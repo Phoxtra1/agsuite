@@ -39,21 +39,22 @@ interface AuthProviderProps {
 }
 
 export function AuthProvider({ children }: AuthProviderProps) {
-  const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-
-  useEffect(() => {
-    // Check for existing session
+  // Auto-login as Super Admin for development - keeps you logged in
+  const [user, setUser] = useState<User | null>(() => {
     const storedUser = localStorage.getItem('amineva_user');
     if (storedUser) {
       try {
-        setUser(JSON.parse(storedUser));
+        return JSON.parse(storedUser);
       } catch {
         localStorage.removeItem('amineva_user');
       }
     }
-    setIsLoading(false);
-  }, []);
+    // Default to Super Admin so you can see the UI
+    const defaultAdmin = MOCK_USERS['admin@amineva.com'].user;
+    localStorage.setItem('amineva_user', JSON.stringify(defaultAdmin));
+    return defaultAdmin;
+  });
+  const [isLoading, setIsLoading] = useState(false);
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);

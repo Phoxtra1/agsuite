@@ -110,17 +110,6 @@ export function LoginForm() {
                 )}
               </Button>
             </form>
-
-            <div className="mt-6 pt-6 border-t border-border">
-              <p className="text-center text-sm text-muted-foreground">
-                Demo credentials:
-              </p>
-              <div className="mt-2 space-y-1 text-xs text-muted-foreground text-center">
-                <p><span className="font-medium">Super Admin:</span> admin@amineva.com / admin123</p>
-                <p><span className="font-medium">Staff:</span> staff@amineva.com / staff123</p>
-                <p><span className="font-medium">Customer:</span> customer@amineva.com / customer123</p>
-              </div>
-            </div>
           </CardContent>
         </Card>
 
