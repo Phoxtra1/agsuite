@@ -1,0 +1,53 @@
+import { Product } from '@/types/product';
+
+// Default products for Amineva Suite
+export const DEFAULT_PRODUCTS: Omit<Product, 'icon'>[] = [
+  {
+    id: 'ag-main',
+    name: 'AG Main',
+    shortName: 'Main',
+    description: 'Corporate website and public information',
+    url: 'https://amineva.com',
+    status: 'live',
+    isPublic: true,
+    allowedRoles: ['super_admin', 'staff', 'customer', 'visitor'],
+    isExternal: true,
+    order: 1,
+  },
+  {
+    id: 'ag-app',
+    name: 'AG App',
+    shortName: 'App',
+    description: "Amineva's internal client and project workspace",
+    url: 'https://app.amineva.com',
+    status: 'restricted',
+    isPublic: false,
+    allowedRoles: ['super_admin', 'staff', 'customer'],
+    isExternal: true,
+    order: 2,
+  },
+  {
+    id: 'ag-ops',
+    name: 'AG Ops',
+    shortName: 'Ops',
+    description: 'A business operations platform that allows organizations to manage clients, staff, payments, files, and service workflows',
+    url: 'https://ops.amineva.com',
+    status: 'coming_soon',
+    isPublic: false,
+    allowedRoles: ['super_admin', 'staff'],
+    isExternal: true,
+    order: 3,
+  },
+  {
+    id: 'ag-stock',
+    name: 'AG Stock',
+    shortName: 'Stock',
+    description: 'A secure stock, sales, and loss-prevention platform for shop owners, traders, warehouses, and distributors',
+    url: 'https://stock.amineva.com',
+    status: 'coming_soon',
+    isPublic: false,
+    allowedRoles: ['super_admin', 'staff', 'customer'],
+    isExternal: true,
+    order: 4,
+  },
+];
