@@ -3,18 +3,28 @@ import { useAuth } from '@/contexts/AuthContext';
 import { TopNav } from '@/components/layout/TopNav';
 import { ProductGrid } from '@/components/suite/ProductGrid';
 import { AdminPanel } from '@/components/admin/AdminPanel';
-import { Home, Grid3X3, Shield } from 'lucide-react';
+import { LoginForm } from '@/components/auth/LoginForm';
+import { Home, Grid3X3, Shield, LogIn } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import {
+  Dialog,
+  DialogContent,
+} from '@/components/ui/dialog';
 
 type View = 'home' | 'products' | 'admin';
 
 export function SuiteHome() {
   const { user } = useAuth();
   const [currentView, setCurrentView] = useState<View>('home');
+  const [showLoginPage, setShowLoginPage] = useState(false);
   const isSuperAdmin = user?.role === 'super_admin';
 
   const handleAdminClick = () => {
     setCurrentView('admin');
+  };
+
+  const handleHomeClick = () => {
+    setShowLoginPage(true);
   };
 
   return (
@@ -26,17 +36,17 @@ export function SuiteHome() {
         <aside className="hidden lg:flex w-64 h-[calc(100vh-4rem)] border-r border-border bg-card flex-col p-4 sticky top-16">
           <nav className="space-y-1">
             <Button
-              variant={currentView === 'home' ? 'secondary' : 'ghost'}
+              variant="ghost"
               className="w-full justify-start"
-              onClick={() => setCurrentView('home')}
+              onClick={handleHomeClick}
             >
               <Home className="mr-2 h-4 w-4" />
               Home
             </Button>
             <Button
-              variant={currentView === 'products' ? 'secondary' : 'ghost'}
+              variant={currentView === 'products' || currentView === 'home' ? 'secondary' : 'ghost'}
               className="w-full justify-start"
-              onClick={() => setCurrentView('products')}
+              onClick={() => setCurrentView('home')}
             >
               <Grid3X3 className="mr-2 h-4 w-4" />
               Products
@@ -79,6 +89,23 @@ export function SuiteHome() {
           )}
         </main>
       </div>
+
+      {/* Login/Register Page Modal */}
+      <Dialog open={showLoginPage} onOpenChange={setShowLoginPage}>
+        <DialogContent className="max-w-[100vw] max-h-[100vh] w-screen h-screen p-0 border-0">
+          <div className="relative w-full h-full overflow-auto">
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-4 right-4 z-50"
+              onClick={() => setShowLoginPage(false)}
+            >
+              <LogIn className="h-4 w-4" />
+            </Button>
+            <LoginForm />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

@@ -1,7 +1,9 @@
-import { Product } from '@/types/product';
+import { ProductData } from '@/types/product';
+
+const STORAGE_KEY = 'amineva_products';
 
 // Default products for Amineva Suite
-export const DEFAULT_PRODUCTS: Omit<Product, 'icon'>[] = [
+export const DEFAULT_PRODUCTS: ProductData[] = [
   {
     id: 'ag-main',
     name: 'AG Main',
@@ -51,3 +53,34 @@ export const DEFAULT_PRODUCTS: Omit<Product, 'icon'>[] = [
     order: 4,
   },
 ];
+
+// Load products from localStorage or return defaults
+export function loadProducts(): ProductData[] {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch {
+    console.error('Failed to load products from storage');
+  }
+  return DEFAULT_PRODUCTS;
+}
+
+// Save products to localStorage
+export function saveProducts(products: ProductData[]): void {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+    // Dispatch event for same-tab updates
+    window.dispatchEvent(new Event('productsUpdated'));
+  } catch {
+    console.error('Failed to save products to storage');
+  }
+}
+
+// Reset products to defaults
+export function resetProducts(): ProductData[] {
+  localStorage.removeItem(STORAGE_KEY);
+  window.dispatchEvent(new Event('productsUpdated'));
+  return DEFAULT_PRODUCTS;
+}
