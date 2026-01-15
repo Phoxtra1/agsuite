@@ -198,11 +198,11 @@ function SocialButton({ icon, label, onClick }: { icon: React.ReactNode; label: 
 // Feature item component
 function FeatureItem({ icon, title }: { icon: React.ReactNode; title: string }) {
   return (
-    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-      <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
+    <div className="flex items-center gap-3 text-sm">
+      <div className="w-8 h-8 rounded-lg bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0 border border-white/10">
         {icon}
       </div>
-      <span>{title}</span>
+      <span className="text-white/90 font-medium">{title}</span>
     </div>
   );
 }
@@ -248,18 +248,21 @@ export function LoginForm() {
       <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative suite-gradient overflow-hidden">
         <AnimatedVisuals />
         
-        {/* Headline overlay */}
+        {/* Headline overlay with backdrop for readability */}
         <div className="absolute inset-0 flex flex-col justify-center px-12 xl:px-20 z-10">
-          <div className="max-w-lg">
+          <div className="max-w-lg relative">
+            {/* Subtle backdrop blur for text contrast */}
+            <div className="absolute -inset-6 bg-gradient-to-r from-black/30 to-transparent rounded-2xl backdrop-blur-[2px] -z-10" />
+            
             <img 
               src={amvLogo} 
               alt="Amineva" 
-              className="h-10 w-auto mb-8 opacity-90"
+              className="h-10 w-auto mb-8 brightness-0 invert"
             />
-            <h1 className="text-4xl xl:text-5xl font-bold text-primary-foreground leading-tight mb-6">
+            <h1 className="text-4xl xl:text-5xl font-bold text-white leading-tight mb-6 drop-shadow-lg">
               The Business<br />Intelligence OS
             </h1>
-            <p className="text-lg text-primary-foreground/70 leading-relaxed mb-10">
+            <p className="text-lg text-white/85 leading-relaxed mb-10 drop-shadow-md">
               A unified operating system for modern organizations. Run, analyze, and control your operations, data, workflows, teams, and digital assets from one powerful platform.
             </p>
             
