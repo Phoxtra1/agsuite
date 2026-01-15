@@ -2,19 +2,27 @@ import { UserRole } from './auth';
 
 export type ProductStatus = 'live' | 'restricted' | 'offline' | 'coming_soon';
 
-export interface Product {
+// Base product data without icon (for storage)
+export interface ProductData {
   id: string;
   name: string;
   shortName: string;
   description: string;
   url: string;
   status: ProductStatus;
-  icon: React.ReactNode;
   isPublic: boolean;
   allowedRoles: UserRole[];
   isExternal: boolean;
   order: number;
 }
+
+// Product with icon for display
+export interface Product extends ProductData {
+  icon: React.ReactNode;
+}
+
+// Alias for clarity
+export type ProductWithIcon = Product;
 
 export const STATUS_LABELS: Record<ProductStatus, string> = {
   live: 'Live',

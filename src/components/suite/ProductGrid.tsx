@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { Product } from '@/types/product';
 import { useAuth } from '@/contexts/AuthContext';
 import { getProductsWithIcons, filterProductsByRole } from '@/lib/products';
@@ -15,6 +15,7 @@ type FilterStatus = 'all' | 'live' | 'restricted' | 'coming_soon';
 
 export function ProductGrid() {
   const { user } = useAuth();
+  const [products, setProducts] = useState<Product[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [viewMode, setViewMode] = useState<ViewMode>('grid');
   const [sortBy, setSortBy] = useState<SortBy>('order');
@@ -26,11 +27,29 @@ export function ProductGrid() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showComingSoon, setShowComingSoon] = useState(false);
 
-  const allProducts = useMemo(() => getProductsWithIcons(), []);
+  // Load products from localStorage
+  useEffect(() => {
+    setProducts(getProductsWithIcons());
+  }, []);
+
+  // Listen for product updates
+  useEffect(() => {
+    const handleProductsUpdated = () => {
+      setProducts(getProductsWithIcons());
+    };
+
+    window.addEventListener('productsUpdated', handleProductsUpdated);
+    window.addEventListener('storage', handleProductsUpdated);
+
+    return () => {
+      window.removeEventListener('productsUpdated', handleProductsUpdated);
+      window.removeEventListener('storage', handleProductsUpdated);
+    };
+  }, []);
   
   const accessibleProducts = useMemo(() => {
-    return filterProductsByRole(allProducts, user?.role || null);
-  }, [allProducts, user?.role]);
+    return filterProductsByRole(products, user?.role || null);
+  }, [products, user?.role]);
 
   const filteredAndSortedProducts = useMemo(() => {
     let result = [...accessibleProducts];

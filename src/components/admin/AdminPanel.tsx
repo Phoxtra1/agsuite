@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { DEFAULT_PRODUCTS } from '@/data/products';
-import { STATUS_LABELS, STATUS_COLORS, ProductStatus } from '@/types/product';
+import React, { useState, useEffect } from 'react';
+import { loadProducts, saveProducts, resetProducts } from '@/data/products';
+import { ProductData, STATUS_LABELS, STATUS_COLORS, ProductStatus } from '@/types/product';
 import { ROLE_LABELS, UserRole } from '@/types/auth';
 import { getProductIcon } from '@/lib/products';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -27,9 +27,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table';
-import { Plus, Pencil, Trash2, Save, X, AlertCircle } from 'lucide-react';
+import { Plus, Pencil, Trash2, Save, X, RotateCcw } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Alert, AlertDescription } from '@/components/ui/alert';
+import { toast } from 'sonner';
 
 interface ProductFormData {
   name: string;
@@ -52,11 +52,23 @@ const initialFormData: ProductFormData = {
 };
 
 export function AdminPanel() {
-  const [products, setProducts] = useState(DEFAULT_PRODUCTS);
+  const [products, setProducts] = useState<ProductData[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProductFormData>(initialFormData);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+
+  // Load products from localStorage on mount
+  useEffect(() => {
+    setProducts(loadProducts());
+  }, []);
+
+  // Save products to localStorage whenever they change
+  useEffect(() => {
+    if (products.length > 0) {
+      saveProducts(products);
+    }
+  }, [products]);
 
   const handleEdit = (productId: string) => {
     const product = products.find(p => p.id === productId);
@@ -90,17 +102,17 @@ export function AdminPanel() {
             : p
         )
       );
+      toast.success('Product updated successfully');
     } else {
       const newId = `custom-${Date.now()}`;
-      setProducts(prev => [
-        ...prev,
-        {
-          id: newId,
-          ...formData,
-          isExternal: true,
-          order: prev.length + 1,
-        },
-      ]);
+      const newProduct: ProductData = {
+        id: newId,
+        ...formData,
+        isExternal: true,
+        order: products.length + 1,
+      };
+      setProducts(prev => [...prev, newProduct]);
+      toast.success('Product added successfully');
     }
     setIsDialogOpen(false);
     setEditingId(null);
@@ -109,6 +121,13 @@ export function AdminPanel() {
   const handleDelete = (productId: string) => {
     setProducts(prev => prev.filter(p => p.id !== productId));
     setDeleteConfirm(null);
+    toast.success('Product deleted successfully');
+  };
+
+  const handleReset = () => {
+    const defaultProducts = resetProducts();
+    setProducts(defaultProducts);
+    toast.success('Products reset to defaults');
   };
 
   const toggleRole = (role: UserRole) => {
@@ -127,18 +146,17 @@ export function AdminPanel() {
           <h2 className="text-2xl font-semibold">Product Registry</h2>
           <p className="text-muted-foreground">Manage products in the Amineva Suite</p>
         </div>
-        <Button onClick={handleAdd} className="bg-accent text-accent-foreground hover:bg-accent/90">
-          <Plus className="mr-2 h-4 w-4" />
-          Add Product
-        </Button>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={handleReset}>
+            <RotateCcw className="mr-2 h-4 w-4" />
+            Reset
+          </Button>
+          <Button onClick={handleAdd} className="bg-accent text-accent-foreground hover:bg-accent/90">
+            <Plus className="mr-2 h-4 w-4" />
+            Add Product
+          </Button>
+        </div>
       </div>
-
-      <Alert>
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription>
-          <strong>Note:</strong> Changes are stored in memory only. Enable Lovable Cloud for persistent storage.
-        </AlertDescription>
-      </Alert>
 
       <Card>
         <CardContent className="p-0">

@@ -1,6 +1,6 @@
 import React from 'react';
-import { Product } from '@/types/product';
-import { DEFAULT_PRODUCTS } from '@/data/products';
+import { Product, ProductData } from '@/types/product';
+import { loadProducts } from '@/data/products';
 import { IconAGMain, IconAGApp, IconAGOps, IconAGStock, IconPlaceholder } from '@/components/icons/ProductIcons';
 import { UserRole } from '@/types/auth';
 
@@ -16,8 +16,9 @@ export function getProductIcon(productId: string): React.ComponentType<{ classNa
   return PRODUCT_ICON_MAP[productId] || IconPlaceholder;
 }
 
-export function getProductsWithIcons(): Product[] {
-  return DEFAULT_PRODUCTS.map(product => {
+export function getProductsWithIcons(productsData?: ProductData[]): Product[] {
+  const data = productsData || loadProducts();
+  return data.map(product => {
     const IconComponent = getProductIcon(product.id);
     return {
       ...product,
