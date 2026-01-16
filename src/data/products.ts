@@ -2,14 +2,14 @@ import { ProductData } from '@/types/product';
 
 const STORAGE_KEY = 'amineva_products';
 
-// Default products for Amineva Suite
+// Default products for Amineva Global
 export const DEFAULT_PRODUCTS: ProductData[] = [
   {
-    id: 'ag-main',
-    name: 'AG Main',
-    shortName: 'Main',
-    description: 'Corporate website and public information',
-    url: 'https://amineva.com',
+    id: 'ag-hub',
+    name: 'AG Hub',
+    shortName: 'Hub',
+    description: 'Publications of insights, reports, previous works, careers/recruitments, resources, and previous work done.',
+    url: 'https://hub.amineva.com',
     status: 'live',
     isPublic: true,
     allowedRoles: ['super_admin', 'staff', 'customer', 'visitor'],
@@ -20,9 +20,9 @@ export const DEFAULT_PRODUCTS: ProductData[] = [
     id: 'ag-app',
     name: 'AG App',
     shortName: 'App',
-    description: "Amineva's internal client and project workspace",
+    description: 'Services to clients needing data & insights, field project inspection, strategic assessment, and professional documentation.',
     url: 'https://app.amineva.com',
-    status: 'restricted',
+    status: 'live',
     isPublic: false,
     allowedRoles: ['super_admin', 'staff', 'customer'],
     isExternal: true,
@@ -32,7 +32,7 @@ export const DEFAULT_PRODUCTS: ProductData[] = [
     id: 'ag-ops',
     name: 'AG Ops',
     shortName: 'Ops',
-    description: 'A business operations platform that allows organizations to manage clients, staff, payments, files, and service workflows',
+    description: 'Business operations platform allowing organizations/service providers to manage clients.',
     url: 'https://ops.amineva.com',
     status: 'coming_soon',
     isPublic: false,
@@ -44,9 +44,9 @@ export const DEFAULT_PRODUCTS: ProductData[] = [
     id: 'ag-stock',
     name: 'AG Stock',
     shortName: 'Stock',
-    description: 'A secure stock, sales, and loss-prevention platform for shop owners, traders, warehouses, and distributors',
+    description: 'Secure inventory, sales, and loss-prevention platform for shop owners.',
     url: 'https://stock.amineva.com',
-    status: 'coming_soon',
+    status: 'live',
     isPublic: false,
     allowedRoles: ['super_admin', 'staff', 'customer'],
     isExternal: true,

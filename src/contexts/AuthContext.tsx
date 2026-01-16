@@ -1,9 +1,9 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode } from 'react';
-import { User, AuthContextType, UserRole } from '@/types/auth';
+import React, { createContext, useContext, useState, ReactNode } from 'react';
+import { User, AuthContextType } from '@/types/auth';
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-// Mock users for demo - in production this would use Supabase
+// Mock users for demo - in production this would use Supabase/Appwrite
 const MOCK_USERS: Record<string, { password: string; user: User }> = {
   'admin@amineva.com': {
     password: 'admin123',

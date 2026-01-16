@@ -7,7 +7,51 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
 import { Loader2, AlertCircle, Eye, EyeOff, BarChart3, Shield, Zap, Network, Database, Activity } from 'lucide-react';
-import amvLogo from '@/assets/amv_logo.png';
+import amvLogo from '@/assets/amv_global_logo.png';
+
+// Typing animation text
+const TYPING_TEXT = "BRIDGING THE GAP BETWEEN INFORMATION AND EXECUTION, DELIVERING VERIFIED FIELD INSIGHTS THAT EMPOWER PROJECT OWNERS, INVESTORS, INSTITUTIONS, AND DECISION MAKERS.";
+
+// Typing animation component
+function TypingAnimation() {
+  const [displayText, setDisplayText] = useState('');
+  const [currentIndex, setCurrentIndex] = useState(0);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      if (!isDeleting) {
+        if (currentIndex < TYPING_TEXT.length) {
+          setDisplayText(TYPING_TEXT.slice(0, currentIndex + 1));
+          setCurrentIndex(currentIndex + 1);
+        } else {
+          // Pause at the end before restarting
+          setTimeout(() => {
+            setIsDeleting(true);
+          }, 3000);
+        }
+      } else {
+        if (currentIndex > 0) {
+          setDisplayText(TYPING_TEXT.slice(0, currentIndex - 1));
+          setCurrentIndex(currentIndex - 1);
+        } else {
+          setIsDeleting(false);
+        }
+      }
+    }, isDeleting ? 20 : 50);
+
+    return () => clearTimeout(timer);
+  }, [currentIndex, isDeleting]);
+
+  return (
+    <div className="min-h-[120px]">
+      <p className="text-sm md:text-base text-primary-foreground/80 leading-relaxed font-medium tracking-wide">
+        {displayText}
+        <span className="animate-pulse">|</span>
+      </p>
+    </div>
+  );
+}
 
 // Animated dashboard visualization component
 function AnimatedVisuals() {
@@ -195,18 +239,6 @@ function SocialButton({ icon, label, onClick }: { icon: React.ReactNode; label: 
   );
 }
 
-// Feature item component
-function FeatureItem({ icon, title }: { icon: React.ReactNode; title: string }) {
-  return (
-    <div className="flex items-center gap-3 text-sm text-muted-foreground">
-      <div className="w-8 h-8 rounded-lg bg-accent/10 flex items-center justify-center flex-shrink-0">
-        {icon}
-      </div>
-      <span>{title}</span>
-    </div>
-  );
-}
-
 export function LoginForm() {
   const { login, isLoading } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
@@ -244,51 +276,25 @@ export function LoginForm() {
 
   return (
     <div className="min-h-screen flex bg-background">
-      {/* Left side - Animated visuals */}
+      {/* Left side - Animated visuals with typing text */}
       <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative suite-gradient overflow-hidden">
         <AnimatedVisuals />
         
-        {/* Headline overlay */}
+        {/* Content overlay */}
         <div className="absolute inset-0 flex flex-col justify-center px-12 xl:px-20 z-10">
           <div className="max-w-lg">
-            <img 
-              src={amvLogo} 
-              alt="Amineva" 
-              className="h-10 w-auto mb-8 opacity-90"
-            />
-            <h1 className="text-4xl xl:text-5xl font-bold text-primary-foreground leading-tight mb-6">
-              The Business<br />Intelligence OS
-            </h1>
-            <p className="text-lg text-primary-foreground/70 leading-relaxed mb-10">
-              A unified operating system for modern organizations. Run, analyze, and control your operations, data, workflows, teams, and digital assets from one powerful platform.
-            </p>
+            {/* Typing animation text */}
+            <TypingAnimation />
             
-            {/* Feature highlights */}
-            <div className="grid grid-cols-2 gap-4">
-              <FeatureItem 
-                icon={<Zap className="h-4 w-4 text-accent" />} 
-                title="Operations Management" 
+            {/* Logo below typing text */}
+            <div className="mt-8">
+              <img 
+                src={amvLogo} 
+                alt="Amineva Global" 
+                className="h-20 w-20 rounded-full opacity-90"
               />
-              <FeatureItem 
-                icon={<BarChart3 className="h-4 w-4 text-accent" />} 
-                title="Intelligence & Analytics" 
-              />
-              <FeatureItem 
-                icon={<Shield className="h-4 w-4 text-accent" />} 
-                title="Secure Workspaces" 
-              />
-              <FeatureItem 
-                icon={<Activity className="h-4 w-4 text-accent" />} 
-                title="Business Monitoring" 
-              />
-              <FeatureItem 
-                icon={<Database className="h-4 w-4 text-accent" />} 
-                title="Digital Asset Control" 
-              />
-              <FeatureItem 
-                icon={<Network className="h-4 w-4 text-accent" />} 
-                title="Enterprise Integration" 
-              />
+              <h2 className="text-2xl font-bold text-primary-foreground mt-4">AMINEVA GLOBAL</h2>
+              <p className="text-primary-foreground/60 text-sm">Connect. Verify. Grow</p>
             </div>
           </div>
         </div>
@@ -297,20 +303,16 @@ export function LoginForm() {
       {/* Right side - Auth form */}
       <div className="flex-1 flex items-center justify-center p-6 lg:p-12">
         <div className="w-full max-w-md">
-          {/* Mobile logo */}
-          <div className="lg:hidden flex justify-center mb-8">
+          {/* Mobile logo & typing text */}
+          <div className="lg:hidden text-center mb-8">
             <img 
               src={amvLogo} 
-              alt="Amineva" 
-              className="h-10 w-auto"
+              alt="Amineva Global" 
+              className="h-16 w-16 rounded-full mx-auto mb-4"
             />
-          </div>
-
-          {/* Mobile headline */}
-          <div className="lg:hidden text-center mb-8">
-            <h1 className="text-2xl font-bold mb-2">The Business Intelligence OS</h1>
-            <p className="text-sm text-muted-foreground">
-              Run, analyze, and control your organization from one platform.
+            <h1 className="text-xl font-bold mb-2">AMINEVA GLOBAL</h1>
+            <p className="text-xs text-muted-foreground px-4">
+              {TYPING_TEXT}
             </p>
           </div>
 
@@ -439,16 +441,17 @@ export function LoginForm() {
                     </svg>
                   }
                   label="Google"
-                  onClick={() => handleSocialLogin('google')}
+                  onClick={() => handleSocialLogin('Google')}
                 />
                 <SocialButton
                   icon={
                     <svg className="h-4 w-4" viewBox="0 0 24 24">
-                      <path fill="currentColor" d="M11.4 24H0V12.6L11.4 0H24v11.4L12.6 24H11.4zM1.8 22.2h8.8L22.2 10.6V1.8h-8.8L1.8 13.4v8.8z"/>
+                      <path fill="currentColor" d="M3 5.5A2.5 2.5 0 0 1 5.5 3h13A2.5 2.5 0 0 1 21 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18.5v-13zM5.5 5a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-13a.5.5 0 0 0-.5-.5h-13z"/>
+                      <path fill="currentColor" d="M11 8h2v2h2v2h-2v2h2v2h-2v-2H9v-2h2v-2H9V8h2z"/>
                     </svg>
                   }
                   label="Microsoft"
-                  onClick={() => handleSocialLogin('microsoft')}
+                  onClick={() => handleSocialLogin('Microsoft')}
                 />
                 <SocialButton
                   icon={
@@ -457,7 +460,7 @@ export function LoginForm() {
                     </svg>
                   }
                   label="Facebook"
-                  onClick={() => handleSocialLogin('facebook')}
+                  onClick={() => handleSocialLogin('Facebook')}
                 />
                 <SocialButton
                   icon={
@@ -466,19 +469,11 @@ export function LoginForm() {
                     </svg>
                   }
                   label="GitHub"
-                  onClick={() => handleSocialLogin('github')}
+                  onClick={() => handleSocialLogin('GitHub')}
                 />
               </div>
             </CardContent>
           </Card>
-
-          <p className="text-center text-xs text-muted-foreground mt-6">
-            By continuing, you agree to Amineva's Terms of Service and Privacy Policy.
-          </p>
-
-          <p className="text-center text-xs text-muted-foreground mt-4">
-            © {new Date().getFullYear()} Amineva Global. All rights reserved.
-          </p>
         </div>
       </div>
     </div>
