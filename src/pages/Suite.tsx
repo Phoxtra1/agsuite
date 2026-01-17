@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { SuiteNav } from '@/components/suite/SuiteNav';
@@ -51,7 +51,8 @@ export default function SuitePage() {
         isSuperAdmin={isSuperAdmin}
       />
       
-      <main className="container mx-auto px-4 py-8 max-w-7xl">
+      {/* Main content area - offset by sidebar width */}
+      <main className="ml-64 p-8">
         {/* Welcome Banner */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
