@@ -1,17 +1,25 @@
 import React, {
   createContext,
   useContext,
-  useMemo,
   useEffect,
+  useMemo,
   useState,
   ReactNode,
 } from "react";
 import { Client, Account, ID, Models } from "appwrite";
 import { User, AuthContextType } from "@/types/auth";
 
+/* ------------------------------------------------------------------ */
+/* Context setup */
+/* ------------------------------------------------------------------ */
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
-function isLovablePreview() {
+/* ------------------------------------------------------------------ */
+/* Helpers */
+/* ------------------------------------------------------------------ */
+
+function isLovablePreview(): boolean {
   try {
     const host = window.location.hostname;
     return (
@@ -24,31 +32,41 @@ function isLovablePreview() {
   }
 }
 
-// ✅ Configure Appwrite here (use env if you have it; fallback to your known endpoint)
+/* ------------------------------------------------------------------ */
+/* Appwrite configuration */
+/* ------------------------------------------------------------------ */
+
 const APPWRITE_ENDPOINT =
-  (import.meta as any)?.env?.VITE_APPWRITE_ENDPOINT ||
+  (import.meta as any)?.env?.VITE_APPWRITE_ENDPOINT ??
   "https://fra.cloud.appwrite.io/v1";
 
 const APPWRITE_PROJECT_ID =
-  (import.meta as any)?.env?.VITE_APPWRITE_PROJECT_ID ||
-  ""; // <-- MUST be set correctly
+  (import.meta as any)?.env?.VITE_APPWRITE_PROJECT_ID ?? "";
 
-const client = new Client().setEndpoint(APPWRITE_ENDPOINT);
-if (APPWRITE_PROJECT_ID) client.setProject(APPWRITE_PROJECT_ID);
+const client = new Client()
+  .setEndpoint(APPWRITE_ENDPOINT)
+  .setProject(APPWRITE_PROJECT_ID);
+
 const account = new Account(client);
 
-// Convert Appwrite user to your app User type
-function mapAppwriteUser(u: Models.User<Models.Preferences>): User {
-  // Role: if you store role in preferences later, read it; otherwise default.
-  const role = (u.prefs as any)?.role || "customer";
+/* ------------------------------------------------------------------ */
+/* Mapping Appwrite user → App user */
+/* ------------------------------------------------------------------ */
 
+function mapAppwriteUser(
+  u: Models.User<Models.Preferences>
+): User {
   return {
     id: u.$id,
     email: u.email,
-    name: u.name || u.email?.split("@")?.[0] || "User",
-    role,
+    name: u.name || u.email.split("@")[0],
+    role: (u.prefs as any)?.role ?? "customer",
   };
 }
+
+/* ------------------------------------------------------------------ */
+/* Provider */
+/* ------------------------------------------------------------------ */
 
 interface AuthProviderProps {
   children: ReactNode;
@@ -59,54 +77,74 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const [isLoading, setIsLoading] = useState(true);
   const preview = isLovablePreview();
 
-  // On app load: check if there is an existing Appwrite session
+  /* -------------------------------------------------------------- */
+  /* Load existing session on app start */
+  /* -------------------------------------------------------------- */
+
   useEffect(() => {
-    let cancelled = false;
+    let active = true;
 
     async function loadSession() {
       try {
         if (!APPWRITE_PROJECT_ID) {
-          // If project ID is missing, auth cannot work properly.
-          // Keep app running but show not authenticated.
-          if (!cancelled) setUser(null);
+          console.error("Appwrite Project ID is missing");
           return;
         }
 
         const u = await account.get();
-        if (!cancelled) setUser(mapAppwriteUser(u));
+        if (active) setUser(mapAppwriteUser(u));
       } catch {
-        if (!cancelled) setUser(null);
+        if (active) setUser(null);
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (active) setIsLoading(false);
       }
     }
 
     loadSession();
     return () => {
-      cancelled = true;
+      active = false;
     };
   }, []);
+
+  /* -------------------------------------------------------------- */
+  /* Login */
+  /* -------------------------------------------------------------- */
 
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      await account.createEmailPasswordSession(email.trim(), password);
+      await account.createEmailPasswordSession(
+        email.trim(),
+        password
+      );
+
       const u = await account.get();
       setUser(mapAppwriteUser(u));
     } finally {
       setIsLoading(false);
     }
   };
+
+  /* -------------------------------------------------------------- */
+  /* Register */
+  /* -------------------------------------------------------------- */
 
   const register = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // ✅ This is the missing part in your current code.
-      // Without this, Appwrite will NOT list users.
-      await account.create(ID.unique(), email.trim(), password);
+      await account.create(
+        ID.unique(),
+        email.trim(),
+        password
+      );
 
-      // Create a session right after register
-      await account.createEmailPasswordSession(email.trim(), password);
+      await account.createEmailPasswordSession(
+        email.trim(),
+        password
+      );
+
+      // Default role for new users
+      await account.updatePrefs({ role: "customer" });
 
       const u = await account.get();
       setUser(mapAppwriteUser(u));
@@ -115,19 +153,32 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
-  const socialLogin: AuthContextType["socialLogin"] = async (provider) => {
-    // ✅ provider must be lowercase: "google" | "microsoft" | "facebook" | "github"
+  /* -------------------------------------------------------------- */
+  /* Social login (OAuth) */
+  /* -------------------------------------------------------------- */
+
+  const socialLogin: AuthContextType["socialLogin"] = async (
+    provider
+  ) => {
     if (!APPWRITE_PROJECT_ID) {
-      throw new Error("Appwrite Project ID is missing. Set VITE_APPWRITE_PROJECT_ID.");
+      console.error("Appwrite Project ID is missing");
+      return;
     }
 
-    const success = `${window.location.origin}/suite`;
-    const failure = `${window.location.origin}/?oauth=failed`;
+    const successUrl = `${window.location.origin}/suite`;
+    const failureUrl = `${window.location.origin}/?oauth=failed`;
 
-    // Appwrite handles the provider callback internally;
-    // you do NOT paste provider callback URLs in your code.
-    account.createOAuth2Session(provider, success, failure);
+    // Redirect handled by Appwrite
+    account.createOAuth2Session(
+      provider,
+      successUrl,
+      failureUrl
+    );
   };
+
+  /* -------------------------------------------------------------- */
+  /* Logout */
+  /* -------------------------------------------------------------- */
 
   const logout = async () => {
     setIsLoading(true);
@@ -139,6 +190,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   };
 
+  /* -------------------------------------------------------------- */
+  /* Context value */
+  /* -------------------------------------------------------------- */
+
   const value = useMemo<AuthContextType>(
     () => ({
       user,
@@ -149,21 +204,27 @@ export function AuthProvider({ children }: AuthProviderProps) {
       logout,
       isAuthenticated: !!user,
 
-      // Optional flag you can use in your route guard:
-      // allow /suite to be visible in preview even when not authenticated,
-      // without faking users in localStorage.
+      // Preview flag for route guards (NO fake auth)
       ...(preview ? ({ isPreview: true } as any) : {}),
     }),
     [user, isLoading, preview]
   );
 
-  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
+  return (
+    <AuthContext.Provider value={value}>
+      {children}
+    </AuthContext.Provider>
+  );
 }
+
+/* ------------------------------------------------------------------ */
+/* Hook */
+/* ------------------------------------------------------------------ */
 
 export function useAuth() {
   const context = useContext(AuthContext);
-  if (context === undefined) {
-    throw new Error("useAuth must be used within an AuthProvider");
+  if (!context) {
+    throw new Error("useAuth must be used within AuthProvider");
   }
   return context;
 }
