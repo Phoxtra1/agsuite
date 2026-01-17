@@ -462,7 +462,7 @@ export function LoginForm() {
                       </svg>
                     }
                     label="Google"
-                    onClick={() => handleSocialLogin('Google')}
+                    onClick={() => handleSocialLogin('google')}
                   />
                   <SocialButton
                     icon={
@@ -472,7 +472,7 @@ export function LoginForm() {
                       </svg>
                     }
                     label="Microsoft"
-                    onClick={() => handleSocialLogin('Microsoft')}
+                    onClick={() => handleSocialLogin('microsoft')}
                   />
                   <SocialButton
                     icon={
@@ -481,7 +481,7 @@ export function LoginForm() {
                       </svg>
                     }
                     label="Facebook"
-                    onClick={() => handleSocialLogin('Facebook')}
+                    onClick={() => handleSocialLogin('facebook')}
                   />
                   <SocialButton
                     icon={
@@ -490,7 +490,7 @@ export function LoginForm() {
                       </svg>
                     }
                     label="GitHub"
-                    onClick={() => handleSocialLogin('GitHub')}
+                    onClick={() => handleSocialLogin('gitHub')}
                   />
                 </div>
               </CardContent>
