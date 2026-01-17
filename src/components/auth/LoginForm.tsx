@@ -6,15 +6,16 @@ import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Separator } from '@/components/ui/separator';
-import { Loader2, AlertCircle, Eye, EyeOff, BarChart3, Shield, Zap, Network, Database, Activity } from 'lucide-react';
+import { toast } from '@/components/ui/sonner';
+import { Loader2, AlertCircle, Eye, EyeOff, BarChart3, Zap, Network, Database, Activity } from 'lucide-react';
 import amvLogo from '@/assets/amv_global_logo.png';
 
 // Animated text phrases
 const ANIMATED_PHRASES = [
-  "BRIDGING THE GAP BETWEEN INFORMATION AND EXECUTION",
-  "DELIVERING VERIFIED FIELD INSIGHTS",
-  "EMPOWERING PROJECT OWNERS AND INVESTORS",
-  "ENABLING INSTITUTIONS AND DECISION MAKERS"
+  'BRIDGING THE GAP BETWEEN INFORMATION AND EXECUTION',
+  'DELIVERING VERIFIED FIELD INSIGHTS',
+  'EMPOWERING PROJECT OWNERS AND INVESTORS',
+  'ENABLING INSTITUTIONS AND DECISION MAKERS',
 ];
 
 // Smooth animated text component (no typing/deleting - smooth transitions)
@@ -35,9 +36,9 @@ function AnimatedText() {
   }, []);
 
   return (
-    <div className="min-h-[80px] flex items-center">
-      <p 
-        className={`text-sm md:text-base text-accent font-semibold tracking-wider uppercase transition-all duration-500 ease-in-out ${
+    <div className="min-h-[56px] flex items-center">
+      <p
+        className={`text-sm md:text-base text-accent font-semibold tracking-wider uppercase transition-all duration-500 ease-in-out text-left ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
         }`}
       >
@@ -50,7 +51,7 @@ function AnimatedText() {
 // Animated dashboard visualization component
 function AnimatedVisuals() {
   const [activeIndex, setActiveIndex] = useState(0);
-  
+
   useEffect(() => {
     const interval = setInterval(() => {
       setActiveIndex((prev) => (prev + 1) % 4);
@@ -62,13 +63,16 @@ function AnimatedVisuals() {
     <div className="relative w-full h-full overflow-hidden">
       {/* Background grid */}
       <div className="absolute inset-0 opacity-10">
-        <div className="absolute inset-0" style={{
-          backgroundImage: `
-            linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
-            linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
-          `,
-          backgroundSize: '60px 60px'
-        }} />
+        <div
+          className="absolute inset-0"
+          style={{
+            backgroundImage: `
+              linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px),
+              linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)
+            `,
+            backgroundSize: '60px 60px',
+          }}
+        />
       </div>
 
       {/* Floating data nodes */}
@@ -81,7 +85,7 @@ function AnimatedVisuals() {
               left: `${10 + (i % 4) * 25}%`,
               top: `${15 + Math.floor(i / 4) * 30}%`,
               animationDelay: `${i * 0.3}s`,
-              animationDuration: `${2 + (i % 3)}s`
+              animationDuration: `${2 + (i % 3)}s`,
             }}
           />
         ))}
@@ -115,17 +119,15 @@ function AnimatedVisuals() {
       <div className="absolute inset-0 flex items-center justify-center">
         <div className="relative w-[400px] h-[400px]">
           {/* Rotating ring */}
-          <div 
-            className="absolute inset-0 border border-accent/20 rounded-full"
-            style={{ animation: 'spin 20s linear infinite' }}
-          />
-          <div 
-            className="absolute inset-8 border border-accent/15 rounded-full"
-            style={{ animation: 'spin 15s linear infinite reverse' }}
-          />
-          
+          <div className="absolute inset-0 border border-accent/20 rounded-full" style={{ animation: 'spin 20s linear infinite' }} />
+          <div className="absolute inset-8 border border-accent/15 rounded-full" style={{ animation: 'spin 15s linear infinite reverse' }} />
+
           {/* Dashboard cards */}
-          <div className={`absolute top-8 left-1/2 -translate-x-1/2 transition-all duration-700 ${activeIndex === 0 ? 'opacity-100 scale-100' : 'opacity-30 scale-90'}`}>
+          <div
+            className={`absolute top-8 left-1/2 -translate-x-1/2 transition-all duration-700 ${
+              activeIndex === 0 ? 'opacity-100 scale-100' : 'opacity-30 scale-90'
+            }`}
+          >
             <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-4 w-48">
               <div className="flex items-center gap-2 mb-3">
                 <BarChart3 className="h-4 w-4 text-accent" />
@@ -139,7 +141,11 @@ function AnimatedVisuals() {
             </div>
           </div>
 
-          <div className={`absolute bottom-8 left-1/2 -translate-x-1/2 transition-all duration-700 ${activeIndex === 2 ? 'opacity-100 scale-100' : 'opacity-30 scale-90'}`}>
+          <div
+            className={`absolute bottom-8 left-1/2 -translate-x-1/2 transition-all duration-700 ${
+              activeIndex === 2 ? 'opacity-100 scale-100' : 'opacity-30 scale-90'
+            }`}
+          >
             <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-4 w-48">
               <div className="flex items-center gap-2 mb-3">
                 <Activity className="h-4 w-4 text-success" />
@@ -153,7 +159,11 @@ function AnimatedVisuals() {
             </div>
           </div>
 
-          <div className={`absolute left-0 top-1/2 -translate-y-1/2 transition-all duration-700 ${activeIndex === 3 ? 'opacity-100 scale-100' : 'opacity-30 scale-90'}`}>
+          <div
+            className={`absolute left-0 top-1/2 -translate-y-1/2 transition-all duration-700 ${
+              activeIndex === 3 ? 'opacity-100 scale-100' : 'opacity-30 scale-90'
+            }`}
+          >
             <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-4 w-44">
               <div className="flex items-center gap-2 mb-3">
                 <Network className="h-4 w-4 text-accent" />
@@ -167,7 +177,11 @@ function AnimatedVisuals() {
             </div>
           </div>
 
-          <div className={`absolute right-0 top-1/2 -translate-y-1/2 transition-all duration-700 ${activeIndex === 1 ? 'opacity-100 scale-100' : 'opacity-30 scale-90'}`}>
+          <div
+            className={`absolute right-0 top-1/2 -translate-y-1/2 transition-all duration-700 ${
+              activeIndex === 1 ? 'opacity-100 scale-100' : 'opacity-30 scale-90'
+            }`}
+          >
             <div className="bg-card/80 backdrop-blur-sm border border-border/50 rounded-lg p-4 w-44">
               <div className="flex items-center gap-2 mb-3">
                 <Database className="h-4 w-4 text-accent" />
@@ -218,23 +232,27 @@ function AnimatedVisuals() {
   );
 }
 
-// Social login button component
-function SocialButton({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
-  return (
-    <Button
-      type="button"
-      variant="outline"
-      className="flex-1 h-11 gap-2 bg-background/50 hover:bg-muted/50 border-border/50"
-      onClick={onClick}
-    >
-      {icon}
-      <span className="sr-only md:not-sr-only md:text-xs">{label}</span>
-    </Button>
-  );
-}
+// Social login button component (forwardRef to avoid ref warnings)
+const SocialButton = React.forwardRef<HTMLButtonElement, { icon: React.ReactNode; label: string; onClick?: () => void }>(
+  ({ icon, label, onClick }, ref) => {
+    return (
+      <Button
+        ref={ref}
+        type="button"
+        variant="outline"
+        className="flex-1 h-11 gap-2 bg-background/50 hover:bg-muted/50 border-border/50"
+        onClick={onClick}
+      >
+        {icon}
+        <span className="sr-only md:not-sr-only md:text-xs">{label}</span>
+      </Button>
+    );
+  },
+);
+SocialButton.displayName = 'SocialButton';
 
 export function LoginForm() {
-  const { login, isLoading } = useAuth();
+  const { login, register, socialLogin, isLoading } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -257,15 +275,30 @@ export function LoginForm() {
     }
 
     try {
-      await login(email, password);
+      if (isRegister) {
+        await register(email, password);
+      } else {
+        await login(email, password);
+      }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
     }
   };
 
-  const handleSocialLogin = (provider: string) => {
-    // Social login will be implemented with backend
-    console.log(`${provider} login clicked`);
+  const handleSocialLogin = async (provider: 'google' | 'microsoft' | 'facebook' | 'github') => {
+    try {
+      // Google intentionally left for later backend config.
+      if (provider === 'google') {
+        toast.message('Google login will be configured next.', {
+          description: 'Microsoft, Facebook, and GitHub are enabled for preview testing.',
+        });
+        return;
+      }
+
+      await socialLogin(provider);
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : 'Social login failed');
+    }
   };
 
   const currentYear = new Date().getFullYear();
