@@ -11,9 +11,21 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
+// Check if we're in Lovable preview environment
+const isLovablePreview = () => {
+  return window.location.hostname.includes('lovable.app') || 
+         window.location.hostname.includes('localhost') ||
+         window.location.hostname.includes('127.0.0.1');
+};
+
 // Protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
+  
+  // In Lovable preview, allow access for development
+  if (isLovablePreview()) {
+    return <>{children}</>;
+  }
   
   if (isLoading) {
     return (
@@ -30,9 +42,14 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   return <>{children}</>;
 }
 
-// Public route - redirects to suite if authenticated
+// Public route - redirects to suite if authenticated (only on production)
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
+  
+  // In Lovable preview, don't force redirect
+  if (isLovablePreview()) {
+    return <>{children}</>;
+  }
   
   if (isLoading) {
     return (

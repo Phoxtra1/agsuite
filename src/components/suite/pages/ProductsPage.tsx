@@ -12,7 +12,7 @@ import {
 import { loadProducts } from '@/data/products';
 import { ProductData, STATUS_LABELS } from '@/types/product';
 import { IconAGMain, IconAGApp, IconAGOps, IconAGStock, IconPlaceholder } from '@/components/icons/ProductIcons';
-import { Globe, FileText, LayoutGrid, Package, Lock, Clock } from 'lucide-react';
+import { Globe, Lock, Clock } from 'lucide-react';
 
 // Map product IDs to icons
 function getProductIcon(productId: string) {
@@ -123,33 +123,29 @@ export function ProductsPage() {
     }
   };
 
-  // Product descriptions
+  // Product descriptions - text only, no icons or links
   const productDescriptions = [
     {
       id: 'ag-hub',
       name: 'AG Hub',
-      url: 'https://hub.amineva.com',
       status: 'live',
       description: 'Publications of insights, reports, previous works, careers/recruitments, resources, and previous work done.',
     },
     {
       id: 'ag-app',
       name: 'AG App',
-      url: 'https://app.amineva.com',
       status: 'live',
       description: 'Services to clients needing data & insights, field project inspection, strategic assessment, and professional documentation.',
     },
     {
       id: 'ag-ops',
       name: 'AG Ops',
-      url: 'https://ops.amineva.com',
       status: 'coming_soon',
       description: 'Business operations platform allowing organizations/service providers to manage clients.',
     },
     {
       id: 'ag-stock',
       name: 'AG Stock',
-      url: 'https://stock.amineva.com',
       status: 'live',
       description: 'Secure inventory, sales, and loss-prevention platform for shop owners.',
     },
@@ -157,7 +153,7 @@ export function ProductsPage() {
 
   return (
     <div className="space-y-8">
-      {/* Products Grid */}
+      {/* Products Grid - clickable icons at top */}
       <section>
         <h2 className="text-2xl font-bold text-foreground mb-6">Products</h2>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
@@ -183,35 +179,20 @@ export function ProductsPage() {
         </div>
       </section>
 
-      {/* Product Descriptions */}
+      {/* Product Descriptions - clean text only, no extra icons or links */}
       <section>
-        <h2 className="text-2xl font-bold text-foreground mb-6">Product Descriptions</h2>
+        <h2 className="text-2xl font-bold text-foreground mb-6">Descriptions</h2>
         <div className="space-y-4">
           {productDescriptions.map((product) => (
             <Card key={product.id} className="hover:border-accent/30 transition-colors">
-              <CardContent className="p-6 flex items-start gap-4">
-                <div className="flex-shrink-0">
-                  {getProductIcon(product.id)}
+              <CardContent className="p-6">
+                <div className="flex items-center gap-3 mb-2">
+                  <h3 className="font-semibold text-foreground">{product.name}</h3>
+                  <Badge variant={getStatusBadgeVariant(product.status)} className="text-xs">
+                    {product.status === 'live' ? 'Live' : product.status === 'coming_soon' ? 'Coming Soon' : 'Restricted'}
+                  </Badge>
                 </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-3 mb-2">
-                    <h3 className="font-semibold text-foreground">{product.name}</h3>
-                    <Badge variant={getStatusBadgeVariant(product.status)} className="text-xs">
-                      {product.status === 'live' ? 'Live' : product.status === 'coming_soon' ? 'Coming Soon' : 'Restricted'}
-                    </Badge>
-                    {product.status === 'live' && (
-                      <a 
-                        href={product.url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-xs text-accent hover:underline"
-                      >
-                        {product.url.replace('https://', '')}
-                      </a>
-                    )}
-                  </div>
-                  <p className="text-muted-foreground text-sm">{product.description}</p>
-                </div>
+                <p className="text-muted-foreground text-sm">{product.description}</p>
               </CardContent>
             </Card>
           ))}
