@@ -6,7 +6,7 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { Client, Account, ID, Models } from "appwrite";
+import { Client, Account, ID, Models, OAuthProvider } from "appwrite";
 import { User, AuthContextType } from "@/types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -131,7 +131,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
     const successUrl = `${window.location.origin}/suite`;
     const failureUrl = `${window.location.origin}/?oauth=failed`;
 
-    account.createOAuth2Session(provider, successUrl, failureUrl);
+    // Map our provider strings to Appwrite's OAuthProvider enum
+    const providerMap: Record<string, OAuthProvider> = {
+      google: OAuthProvider.Google,
+      microsoft: OAuthProvider.Microsoft,
+      facebook: OAuthProvider.Facebook,
+      github: OAuthProvider.Github,
+    };
+
+    const oauthProvider = providerMap[provider];
+    if (oauthProvider) {
+      account.createOAuth2Session(oauthProvider, successUrl, failureUrl);
+    }
   };
 
   const logout = async () => {
