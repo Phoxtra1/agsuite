@@ -1,0 +1,9 @@
+{
+  "name": "agstock-daily-sales-summary",
+  "version": "1.0.0",
+  "description": "AGStock Appwrite Function - Daily Sales Summary",
+  "main": "index.js",
+  "dependencies": {
+    "node-appwrite": "^13.0.0"
+  }
+}
