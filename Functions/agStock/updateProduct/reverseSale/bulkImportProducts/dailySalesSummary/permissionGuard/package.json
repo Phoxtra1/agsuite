@@ -1,0 +1,9 @@
+{
+  "name": "agstock-permission-guard",
+  "version": "1.0.0",
+  "description": "AGStock Appwrite Function - Permission Guard",
+  "main": "index.js",
+  "dependencies": {
+    "node-appwrite": "^13.0.0"
+  }
+}
