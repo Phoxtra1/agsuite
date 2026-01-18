@@ -1,0 +1,9 @@
+{
+  "name": "agstock-process-sale",
+  "version": "1.0.0",
+  "description": "AGStock Appwrite Function - Process Sale",
+  "main": "index.js",
+  "dependencies": {
+    "node-appwrite": "^13.0.0"
+  }
+}
