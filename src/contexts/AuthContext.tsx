@@ -6,7 +6,8 @@ import React, {
   useState,
   ReactNode,
 } from "react";
-import { Client, Account, ID, Models, OAuthProvider } from "appwrite";
+import { ID, Models, OAuthProvider } from "appwrite";
+import { account } from "@/lib/appwrite";
 import { User, AuthContextType } from "@/types/auth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,19 +24,6 @@ function isLovablePreview(): boolean {
     return false;
   }
 }
-
-const APPWRITE_ENDPOINT =
-  (import.meta as any)?.env?.VITE_APPWRITE_ENDPOINT ??
-  "https://fra.cloud.appwrite.io/v1";
-
-const APPWRITE_PROJECT_ID =
-  (import.meta as any)?.env?.VITE_APPWRITE_PROJECT_ID ?? "";
-
-const client = new Client()
-  .setEndpoint(APPWRITE_ENDPOINT)
-  .setProject(APPWRITE_PROJECT_ID);
-
-const account = new Account(client);
 
 function mapAppwriteUser(u: Models.User<Models.Preferences>): User {
   return {
@@ -59,16 +47,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     let active = true;
 
     async function loadSession() {
-      // ✅ IMPORTANT: Never leave the app stuck in loading state
-      if (!APPWRITE_PROJECT_ID) {
-        console.error("Appwrite Project ID is missing");
-        if (active) {
-          setUser(null);
-          setIsLoading(false);
-        }
-        return;
-      }
-
       try {
         const u = await account.get();
         if (active) setUser(mapAppwriteUser(u));
@@ -86,13 +64,10 @@ export function AuthProvider({ children }: AuthProviderProps) {
   }, []);
 
   const login = async (email: string, password: string) => {
-    if (!APPWRITE_PROJECT_ID) {
-      throw new Error("Appwrite Project ID is missing");
-    }
-
     setIsLoading(true);
     try {
       await account.createEmailPasswordSession(email.trim(), password);
+      // ✅ Verify session/user before completing
       const u = await account.get();
       setUser(mapAppwriteUser(u));
     } finally {
@@ -101,21 +76,18 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const register = async (email: string, password: string) => {
-    if (!APPWRITE_PROJECT_ID) {
-      throw new Error("Appwrite Project ID is missing");
-    }
-
     setIsLoading(true);
     try {
-      // ✅ This creates a real Appwrite user (will show in Auth → Users)
+      // ✅ Create REAL Appwrite user (shows in Auth → Users)
       await account.create(ID.unique(), email.trim(), password);
 
-      // ✅ Sign them in immediately
+      // ✅ Then create session
       await account.createEmailPasswordSession(email.trim(), password);
 
-      // ✅ Optional: store default role in prefs
+      // ✅ Optional: store default role
       await account.updatePrefs({ role: "customer" });
 
+      // ✅ Verify session/user before completing
       const u = await account.get();
       setUser(mapAppwriteUser(u));
     } finally {
@@ -124,35 +96,24 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const socialLogin: AuthContextType["socialLogin"] = async (provider) => {
-    if (!APPWRITE_PROJECT_ID) {
-      throw new Error("Appwrite Project ID is missing");
-    }
-
     const successUrl = `${window.location.origin}/suite`;
     const failureUrl = `${window.location.origin}/?oauth=failed`;
 
-    // Map our provider strings to Appwrite's OAuthProvider enum
-    const providerMap: Record<string, OAuthProvider> = {
+    const providerMap = {
       google: OAuthProvider.Google,
       microsoft: OAuthProvider.Microsoft,
       facebook: OAuthProvider.Facebook,
       github: OAuthProvider.Github,
-    };
+    } as const;
 
     const oauthProvider = providerMap[provider];
-    if (oauthProvider) {
-      account.createOAuth2Session(oauthProvider, successUrl, failureUrl);
-    }
+    if (!oauthProvider) return;
+
+    // Redirects to provider; on callback, AuthProvider's loadSession() will run
+    account.createOAuth2Session(oauthProvider as unknown as OAuthProvider, successUrl, failureUrl);
   };
 
   const logout = async () => {
-    if (!APPWRITE_PROJECT_ID) {
-      // If env is missing, just clear local state
-      setUser(null);
-      setIsLoading(false);
-      return;
-    }
-
     setIsLoading(true);
     try {
       await account.deleteSession("current");

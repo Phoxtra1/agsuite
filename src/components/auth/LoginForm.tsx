@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -252,6 +253,7 @@ const SocialButton = React.forwardRef<HTMLButtonElement, { icon: React.ReactNode
 SocialButton.displayName = 'SocialButton';
 
 export function LoginForm() {
+  const navigate = useNavigate();
   const { login, register, socialLogin, isLoading } = useAuth();
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
@@ -280,6 +282,9 @@ export function LoginForm() {
       } else {
         await login(email, password);
       }
+
+      // ✅ Only redirect after Appwrite session is verified (done inside AuthContext via account.get())
+      navigate('/suite', { replace: true });
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Authentication failed');
     }
