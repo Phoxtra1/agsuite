@@ -490,7 +490,7 @@ export function LoginForm() {
                       </svg>
                     }
                     label="GitHub"
-                    onClick={() => handleSocialLogin('gitHub')}
+                    onClick={() => handleSocialLogin('github')}
                   />
                 </div>
               </CardContent>
