@@ -1,0 +1,9 @@
+{
+  "name": "agstock-create-product",
+  "version": "1.0.0",
+  "description": "AGStock Appwrite Function - Create Product",
+  "main": "index.js",
+  "dependencies": {
+    "node-appwrite": "^13.0.0"
+  }
+}
