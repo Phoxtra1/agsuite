@@ -292,17 +292,11 @@ export function LoginForm() {
 
   const handleSocialLogin = async (provider: 'google' | 'microsoft' | 'facebook' | 'github') => {
     try {
-      // Google intentionally left for later backend config.
-      if (provider === 'google') {
-        toast.message('Google login will be configured next.', {
-          description: 'Microsoft, Facebook, and GitHub are enabled for preview testing.',
-        });
-        return;
-      }
-
       await socialLogin(provider);
+      // OAuth redirects away; if it doesn't, show a hint.
+      toast.message('Redirecting to continue sign-in…');
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : 'Social login failed');
+      setError(err instanceof Error ? err.message : 'Social login failed');
     }
   };
 
@@ -469,9 +463,11 @@ export function LoginForm() {
                   />
                   <SocialButton
                     icon={
-                      <svg className="h-4 w-4" viewBox="0 0 24 24">
-                        <path fill="currentColor" d="M3 5.5A2.5 2.5 0 0 1 5.5 3h13A2.5 2.5 0 0 1 21 5.5v13a2.5 2.5 0 0 1-2.5 2.5h-13A2.5 2.5 0 0 1 3 18.5v-13zM5.5 5a.5.5 0 0 0-.5.5v13a.5.5 0 0 0 .5.5h13a.5.5 0 0 0 .5-.5v-13a.5.5 0 0 0-.5-.5h-13z"/>
-                        <path fill="currentColor" d="M11 8h2v2h2v2h-2v2h2v2h-2v-2H9v-2h2v-2H9V8h2z"/>
+                      <svg className="h-4 w-4" viewBox="0 0 24 24" aria-hidden="true">
+                        <path fill="#f25022" d="M1 1h10v10H1z" />
+                        <path fill="#7fba00" d="M13 1h10v10H13z" />
+                        <path fill="#00a4ef" d="M1 13h10v10H1z" />
+                        <path fill="#ffb900" d="M13 13h10v10H13z" />
                       </svg>
                     }
                     label="Microsoft"
