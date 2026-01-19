@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -31,6 +32,16 @@ function AminevaLoader() {
       </div>
     </div>
   );
+}
+
+function HashNormalizer() {
+  useEffect(() => {
+    // Some OAuth flows may return with a trailing "#"; normalize to keep routing stable.
+    if (window.location.hash === "#" || window.location.hash === "#/") {
+      window.history.replaceState({}, "", window.location.pathname + window.location.search);
+    }
+  }, []);
+  return null;
 }
 
 // Protected route wrapper
@@ -99,6 +110,7 @@ const App = () => (
           <Toaster />
           <Sonner />
           <BrowserRouter>
+            <HashNormalizer />
             <AppRoutes />
           </BrowserRouter>
         </TooltipProvider>
