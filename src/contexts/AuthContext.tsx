@@ -30,7 +30,7 @@ function mapAppwriteUser(u: Models.User<Models.Preferences>): User {
     id: u.$id,
     email: u.email,
     name: u.name || u.email.split("@")[0],
-    role: ((u.prefs as any)?.role ?? "customer") as any,
+    role: ((u.prefs as Record<string, unknown>)?.role ?? "customer") as User["role"],
   };
 }
 
@@ -67,7 +67,6 @@ export function AuthProvider({ children }: AuthProviderProps) {
     setIsLoading(true);
     try {
       await account.createEmailPasswordSession(email.trim(), password);
-      // ✅ Verify session/user before completing
       const u = await account.get();
       setUser(mapAppwriteUser(u));
     } finally {
@@ -78,16 +77,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const register = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // ✅ Create REAL Appwrite user (shows in Auth → Users)
+      // Create REAL Appwrite user (shows in Auth → Users)
       await account.create(ID.unique(), email.trim(), password);
-
-      // ✅ Then create session
+      // Then create session
       await account.createEmailPasswordSession(email.trim(), password);
-
-      // ✅ Optional: store default role
+      // Store default role
       await account.updatePrefs({ role: "customer" });
-
-      // ✅ Verify session/user before completing
+      // Verify session/user before completing
       const u = await account.get();
       setUser(mapAppwriteUser(u));
     } finally {
@@ -96,21 +92,22 @@ export function AuthProvider({ children }: AuthProviderProps) {
   };
 
   const socialLogin: AuthContextType["socialLogin"] = async (provider) => {
+    // Build redirect URLs - ensure clean /suite path (no hash)
     const successUrl = `${window.location.origin}/suite`;
     const failureUrl = `${window.location.origin}/?oauth=failed`;
 
-    const providerMap = {
+    const providerMap: Record<string, OAuthProvider> = {
       google: OAuthProvider.Google,
       microsoft: OAuthProvider.Microsoft,
       facebook: OAuthProvider.Facebook,
       github: OAuthProvider.Github,
-    } as const;
+    };
 
     const oauthProvider = providerMap[provider];
     if (!oauthProvider) return;
 
     // Redirects to provider; on callback, AuthProvider's loadSession() will run
-    account.createOAuth2Session(oauthProvider as unknown as OAuthProvider, successUrl, failureUrl);
+    account.createOAuth2Session(oauthProvider, successUrl, failureUrl);
   };
 
   const logout = async () => {
@@ -132,7 +129,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       socialLogin,
       logout,
       isAuthenticated: !!user,
-      ...(preview ? ({ isPreview: true } as any) : {}),
+      ...(preview ? ({ isPreview: true } as Record<string, unknown>) : {}),
     }),
     [user, isLoading, preview]
   );

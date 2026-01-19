@@ -16,7 +16,7 @@ import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sun, Moon, LogOut, User, Settings, LayoutDashboard, Package, HelpCircle, Workflow, Shield } from 'lucide-react';
 import amvLogo from '@/assets/amv_global_logo.png';
 
-type TabView = 'overview' | 'products' | 'why' | 'how' | 'admin';
+type TabView = 'overview' | 'products' | 'why' | 'how' | 'admin' | 'profile' | 'settings';
 
 interface SuiteNavProps {
   currentTab: TabView;
@@ -42,13 +42,11 @@ export function SuiteNav({ currentTab, onTabChange, isSuperAdmin }: SuiteNavProp
   };
 
   const handleProfile = () => {
-    // Navigate to profile page
-    console.log('Navigate to profile');
+    onTabChange('profile');
   };
 
   const handleSettings = () => {
-    // Navigate to settings page
-    console.log('Navigate to settings');
+    onTabChange('settings');
   };
 
   const tabs = [
@@ -81,7 +79,7 @@ export function SuiteNav({ currentTab, onTabChange, isSuperAdmin }: SuiteNavProp
           </Button>
         ))}
         
-        {/* Manager tab - only for admins (renamed from Admin) */}
+        {/* Admin tab - only for super_admin */}
         {isSuperAdmin && (
           <Button
             variant="ghost"
@@ -91,7 +89,7 @@ export function SuiteNav({ currentTab, onTabChange, isSuperAdmin }: SuiteNavProp
             }`}
           >
             <Shield className="h-4 w-4" />
-            <span className="text-sm">Manager</span>
+            <span className="text-sm">Admin</span>
           </Button>
         )}
       </nav>

@@ -37,9 +37,9 @@ function AnimatedText() {
   }, []);
 
   return (
-    <div className="min-h-[56px] flex items-center">
+    <div className="min-h-[48px] flex items-start">
       <p
-        className={`text-sm md:text-base text-accent font-semibold tracking-wider uppercase transition-all duration-500 ease-in-out text-left ${
+        className={`text-xs md:text-sm text-accent font-semibold tracking-wider uppercase transition-all duration-500 ease-in-out text-left max-w-[280px] leading-relaxed ${
           isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
         }`}
       >
@@ -313,18 +313,16 @@ export function LoginForm() {
       <div className="flex flex-1">
         {/* Left side - Animated visuals with logo at top-left and animated text above circle */}
         <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative suite-gradient overflow-hidden">
-          {/* Logo at top-left */}
-          <div className="absolute top-6 left-6 z-20">
+          {/* Logo and animated text aligned at top-left */}
+          <div className="absolute top-6 left-6 z-20 flex items-start gap-4">
             <img 
               src={amvLogo} 
               alt="Amineva Global" 
-              className="h-14 w-14 rounded-full"
+              className="h-14 w-14 rounded-full flex-shrink-0"
             />
-          </div>
-          
-          {/* Animated text above the center circle */}
-          <div className="absolute top-24 left-0 right-0 z-10 px-12 xl:px-20">
-            <AnimatedText />
+            <div className="pt-1">
+              <AnimatedText />
+            </div>
           </div>
           
           <AnimatedVisuals />
