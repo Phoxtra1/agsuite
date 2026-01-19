@@ -18,6 +18,21 @@ const isLovablePreview = () => {
          window.location.hostname.includes('127.0.0.1');
 };
 
+// Stylish Amineva loading spinner
+function AminevaLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-4">
+        <div className="relative">
+          <div className="w-12 h-12 rounded-full border-4 border-accent/20 animate-pulse" />
+          <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-t-accent animate-spin" />
+        </div>
+        <p className="text-sm text-muted-foreground animate-pulse">Loading Amineva Suite...</p>
+      </div>
+    </div>
+  );
+}
+
 // Protected route wrapper
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
@@ -28,11 +43,7 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   }
   
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
-      </div>
-    );
+    return <AminevaLoader />;
   }
   
   if (!isAuthenticated) {
@@ -52,11 +63,7 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
   
   if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-accent" />
-      </div>
-    );
+    return <AminevaLoader />;
   }
   
   if (isAuthenticated) {

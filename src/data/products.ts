@@ -18,8 +18,8 @@ export const DEFAULT_PRODUCTS: ProductData[] = [
   },
   {
     id: 'ag-app',
-    name: 'AG App',
-    shortName: 'App',
+    name: 'AGIS',
+    shortName: 'AGIS',
     description: 'Services to clients needing data & insights, field project inspection, strategic assessment, and professional documentation.',
     url: 'https://app.amineva.com',
     status: 'live',
@@ -30,7 +30,7 @@ export const DEFAULT_PRODUCTS: ProductData[] = [
   },
   {
     id: 'ag-ops',
-    name: 'AG Ops',
+    name: 'AminevaOps',
     shortName: 'Ops',
     description: 'Business operations platform allowing organizations/service providers to manage clients.',
     url: 'https://ops.amineva.com',
@@ -42,7 +42,7 @@ export const DEFAULT_PRODUCTS: ProductData[] = [
   },
   {
     id: 'ag-stock',
-    name: 'AG Stock',
+    name: 'AGStock',
     shortName: 'Stock',
     description: 'Secure inventory, sales, and loss-prevention platform for shop owners.',
     url: 'https://stock.amineva.com',

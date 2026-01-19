@@ -6,9 +6,11 @@ import { OverviewPage } from '@/components/suite/pages/OverviewPage';
 import { ProductsPage } from '@/components/suite/pages/ProductsPage';
 import { WhyAminevaPage } from '@/components/suite/pages/WhyAminevaPage';
 import { HowItWorksPage } from '@/components/suite/pages/HowItWorksPage';
+import { ProfilePage } from '@/components/suite/pages/ProfilePage';
+import { SettingsPage } from '@/components/suite/pages/SettingsPage';
 import { AdminPanel } from '@/components/admin/AdminPanel';
 
-type TabView = 'overview' | 'products' | 'why' | 'how' | 'admin';
+type TabView = 'overview' | 'products' | 'why' | 'how' | 'admin' | 'profile' | 'settings';
 
 export default function SuitePage() {
   const { user } = useAuth();
@@ -24,6 +26,8 @@ export default function SuitePage() {
     if (path === '/why') return 'why';
     if (path === '/how') return 'how';
     if (path === '/admin') return 'admin';
+    if (path === '/profile') return 'profile';
+    if (path === '/settings') return 'settings';
     return 'overview';
   };
   
@@ -36,6 +40,8 @@ export default function SuitePage() {
       why: '/suite/why',
       how: '/suite/how',
       admin: '/suite/admin',
+      profile: '/suite/profile',
+      settings: '/suite/settings',
     };
     navigate(paths[tab]);
   };
@@ -68,6 +74,8 @@ export default function SuitePage() {
           <Route path="/products" element={<ProductsPage />} />
           <Route path="/why" element={<WhyAminevaPage />} />
           <Route path="/how" element={<HowItWorksPage />} />
+          <Route path="/profile" element={<ProfilePage />} />
+          <Route path="/settings" element={<SettingsPage />} />
           {isSuperAdmin && <Route path="/admin" element={<AdminPanel />} />}
         </Routes>
       </main>
