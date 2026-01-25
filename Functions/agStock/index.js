@@ -67,11 +67,41 @@ const DB_ID = process.env.APPWRITE_DB_ID;
 const COL_EMPLOYEES = process.env.COL_EMPLOYEES || "employees";
 const COL_INVITES = process.env.COL_INVITES || "invites";
 
-export default async ({ req, res, log, error }) => {
+export default async ({ req, res }) => {
   try {
-    const db = getDb();
-    const path = req.path || "/";
-    const method = (req.method || "GET").toUpperCase();
+    const path = req.path || "";
+
+    // -------------------------
+    // GET SHOP SUBSCRIPTION
+    // -------------------------
+    if (path === "/shop/subscription") {
+      const shopId = req.headers["x-shop-id"];
+
+      const client = new Client()
+        .setEndpoint(process.env.APPWRITE_ENDPOINT)
+        .setProject(process.env.APPWRITE_PROJECT_ID)
+        .setKey(process.env.APPWRITE_API_KEY);
+
+      const db = new Databases(client);
+
+      const shop = await db.getDocument(
+        process.env.DB_ID,
+        "shops",
+        shopId
+      );
+
+      return res.json({
+        subscriptionStatus: shop.subscriptionStatus,
+        subscriptionTier: shop.subscriptionTier,
+        productCount: shop.productCount || 0,
+        subscriptionEndsAt: shop.subscriptionEndsAt || null,
+      });
+    }
+
+    // -------------------------
+    // STRIPE CHECKOUT
+    // -------------------------
+
 
     // Basic CORS (adjust your allowed origin)
     const corsHeaders = {
