@@ -52,28 +52,31 @@ export default async ({ req, res }) => {
         process.env.STRIPE_WEBHOOK_SECRET
       );
 
-      if (event.type === "checkout.session.completed") {
-        const session = event.data.object;
-        const { shopId, planKey, maxProducts } = session.metadata;
+  if (event.type === "checkout.session.completed") {
+  const session = event.data.object;
+  const { shopId, planKey, maxProducts } = session.metadata;
 
-        const client = new Client()
-          .setEndpoint(process.env.APPWRITE_ENDPOINT)
-          .setProject(process.env.APPWRITE_PROJECT_ID)
-          .setKey(process.env.APPWRITE_API_KEY);
+  const client = new Client()
+    .setEndpoint(process.env.APPWRITE_ENDPOINT)
+    .setProject(process.env.APPWRITE_PROJECT_ID)
+    .setKey(process.env.APPWRITE_API_KEY);
 
-        const db = new Databases(client);
+  const db = new Databases(client);
 
-        await db.updateDocument(
-          process.env.DB_ID,
-          "shops",
-          shopId,
-          {
-            subscriptionStatus: "ACTIVE",
-            planKey,
-            maxProducts: Number(maxProducts),
-          }
-        );
-      }
+  await db.updateDocument(
+    process.env.DB_ID,
+    "shops",
+    shopId,
+    {
+      subscriptionStatus: "active",
+      subscriptionTier: planKey,
+      maxProducts: Number(maxProducts),
+      subscriptionEndsAt: new Date(
+        Date.now() + 30 * 24 * 60 * 60 * 1000
+      ).toISOString(),
+    }
+  );
+}
 
       return res.json({ received: true });
     }
