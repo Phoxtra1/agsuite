@@ -140,11 +140,6 @@ export function AdminPanel() {
           <h2 className="text-2xl font-semibold">Product Registry</h2>
           <p className="text-muted-foreground">Manage products in the Amineva Suite</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={handleReset}>
-            <RotateCcw className="mr-2 h-4 w-4" />
-            Reset
-          </Button>
           <Button onClick={handleAdd} className="bg-accent text-accent-foreground hover:bg-accent/90">
             <Plus className="mr-2 h-4 w-4" />
             Add Product
