@@ -1,154 +1,88 @@
-import React, { useState, useMemo, useEffect } from "react";
-import { Product } from "@/types/product";
-import { useAuth } from "@/contexts/AuthContext";
-import { ensureProfile } from "@/lib/profile";
-import { ProductTile } from "./ProductTile";
-import { ComingSoonModal } from "./ComingSoonModal";
-import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Search, Grid3X3, List, SlidersHorizontal } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import React, { useState, useMemo, useEffect } from 'react';
+import { Product } from '@/types/product';
+import { useAuth } from '@/contexts/AuthContext';
+import { getProductsWithIcons, filterProductsByRole } from '@/lib/products';
+import { ProductTile } from './ProductTile';
+import { ComingSoonModal } from './ComingSoonModal';
+import { Input } from '@/components/ui/input';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Search, Grid3X3, List, SlidersHorizontal } from 'lucide-react';
+import { Button } from '@/components/ui/button';
 
-// ✅ Your approved products list (locked)
-const BASE_PRODUCTS: Product[] = [
-  {
-    id: "hub",
-    key: "hub",
-    name: "AG Hub",
-    description: "Reports, insights & publications.",
-    url: "https://hub.amineva.com",
-    status: "live",
-    order: 1,
-    isExternal: true,
-  },
-  {
-    id: "agis",
-    key: "agis",
-    name: "AGIS",
-    description: "Intelligence system and operational tools.",
-    url: "https://app.amineva.com",
-    status: "live",
-    order: 2,
-    isExternal: true,
-  },
-  {
-    id: "agstock",
-    key: "agstock",
-    name: "AGStock",
-    description: "Stock & inventory management.",
-    url: "https://stock.amineva.com",
-    status: "live",
-    order: 3,
-    isExternal: true,
-  },
-  {
-    id: "amniva",
-    key: "amniva",
-    name: "Amniva",
-    description: "Verify & predictions (currently inactive).",
-    url: "https://www.amniva.io",
-    status: "offline",
-    order: 4,
-    isExternal: true,
-  },
-  {
-    id: "ops",
-    key: "ops",
-    name: "AminevaOps",
-    description: "Service operations tools (coming soon).",
-    url: "",
-    status: "coming_soon",
-    order: 5,
-    isExternal: true,
-  },
-];
-
-type ViewMode = "grid" | "list";
-type SortBy = "name" | "status" | "order";
-type FilterStatus = "all" | "live" | "restricted" | "coming_soon" | "offline";
+type ViewMode = 'grid' | 'list';
+type SortBy = 'name' | 'status' | 'order';
+type FilterStatus = 'all' | 'live' | 'restricted' | 'coming_soon';
 
 export function ProductGrid() {
   const { user } = useAuth();
-
   const [products, setProducts] = useState<Product[]>([]);
-  const [enabledSet, setEnabledSet] = useState<Set<string>>(new Set());
-
-  const [searchQuery, setSearchQuery] = useState("");
-  const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [sortBy, setSortBy] = useState<SortBy>("order");
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
-
+  const [searchQuery, setSearchQuery] = useState('');
+  const [viewMode, setViewMode] = useState<ViewMode>('grid');
+  const [sortBy, setSortBy] = useState<SortBy>('order');
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all');
   const [favorites, setFavorites] = useState<Set<string>>(() => {
-    const stored = localStorage.getItem("amineva_favorites");
+    const stored = localStorage.getItem('amineva_favorites');
     return stored ? new Set(JSON.parse(stored)) : new Set();
   });
-
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [showComingSoon, setShowComingSoon] = useState(false);
 
-  // 1) Load base products
+  // Load products from localStorage
   useEffect(() => {
-    setProducts(BASE_PRODUCTS);
+    setProducts(getProductsWithIcons());
   }, []);
 
-  // 2) Load Suite profile enabledProducts -> used to prevent wandering
+  // Listen for product updates
   useEffect(() => {
-    (async () => {
-      try {
-        const userId = (user as any)?.$id || (user as any)?.id;
-        if (!userId) return;
+    const handleProductsUpdated = () => {
+      setProducts(getProductsWithIcons());
+    };
 
-        const prof = await ensureProfile(userId);
-        setEnabledSet(new Set(prof.enabledProducts));
-      } catch {
-        setEnabledSet(new Set());
-      }
-    })();
-  }, [user]);
+    window.addEventListener('productsUpdated', handleProductsUpdated);
+    window.addEventListener('storage', handleProductsUpdated);
 
-  // 3) Apply access gating:
+    return () => {
+      window.removeEventListener('productsUpdated', handleProductsUpdated);
+      window.removeEventListener('storage', handleProductsUpdated);
+    };
+  }, []);
+  
   const accessibleProducts = useMemo(() => {
-    return products.map((p) => {
-      const key = (p as any).key || p.id;
-      const assigned = enabledSet.has(key);
-
-      if (!assigned) return { ...p, status: "restricted" as any };
-      return p;
-    });
-  }, [products, enabledSet]);
+    return filterProductsByRole(products, user?.role || null);
+  }, [products, user?.role]);
 
   const filteredAndSortedProducts = useMemo(() => {
     let result = [...accessibleProducts];
 
+    // Filter by search
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
-        (p) => p.name.toLowerCase().includes(query) || p.description.toLowerCase().includes(query)
+        p => p.name.toLowerCase().includes(query) || 
+             p.description.toLowerCase().includes(query)
       );
     }
 
-    if (filterStatus !== "all") {
-      result = result.filter((p) => p.status === filterStatus);
+    // Filter by status
+    if (filterStatus !== 'all') {
+      result = result.filter(p => p.status === filterStatus);
     }
 
+    // Sort
     switch (sortBy) {
-      case "name":
+      case 'name':
         result.sort((a, b) => a.name.localeCompare(b.name));
         break;
-      case "status":
-        const statusOrder: Record<string, number> = {
-          live: 0,
-          restricted: 1,
-          coming_soon: 2,
-          offline: 3,
-        };
-        result.sort((a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99));
+      case 'status':
+        const statusOrder = { live: 0, restricted: 1, coming_soon: 2, offline: 3 };
+        result.sort((a, b) => statusOrder[a.status] - statusOrder[b.status]);
         break;
-      case "order":
+      case 'order':
       default:
-        result.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+        result.sort((a, b) => a.order - b.order);
     }
 
+    // Move favorites to top
     const favArray = Array.from(favorites);
     result.sort((a, b) => {
       const aFav = favArray.includes(a.id) ? 0 : 1;
@@ -160,33 +94,32 @@ export function ProductGrid() {
   }, [accessibleProducts, searchQuery, filterStatus, sortBy, favorites]);
 
   const handleToggleFavorite = (productId: string) => {
-    setFavorites((prev) => {
+    setFavorites(prev => {
       const next = new Set(prev);
-      if (next.has(productId)) next.delete(productId);
-      else next.add(productId);
-
-      localStorage.setItem("amineva_favorites", JSON.stringify(Array.from(next)));
+      if (next.has(productId)) {
+        next.delete(productId);
+      } else {
+        next.add(productId);
+      }
+      localStorage.setItem('amineva_favorites', JSON.stringify(Array.from(next)));
       return next;
     });
   };
 
   const handleOpenProduct = (product: Product) => {
-    if (product.status === "restricted" || product.status === "coming_soon" || product.status === "offline") {
+    if (product.status === 'coming_soon' || product.status === 'offline') {
       setSelectedProduct(product);
       setShowComingSoon(true);
-      return;
+    } else if (product.isExternal) {
+      window.location.href = product.url;
+    } else {
+      // Internal routing would go here
+      window.location.href = product.url;
     }
-
-    if (product.url) window.location.href = product.url;
   };
 
   return (
     <div className="space-y-6">
-      {/* ✅ DEBUG BANNER: must show if THIS file is the one being rendered */}
-      <div style={{ background: "red", color: "white", padding: 10, borderRadius: 8 }}>
-        PRODUCTGRID IS ACTIVE — New products should be: Hub, AGIS, AGStock, Amniva, Ops
-      </div>
-
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="relative flex-1 max-w-md">
@@ -198,10 +131,10 @@ export function ProductGrid() {
             className="pl-10 h-10"
           />
         </div>
-
+        
         <div className="flex items-center gap-2">
           <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
-            <SelectTrigger className="w-[160px] h-10">
+            <SelectTrigger className="w-[140px] h-10">
               <SlidersHorizontal className="w-4 h-4 mr-2" />
               <SelectValue placeholder="Filter" />
             </SelectTrigger>
@@ -210,10 +143,9 @@ export function ProductGrid() {
               <SelectItem value="live">Live</SelectItem>
               <SelectItem value="restricted">Restricted</SelectItem>
               <SelectItem value="coming_soon">Coming Soon</SelectItem>
-              <SelectItem value="offline">Offline</SelectItem>
             </SelectContent>
           </Select>
-
+          
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
             <SelectTrigger className="w-[120px] h-10">
               <SelectValue placeholder="Sort by" />
@@ -224,21 +156,21 @@ export function ProductGrid() {
               <SelectItem value="status">Status</SelectItem>
             </SelectContent>
           </Select>
-
+          
           <div className="flex border border-border rounded-md">
             <Button
-              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              variant={viewMode === 'grid' ? 'secondary' : 'ghost'}
               size="icon"
               className="h-10 w-10 rounded-r-none"
-              onClick={() => setViewMode("grid")}
+              onClick={() => setViewMode('grid')}
             >
               <Grid3X3 className="w-4 h-4" />
             </Button>
             <Button
-              variant={viewMode === "list" ? "secondary" : "ghost"}
+              variant={viewMode === 'list' ? 'secondary' : 'ghost'}
               size="icon"
               className="h-10 w-10 rounded-l-none"
-              onClick={() => setViewMode("list")}
+              onClick={() => setViewMode('list')}
             >
               <List className="w-4 h-4" />
             </Button>
@@ -252,15 +184,17 @@ export function ProductGrid() {
           <p>No products found matching your criteria.</p>
         </div>
       ) : (
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
-              : "flex flex-col gap-4"
-          }
-        >
+        <div className={
+          viewMode === 'grid' 
+            ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+            : "flex flex-col gap-4"
+        }>
           {filteredAndSortedProducts.map((product, index) => (
-            <div key={product.id} className="animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+            <div
+              key={product.id}
+              className="animate-fade-in"
+              style={{ animationDelay: `${index * 50}ms` }}
+            >
               <ProductTile
                 product={product}
                 onOpen={handleOpenProduct}
@@ -272,7 +206,12 @@ export function ProductGrid() {
         </div>
       )}
 
-      <ComingSoonModal open={showComingSoon} onOpenChange={setShowComingSoon} productName={selectedProduct?.name} />
+      {/* Coming Soon Modal */}
+      <ComingSoonModal
+        open={showComingSoon}
+        onOpenChange={setShowComingSoon}
+        productName={selectedProduct?.name}
+      />
     </div>
   );
 }
