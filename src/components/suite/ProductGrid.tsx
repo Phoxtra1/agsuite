@@ -47,7 +47,7 @@ const BASE_PRODUCTS: Product[] = [
     name: "Amniva",
     description: "Verify & predictions (currently inactive).",
     url: "https://www.amniva.io",
-    status: "offline", // matches your "off"
+    status: "offline",
     order: 4,
     isExternal: true,
   },
@@ -56,7 +56,7 @@ const BASE_PRODUCTS: Product[] = [
     key: "ops",
     name: "AminevaOps",
     description: "Service operations tools (coming soon).",
-    url: "", // not created yet
+    url: "",
     status: "coming_soon",
     order: 5,
     isExternal: true,
@@ -95,7 +95,6 @@ export function ProductGrid() {
   useEffect(() => {
     (async () => {
       try {
-        // IMPORTANT: adjust according to your AuthContext user shape
         const userId = (user as any)?.$id || (user as any)?.id;
         if (!userId) return;
 
@@ -108,18 +107,12 @@ export function ProductGrid() {
   }, [user]);
 
   // 3) Apply access gating:
-  // If product is LIVE but user is not enabled -> mark as "restricted"
   const accessibleProducts = useMemo(() => {
     return products.map((p) => {
       const key = (p as any).key || p.id;
       const assigned = enabledSet.has(key);
 
-      // If not assigned, show but lock it (restricted)
       if (!assigned) return { ...p, status: "restricted" as any };
-
-      // Respect your global enable rules:
-      // - ops stays coming_soon
-      // - amniva stays offline
       return p;
     });
   }, [products, enabledSet]);
@@ -127,7 +120,6 @@ export function ProductGrid() {
   const filteredAndSortedProducts = useMemo(() => {
     let result = [...accessibleProducts];
 
-    // Search
     if (searchQuery) {
       const query = searchQuery.toLowerCase();
       result = result.filter(
@@ -135,12 +127,10 @@ export function ProductGrid() {
       );
     }
 
-    // Filter status
     if (filterStatus !== "all") {
       result = result.filter((p) => p.status === filterStatus);
     }
 
-    // Sort
     switch (sortBy) {
       case "name":
         result.sort((a, b) => a.name.localeCompare(b.name));
@@ -159,7 +149,6 @@ export function ProductGrid() {
         result.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
     }
 
-    // Favorites on top
     const favArray = Array.from(favorites);
     result.sort((a, b) => {
       const aFav = favArray.includes(a.id) ? 0 : 1;
@@ -182,19 +171,22 @@ export function ProductGrid() {
   };
 
   const handleOpenProduct = (product: Product) => {
-    // Block restricted / coming soon / offline
     if (product.status === "restricted" || product.status === "coming_soon" || product.status === "offline") {
       setSelectedProduct(product);
       setShowComingSoon(true);
       return;
     }
 
-    // Live products
     if (product.url) window.location.href = product.url;
   };
 
   return (
     <div className="space-y-6">
+      {/* ✅ DEBUG BANNER: must show if THIS file is the one being rendered */}
+      <div style={{ background: "red", color: "white", padding: 10, borderRadius: 8 }}>
+        PRODUCTGRID IS ACTIVE — New products should be: Hub, AGIS, AGStock, Amniva, Ops
+      </div>
+
       {/* Toolbar */}
       <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
         <div className="relative flex-1 max-w-md">
@@ -280,12 +272,7 @@ export function ProductGrid() {
         </div>
       )}
 
-      {/* Modal for Restricted/Coming Soon/Offline */}
-      <ComingSoonModal
-        open={showComingSoon}
-        onOpenChange={setShowComingSoon}
-        productName={selectedProduct?.name}
-      />
+      <ComingSoonModal open={showComingSoon} onOpenChange={setShowComingSoon} productName={selectedProduct?.name} />
     </div>
   );
 }
