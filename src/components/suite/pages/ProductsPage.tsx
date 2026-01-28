@@ -10,7 +10,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 
-import { ensureProfile, getCurrentUser } from "@/lib/profiles";
+import { ensureProfile, getCurrentUser } from "../../../lib/profile";
 
 import {
   IconAGApp,
