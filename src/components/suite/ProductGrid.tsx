@@ -1,252 +1,291 @@
-import { useEffect, useMemo, useState } from "react";
-import { ensureProfile, getCurrentUser, type ProfileDoc } from "../lib/profile";
+import React, { useState, useMemo, useEffect } from "react";
+import { Product } from "@/types/product";
+import { useAuth } from "@/contexts/AuthContext";
+import { ensureProfile } from "@/lib/profile";
+import { ProductTile } from "./ProductTile";
+import { ComingSoonModal } from "./ComingSoonModal";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Search, Grid3X3, List, SlidersHorizontal } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
-// If you already have your own icon components, swap these.
-// lucide-react is common; if you don’t have it installed, tell me and I’ll rewrite icons as SVG inline.
-import { Globe, Boxes, BarChart3, ShieldCheck, Settings, Clock } from "lucide-react";
-
-type ProductKey = "hub" | "agis" | "agstock" | "amniva" | "ops";
-type ProductStatus = "live" | "coming_soon" | "off";
-
-type ProductItem = {
-  key: ProductKey;
-  name: string;
-  url?: string; // ops can be undefined since not created yet
-  enabled: boolean;
-  status: ProductStatus;
-  description: string;
-  icon: React.ReactNode;
-};
-
-const PRODUCTS: ProductItem[] = [
+// ✅ Your approved products list (locked)
+const BASE_PRODUCTS: Product[] = [
   {
+    id: "hub",
     key: "hub",
     name: "AG Hub",
-    url: "https://hub.amineva.com",
-    enabled: true,
-    status: "live",
     description: "Reports, insights & publications.",
-    icon: <Globe size={28} />,
+    url: "https://hub.amineva.com",
+    status: "live",
+    order: 1,
+    isExternal: true,
   },
   {
+    id: "agis",
     key: "agis",
-    name: "AG App",
-    url: "https://app.amineva.com",
-    enabled: true,
-    status: "live",
+    name: "AGIS",
     description: "Intelligence system and operational tools.",
-    icon: <Boxes size={28} />,
-  },
-  {
-    key: "ops",
-    name: "AG Ops",
-    url: undefined,
-    enabled: false,
-    status: "coming_soon",
-    description: "Service operations tools (coming soon).",
-    icon: <Clock size={28} />,
-  },
-  {
-    key: "agstock",
-    name: "AG Stock",
-    url: "https://stock.amineva.com",
-    enabled: true,
+    url: "https://app.amineva.com",
     status: "live",
-    description: "Stock & inventory management.",
-    icon: <BarChart3 size={28} />,
+    order: 2,
+    isExternal: true,
   },
   {
+    id: "agstock",
+    key: "agstock",
+    name: "AGStock",
+    description: "Stock & inventory management.",
+    url: "https://stock.amineva.com",
+    status: "live",
+    order: 3,
+    isExternal: true,
+  },
+  {
+    id: "amniva",
     key: "amniva",
     name: "Amniva",
-    url: "https://www.amniva.io",
-    enabled: false,
-    status: "off",
     description: "Verify & predictions (currently inactive).",
-    icon: <ShieldCheck size={28} />,
+    url: "https://www.amniva.io",
+    status: "offline", // matches your "off"
+    order: 4,
+    isExternal: true,
+  },
+  {
+    id: "ops",
+    key: "ops",
+    name: "AminevaOps",
+    description: "Service operations tools (coming soon).",
+    url: "", // not created yet
+    status: "coming_soon",
+    order: 5,
+    isExternal: true,
   },
 ];
 
-function statusBadge(status: ProductStatus) {
-  if (status === "live") return { label: "Live", tone: "live" as const };
-  if (status === "coming_soon") return { label: "Coming Soon", tone: "soon" as const };
-  return { label: "Off", tone: "off" as const };
-}
+type ViewMode = "grid" | "list";
+type SortBy = "name" | "status" | "order";
+type FilterStatus = "all" | "live" | "restricted" | "coming_soon" | "offline";
 
-export function ProductsPage() {
-  const [loading, setLoading] = useState(true);
-  const [profile, setProfile] = useState<ProfileDoc | null>(null);
+export function ProductGrid() {
+  const { user } = useAuth();
 
+  const [products, setProducts] = useState<Product[]>([]);
+  const [enabledSet, setEnabledSet] = useState<Set<string>>(new Set());
+
+  const [searchQuery, setSearchQuery] = useState("");
+  const [viewMode, setViewMode] = useState<ViewMode>("grid");
+  const [sortBy, setSortBy] = useState<SortBy>("order");
+  const [filterStatus, setFilterStatus] = useState<FilterStatus>("all");
+
+  const [favorites, setFavorites] = useState<Set<string>>(() => {
+    const stored = localStorage.getItem("amineva_favorites");
+    return stored ? new Set(JSON.parse(stored)) : new Set();
+  });
+
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [showComingSoon, setShowComingSoon] = useState(false);
+
+  // 1) Load base products
+  useEffect(() => {
+    setProducts(BASE_PRODUCTS);
+  }, []);
+
+  // 2) Load Suite profile enabledProducts -> used to prevent wandering
   useEffect(() => {
     (async () => {
       try {
-        const user = await getCurrentUser();
-        const prof = await ensureProfile(user.$id);
-        setProfile(prof);
+        // IMPORTANT: adjust according to your AuthContext user shape
+        const userId = (user as any)?.$id || (user as any)?.id;
+        if (!userId) return;
 
-        // If onboarding not complete, send back to AppEntry (your Step 2 route)
-        if (!prof.onboardingComplete) {
-          window.location.href = "/";
-          return;
-        }
+        const prof = await ensureProfile(userId);
+        setEnabledSet(new Set(prof.enabledProducts));
       } catch {
-        window.location.href = "/login";
-        return;
-      } finally {
-        setLoading(false);
+        setEnabledSet(new Set());
       }
     })();
-  }, []);
+  }, [user]);
 
-  const enabledSet = useMemo(() => new Set(profile?.enabledProducts ?? []), [profile]);
+  // 3) Apply access gating:
+  // If product is LIVE but user is not enabled -> mark as "restricted"
+  const accessibleProducts = useMemo(() => {
+    return products.map((p) => {
+      const key = (p as any).key || p.id;
+      const assigned = enabledSet.has(key);
 
-  function canOpen(p: ProductItem) {
-    // 1) globally enabled
-    if (!p.enabled) return false;
-    // 2) user enabledProducts must include it (prevents wandering)
-    if (!enabledSet.has(p.key as any)) return false;
-    // 3) must be live with a url
-    if (p.status !== "live") return false;
-    if (!p.url) return false;
-    return true;
-  }
+      // If not assigned, show but lock it (restricted)
+      if (!assigned) return { ...p, status: "restricted" as any };
 
-  function handleOpen(p: ProductItem) {
-    if (canOpen(p)) {
-      window.location.href = p.url!;
+      // Respect your global enable rules:
+      // - ops stays coming_soon
+      // - amniva stays offline
+      return p;
+    });
+  }, [products, enabledSet]);
+
+  const filteredAndSortedProducts = useMemo(() => {
+    let result = [...accessibleProducts];
+
+    // Search
+    if (searchQuery) {
+      const query = searchQuery.toLowerCase();
+      result = result.filter(
+        (p) => p.name.toLowerCase().includes(query) || p.description.toLowerCase().includes(query)
+      );
+    }
+
+    // Filter status
+    if (filterStatus !== "all") {
+      result = result.filter((p) => p.status === filterStatus);
+    }
+
+    // Sort
+    switch (sortBy) {
+      case "name":
+        result.sort((a, b) => a.name.localeCompare(b.name));
+        break;
+      case "status":
+        const statusOrder: Record<string, number> = {
+          live: 0,
+          restricted: 1,
+          coming_soon: 2,
+          offline: 3,
+        };
+        result.sort((a, b) => (statusOrder[a.status] ?? 99) - (statusOrder[b.status] ?? 99));
+        break;
+      case "order":
+      default:
+        result.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+    }
+
+    // Favorites on top
+    const favArray = Array.from(favorites);
+    result.sort((a, b) => {
+      const aFav = favArray.includes(a.id) ? 0 : 1;
+      const bFav = favArray.includes(b.id) ? 0 : 1;
+      return aFav - bFav;
+    });
+
+    return result;
+  }, [accessibleProducts, searchQuery, filterStatus, sortBy, favorites]);
+
+  const handleToggleFavorite = (productId: string) => {
+    setFavorites((prev) => {
+      const next = new Set(prev);
+      if (next.has(productId)) next.delete(productId);
+      else next.add(productId);
+
+      localStorage.setItem("amineva_favorites", JSON.stringify(Array.from(next)));
+      return next;
+    });
+  };
+
+  const handleOpenProduct = (product: Product) => {
+    // Block restricted / coming soon / offline
+    if (product.status === "restricted" || product.status === "coming_soon" || product.status === "offline") {
+      setSelectedProduct(product);
+      setShowComingSoon(true);
       return;
     }
 
-    // Messages kept simple and user-friendly
-    if (!enabledSet.has(p.key as any)) {
-      alert("This product isn’t active for your account yet.");
-      return;
-    }
-    if (!p.enabled || p.status === "off") {
-      alert("This product is currently turned off.");
-      return;
-    }
-    if (p.status === "coming_soon") {
-      alert("This product is coming soon.");
-      return;
-    }
-    alert("This product is not available right now.");
-  }
-
-  if (loading) return <div style={{ padding: 16 }}>Loading...</div>;
-  if (!profile) return null;
-
-  const isAdmin = (profile as any).isAdmin === true; // only if you add isAdmin to profile later
+    // Live products
+    if (product.url) window.location.href = product.url;
+  };
 
   return (
-    <div style={{ padding: 24 }}>
-      <div style={{ display: "flex", justifyContent: "space-between", gap: 12, alignItems: "center" }}>
-        <div>
-          <h1 style={{ fontSize: 28, margin: 0 }}>Products</h1>
-          <p style={{ marginTop: 8, opacity: 0.8 }}>
-            Click a product to continue.
-          </p>
+    <div className="space-y-6">
+      {/* Toolbar */}
+      <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between">
+        <div className="relative flex-1 max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+          <Input
+            placeholder="Search products..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10 h-10"
+          />
         </div>
 
-        {isAdmin && (
-          <button
-            onClick={() => (window.location.href = "/settings/products")}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              gap: 8,
-              padding: "10px 12px",
-              borderRadius: 12,
-              border: "1px solid rgba(255,255,255,0.12)",
-              background: "rgba(255,255,255,0.04)",
-              cursor: "pointer",
-            }}
-          >
-            <Settings size={18} />
-            Product Settings
-          </button>
-        )}
-      </div>
+        <div className="flex items-center gap-2">
+          <Select value={filterStatus} onValueChange={(v) => setFilterStatus(v as FilterStatus)}>
+            <SelectTrigger className="w-[160px] h-10">
+              <SlidersHorizontal className="w-4 h-4 mr-2" />
+              <SelectValue placeholder="Filter" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Status</SelectItem>
+              <SelectItem value="live">Live</SelectItem>
+              <SelectItem value="restricted">Restricted</SelectItem>
+              <SelectItem value="coming_soon">Coming Soon</SelectItem>
+              <SelectItem value="offline">Offline</SelectItem>
+            </SelectContent>
+          </Select>
 
-      <div
-        style={{
-          marginTop: 18,
-          display: "grid",
-          gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))",
-          gap: 16,
-        }}
-      >
-        {PRODUCTS.map((p) => {
-          const badge = statusBadge(p.status);
-          const clickable = canOpen(p);
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortBy)}>
+            <SelectTrigger className="w-[120px] h-10">
+              <SelectValue placeholder="Sort by" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="order">Default</SelectItem>
+              <SelectItem value="name">Name</SelectItem>
+              <SelectItem value="status">Status</SelectItem>
+            </SelectContent>
+          </Select>
 
-          return (
-            <div
-              key={p.key}
-              onClick={() => handleOpen(p)}
-              style={{
-                borderRadius: 18,
-                border: "1px solid rgba(255,255,255,0.10)",
-                background: "rgba(255,255,255,0.03)",
-                padding: 18,
-                cursor: clickable ? "pointer" : "not-allowed",
-                opacity: p.enabled ? 1 : 0.65,
-                transition: "transform 120ms ease",
-              }}
-              onMouseEnter={(e) => {
-                if (clickable) (e.currentTarget.style.transform = "translateY(-2px)");
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = "translateY(0px)";
-              }}
+          <div className="flex border border-border rounded-md">
+            <Button
+              variant={viewMode === "grid" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-10 w-10 rounded-r-none"
+              onClick={() => setViewMode("grid")}
             >
-              <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-                <div
-                  style={{
-                    width: 52,
-                    height: 52,
-                    borderRadius: 14,
-                    display: "grid",
-                    placeItems: "center",
-                    background: "rgba(255,255,255,0.05)",
-                    border: "1px solid rgba(255,255,255,0.08)",
-                  }}
-                >
-                  {p.icon}
-                </div>
-
-                <div style={{ flex: 1 }}>
-                  <div style={{ fontWeight: 700 }}>{p.name}</div>
-                  <div style={{ fontSize: 13, opacity: 0.75, marginTop: 3 }}>{p.description}</div>
-                </div>
-              </div>
-
-              <div style={{ marginTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-                <span
-                  style={{
-                    fontSize: 12,
-                    padding: "6px 10px",
-                    borderRadius: 999,
-                    border: "1px solid rgba(255,255,255,0.10)",
-                    background:
-                      badge.tone === "live"
-                        ? "rgba(255,255,255,0.08)"
-                        : badge.tone === "soon"
-                        ? "rgba(255,255,255,0.05)"
-                        : "rgba(255,255,255,0.03)",
-                    opacity: 0.95,
-                  }}
-                >
-                  {badge.label}
-                </span>
-
-                {!enabledSet.has(p.key as any) && (
-                  <span style={{ fontSize: 12, opacity: 0.7 }}>Not assigned</span>
-                )}
-              </div>
-            </div>
-          );
-        })}
+              <Grid3X3 className="w-4 h-4" />
+            </Button>
+            <Button
+              variant={viewMode === "list" ? "secondary" : "ghost"}
+              size="icon"
+              className="h-10 w-10 rounded-l-none"
+              onClick={() => setViewMode("list")}
+            >
+              <List className="w-4 h-4" />
+            </Button>
+          </div>
+        </div>
       </div>
+
+      {/* Product Grid/List */}
+      {filteredAndSortedProducts.length === 0 ? (
+        <div className="text-center py-12 text-muted-foreground">
+          <p>No products found matching your criteria.</p>
+        </div>
+      ) : (
+        <div
+          className={
+            viewMode === "grid"
+              ? "grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6"
+              : "flex flex-col gap-4"
+          }
+        >
+          {filteredAndSortedProducts.map((product, index) => (
+            <div key={product.id} className="animate-fade-in" style={{ animationDelay: `${index * 50}ms` }}>
+              <ProductTile
+                product={product}
+                onOpen={handleOpenProduct}
+                isFavorite={favorites.has(product.id)}
+                onToggleFavorite={handleToggleFavorite}
+              />
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* Modal for Restricted/Coming Soon/Offline */}
+      <ComingSoonModal
+        open={showComingSoon}
+        onOpenChange={setShowComingSoon}
+        productName={selectedProduct?.name}
+      />
     </div>
   );
 }
