@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { loadProducts, saveProducts, resetProducts } from '@/data/products';
+import { loadProducts, saveProducts } from '@/data/products';
 import { ProductData, STATUS_LABELS, STATUS_COLORS, ProductStatus } from '@/types/product';
 import { ROLE_LABELS, UserRole } from '@/types/auth';
 import { getProductIcon } from '@/lib/products';
@@ -122,12 +122,6 @@ export function AdminPanel() {
     setProducts(prev => prev.filter(p => p.id !== productId));
     setDeleteConfirm(null);
     toast.success('Product deleted successfully');
-  };
-
-  const handleReset = () => {
-    const defaultProducts = resetProducts();
-    setProducts(defaultProducts);
-    toast.success('Products reset to defaults');
   };
 
   const toggleRole = (role: UserRole) => {
