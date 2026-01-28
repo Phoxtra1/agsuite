@@ -6,10 +6,11 @@ import { UserRole } from '@/types/auth';
 
 // Icon mapping by product ID
 const PRODUCT_ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
-  'ag-main': IconAGMain,
-  'ag-app': IconAGApp,
-  'ag-ops': IconAGOps,
+  'amineva-hub': IconAminevaHub,
+  'agis': IconAGIS,
+  'aminevaops': IconAminevaOps,
   'ag-stock': IconAGStock,
+  'amineva': IconAmniva,
 };
 
 export function getProductIcon(productId: string): React.ComponentType<{ className?: string }> {
