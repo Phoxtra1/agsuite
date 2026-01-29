@@ -3,18 +3,15 @@ import { UserRole } from './auth';
 export type ProductStatus = 'live' | 'restricted' | 'offline' | 'coming_soon';
 
 // Base product data without icon (for storage)
-export interface ProductData {
+export type ProductData = {
   id: string;
   name: string;
-  shortName: string;
-  description: string;
+  status: "live" | "offline" | "coming_soon" | "restricted";
   url: string;
-  status: ProductStatus;
-  isPublic: boolean;
-  allowedRoles: UserRole[];
-  isExternal: boolean;
+  adminUrl?: string;
+  category?: string;
   order: number;
-}
+};
 
 // Product with icon for display
 export interface Product extends ProductData {
