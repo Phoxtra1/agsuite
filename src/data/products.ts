@@ -1,11 +1,18 @@
 import type { ProductData } from "@/types/product";
 
+/**
+ * Locked default products for Amineva Suite
+ * This file is the single source of truth.
+ */
+
 const DEFAULT_PRODUCTS: ProductData[] = [
   {
     id: "hub",
     name: "Amineva Hub",
     status: "live",
     url: "https://hub.amineva.com",
+    adminUrl: "https://hub.amineva.com/wp-admin",
+    category: "Reports & Publications",
     order: 1,
   },
   {
@@ -13,6 +20,8 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     name: "AGIS",
     status: "live",
     url: "https://app.amineva.com",
+    adminUrl: "https://app.amineva.com/admin",
+    category: "Intelligence & Analytics",
     order: 2,
   },
   {
@@ -20,6 +29,8 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     name: "AminevaOps",
     status: "coming_soon",
     url: "",
+    adminUrl: "",
+    category: "Operations",
     order: 3,
   },
   {
@@ -27,6 +38,8 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     name: "AGStock",
     status: "live",
     url: "https://stock.amineva.com",
+    adminUrl: "https://stock.amineva.com/admin",
+    category: "Sell & Manage Business",
     order: 4,
   },
   {
@@ -34,16 +47,22 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     name: "Amniva",
     status: "offline",
     url: "https://www.amniva.io",
+    adminUrl: "",
+    category: "Identity & Verification",
     order: 5,
   },
 ];
 
 const STORAGE_KEY = "amineva_products";
 
+/**
+ * Load products from localStorage.
+ * If legacy or corrupted data is found, reset to defaults.
+ */
 export function loadProducts(): ProductData[] {
-  // If you had old products saved, wipe them once and replace with new defaults.
   const stored = localStorage.getItem(STORAGE_KEY);
 
+  // First run → store defaults
   if (!stored) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PRODUCTS));
     window.dispatchEvent(new Event("productsUpdated"));
@@ -53,11 +72,18 @@ export function loadProducts(): ProductData[] {
   try {
     const parsed = JSON.parse(stored) as ProductData[];
 
-    // Detect legacy IDs and reset
-    const legacyIds = new Set(["ag-main", "ag-hub", "ag-app", "ag-ops", "ag-stock"]);
+    // Detect old/legacy IDs
+    const legacyIds = new Set([
+      "ag-main",
+      "ag-hub",
+      "ag-app",
+      "ag-ops",
+      "ag-stock",
+    ]);
+
     const hasLegacy = parsed.some((p) => legacyIds.has(p.id));
 
-    // Detect missing required IDs and reset
+    // Ensure required products exist
     const required = new Set(["hub", "agis", "agstock", "amniva", "ops"]);
     const hasRequired = parsed.some((p) => required.has(p.id));
 
@@ -75,6 +101,9 @@ export function loadProducts(): ProductData[] {
   }
 }
 
+/**
+ * Persist products to storage
+ */
 export function saveProducts(products: ProductData[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
   window.dispatchEvent(new Event("productsUpdated"));
