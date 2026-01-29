@@ -9,7 +9,7 @@ import {
 } from "@/types/product";
 import { ROLE_LABELS, UserRole } from "@/types/auth";
 
-import { getProductIcon } from "@/lib/products";
+import { getProductIcon } from '@/lib/products.ts';
 
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
