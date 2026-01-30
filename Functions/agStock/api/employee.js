@@ -1,30 +1,33 @@
-import crypto from "crypto";
+import express from "express";
 
-export async function setEmployeePin(req, res) {
+const router = express.Router();
+
+/**
+ * POST /api/employee/pin
+ * Body: { token, pin }
+ */
+router.post("/pin", async (req, res) => {
   try {
     const { token, pin } = req.body;
 
     if (!token || !pin) {
-      return res.status(400).json({ error: "Token and PIN required" });
+      return res.status(400).json({ error: "Missing token or pin" });
     }
 
-    if (!/^\d{4}$/.test(pin)) {
-      return res.status(400).json({ error: "PIN must be 4 digits" });
-    }
+    // TODO:
+    // Later you will:
+    // - validate token
+    // - hash pin
+    // - save pin to database
 
-    const hash = crypto
-      .createHash("sha256")
-      .update(pin)
-      .digest("hex");
-
-    // TODO: Replace with real DB write
-    global.employeePins = global.employeePins || {};
-    global.employeePins[token] = hash;
-
-    return res.json({ success: true });
-
+    return res.json({
+      success: true,
+      message: "PIN set successfully"
+    });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ error: "PIN setup failed" });
+    return res.status(500).json({ error: "Server error" });
   }
-}
+});
+
+export default router;
