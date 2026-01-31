@@ -1,22 +1,22 @@
 import type { ProductData } from "@/types/product";
 import {
+  IconAGHub,
   IconAGIS,
-  IconAGOps,
+  IconAminevaOps,
   IconAGStock,
   IconPlaceholder,
 } from "@/components/icons/ProductIcons";
-import { Globe } from "lucide-react";
 
 export function getProductIcon(productId: ProductData["id"] | string) {
   switch (productId) {
     case "hub":
-      return Globe;
+      return IconAGHub;
     case "agis":
       return IconAGIS;
     case "agstock":
       return IconAGStock;
     case "ops":
-      return IconAGOps;
+      return IconAminevaOps;
     case "amniva":
     default:
       return IconPlaceholder;
