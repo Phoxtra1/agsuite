@@ -1,17 +1,12 @@
 import type { ProductData } from "@/types/product";
 import {
-  IconAGApp,
+  IconAGIS,
   IconAGOps,
   IconAGStock,
   IconPlaceholder,
 } from "@/components/icons/ProductIcons";
 import { Globe } from "lucide-react";
 
-/**
- * Returns a React component (icon) for a product ID.
- * AdminPanel uses: const IconComponent = getProductIcon(product.id);
- * then: <IconComponent className="w-10 h-10" />
- */
 export function getProductIcon(productId: ProductData["id"] | string) {
   switch (productId) {
     case "hub":
@@ -21,9 +16,17 @@ export function getProductIcon(productId: ProductData["id"] | string) {
     case "agstock":
       return IconAGStock;
     case "ops":
-      return IconAminevaOps;
+      return IconAGOps;
     case "amniva":
     default:
       return IconPlaceholder;
   }
+}
+
+export function getProductsWithIcons() {
+  return [];
+}
+
+export function filterProductsByRole(products: any[], role?: string) {
+  return products;
 }
