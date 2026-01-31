@@ -6,7 +6,7 @@ interface ProductIconProps {
 }
 
 // AG Main - Globe/Network symbol for public website
-export function IconAGMain({ className }: ProductIconProps) {
+export function IconAGHub({ className }: ProductIconProps) {
   return (
     <svg
       viewBox="0 0 64 64"
@@ -28,7 +28,7 @@ export function IconAGMain({ className }: ProductIconProps) {
 }
 
 // AG App - Document/Workspace symbol for client portal
-export function IconAGApp({ className }: ProductIconProps) {
+export function IconAGIS({ className }: ProductIconProps) {
   return (
     <svg
       viewBox="0 0 64 64"
@@ -55,7 +55,7 @@ export function IconAGApp({ className }: ProductIconProps) {
 }
 
 // AG Ops - Grid/Blocks symbol for business operations
-export function IconAGOps({ className }: ProductIconProps) {
+export function IconAminevaOps({ className }: ProductIconProps) {
   return (
     <svg
       viewBox="0 0 64 64"
