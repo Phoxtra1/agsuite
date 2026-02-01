@@ -109,6 +109,45 @@ export function IconAGStock({ className }: ProductIconProps) {
   );
 }
 
+// Amniva - Shield/Verification symbol for identity verification
+export function IconAmniva({ className }: ProductIconProps) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={cn('w-12 h-12', className)}
+    >
+      <rect width="64" height="64" rx="12" className="fill-primary" />
+      {/* Shield shape */}
+      <path 
+        d="M32 12L48 18V30C48 40 40 48 32 52C24 48 16 40 16 30V18L32 12Z" 
+        stroke="hsl(38 92% 50%)" 
+        strokeWidth="2" 
+        fill="none" 
+      />
+      {/* Checkmark inside shield */}
+      <path 
+        d="M24 32L30 38L40 26" 
+        stroke="hsl(38 92% 50%)" 
+        strokeWidth="2.5" 
+        strokeLinecap="round" 
+        strokeLinejoin="round" 
+        fill="none" 
+      />
+      {/* Fingerprint arc hint */}
+      <path 
+        d="M28 44C30 45 32 45.5 34 45C36 44.5 38 43 39 42" 
+        stroke="hsl(38 92% 50%)" 
+        strokeWidth="1" 
+        strokeLinecap="round" 
+        fill="none" 
+        opacity="0.6"
+      />
+    </svg>
+  );
+}
+
 // Generic placeholder icon
 export function IconPlaceholder({ className }: ProductIconProps) {
   return (
