@@ -5,6 +5,7 @@ import {
   IconAGIS,
   IconAminevaOps,
   IconAGStock,
+  IconAmniva,
   IconPlaceholder,
 } from "@/components/icons/ProductIcons";
 
@@ -19,6 +20,7 @@ export function getProductIcon(productId: ProductData["id"] | string) {
     case "ops":
       return IconAminevaOps;
     case "amniva":
+      return IconAmniva;
     default:
       return IconPlaceholder;
   }

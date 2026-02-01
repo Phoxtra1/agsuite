@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { loadProducts } from '@/data/products';
 import { DEFAULT_CATEGORIES, ProductData } from '@/types/product';
 import {
@@ -19,15 +19,38 @@ interface ProductSelectionStepProps {
 }
 
 export function ProductSelectionStep({ onSelectProduct, onExploreLater }: ProductSelectionStepProps) {
-  const products = loadProducts();
-  
-  // Group products by category
+  const [products, setProducts] = useState<ProductData[]>([]);
+
+  // Load products and listen for updates from Console
+  useEffect(() => {
+    setProducts(loadProducts());
+
+    const handleUpdate = () => setProducts(loadProducts());
+    window.addEventListener('productsUpdated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+
+    return () => {
+      window.removeEventListener('productsUpdated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
+
+  // Group products by category dynamically
   const productsByCategory = DEFAULT_CATEGORIES.map(category => ({
     ...category,
     products: category.products
       .map(id => products.find(p => p.id === id))
       .filter(Boolean) as ProductData[],
-  }));
+  })).filter(cat => cat.products.length > 0);
+
+  // Collect uncategorized products (custom products added via Console)
+  const categorizedIds = new Set(DEFAULT_CATEGORIES.flatMap(c => c.products));
+  const uncategorizedProducts = products.filter(p => !categorizedIds.has(p.id));
+
+  // Add "Other Applications" category if there are uncategorized products
+  const allCategories = uncategorizedProducts.length > 0
+    ? [...productsByCategory, { id: 'other', name: 'Other Applications', order: 99, products: uncategorizedProducts }]
+    : productsByCategory;
 
   const getStatusBadge = (status: ProductData['status']) => {
     switch (status) {
@@ -79,7 +102,7 @@ export function ProductSelectionStep({ onSelectProduct, onExploreLater }: Produc
       </div>
 
       <Accordion type="single" collapsible className="space-y-2">
-        {productsByCategory.map((category) => (
+        {allCategories.map((category) => (
           <AccordionItem 
             key={category.id} 
             value={category.id}
