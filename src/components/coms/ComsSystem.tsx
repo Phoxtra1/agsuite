@@ -375,6 +375,174 @@ function ComposeMessageModal({ open, onOpenChange }: ComposeModalProps) {
   );
 }
 
+// ============ SETTINGS MODAL ============
+interface SettingsModalProps {
+  open: boolean;
+  onOpenChange: (open: boolean) => void;
+}
+
+function ComsSettingsModal({ open, onOpenChange }: SettingsModalProps) {
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle className="flex items-center gap-2 text-foreground">
+            <Settings className="h-5 w-5" />
+            ComsSystem Settings
+          </DialogTitle>
+          <DialogDescription>
+            Configure global communication settings
+          </DialogDescription>
+        </DialogHeader>
+
+        <div className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label className="text-foreground">Default Sender Email</Label>
+            <Input placeholder="noreply@amineva.com" defaultValue="noreply@amineva.com" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-foreground">Default Sender Name</Label>
+            <Input placeholder="Amineva Team" defaultValue="Amineva Team" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-foreground">Reply-To Email</Label>
+            <Input placeholder="support@amineva.com" defaultValue="support@amineva.com" />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-foreground">Email Footer</Label>
+            <Textarea 
+              placeholder="Email footer text..."
+              defaultValue="© 2025 Amineva Global. All rights reserved.\nAccra, Ghana"
+              className="min-h-[80px]"
+            />
+          </div>
+          <div className="space-y-2">
+            <Label className="text-foreground">Brand Logo URL</Label>
+            <Input placeholder="https://amineva.com/logo.png" />
+          </div>
+        </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancel
+          </Button>
+          <Button onClick={() => {
+            toast.success('Settings saved');
+            onOpenChange(false);
+          }}>
+            Save Settings
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+// ============ IN-APP NOTIFICATIONS PANEL ============
+interface InAppNotification {
+  id: string;
+  title: string;
+  message: string;
+  type: 'info' | 'success' | 'warning' | 'error';
+  sourceApp: string;
+  createdAt: string;
+  isRead: boolean;
+}
+
+const mockNotifications: InAppNotification[] = [
+  { id: '1', title: 'Low Stock Alert', message: 'Product SKU-2341 is running low. Current stock: 5 units.', type: 'warning', sourceApp: 'AGStock', createdAt: '2 min ago', isRead: false },
+  { id: '2', title: 'New Support Ticket', message: 'Customer Ama Owusu opened ticket #4521 regarding invoice.', type: 'info', sourceApp: 'AGIS', createdAt: '15 min ago', isRead: false },
+  { id: '3', title: 'Campaign Sent', message: 'February Promo campaign sent to 2,340 recipients.', type: 'success', sourceApp: 'ComsSystem', createdAt: '1 hour ago', isRead: true },
+  { id: '4', title: 'Payment Received', message: 'Payment of GHS 5,400 received from Kofi Asante.', type: 'success', sourceApp: 'AGIS', createdAt: '3 hours ago', isRead: true },
+  { id: '5', title: 'System Update', message: 'Scheduled maintenance tonight from 2:00 AM to 4:00 AM GMT.', type: 'info', sourceApp: 'System', createdAt: 'Yesterday', isRead: true },
+];
+
+const notificationTypeStyles = {
+  info: { icon: Bell, bg: 'bg-blue-500/10', color: 'text-blue-500' },
+  success: { icon: CheckCircle, bg: 'bg-emerald-500/10', color: 'text-emerald-500' },
+  warning: { icon: AlertTriangle, bg: 'bg-amber-500/10', color: 'text-amber-500' },
+  error: { icon: XCircle, bg: 'bg-destructive/10', color: 'text-destructive' },
+};
+
+function InAppNotificationsPanel() {
+  const [notifications, setNotifications] = React.useState(mockNotifications);
+  
+  const handleMarkAsRead = (id: string) => {
+    setNotifications(prev => prev.map(n => n.id === id ? { ...n, isRead: true } : n));
+  };
+
+  const handleMarkAllRead = () => {
+    setNotifications(prev => prev.map(n => ({ ...n, isRead: true })));
+    toast.success('All notifications marked as read');
+  };
+
+  const handleDismiss = (id: string) => {
+    setNotifications(prev => prev.filter(n => n.id !== id));
+    toast.success('Notification dismissed');
+  };
+
+  const unreadCount = notifications.filter(n => !n.isRead).length;
+
+  return (
+    <Card>
+      <CardHeader>
+        <div className="flex items-center justify-between">
+          <CardTitle className="flex items-center gap-2 text-foreground">
+            <Bell className="h-5 w-5" />
+            In-App Notifications
+            {unreadCount > 0 && <Badge variant="destructive">{unreadCount}</Badge>}
+          </CardTitle>
+          <Button variant="outline" size="sm" onClick={handleMarkAllRead} className="text-foreground border-border">
+            Mark All Read
+          </Button>
+        </div>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        {notifications.length === 0 ? (
+          <div className="text-center py-8 text-muted-foreground">
+            <Bell className="h-10 w-10 mx-auto mb-2 opacity-50" />
+            <p>No notifications</p>
+          </div>
+        ) : (
+          notifications.map((notification) => {
+            const typeStyle = notificationTypeStyles[notification.type];
+            const Icon = typeStyle.icon;
+            return (
+              <div 
+                key={notification.id} 
+                className={`flex items-start gap-3 p-3 rounded-lg border transition-colors cursor-pointer hover:bg-muted/50 ${!notification.isRead ? 'bg-primary/5 border-primary/20' : 'bg-card'}`}
+                onClick={() => handleMarkAsRead(notification.id)}
+              >
+                <div className={`h-9 w-9 rounded-full ${typeStyle.bg} flex items-center justify-center flex-shrink-0`}>
+                  <Icon className={`h-4 w-4 ${typeStyle.color}`} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2">
+                    <span className={`font-medium text-sm text-foreground ${!notification.isRead ? 'font-semibold' : ''}`}>
+                      {notification.title}
+                    </span>
+                    <Badge variant="outline" className="text-xs text-foreground border-border">{notification.sourceApp}</Badge>
+                  </div>
+                  <p className="text-sm text-muted-foreground mt-0.5">{notification.message}</p>
+                  <span className="text-xs text-muted-foreground">{notification.createdAt}</span>
+                </div>
+                <Button 
+                  variant="ghost" 
+                  size="icon" 
+                  className="h-8 w-8 flex-shrink-0 text-muted-foreground hover:text-destructive"
+                  onClick={(e) => { e.stopPropagation(); handleDismiss(notification.id); }}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            );
+          })
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
 // ============ MAIN COMS SYSTEM ============
 const comsStats = {
   totalMessages: 1247,
@@ -387,6 +555,7 @@ const comsStats = {
 
 export function ComsSystem() {
   const [composeOpen, setComposeOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   return (
     <div className="space-y-6">
@@ -400,8 +569,14 @@ export function ComsSystem() {
           <p className="text-muted-foreground">Centralized communications hub for all Amineva products</p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm"><Settings className="h-4 w-4 mr-2" />Settings</Button>
-          <Button size="sm" onClick={() => setComposeOpen(true)}><Plus className="h-4 w-4 mr-2" />New Message</Button>
+          <Button variant="outline" size="sm" className="text-foreground border-border" onClick={() => setSettingsOpen(true)}>
+            <Settings className="h-4 w-4 mr-2" />
+            Settings
+          </Button>
+          <Button size="sm" onClick={() => setComposeOpen(true)}>
+            <Plus className="h-4 w-4 mr-2" />
+            New Message
+          </Button>
         </div>
       </div>
 
@@ -412,7 +587,7 @@ export function ComsSystem() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Unread</p>
-                <p className="text-2xl font-bold">{comsStats.unreadMessages}</p>
+                <p className="text-2xl font-bold text-foreground">{comsStats.unreadMessages}</p>
               </div>
               <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                 <Inbox className="h-5 w-5 text-primary" />
@@ -425,7 +600,7 @@ export function ComsSystem() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Pending Replies</p>
-                <p className="text-2xl font-bold">{comsStats.pendingReplies}</p>
+                <p className="text-2xl font-bold text-foreground">{comsStats.pendingReplies}</p>
               </div>
               <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center">
                 <Clock className="h-5 w-5 text-accent-foreground" />
@@ -438,7 +613,7 @@ export function ComsSystem() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Sent Today</p>
-                <p className="text-2xl font-bold">{comsStats.sentToday}</p>
+                <p className="text-2xl font-bold text-foreground">{comsStats.sentToday}</p>
               </div>
               <div className="h-10 w-10 rounded-full bg-secondary flex items-center justify-center">
                 <Send className="h-5 w-5 text-secondary-foreground" />
@@ -451,7 +626,7 @@ export function ComsSystem() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground">Delivery Rate</p>
-                <p className="text-2xl font-bold">{comsStats.deliveryRate}%</p>
+                <p className="text-2xl font-bold text-foreground">{comsStats.deliveryRate}%</p>
               </div>
               <div className="h-10 w-10 rounded-full bg-muted flex items-center justify-center">
                 <TrendingUp className="h-5 w-5 text-muted-foreground" />
@@ -463,29 +638,39 @@ export function ComsSystem() {
 
       {/* Main Tabs */}
       <Tabs defaultValue="inbox" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-4">
+        <TabsList className="grid w-full grid-cols-5">
           <TabsTrigger value="inbox" className="gap-2">
             <Inbox className="h-4 w-4" />
-            <span className="hidden sm:inline">Unified Inbox</span>
-            <span className="sm:hidden">Inbox</span>
+            <span className="hidden sm:inline">Inbox</span>
             {comsStats.unreadMessages > 0 && <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">{comsStats.unreadMessages}</Badge>}
+          </TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2">
+            <Bell className="h-4 w-4" />
+            <span className="hidden sm:inline">In-App</span>
           </TabsTrigger>
           <TabsTrigger value="campaigns" className="gap-2">
             <Megaphone className="h-4 w-4" />
             <span className="hidden sm:inline">Campaigns</span>
-            <span className="sm:hidden">Camps</span>
             {comsStats.activeCampaigns > 0 && <Badge className="ml-1 h-5 px-1.5 text-xs bg-primary">{comsStats.activeCampaigns}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="templates" className="gap-2"><FileText className="h-4 w-4" />Templates</TabsTrigger>
-          <TabsTrigger value="logs" className="gap-2"><Activity className="h-4 w-4" />Logs</TabsTrigger>
+          <TabsTrigger value="templates" className="gap-2">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">Templates</span>
+          </TabsTrigger>
+          <TabsTrigger value="logs" className="gap-2">
+            <Activity className="h-4 w-4" />
+            <span className="hidden sm:inline">Logs</span>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="inbox"><UnifiedInbox /></TabsContent>
+        <TabsContent value="notifications"><InAppNotificationsPanel /></TabsContent>
         <TabsContent value="campaigns"><CampaignsPanel /></TabsContent>
         <TabsContent value="templates"><TemplatesPanel /></TabsContent>
         <TabsContent value="logs"><ComsLogsPanel /></TabsContent>
       </Tabs>
 
       <ComposeMessageModal open={composeOpen} onOpenChange={setComposeOpen} />
+      <ComsSettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );
 }

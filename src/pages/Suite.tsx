@@ -22,6 +22,7 @@ export default function SuitePage() {
   // In preview mode (lovable.app, localhost), grant admin access for testing
   const isPreviewMode = typeof window !== 'undefined' && (
     window.location.hostname.includes('lovable.app') ||
+    window.location.hostname.includes('lovableproject.com') ||
     window.location.hostname.includes('localhost') ||
     window.location.hostname.includes('127.0.0.1')
   );
