@@ -15,15 +15,11 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 function isLovablePreview(): boolean {
   try {
     const host = window.location.hostname;
-    // Comprehensive preview detection - ensures platform owner stays logged in
     return (
       host.includes("lovable.app") ||
       host.includes("lovableproject.com") ||
       host.includes("localhost") ||
-      host.includes("127.0.0.1") ||
-      host.includes("preview") ||
-      host.endsWith(".dev") ||
-      host.includes("webcontainer")
+      host.includes("127.0.0.1")
     );
   } catch {
     return false;

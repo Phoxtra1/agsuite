@@ -4,7 +4,6 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ROLE_LABELS } from '@/types/auth';
 import { Button } from '@/components/ui/button';
-import { cn } from '@/lib/utils';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -64,18 +63,16 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
         <img src={amvLogo} alt="Amineva Global" className="h-12 w-12 rounded-full" />
       </div>
       
-      {/* Navigation tabs - always visible with proper contrast */}
+      {/* Navigation tabs */}
       <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
         {tabs.map((tab) => (
           <Button
             key={tab.id}
             variant="ghost"
             onClick={() => onTabChange(tab.id)}
-            className={cn(
-              "w-full justify-start gap-3 h-11 font-medium transition-colors",
-              "text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-              currentTab === tab.id && "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-            )}
+            className={`w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+              currentTab === tab.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+            }`}
           >
             <tab.icon className="h-4 w-4" />
             <span className="text-sm">{tab.label}</span>
@@ -93,11 +90,9 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
             <Button
               variant="ghost"
               onClick={() => onTabChange('console')}
-              className={cn(
-                "w-full justify-start gap-3 h-11 font-medium transition-colors",
-                "text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                currentTab === 'console' && "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-              )}
+              className={`w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+                currentTab === 'console' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+              }`}
             >
               <Terminal className="h-4 w-4" />
               <span className="text-sm">Amineva Console</span>
@@ -105,11 +100,9 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
             <Button
               variant="ghost"
               onClick={() => onTabChange('coms')}
-              className={cn(
-                "w-full justify-start gap-3 h-11 font-medium transition-colors",
-                "text-sidebar-foreground/90 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground",
-                currentTab === 'coms' && "bg-sidebar-accent text-sidebar-accent-foreground font-semibold"
-              )}
+              className={`w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+                currentTab === 'coms' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+              }`}
             >
               <Megaphone className="h-4 w-4" />
               <span className="text-sm">ComsSystem</span>

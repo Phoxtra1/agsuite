@@ -12,17 +12,16 @@ import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
 
-// Check if we're in Lovable preview environment - ensures platform owner stays logged in
+// Check if we're in Lovable preview environment
 const isLovablePreview = () => {
+  // Lovable preview can be served from multiple hostnames depending on context
+  // (e.g. lovable.app wrapper vs lovableproject.com iframe runtime)
   const host = window.location.hostname;
   return (
     host.includes('lovable.app') ||
     host.includes('lovableproject.com') ||
     host.includes('localhost') ||
-    host.includes('127.0.0.1') ||
-    host.includes('preview') ||
-    host.endsWith('.dev') ||
-    host.includes('webcontainer')
+    host.includes('127.0.0.1')
   );
 };
 

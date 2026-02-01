@@ -45,8 +45,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { Pencil, Plus, Save, Trash2, X, ExternalLink, Power, PowerOff } from "lucide-react";
-import { Switch } from "@/components/ui/switch";
+import { Pencil, Plus, Save, Trash2, X, ExternalLink } from "lucide-react";
 
 interface ProductFormData {
   name: string;
@@ -146,17 +145,6 @@ export function AdminPanel() {
     toast.success("Product deleted");
   };
 
-  const handleQuickToggle = (productId: string) => {
-    setProducts((prev) =>
-      prev.map((p) =>
-        p.id === productId
-          ? { ...p, status: p.status === "live" ? "offline" : "live" as ProductStatus }
-          : p
-      )
-    );
-    toast.success("Product status updated");
-  };
-
   const openAdminUrl = (url?: string) => {
     if (url) window.open(url, "_blank");
   };
@@ -190,7 +178,6 @@ export function AdminPanel() {
                 <TableHead className="w-12">Icon</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="w-20">Live</TableHead>
                 <TableHead>Admin Portal</TableHead>
                 <TableHead className="w-24">Actions</TableHead>
               </TableRow>
@@ -221,22 +208,6 @@ export function AdminPanel() {
                       >
                         {STATUS_LABELS[product.status]}
                       </Badge>
-                    </TableCell>
-
-                    {/* Quick Live/Offline Toggle */}
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Switch
-                          checked={product.status === "live"}
-                          onCheckedChange={() => handleQuickToggle(product.id)}
-                          aria-label="Toggle live status"
-                        />
-                        {product.status === "live" ? (
-                          <Power className="h-4 w-4 text-success" />
-                        ) : (
-                          <PowerOff className="h-4 w-4 text-muted-foreground" />
-                        )}
-                      </div>
                     </TableCell>
 
                     <TableCell>
