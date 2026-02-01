@@ -59,7 +59,7 @@ export function ProductGrid() {
       const query = searchQuery.toLowerCase();
       result = result.filter(
         p => p.name.toLowerCase().includes(query) || 
-             p.description.toLowerCase().includes(query)
+             (p.description || '').toLowerCase().includes(query)
       );
     }
 
@@ -110,10 +110,7 @@ export function ProductGrid() {
     if (product.status === 'coming_soon' || product.status === 'offline') {
       setSelectedProduct(product);
       setShowComingSoon(true);
-    } else if (product.isExternal) {
-      window.location.href = product.url;
-    } else {
-      // Internal routing would go here
+    } else if (product.url) {
       window.location.href = product.url;
     }
   };

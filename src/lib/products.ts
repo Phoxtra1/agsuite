@@ -1,4 +1,5 @@
-import type { ProductData } from "@/types/product";
+import type { ProductData, Product } from "@/types/product";
+import { loadProducts } from "@/data/products";
 import {
   IconAGHub,
   IconAGIS,
@@ -23,10 +24,23 @@ export function getProductIcon(productId: ProductData["id"] | string) {
   }
 }
 
-export function getProductsWithIcons() {
-  return [];
+export function getProductsWithIcons(): Product[] {
+  const products = loadProducts();
+  return products.map((product) => ({
+    ...product,
+    icon: undefined, // Icon is rendered via getProductIcon
+  }));
 }
 
-export function filterProductsByRole(products: any[], role?: string) {
-  return products;
+export function filterProductsByRole(products: Product[], role?: string | null): Product[] {
+  if (!role) {
+    // No role = only public products
+    return products.filter((p) => p.isPublic);
+  }
+
+  return products.filter((p) => {
+    if (p.isPublic) return true;
+    if (!p.allowedRoles) return false;
+    return p.allowedRoles.includes(role as any);
+  });
 }

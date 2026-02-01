@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { Product, STATUS_LABELS, STATUS_COLORS } from '@/types/product';
 import { getProductIcon } from '@/lib/products';
 import { Badge } from '@/components/ui/badge';
@@ -62,7 +62,7 @@ export function ProductTile({ product, onOpen, isFavorite = false, onToggleFavor
       </div>
       
       <p className="text-sm text-muted-foreground flex-1 line-clamp-2">
-        {product.description}
+        {product.description || 'No description available'}
       </p>
       
       <Button
