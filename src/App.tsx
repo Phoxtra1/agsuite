@@ -14,15 +14,9 @@ const queryClient = new QueryClient();
 
 // Check if we're in Lovable preview environment
 const isLovablePreview = () => {
-  // Lovable preview can be served from multiple hostnames depending on context
-  // (e.g. lovable.app wrapper vs lovableproject.com iframe runtime)
-  const host = window.location.hostname;
-  return (
-    host.includes('lovable.app') ||
-    host.includes('lovableproject.com') ||
-    host.includes('localhost') ||
-    host.includes('127.0.0.1')
-  );
+  return window.location.hostname.includes('lovable.app') || 
+         window.location.hostname.includes('localhost') ||
+         window.location.hostname.includes('127.0.0.1');
 };
 
 // Stylish Amineva loading spinner
