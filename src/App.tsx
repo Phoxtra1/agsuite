@@ -44,12 +44,13 @@ function HashNormalizer() {
   return null;
 }
 
-// Protected route wrapper
+// Protected route wrapper - allows preview access for development
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
+  const preview = isLovablePreview();
   
-  // In Lovable preview, allow access for development
-  if (isLovablePreview()) {
+  // In Lovable preview, always allow access for development testing
+  if (preview) {
     return <>{children}</>;
   }
   
@@ -67,9 +68,10 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
 // Public route - redirects to suite if authenticated (only on production)
 function PublicRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated, isLoading } = useAuth();
+  const preview = isLovablePreview();
   
-  // In Lovable preview, don't force redirect
-  if (isLovablePreview()) {
+  // In Lovable preview, don't force redirect - allow staying on gateway
+  if (preview) {
     return <>{children}</>;
   }
   
@@ -87,16 +89,21 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
 function AppRoutes() {
   return (
     <Routes>
+      {/* Public gateway / login page */}
       <Route path="/" element={
         <PublicRoute>
           <LoginForm />
         </PublicRoute>
       } />
+      
+      {/* Protected Suite routes (includes /suite/console for admins) */}
       <Route path="/suite/*" element={
         <ProtectedRoute>
           <SuitePage />
         </ProtectedRoute>
       } />
+      
+      {/* Catch-all 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
