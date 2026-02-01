@@ -7,7 +7,6 @@ import {
   STATUS_LABELS,
   ProductStatus,
 } from "@/types/product";
-import { ROLE_LABELS, UserRole } from "@/types/auth";
 
 import { getProductIcon } from '@/lib/products.ts';
 
@@ -19,8 +18,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
-import { Textarea } from "@/components/ui/textarea";
 
 import {
   Dialog,
@@ -48,26 +45,22 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { Pencil, Plus, Save, Trash2, X } from "lucide-react";
+import { Pencil, Plus, Save, Trash2, X, ExternalLink } from "lucide-react";
 
 interface ProductFormData {
   name: string;
   shortName: string;
   description: string;
-  url: string;
+  adminUrl: string;
   status: ProductStatus;
-  isPublic: boolean;
-  allowedRoles: UserRole[];
 }
 
 const initialFormData: ProductFormData = {
   name: "",
   shortName: "",
   description: "",
-  url: "",
+  adminUrl: "",
   status: "coming_soon",
-  isPublic: false,
-  allowedRoles: ["super_admin"],
 };
 
 export function AdminPanel() {
@@ -101,12 +94,10 @@ export function AdminPanel() {
 
     setFormData({
       name: product.name,
-      shortName: product.shortName,
-      description: product.description,
-      url: product.url,
+      shortName: product.shortName || "",
+      description: product.description || "",
+      adminUrl: product.adminUrl || "",
       status: product.status,
-      isPublic: product.isPublic,
-      allowedRoles: [...product.allowedRoles],
     });
 
     setEditingId(productId);
@@ -114,22 +105,34 @@ export function AdminPanel() {
   };
 
   const handleSave = () => {
+    if (!formData.name.trim()) {
+      toast.error("Product name is required");
+      return;
+    }
+
     if (editingId) {
       setProducts((prev) =>
         prev.map((p) => (p.id === editingId ? { ...p, ...formData } : p))
       );
-      toast.success("Product updated successfully");
+      toast.success("Product updated");
     } else {
       const newId = `custom-${Date.now()}`;
       const newProduct: ProductData = {
         id: newId,
-        ...formData,
+        name: formData.name,
+        shortName: formData.shortName,
+        description: formData.description,
+        adminUrl: formData.adminUrl,
+        status: formData.status,
+        url: formData.adminUrl || `https://${formData.shortName.toLowerCase()}.amineva.com`,
         isExternal: true,
+        isPublic: false,
+        allowedRoles: ["super_admin", "staff"],
         order: products.length + 1,
       };
 
       setProducts((prev) => [...prev, newProduct]);
-      toast.success("Product added successfully");
+      toast.success("Product added");
     }
 
     setIsDialogOpen(false);
@@ -139,16 +142,11 @@ export function AdminPanel() {
   const handleDelete = (productId: string) => {
     setProducts((prev) => prev.filter((p) => p.id !== productId));
     setDeleteConfirm(null);
-    toast.success("Product deleted successfully");
+    toast.success("Product deleted");
   };
 
-  const toggleRole = (role: UserRole) => {
-    setFormData((prev) => ({
-      ...prev,
-      allowedRoles: prev.allowedRoles.includes(role)
-        ? prev.allowedRoles.filter((r) => r !== role)
-        : [...prev.allowedRoles, role],
-    }));
+  const openAdminUrl = (url?: string) => {
+    if (url) window.open(url, "_blank");
   };
 
   return (
@@ -156,7 +154,7 @@ export function AdminPanel() {
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-semibold">Product Registry</h2>
+          <h2 className="text-2xl font-semibold text-foreground">Product Registry</h2>
           <p className="text-muted-foreground">
             Manage products in the Amineva Suite
           </p>
@@ -179,9 +177,8 @@ export function AdminPanel() {
               <TableRow>
                 <TableHead className="w-12">Icon</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>URL</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Access</TableHead>
+                <TableHead>Admin Portal</TableHead>
                 <TableHead className="w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -198,17 +195,11 @@ export function AdminPanel() {
 
                     <TableCell>
                       <div>
-                        <p className="font-medium">{product.name}</p>
+                        <p className="font-medium text-foreground">{product.name}</p>
                         <p className="text-sm text-muted-foreground line-clamp-1">
                           {product.description || 'No description'}
                         </p>
                       </div>
-                    </TableCell>
-
-                    <TableCell>
-                      <code className="text-xs bg-muted px-2 py-1 rounded">
-                        {product.url}
-                      </code>
                     </TableCell>
 
                     <TableCell>
@@ -220,26 +211,18 @@ export function AdminPanel() {
                     </TableCell>
 
                     <TableCell>
-                      {product.isPublic ? (
-                        <Badge variant="outline">Public</Badge>
+                      {product.adminUrl ? (
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="text-accent hover:text-accent/80 h-8 px-2"
+                          onClick={() => openAdminUrl(product.adminUrl)}
+                        >
+                          <ExternalLink className="h-4 w-4 mr-1" />
+                          Open
+                        </Button>
                       ) : (
-                        <div className="flex flex-wrap gap-1">
-                          {(product.allowedRoles || []).slice(0, 2).map((role) => (
-                            <Badge
-                              key={role}
-                              variant="secondary"
-                              className="text-xs"
-                            >
-                              {ROLE_LABELS[role]}
-                            </Badge>
-                          ))}
-
-                          {(product.allowedRoles || []).length > 2 && (
-                            <Badge variant="secondary" className="text-xs">
-                              +{(product.allowedRoles || []).length - 2}
-                            </Badge>
-                          )}
-                        </div>
+                        <span className="text-muted-foreground text-sm">—</span>
                       )}
                     </TableCell>
 
@@ -248,7 +231,7 @@ export function AdminPanel() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8"
+                          className="h-8 w-8 text-foreground hover:text-accent"
                           onClick={() => handleEdit(product.id)}
                         >
                           <Pencil className="h-4 w-4" />
@@ -257,7 +240,7 @@ export function AdminPanel() {
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="h-8 w-8 text-destructive hover:text-destructive"
+                          className="h-8 w-8 text-destructive hover:text-destructive/80"
                           onClick={() => setDeleteConfirm(product.id)}
                         >
                           <Trash2 className="h-4 w-4" />
@@ -272,32 +255,33 @@ export function AdminPanel() {
         </CardContent>
       </Card>
 
-      {/* Add/Edit Dialog */}
+      {/* Compact Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="sm:max-w-lg">
+        <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Product" : "Add New Product"}</DialogTitle>
+            <DialogTitle>{editingId ? "Edit Product" : "Add Product"}</DialogTitle>
             <DialogDescription>
-              Configure the product details and access permissions.
+              {editingId ? "Update product details" : "Add a new product to the suite"}
             </DialogDescription>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="name">Product Name</Label>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="name" className="text-foreground">Name</Label>
                 <Input
                   id="name"
                   value={formData.name}
                   onChange={(e) =>
                     setFormData((prev) => ({ ...prev, name: e.target.value }))
                   }
-                  placeholder="AG New Product"
+                  placeholder="Product Name"
+                  className="h-9"
                 />
               </div>
 
-              <div className="space-y-2">
-                <Label htmlFor="shortName">Short Name</Label>
+              <div className="space-y-1.5">
+                <Label htmlFor="shortName" className="text-foreground">Short Name</Label>
                 <Input
                   id="shortName"
                   value={formData.shortName}
@@ -307,14 +291,15 @@ export function AdminPanel() {
                       shortName: e.target.value,
                     }))
                   }
-                  placeholder="New"
+                  placeholder="Short"
+                  className="h-9"
                 />
               </div>
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="description">Description</Label>
-              <Textarea
+            <div className="space-y-1.5">
+              <Label htmlFor="description" className="text-foreground">Description</Label>
+              <Input
                 id="description"
                 value={formData.description}
                 onChange={(e) =>
@@ -323,87 +308,56 @@ export function AdminPanel() {
                     description: e.target.value,
                   }))
                 }
-                placeholder="A brief description of the product..."
-                rows={2}
+                placeholder="Brief product description"
+                className="h-9"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="url">URL</Label>
+            <div className="space-y-1.5">
+              <Label htmlFor="adminUrl" className="text-foreground">Admin URL</Label>
               <Input
-                id="url"
-                value={formData.url}
+                id="adminUrl"
+                value={formData.adminUrl}
                 onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, url: e.target.value }))
+                  setFormData((prev) => ({ ...prev, adminUrl: e.target.value }))
                 }
-                placeholder="https://product.amineva.com"
+                placeholder="https://product.amineva.com/admin"
+                className="h-9"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label>Status</Label>
+            <div className="space-y-1.5">
+              <Label className="text-foreground">Status</Label>
               <Select
                 value={formData.status}
                 onValueChange={(v) =>
                   setFormData((prev) => ({ ...prev, status: v as ProductStatus }))
                 }
               >
-                <SelectTrigger>
+                <SelectTrigger className="h-9">
                   <SelectValue />
                 </SelectTrigger>
 
                 <SelectContent>
                   <SelectItem value="live">Live</SelectItem>
-                  <SelectItem value="restricted">Restricted</SelectItem>
-                  <SelectItem value="coming_soon">Coming Soon</SelectItem>
                   <SelectItem value="offline">Offline</SelectItem>
+                  <SelectItem value="coming_soon">Coming Soon</SelectItem>
                 </SelectContent>
               </Select>
             </div>
-
-            <div className="flex items-center justify-between">
-              <Label htmlFor="isPublic">Public Access</Label>
-              <Switch
-                id="isPublic"
-                checked={formData.isPublic}
-                onCheckedChange={(v) =>
-                  setFormData((prev) => ({ ...prev, isPublic: v }))
-                }
-              />
-            </div>
-
-            {!formData.isPublic && (
-              <div className="space-y-2">
-                <Label>Allowed Roles</Label>
-                <div className="flex flex-wrap gap-2">
-                  {(["super_admin", "staff", "customer", "visitor"] as UserRole[]).map(
-                    (role) => (
-                      <Badge
-                        key={role}
-                        variant={formData.allowedRoles.includes(role) ? "default" : "outline"}
-                        className="cursor-pointer"
-                        onClick={() => toggleRole(role)}
-                      >
-                        {ROLE_LABELS[role]}
-                      </Badge>
-                    )
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              <X className="mr-2 h-4 w-4" />
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(false)}>
               Cancel
             </Button>
 
             <Button
+              size="sm"
               onClick={handleSave}
               className="bg-accent text-accent-foreground hover:bg-accent/90"
             >
-              <Save className="mr-2 h-4 w-4" />
+              <Save className="mr-1.5 h-4 w-4" />
               Save
             </Button>
           </DialogFooter>
@@ -412,21 +366,22 @@ export function AdminPanel() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
-        <DialogContent className="sm:max-w-md">
+        <DialogContent className="sm:max-w-sm">
           <DialogHeader>
-            <DialogTitle>Confirm Deletion</DialogTitle>
+            <DialogTitle>Delete Product?</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this product? This action cannot be undone.
+              This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteConfirm(null)}>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" size="sm" onClick={() => setDeleteConfirm(null)}>
               Cancel
             </Button>
 
             <Button
               variant="destructive"
+              size="sm"
               onClick={() => deleteConfirm && handleDelete(deleteConfirm)}
             >
               Delete
