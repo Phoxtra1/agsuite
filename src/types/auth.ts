@@ -1,4 +1,4 @@
-export type UserRole = 'super_admin' | 'staff' | 'customer' | 'visitor';
+export type UserRole = 'super_admin' | 'manager' | 'staff' | 'customer' | 'visitor';
 
 export interface User {
   id: string;
@@ -20,6 +20,7 @@ export interface AuthContextType {
 
 export const ROLE_LABELS: Record<UserRole, string> = {
   super_admin: 'Super Admin',
+  manager: 'Manager',
   staff: 'Staff',
   customer: 'Customer',
   visitor: 'Visitor',
@@ -27,6 +28,7 @@ export const ROLE_LABELS: Record<UserRole, string> = {
 
 export const ROLE_PERMISSIONS = {
   super_admin: ['view_all', 'manage_products', 'manage_users', 'admin_access'],
+  manager: ['view_all', 'manage_products', 'admin_access'],
   staff: ['view_restricted', 'view_public'],
   customer: ['view_restricted', 'view_public'],
   visitor: ['view_public'],

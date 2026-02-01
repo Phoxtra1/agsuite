@@ -17,8 +17,14 @@ export default function SuitePage() {
   const navigate = useNavigate();
   const location = useLocation();
   
-  // Admin check: role === 'super_admin' or role === 'manager' (will add isAdmin later via profile)
-  const isAdmin = user?.role === 'super_admin';
+  // Admin check: role === 'super_admin' or role === 'manager'
+  // In preview mode (lovable.app, localhost), grant admin access for testing
+  const isPreviewMode = typeof window !== 'undefined' && (
+    window.location.hostname.includes('lovable.app') ||
+    window.location.hostname.includes('localhost') ||
+    window.location.hostname.includes('127.0.0.1')
+  );
+  const isAdmin = isPreviewMode || user?.role === 'super_admin' || user?.role === 'manager';
   
   // Determine current tab from URL
   const getCurrentTab = (): TabView => {
