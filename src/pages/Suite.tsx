@@ -9,8 +9,9 @@ import { HowItWorksPage } from '@/components/suite/pages/HowItWorksPage';
 import { ProfilePage } from '@/components/suite/pages/ProfilePage';
 import { SettingsPage } from '@/components/suite/pages/SettingsPage';
 import { AminevaConsole } from '@/components/admin/AminevaConsole';
+import { ComsSystem } from '@/components/coms/ComsSystem';
 
-type TabView = 'overview' | 'products' | 'why' | 'how' | 'console' | 'profile' | 'settings';
+type TabView = 'overview' | 'products' | 'why' | 'how' | 'console' | 'coms' | 'profile' | 'settings';
 
 export default function SuitePage() {
   const { user } = useAuth();
@@ -33,6 +34,7 @@ export default function SuitePage() {
     if (path === '/why') return 'why';
     if (path === '/how') return 'how';
     if (path === '/console') return 'console';
+    if (path === '/coms') return 'coms';
     if (path === '/profile') return 'profile';
     if (path === '/settings') return 'settings';
     return 'overview';
@@ -47,6 +49,7 @@ export default function SuitePage() {
       why: '/suite/why',
       how: '/suite/how',
       console: '/suite/console',
+      coms: '/suite/coms',
       profile: '/suite/profile',
       settings: '/suite/settings',
     };
@@ -88,6 +91,13 @@ export default function SuitePage() {
             path="/console" 
             element={
               isAdmin ? <AminevaConsole /> : <Navigate to="/suite" replace />
+            } 
+          />
+          {/* ComsSystem - admin only */}
+          <Route 
+            path="/coms" 
+            element={
+              isAdmin ? <ComsSystem /> : <Navigate to="/suite" replace />
             } 
           />
           {/* Legacy admin route redirect */}

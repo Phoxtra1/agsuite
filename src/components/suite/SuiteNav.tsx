@@ -13,10 +13,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Sun, Moon, LogOut, User, Settings, LayoutDashboard, Package, HelpCircle, Workflow, Shield, Terminal } from 'lucide-react';
+import { Sun, Moon, LogOut, User, Settings, LayoutDashboard, Package, HelpCircle, Workflow, Shield, Terminal, Megaphone } from 'lucide-react';
 import amvLogo from '@/assets/amv_global_logo.png';
 
-type TabView = 'overview' | 'products' | 'why' | 'how' | 'console' | 'profile' | 'settings';
+type TabView = 'overview' | 'products' | 'why' | 'how' | 'console' | 'coms' | 'profile' | 'settings';
 
 interface SuiteNavProps {
   currentTab: TabView;
@@ -96,6 +96,16 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
             >
               <Terminal className="h-4 w-4" />
               <span className="text-sm">Amineva Console</span>
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => onTabChange('coms')}
+              className={`w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+                currentTab === 'coms' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+              }`}
+            >
+              <Megaphone className="h-4 w-4" />
+              <span className="text-sm">ComsSystem</span>
             </Button>
           </>
         )}
