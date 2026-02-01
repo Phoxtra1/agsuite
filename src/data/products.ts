@@ -70,7 +70,7 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     status: "offline",
     url: "https://www.amniva.io",
     adminUrl: "https://www.amniva.io/admin",
-    category: "Identity & Verification",
+    category: "Verify & Predict",
     order: 5,
     isPublic: false,
     isExternal: true,

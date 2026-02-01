@@ -52,6 +52,6 @@ export const DEFAULT_CATEGORIES: ProductCategory[] = [
   { id: 'sell-manage', name: 'Sell & Manage Business', order: 1, products: ['agstock'] },
   { id: 'data-intel', name: 'Data & Intelligence', order: 2, products: ['agis'] },
   { id: 'reports', name: 'Reports & Publications', order: 3, products: ['hub'] },
-  { id: 'identity', name: 'Identity & Verification', order: 4, products: ['amniva'] },
+  { id: 'verify-predict', name: 'Verify & Predict', order: 4, products: ['amniva'] },
   { id: 'operations', name: 'Service Operations', order: 5, products: ['ops'] },
 ];
