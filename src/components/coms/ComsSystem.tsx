@@ -59,14 +59,8 @@ interface LogEntry {
   details?: string;
 }
 
-const mockLogs: LogEntry[] = [
-  { id: '1', timestamp: '2024-01-15T14:32:00Z', event: 'delivered', channel: 'email', recipient: 'john@example.com', subject: 'Your invoice #INV-2024-001', sourceApp: 'AGStock', messageType: 'transactional' },
-  { id: '2', timestamp: '2024-01-15T14:30:00Z', event: 'opened', channel: 'email', recipient: 'sarah@company.org', subject: 'Welcome to Amineva!', sourceApp: 'Suite', messageType: 'marketing' },
-  { id: '3', timestamp: '2024-01-15T14:28:00Z', event: 'bounced', channel: 'email', recipient: 'invalid@email', subject: 'Password Reset Request', sourceApp: 'Suite', messageType: 'transactional', details: 'Mailbox not found' },
-  { id: '4', timestamp: '2024-01-15T14:25:00Z', event: 'delivered', channel: 'in-app', recipient: 'user_12345', subject: 'Low stock alert: Product SKU-001', sourceApp: 'AGStock', messageType: 'system' },
-  { id: '5', timestamp: '2024-01-15T14:20:00Z', event: 'queued', channel: 'email', recipient: 'bulk-list@campaign.com', subject: 'January Newsletter', sourceApp: 'Suite', messageType: 'marketing' },
-  { id: '6', timestamp: '2024-01-15T14:15:00Z', event: 'failed', channel: 'email', recipient: 'client@domain.com', subject: 'Support ticket #4521 update', sourceApp: 'AGIS', messageType: 'support', details: 'SMTP connection timeout' },
-];
+// Start with empty logs - real data will come from Appwrite database
+const mockLogs: LogEntry[] = [];
 
 const eventConfig = {
   delivered: { icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
@@ -449,13 +443,8 @@ interface InAppNotification {
   isRead: boolean;
 }
 
-const mockNotifications: InAppNotification[] = [
-  { id: '1', title: 'Low Stock Alert', message: 'Product SKU-2341 is running low. Current stock: 5 units.', type: 'warning', sourceApp: 'AGStock', createdAt: '2 min ago', isRead: false },
-  { id: '2', title: 'New Support Ticket', message: 'Customer Ama Owusu opened ticket #4521 regarding invoice.', type: 'info', sourceApp: 'AGIS', createdAt: '15 min ago', isRead: false },
-  { id: '3', title: 'Campaign Sent', message: 'February Promo campaign sent to 2,340 recipients.', type: 'success', sourceApp: 'ComsSystem', createdAt: '1 hour ago', isRead: true },
-  { id: '4', title: 'Payment Received', message: 'Payment of GHS 5,400 received from Kofi Asante.', type: 'success', sourceApp: 'AGIS', createdAt: '3 hours ago', isRead: true },
-  { id: '5', title: 'System Update', message: 'Scheduled maintenance tonight from 2:00 AM to 4:00 AM GMT.', type: 'info', sourceApp: 'System', createdAt: 'Yesterday', isRead: true },
-];
+// Start with empty notifications - real data will come from Appwrite database
+const mockNotifications: InAppNotification[] = [];
 
 const notificationTypeStyles = {
   info: { icon: Bell, bg: 'bg-blue-500/10', color: 'text-blue-500' },
@@ -544,13 +533,14 @@ function InAppNotificationsPanel() {
 }
 
 // ============ MAIN COMS SYSTEM ============
+// Real-time metrics - start at zero since no real messages exist yet
 const comsStats = {
-  totalMessages: 1247,
-  unreadMessages: 23,
-  pendingReplies: 8,
-  activeCampaigns: 3,
-  sentToday: 156,
-  deliveryRate: 98.5,
+  totalMessages: 0,
+  unreadMessages: 0,
+  pendingReplies: 0,
+  activeCampaigns: 0,
+  sentToday: 0,
+  deliveryRate: 0,
 };
 
 export function ComsSystem() {

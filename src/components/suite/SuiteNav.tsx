@@ -1,5 +1,5 @@
 import React from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
 import { ROLE_LABELS } from '@/types/auth';
@@ -13,7 +13,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Sun, Moon, LogOut, User, Settings, LayoutDashboard, Package, HelpCircle, Workflow, Shield, Terminal, Megaphone } from 'lucide-react';
+import { Sun, Moon, LogOut, User, Settings, LayoutDashboard, Package, HelpCircle, Workflow, Terminal, Megaphone } from 'lucide-react';
 import amvLogo from '@/assets/amv_global_logo.png';
 
 type TabView = 'overview' | 'products' | 'why' | 'how' | 'console' | 'coms' | 'profile' | 'settings';
@@ -34,7 +34,10 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
     .map(n => n[0])
     .join('')
     .toUpperCase()
-    .slice(0, 2) || 'U';
+    .slice(0, 2) || 'M';
+
+  // Get role label - default to "Manager" for admin users in preview
+  const roleLabel = user?.role ? ROLE_LABELS[user.role] : (isAdmin ? 'Manager' : 'User');
 
   const handleLogout = () => {
     logout();
@@ -71,7 +74,7 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
             variant="ghost"
             onClick={() => onTabChange(tab.id)}
             className={`w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-              currentTab === tab.id ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+              currentTab === tab.id ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : ''
             }`}
           >
             <tab.icon className="h-4 w-4" />
@@ -83,7 +86,7 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
         {isAdmin && (
           <>
             <div className="pt-4 pb-2">
-              <span className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider px-3">
+              <span className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider px-3">
                 Administration
               </span>
             </div>
@@ -91,7 +94,7 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
               variant="ghost"
               onClick={() => onTabChange('console')}
               className={`w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                currentTab === 'console' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+                currentTab === 'console' ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : ''
               }`}
             >
               <Terminal className="h-4 w-4" />
@@ -101,7 +104,7 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
               variant="ghost"
               onClick={() => onTabChange('coms')}
               className={`w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-                currentTab === 'coms' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+                currentTab === 'coms' ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : ''
               }`}
             >
               <Megaphone className="h-4 w-4" />
@@ -113,6 +116,7 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
       
       {/* Bottom section - Theme toggle and user menu */}
       <div className="p-4 border-t border-sidebar-border space-y-3">
+        {/* Theme Toggle */}
         <Button
           variant="ghost"
           onClick={toggleTheme}
@@ -131,18 +135,29 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
           )}
         </Button>
         
+        {/* Profile Button - Fixed visibility */}
+        <Button
+          variant="ghost"
+          onClick={handleProfile}
+          className="w-full justify-start gap-3 h-10 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+        >
+          <User className="h-4 w-4" />
+          <span className="text-sm">Profile</span>
+        </Button>
+        
+        {/* User Account Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" className="w-full justify-start gap-3 h-12 text-sidebar-foreground hover:bg-sidebar-accent">
-              <Avatar className="h-8 w-8">
-                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-xs">
+            <Button variant="ghost" className="w-full justify-start gap-3 h-14 text-sidebar-foreground hover:bg-sidebar-accent">
+              <Avatar className="h-9 w-9 border-2 border-sidebar-accent">
+                <AvatarFallback className="bg-sidebar-primary text-sidebar-primary-foreground text-sm font-medium">
                   {initials}
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start text-left">
-                <span className="text-sm font-medium truncate max-w-[140px]">{user?.name}</span>
-                <span className="text-xs text-sidebar-foreground/60 truncate max-w-[140px]">
-                  {user?.role ? ROLE_LABELS[user.role] : 'User'}
+                <span className="text-sm font-medium truncate max-w-[140px]">{user?.name || 'Manager'}</span>
+                <span className="text-xs text-sidebar-foreground/70 truncate max-w-[140px]">
+                  {roleLabel}
                 </span>
               </div>
             </Button>
@@ -150,9 +165,9 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
           <DropdownMenuContent align="end" side="top" className="w-56">
             <DropdownMenuLabel>
               <div className="flex flex-col">
-                <span>{user?.name}</span>
+                <span>{user?.name || 'Manager'}</span>
                 <span className="text-xs font-normal text-muted-foreground">
-                  {user?.email}
+                  {user?.email || 'admin@amineva.com'}
                 </span>
               </div>
             </DropdownMenuLabel>

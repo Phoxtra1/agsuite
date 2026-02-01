@@ -57,8 +57,11 @@ export default function SuitePage() {
     navigate(paths[tab]);
   };
   
-  // Get first name for welcome message
-  const firstName = user?.name?.split(' ')[0] || 'User';
+  // Get display name and role for welcome message
+  const firstName = user?.name?.split(' ')[0] || 'Manager';
+  const roleLabel = user?.role === 'super_admin' ? 'Super Admin' : 
+                    user?.role === 'manager' ? 'Manager' : 
+                    isAdmin ? 'Manager' : 'User';
 
   return (
     <div className="min-h-screen bg-background">
@@ -73,7 +76,7 @@ export default function SuitePage() {
         {/* Welcome Banner */}
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-foreground mb-2">
-            Akwaaba, {firstName}
+            Akwaaba, {roleLabel}
           </h1>
           <p className="text-muted-foreground">
             Welcome to Amineva Global. Access your products, insights, and operational tools.
