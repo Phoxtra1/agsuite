@@ -1,8 +1,26 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 import { 
   Plus, 
   Play, 
@@ -14,11 +32,29 @@ import {
   Clock,
   CheckCircle,
   XCircle,
-  Calendar
+  Calendar,
+  Save,
+  Send,
+  Edit,
+  Trash2
 } from 'lucide-react';
+import { toast } from 'sonner';
 
-// Mock campaigns data
-const mockCampaigns = [
+interface Campaign {
+  id: string;
+  name: string;
+  status: 'active' | 'scheduled' | 'completed' | 'draft' | 'paused';
+  type: string;
+  audience: number;
+  sent: number;
+  delivered: number;
+  opened: number;
+  clicked: number;
+  scheduledAt: string | null;
+  createdAt: string;
+}
+
+const initialCampaigns: Campaign[] = [
   {
     id: '1',
     name: 'February Promo Launch',
@@ -81,18 +117,177 @@ const statusStyles: Record<string, { color: string; icon: React.ReactNode }> = {
   paused: { color: 'bg-red-500', icon: <Pause className="h-3 w-3" /> },
 };
 
+interface CampaignFormData {
+  name: string;
+  type: string;
+  subject: string;
+  content: string;
+  audienceGroup: string;
+  scheduledAt: string;
+}
+
+const initialFormData: CampaignFormData = {
+  name: '',
+  type: 'marketing',
+  subject: '',
+  content: '',
+  audienceGroup: 'all',
+  scheduledAt: '',
+};
+
+const audienceGroups = [
+  { id: 'all', name: 'All Users', count: 12500 },
+  { id: 'agstock', name: 'AGStock Users', count: 3420 },
+  { id: 'agis', name: 'AGIS Users', count: 1890 },
+  { id: 'subscribers', name: 'Newsletter Subscribers', count: 8560 },
+];
+
 export function CampaignsPanel() {
+  const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
+  const [formData, setFormData] = useState<CampaignFormData>(initialFormData);
+
+  const handleNewCampaign = () => {
+    setEditingCampaign(null);
+    setFormData(initialFormData);
+    setIsDialogOpen(true);
+  };
+
+  const handleSaveDraft = () => {
+    if (!formData.name.trim()) {
+      toast.error('Campaign name is required');
+      return;
+    }
+
+    const audience = audienceGroups.find(g => g.id === formData.audienceGroup)?.count || 0;
+
+    if (editingCampaign) {
+      setCampaigns(prev => prev.map(c => 
+        c.id === editingCampaign.id 
+          ? { ...c, name: formData.name, type: formData.type, audience, scheduledAt: formData.scheduledAt || null }
+          : c
+      ));
+      toast.success('Campaign updated');
+    } else {
+      const newCampaign: Campaign = {
+        id: `campaign-${Date.now()}`,
+        name: formData.name,
+        status: 'draft',
+        type: formData.type,
+        audience,
+        sent: 0,
+        delivered: 0,
+        opened: 0,
+        clicked: 0,
+        scheduledAt: formData.scheduledAt || null,
+        createdAt: new Date().toISOString().split('T')[0],
+      };
+      setCampaigns(prev => [...prev, newCampaign]);
+      toast.success('Campaign saved as draft');
+    }
+
+    setIsDialogOpen(false);
+  };
+
+  const handleSchedule = () => {
+    if (!formData.name.trim()) {
+      toast.error('Campaign name is required');
+      return;
+    }
+    if (!formData.scheduledAt) {
+      toast.error('Please select a schedule date');
+      return;
+    }
+
+    const audience = audienceGroups.find(g => g.id === formData.audienceGroup)?.count || 0;
+
+    const newCampaign: Campaign = {
+      id: `campaign-${Date.now()}`,
+      name: formData.name,
+      status: 'scheduled',
+      type: formData.type,
+      audience,
+      sent: 0,
+      delivered: 0,
+      opened: 0,
+      clicked: 0,
+      scheduledAt: formData.scheduledAt,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setCampaigns(prev => [...prev, newCampaign]);
+    toast.success('Campaign scheduled');
+    setIsDialogOpen(false);
+  };
+
+  const handleSendNow = () => {
+    if (!formData.name.trim()) {
+      toast.error('Campaign name is required');
+      return;
+    }
+
+    const audience = audienceGroups.find(g => g.id === formData.audienceGroup)?.count || 0;
+
+    const newCampaign: Campaign = {
+      id: `campaign-${Date.now()}`,
+      name: formData.name,
+      status: 'active',
+      type: formData.type,
+      audience,
+      sent: audience,
+      delivered: Math.floor(audience * 0.98),
+      opened: 0,
+      clicked: 0,
+      scheduledAt: null,
+      createdAt: new Date().toISOString().split('T')[0],
+    };
+    setCampaigns(prev => [...prev, newCampaign]);
+    toast.success(`Campaign sent to ${audience.toLocaleString()} recipients`);
+    setIsDialogOpen(false);
+  };
+
+  const handlePauseCampaign = (campaignId: string) => {
+    setCampaigns(prev => prev.map(c => 
+      c.id === campaignId ? { ...c, status: 'paused' as const } : c
+    ));
+    toast.success('Campaign paused');
+  };
+
+  const handleResumeCampaign = (campaignId: string) => {
+    setCampaigns(prev => prev.map(c => 
+      c.id === campaignId ? { ...c, status: 'active' as const } : c
+    ));
+    toast.success('Campaign resumed');
+  };
+
+  const handleDeleteCampaign = (campaignId: string) => {
+    setCampaigns(prev => prev.filter(c => c.id !== campaignId));
+    toast.success('Campaign deleted');
+  };
+
+  const activeCampaigns = campaigns.filter(c => c.status === 'active').length;
+  const scheduledCampaigns = campaigns.filter(c => c.status === 'scheduled').length;
+  const totalReach = campaigns.reduce((acc, c) => acc + c.audience, 0);
+  const avgOpenRate = campaigns.filter(c => c.delivered > 0).length > 0
+    ? Math.round(
+        campaigns
+          .filter(c => c.delivered > 0)
+          .reduce((acc, c) => acc + (c.opened / c.delivered) * 100, 0) /
+        campaigns.filter(c => c.delivered > 0).length
+      )
+    : 0;
+
   return (
     <div className="space-y-4">
       {/* Header Actions */}
       <div className="flex items-center justify-between">
         <div>
-          <h3 className="font-semibold">Email Campaigns</h3>
+          <h3 className="font-semibold text-foreground">Email Campaigns</h3>
           <p className="text-sm text-muted-foreground">
             Create and manage bulk email campaigns, newsletters, and announcements
           </p>
         </div>
-        <Button className="gap-2">
+        <Button className="gap-2" onClick={handleNewCampaign}>
           <Plus className="h-4 w-4" />
           New Campaign
         </Button>
@@ -108,7 +303,7 @@ export function CampaignsPanel() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Active</p>
-                <p className="text-xl font-bold">1</p>
+                <p className="text-xl font-bold text-foreground">{activeCampaigns}</p>
               </div>
             </div>
           </CardContent>
@@ -121,7 +316,7 @@ export function CampaignsPanel() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Scheduled</p>
-                <p className="text-xl font-bold">1</p>
+                <p className="text-xl font-bold text-foreground">{scheduledCampaigns}</p>
               </div>
             </div>
           </CardContent>
@@ -134,7 +329,7 @@ export function CampaignsPanel() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Total Reach</p>
-                <p className="text-xl font-bold">17.1K</p>
+                <p className="text-xl font-bold text-foreground">{(totalReach / 1000).toFixed(1)}K</p>
               </div>
             </div>
           </CardContent>
@@ -147,7 +342,7 @@ export function CampaignsPanel() {
               </div>
               <div>
                 <p className="text-xs text-muted-foreground">Avg Open Rate</p>
-                <p className="text-xl font-bold">42.3%</p>
+                <p className="text-xl font-bold text-foreground">{avgOpenRate}%</p>
               </div>
             </div>
           </CardContent>
@@ -157,12 +352,12 @@ export function CampaignsPanel() {
       {/* Campaigns List */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-base">All Campaigns</CardTitle>
+          <CardTitle className="text-base text-foreground">All Campaigns</CardTitle>
           <CardDescription>Manage your email campaigns and track performance</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
-            {mockCampaigns.map((campaign) => {
+            {campaigns.map((campaign) => {
               const deliveryRate = campaign.sent > 0 
                 ? Math.round((campaign.delivered / campaign.sent) * 100) 
                 : 0;
@@ -180,14 +375,14 @@ export function CampaignsPanel() {
                 >
                   <div className="flex-1">
                     <div className="flex items-center gap-2 mb-1">
-                      <h4 className="font-medium">{campaign.name}</h4>
+                      <h4 className="font-medium text-foreground">{campaign.name}</h4>
                       <Badge 
                         className={`text-white gap-1 ${statusStyles[campaign.status]?.color}`}
                       >
                         {statusStyles[campaign.status]?.icon}
                         {campaign.status}
                       </Badge>
-                      <Badge variant="outline">{campaign.type}</Badge>
+                      <Badge variant="outline" className="text-foreground border-border">{campaign.type}</Badge>
                     </div>
                     <div className="flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
@@ -207,21 +402,21 @@ export function CampaignsPanel() {
                         <div>
                           <div className="flex items-center justify-between text-xs mb-1">
                             <span className="text-muted-foreground">Delivered</span>
-                            <span>{deliveryRate}%</span>
+                            <span className="text-foreground">{deliveryRate}%</span>
                           </div>
                           <Progress value={deliveryRate} className="h-1" />
                         </div>
                         <div>
                           <div className="flex items-center justify-between text-xs mb-1">
                             <span className="text-muted-foreground">Opened</span>
-                            <span>{openRate}%</span>
+                            <span className="text-foreground">{openRate}%</span>
                           </div>
                           <Progress value={openRate} className="h-1" />
                         </div>
                         <div>
                           <div className="flex items-center justify-between text-xs mb-1">
                             <span className="text-muted-foreground">Clicked</span>
-                            <span>{clickRate}%</span>
+                            <span className="text-foreground">{clickRate}%</span>
                           </div>
                           <Progress value={clickRate} className="h-1" />
                         </div>
@@ -231,17 +426,32 @@ export function CampaignsPanel() {
                   
                   <div className="flex items-center gap-1">
                     {campaign.status === 'active' && (
-                      <Button variant="ghost" size="icon">
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="text-foreground"
+                        onClick={() => handlePauseCampaign(campaign.id)}
+                      >
                         <Pause className="h-4 w-4" />
                       </Button>
                     )}
-                    {campaign.status === 'draft' && (
-                      <Button variant="ghost" size="icon">
+                    {(campaign.status === 'draft' || campaign.status === 'paused') && (
+                      <Button 
+                        variant="ghost" 
+                        size="icon"
+                        className="text-foreground"
+                        onClick={() => handleResumeCampaign(campaign.id)}
+                      >
                         <Play className="h-4 w-4" />
                       </Button>
                     )}
-                    <Button variant="ghost" size="icon">
-                      <MoreHorizontal className="h-4 w-4" />
+                    <Button 
+                      variant="ghost" 
+                      size="icon"
+                      className="text-destructive hover:text-destructive/80"
+                      onClick={() => handleDeleteCampaign(campaign.id)}
+                    >
+                      <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
@@ -250,6 +460,119 @@ export function CampaignsPanel() {
           </div>
         </CardContent>
       </Card>
+
+      {/* New Campaign Dialog */}
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">Create New Campaign</DialogTitle>
+            <DialogDescription>
+              Set up a new email campaign for your audience
+            </DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="space-y-1.5">
+              <Label htmlFor="campaign-name" className="text-foreground">Campaign Name</Label>
+              <Input
+                id="campaign-name"
+                value={formData.name}
+                onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))}
+                placeholder="e.g., February Newsletter"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label className="text-foreground">Type</Label>
+                <Select 
+                  value={formData.type} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, type: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="marketing">Marketing</SelectItem>
+                    <SelectItem value="newsletter">Newsletter</SelectItem>
+                    <SelectItem value="transactional">Transactional</SelectItem>
+                    <SelectItem value="announcement">Announcement</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-foreground">Audience</Label>
+                <Select 
+                  value={formData.audienceGroup} 
+                  onValueChange={(v) => setFormData(prev => ({ ...prev, audienceGroup: v }))}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {audienceGroups.map(group => (
+                      <SelectItem key={group.id} value={group.id}>
+                        {group.name} ({group.count.toLocaleString()})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="subject" className="text-foreground">Subject Line</Label>
+              <Input
+                id="subject"
+                value={formData.subject}
+                onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+                placeholder="Enter email subject..."
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="content" className="text-foreground">Email Content</Label>
+              <Textarea
+                id="content"
+                value={formData.content}
+                onChange={(e) => setFormData(prev => ({ ...prev, content: e.target.value }))}
+                placeholder="Write your campaign content..."
+                className="min-h-[120px]"
+              />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="schedule" className="text-foreground">Schedule (Optional)</Label>
+              <Input
+                id="schedule"
+                type="datetime-local"
+                value={formData.scheduledAt}
+                onChange={(e) => setFormData(prev => ({ ...prev, scheduledAt: e.target.value }))}
+              />
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 flex-col sm:flex-row">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="secondary" onClick={handleSaveDraft} className="gap-2">
+              <Save className="h-4 w-4" />
+              Save Draft
+            </Button>
+            {formData.scheduledAt && (
+              <Button variant="secondary" onClick={handleSchedule} className="gap-2">
+                <Clock className="h-4 w-4" />
+                Schedule
+              </Button>
+            )}
+            <Button onClick={handleSendNow} className="gap-2">
+              <Send className="h-4 w-4" />
+              Send Now
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
