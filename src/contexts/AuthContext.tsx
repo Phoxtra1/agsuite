@@ -17,6 +17,7 @@ function isLovablePreview(): boolean {
     const host = window.location.hostname;
     return (
       host.includes("lovable.app") ||
+      host.includes("lovableproject.com") ||
       host.includes("localhost") ||
       host.includes("127.0.0.1")
     );
