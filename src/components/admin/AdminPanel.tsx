@@ -188,17 +188,19 @@ export function AdminPanel() {
 
             <TableBody>
               {products.map((product) => {
-                const iconNode = getProductIcon(product.id);
+                const IconComponent = getProductIcon(product.id);
 
                 return (
                   <TableRow key={product.id}>
-                    <TableCell>{iconNode}</TableCell>
+                    <TableCell>
+                      <IconComponent className="w-8 h-8" />
+                    </TableCell>
 
                     <TableCell>
                       <div>
                         <p className="font-medium">{product.name}</p>
                         <p className="text-sm text-muted-foreground line-clamp-1">
-                          {product.description}
+                          {product.description || 'No description'}
                         </p>
                       </div>
                     </TableCell>
@@ -222,7 +224,7 @@ export function AdminPanel() {
                         <Badge variant="outline">Public</Badge>
                       ) : (
                         <div className="flex flex-wrap gap-1">
-                          {product.allowedRoles.slice(0, 2).map((role) => (
+                          {(product.allowedRoles || []).slice(0, 2).map((role) => (
                             <Badge
                               key={role}
                               variant="secondary"
@@ -232,9 +234,9 @@ export function AdminPanel() {
                             </Badge>
                           ))}
 
-                          {product.allowedRoles.length > 2 && (
+                          {(product.allowedRoles || []).length > 2 && (
                             <Badge variant="secondary" className="text-xs">
-                              +{product.allowedRoles.length - 2}
+                              +{(product.allowedRoles || []).length - 2}
                             </Badge>
                           )}
                         </div>

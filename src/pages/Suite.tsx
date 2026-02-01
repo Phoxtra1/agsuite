@@ -1,5 +1,5 @@
 import React from 'react';
-import { Routes, Route, useNavigate, useLocation } from 'react-router-dom';
+import { Routes, Route, useNavigate, useLocation, Navigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { SuiteNav } from '@/components/suite/SuiteNav';
 import { OverviewPage } from '@/components/suite/pages/OverviewPage';
@@ -8,16 +8,17 @@ import { WhyAminevaPage } from '@/components/suite/pages/WhyAminevaPage';
 import { HowItWorksPage } from '@/components/suite/pages/HowItWorksPage';
 import { ProfilePage } from '@/components/suite/pages/ProfilePage';
 import { SettingsPage } from '@/components/suite/pages/SettingsPage';
-import { AdminPanel } from '@/components/admin/AdminPanel';
+import { AminevaConsole } from '@/components/admin/AminevaConsole';
 
-type TabView = 'overview' | 'products' | 'why' | 'how' | 'admin' | 'profile' | 'settings';
+type TabView = 'overview' | 'products' | 'why' | 'how' | 'console' | 'profile' | 'settings';
 
 export default function SuitePage() {
   const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
-  const isSuperAdmin = user?.role === 'super_admin';
+  // Admin check: role === 'super_admin' or role === 'manager' (will add isAdmin later via profile)
+  const isAdmin = user?.role === 'super_admin';
   
   // Determine current tab from URL
   const getCurrentTab = (): TabView => {
@@ -25,7 +26,7 @@ export default function SuitePage() {
     if (path === '/products') return 'products';
     if (path === '/why') return 'why';
     if (path === '/how') return 'how';
-    if (path === '/admin') return 'admin';
+    if (path === '/console') return 'console';
     if (path === '/profile') return 'profile';
     if (path === '/settings') return 'settings';
     return 'overview';
@@ -39,7 +40,7 @@ export default function SuitePage() {
       products: '/suite/products',
       why: '/suite/why',
       how: '/suite/how',
-      admin: '/suite/admin',
+      console: '/suite/console',
       profile: '/suite/profile',
       settings: '/suite/settings',
     };
@@ -54,7 +55,7 @@ export default function SuitePage() {
       <SuiteNav 
         currentTab={currentTab}
         onTabChange={handleTabChange}
-        isSuperAdmin={isSuperAdmin}
+        isAdmin={isAdmin}
       />
       
       {/* Main content area - offset by sidebar width */}
@@ -76,7 +77,15 @@ export default function SuitePage() {
           <Route path="/how" element={<HowItWorksPage />} />
           <Route path="/profile" element={<ProfilePage />} />
           <Route path="/settings" element={<SettingsPage />} />
-          {isSuperAdmin && <Route path="/admin" element={<AdminPanel />} />}
+          {/* Amineva Console - admin only */}
+          <Route 
+            path="/console" 
+            element={
+              isAdmin ? <AminevaConsole /> : <Navigate to="/suite" replace />
+            } 
+          />
+          {/* Legacy admin route redirect */}
+          <Route path="/admin" element={<Navigate to="/suite/console" replace />} />
         </Routes>
       </main>
     </div>

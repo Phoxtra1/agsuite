@@ -13,24 +13,24 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Sun, Moon, LogOut, User, Settings, LayoutDashboard, Package, HelpCircle, Workflow, Shield } from 'lucide-react';
+import { Sun, Moon, LogOut, User, Settings, LayoutDashboard, Package, HelpCircle, Workflow, Shield, Terminal } from 'lucide-react';
 import amvLogo from '@/assets/amv_global_logo.png';
 
-type TabView = 'overview' | 'products' | 'why' | 'how' | 'admin' | 'profile' | 'settings';
+type TabView = 'overview' | 'products' | 'why' | 'how' | 'console' | 'profile' | 'settings';
 
 interface SuiteNavProps {
   currentTab: TabView;
   onTabChange: (tab: TabView) => void;
-  isSuperAdmin: boolean;
+  isAdmin: boolean;
 }
 
-export function SuiteNav({ currentTab, onTabChange, isSuperAdmin }: SuiteNavProps) {
+export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
   const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   
   const initials = user?.name
-    .split(' ')
+    ?.split(' ')
     .map(n => n[0])
     .join('')
     .toUpperCase()
@@ -52,13 +52,13 @@ export function SuiteNav({ currentTab, onTabChange, isSuperAdmin }: SuiteNavProp
   const tabs = [
     { id: 'overview' as TabView, label: 'Overview', icon: LayoutDashboard },
     { id: 'products' as TabView, label: 'Products', icon: Package },
-    { id: 'why' as TabView, label: 'Why Amineva Global?', icon: HelpCircle },
+    { id: 'why' as TabView, label: 'Why Amineva?', icon: HelpCircle },
     { id: 'how' as TabView, label: 'How It Works', icon: Workflow },
   ];
 
   return (
     <aside className="fixed left-0 top-0 h-full w-64 bg-sidebar-background border-r border-sidebar-border flex flex-col z-50">
-      {/* Logo only - no brand name or slogan */}
+      {/* Logo */}
       <div className="p-4 flex items-center justify-center border-b border-sidebar-border">
         <img src={amvLogo} alt="Amineva Global" className="h-12 w-12 rounded-full" />
       </div>
@@ -79,18 +79,25 @@ export function SuiteNav({ currentTab, onTabChange, isSuperAdmin }: SuiteNavProp
           </Button>
         ))}
         
-        {/* Admin tab - only for super_admin */}
-        {isSuperAdmin && (
-          <Button
-            variant="ghost"
-            onClick={() => onTabChange('admin')}
-            className={`w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
-              currentTab === 'admin' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
-            }`}
-          >
-            <Shield className="h-4 w-4" />
-            <span className="text-sm">Admin</span>
-          </Button>
+        {/* Amineva Console - only for admins (role=manager or isAdmin=true) */}
+        {isAdmin && (
+          <>
+            <div className="pt-4 pb-2">
+              <span className="text-xs font-medium text-sidebar-foreground/50 uppercase tracking-wider px-3">
+                Administration
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              onClick={() => onTabChange('console')}
+              className={`w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+                currentTab === 'console' ? 'bg-sidebar-accent text-sidebar-accent-foreground' : ''
+              }`}
+            >
+              <Terminal className="h-4 w-4" />
+              <span className="text-sm">Amineva Console</span>
+            </Button>
+          </>
         )}
       </nav>
       
