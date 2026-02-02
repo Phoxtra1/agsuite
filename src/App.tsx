@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -9,6 +9,9 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LoginForm } from "@/components/auth/LoginForm";
 import SuitePage from "./pages/Suite";
 import NotFound from "./pages/NotFound";
+
+// Lazy load invite bridge (rarely used)
+const InviteBridge = lazy(() => import("./pages/InviteBridge"));
 
 const queryClient = new QueryClient();
 
@@ -46,9 +49,10 @@ function HashNormalizer() {
   return null;
 }
 
-// Protected route wrapper - allows preview access for development
-function ProtectedRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+// Protected route wrapper for Suite Dashboard (managers only)
+// In preview mode, allow access for development testing
+function ProtectedSuiteRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
   const preview = isLovablePreview();
   
   // In Lovable preview, always allow access for development testing
@@ -64,12 +68,21 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     return <Navigate to="/" replace />;
   }
   
+  // Suite dashboard is ONLY for managers/super_admins
+  const isManager = user?.role === 'super_admin' || user?.role === 'manager';
+  if (!isManager) {
+    // Normal users should never land on Suite dashboard
+    // Redirect to gateway to select a product
+    return <Navigate to="/" replace />;
+  }
+  
   return <>{children}</>;
 }
 
-// Public route - redirects to suite if authenticated (only on production)
+// Public route - shows gateway for unauthenticated users
+// Managers go to suite, others go to product selection
 function PublicRoute({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
   const preview = isLovablePreview();
   
   // In Lovable preview, don't force redirect - allow staying on gateway
@@ -82,7 +95,13 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   }
   
   if (isAuthenticated) {
-    return <Navigate to="/suite" replace />;
+    // Only managers/super_admins go to suite dashboard
+    const isManager = user?.role === 'super_admin' || user?.role === 'manager';
+    if (isManager) {
+      return <Navigate to="/suite" replace />;
+    }
+    // Normal authenticated users stay on gateway to select product
+    // They will be routed to external product after selection
   }
   
   return <>{children}</>;
@@ -98,11 +117,18 @@ function AppRoutes() {
         </PublicRoute>
       } />
       
-      {/* Protected Suite routes (includes /suite/console for admins) */}
+      {/* Invite Bridge Routes - /invite/agstock?token=XXX or /invite/agis?token=XXX */}
+      <Route path="/invite/:product" element={
+        <Suspense fallback={<AminevaLoader />}>
+          <InviteBridge />
+        </Suspense>
+      } />
+      
+      {/* Protected Suite routes (managers/super_admins only) */}
       <Route path="/suite/*" element={
-        <ProtectedRoute>
+        <ProtectedSuiteRoute>
           <SuitePage />
-        </ProtectedRoute>
+        </ProtectedSuiteRoute>
       } />
       
       {/* Catch-all 404 */}
