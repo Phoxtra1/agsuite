@@ -6,6 +6,8 @@ import { CountrySelectionStep } from './CountrySelectionStep';
 import { AuthStep } from './AuthStep';
 import { loadGatewayState, saveGatewayState, clearGatewayState, GatewayStep } from '@/suite/gateway/gatewayState';
 import { loadProducts } from '@/data/products';
+import { getOrCreateProfile } from '@/lib/suiteProfile';
+import { shouldRouteToSuite } from '@/lib/productRouting';
 import { toast } from '@/components/ui/sonner';
 
 export function GatewayFlow() {
@@ -52,6 +54,7 @@ export function GatewayFlow() {
   };
 
   // Handle "Explore Later" - go to auth without product selection
+  // Only managers/super_admins will be routed to suite dashboard
   const handleExploreLater = () => {
     setSelectedProductKey(null);
     saveGatewayState({ selectedProductKey: null });
@@ -88,13 +91,28 @@ export function GatewayFlow() {
   };
 
   // Route user after auth
-  const routeToProduct = useCallback(() => {
+  const routeToProduct = useCallback(async () => {
     const products = loadProducts();
     
+    // Create/update lightweight Suite profile (non-blocking)
+    if (user?.id) {
+      getOrCreateProfile(user.id).catch(() => {
+        // Profile failure should not block routing
+      });
+    }
+
+    // If no product selected ("Explore Later")
     if (!selectedProductKey) {
-      // Explore later - go to suite dashboard
       clearGatewayState();
-      navigate('/suite', { replace: true });
+      
+      // Only managers/super_admins go to Suite dashboard
+      if (shouldRouteToSuite(user?.role)) {
+        navigate('/suite', { replace: true });
+      } else {
+        // Normal users stay on gateway - they must select a product
+        setStep('product_selection');
+        toast.info('Please select a product to continue');
+      }
       return;
     }
 
@@ -102,23 +120,42 @@ export function GatewayFlow() {
     if (!product) {
       toast.error('Product not found');
       clearGatewayState();
-      navigate('/suite', { replace: true });
+      setStep('product_selection');
       return;
     }
 
-    // TODO: Create/update Suite profile with selectedProductKey, countryCode, currencyCode
-    // This would be an Appwrite database call
+    // Check product status
+    if (product.status === 'offline') {
+      toast.error(`${product.name} is currently offline`);
+      clearGatewayState();
+      setStep('product_selection');
+      return;
+    }
 
-    // Clear gateway state
+    if (product.status === 'coming_soon') {
+      toast.info(`${product.name} is coming soon`);
+      clearGatewayState();
+      setStep('product_selection');
+      return;
+    }
+
+    // Clear gateway state before redirect
     clearGatewayState();
 
     // Route to external product
+    // Suite ONLY authenticates - products handle their own permissions
     if (product.url) {
       window.location.href = product.url;
     } else {
-      navigate('/suite', { replace: true });
+      // No URL defined - check if manager, else show error
+      if (shouldRouteToSuite(user?.role)) {
+        navigate('/suite', { replace: true });
+      } else {
+        toast.error('Product URL not configured');
+        setStep('product_selection');
+      }
     }
-  }, [selectedProductKey, selectedCountryCode, selectedCurrencyCode, navigate]);
+  }, [selectedProductKey, selectedCountryCode, selectedCurrencyCode, navigate, user]);
 
   // Handle successful auth
   const handleAuthSuccess = () => {

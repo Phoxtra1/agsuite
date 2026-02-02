@@ -1,0 +1,192 @@
+import React, { useEffect, useState } from 'react';
+import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
+import { AuthStep } from '@/components/gateway/AuthStep';
+import { 
+  storeInviteIntent, 
+  getInviteIntent, 
+  clearInviteIntent,
+  validateInviteWithProduct,
+  getInviteRedirectUrl,
+  type InviteProduct 
+} from '@/lib/inviteBridge';
+import { Card, CardContent } from '@/components/ui/card';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
+import { Loader2, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import amvLogo from '@/assets/amv_global_logo.png';
+
+type BridgeStep = 'storing' | 'auth' | 'validating' | 'redirecting' | 'error';
+
+export default function InviteBridge() {
+  const { product } = useParams<{ product: string }>();
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const { isAuthenticated, isLoading: authLoading } = useAuth();
+  
+  const [step, setStep] = useState<BridgeStep>('storing');
+  const [error, setError] = useState<string | null>(null);
+
+  const productKey = product as InviteProduct;
+  const token = searchParams.get('token');
+
+  // Step 1: Store invite intent
+  useEffect(() => {
+    if (!productKey || !token) {
+      setError('Invalid invite link. Missing product or token.');
+      setStep('error');
+      return;
+    }
+
+    if (productKey !== 'agstock' && productKey !== 'agis') {
+      setError('Invalid product. Only AGStock and AGIS invites are supported.');
+      setStep('error');
+      return;
+    }
+
+    // Store intent for post-auth processing
+    storeInviteIntent(productKey, token);
+    
+    // If already authenticated, proceed to validation
+    if (isAuthenticated && !authLoading) {
+      setStep('validating');
+    } else {
+      setStep('auth');
+    }
+  }, [productKey, token, isAuthenticated, authLoading]);
+
+  // Step 3: Validate invite after auth
+  useEffect(() => {
+    if (step !== 'validating') return;
+
+    const intent = getInviteIntent();
+    if (!intent) {
+      setError('Invite session expired. Please use the invite link again.');
+      setStep('error');
+      return;
+    }
+
+    async function validate() {
+      const result = await validateInviteWithProduct(intent!.productKey, intent!.token);
+      
+      if (!result.tokenValid) {
+        setError(result.error || 'This invite is invalid or has expired.');
+        setStep('error');
+        clearInviteIntent();
+        return;
+      }
+
+      const redirectUrl = getInviteRedirectUrl(intent!.productKey, result);
+      if (!redirectUrl) {
+        setError('Unable to determine redirect destination.');
+        setStep('error');
+        clearInviteIntent();
+        return;
+      }
+
+      // Success - redirect to product
+      setStep('redirecting');
+      clearInviteIntent();
+      
+      // Small delay for UX
+      setTimeout(() => {
+        window.location.href = redirectUrl;
+      }, 1000);
+    }
+
+    validate();
+  }, [step]);
+
+  // Handle successful auth
+  const handleAuthSuccess = () => {
+    setStep('validating');
+  };
+
+  // Handle back (cancel invite)
+  const handleBack = () => {
+    clearInviteIntent();
+    navigate('/', { replace: true });
+  };
+
+  const productName = productKey === 'agstock' ? 'AGStock' : productKey === 'agis' ? 'AGIS' : 'Product';
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background p-6">
+      <div className="w-full max-w-md">
+        {/* Logo */}
+        <div className="text-center mb-8">
+          <img 
+            src={amvLogo} 
+            alt="Amineva Global" 
+            className="h-16 w-16 rounded-full mx-auto mb-4"
+          />
+          <h1 className="text-xl font-semibold text-foreground">
+            {productName} Invite
+          </h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            You've been invited to join {productName}
+          </p>
+        </div>
+
+        {/* Step: Storing */}
+        {step === 'storing' && (
+          <Card className="border-border/50">
+            <CardContent className="py-8 flex items-center justify-center">
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step: Auth */}
+        {step === 'auth' && (
+          <AuthStep
+            selectedProductKey={productKey}
+            onBack={handleBack}
+            onAuthSuccess={handleAuthSuccess}
+          />
+        )}
+
+        {/* Step: Validating */}
+        {step === 'validating' && (
+          <Card className="border-border/50">
+            <CardContent className="py-12 text-center">
+              <Loader2 className="h-10 w-10 animate-spin text-accent mx-auto mb-4" />
+              <p className="text-muted-foreground">Validating your invite...</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step: Redirecting */}
+        {step === 'redirecting' && (
+          <Card className="border-border/50">
+            <CardContent className="py-12 text-center">
+              <CheckCircle2 className="h-10 w-10 text-green-500 mx-auto mb-4" />
+              <p className="text-foreground font-medium mb-2">Invite accepted!</p>
+              <p className="text-muted-foreground text-sm">Redirecting to {productName}...</p>
+            </CardContent>
+          </Card>
+        )}
+
+        {/* Step: Error */}
+        {step === 'error' && (
+          <Card className="border-border/50">
+            <CardContent className="py-8 space-y-4">
+              <Alert variant="destructive">
+                <AlertCircle className="h-4 w-4" />
+                <AlertDescription>{error}</AlertDescription>
+              </Alert>
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={handleBack}
+              >
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Return to Gateway
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+      </div>
+    </div>
+  );
+}
