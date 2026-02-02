@@ -231,8 +231,8 @@ export function LoginForm() {
   return (
     <div className="min-h-screen flex flex-col bg-background">
       <div className="flex flex-1">
-        {/* Left side - Animated visuals with logo at top-left */}
-        <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative suite-gradient overflow-hidden">
+        {/* Left side - Animated visuals with logo at top-left - Always dark for brand consistency */}
+        <div className="hidden lg:flex lg:w-1/2 xl:w-3/5 relative bg-[hsl(222_47%_11%)] dark:bg-[hsl(222_47%_14%)] overflow-hidden">
           {/* Logo and animated text aligned at top-left */}
           <div className="absolute top-6 left-6 z-20 flex items-start gap-4">
             <img 
@@ -248,8 +248,8 @@ export function LoginForm() {
           <AnimatedVisuals />
         </div>
 
-        {/* Right side - Gateway flow (product selection → country → auth) */}
-        <div className="flex-1 flex items-center justify-center p-6 lg:p-12 overflow-y-auto">
+        {/* Right side - Gateway flow (respects theme) */}
+        <div className="flex-1 flex items-center justify-center p-6 lg:p-12 overflow-y-auto bg-background">
           <div className="w-full max-w-md">
             {/* Mobile logo */}
             <div className="lg:hidden text-center mb-8">
@@ -266,7 +266,7 @@ export function LoginForm() {
       </div>
       
       {/* Footer */}
-      <footer className="py-4 text-center text-sm text-muted-foreground border-t border-border/50">
+      <footer className="py-4 text-center text-sm text-muted-foreground border-t border-border bg-background">
         © {currentYear} Suite Powered By Amineva Global. All Rights Reserved.
       </footer>
     </div>

@@ -1,13 +1,27 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { loadProducts } from '@/data/products';
-import { DEFAULT_CATEGORIES } from '@/types/product';
+import { DEFAULT_CATEGORIES, ProductData } from '@/types/product';
 import { getProductIcon } from '@/lib/products';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink, Settings } from 'lucide-react';
 
 export function AdminProductLinks() {
-  const products = loadProducts();
+  const [products, setProducts] = useState<ProductData[]>([]);
+
+  // Load products and listen for updates from Console
+  useEffect(() => {
+    setProducts(loadProducts());
+
+    const handleUpdate = () => setProducts(loadProducts());
+    window.addEventListener('productsUpdated', handleUpdate);
+    window.addEventListener('storage', handleUpdate);
+
+    return () => {
+      window.removeEventListener('productsUpdated', handleUpdate);
+      window.removeEventListener('storage', handleUpdate);
+    };
+  }, []);
   
   // Group products by category for admin links
   const adminProducts = DEFAULT_CATEGORIES.map(category => ({
@@ -18,21 +32,34 @@ export function AdminProductLinks() {
       .map(p => p!),
   })).filter(cat => cat.products.length > 0);
 
+  // Collect uncategorized products (custom products added via Console)
+  const categorizedIds = new Set(DEFAULT_CATEGORIES.flatMap(c => c.products));
+  const uncategorizedProducts = products.filter(p => !categorizedIds.has(p.id) && p.adminUrl);
+
+  // Add "Other Applications" category if there are uncategorized products with admin URLs
+  const allAdminProducts = uncategorizedProducts.length > 0
+    ? [...adminProducts, { id: 'other', name: 'Other Applications', order: 99, products: uncategorizedProducts }]
+    : adminProducts;
+
   const handleOpenAdmin = (adminUrl: string) => {
     window.open(adminUrl, '_blank');
   };
 
+  if (allAdminProducts.length === 0) {
+    return null;
+  }
+
   return (
     <Card className="mb-8">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
+        <CardTitle className="flex items-center gap-2 text-foreground">
           <Settings className="h-5 w-5" />
           Which application do you want to manage?
         </CardTitle>
       </CardHeader>
       <CardContent>
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {adminProducts.map((category) => (
+          {allAdminProducts.map((category) => (
             <div key={category.id} className="space-y-2">
               <h3 className="text-sm font-medium text-muted-foreground">
                 {category.name}
@@ -47,17 +74,17 @@ export function AdminProductLinks() {
                     onClick={() => !isDisabled && handleOpenAdmin(product.adminUrl!)}
                     disabled={isDisabled}
                     className={`
-                      w-full flex items-center gap-3 p-3 rounded-lg border transition-all text-left
+                      w-full flex items-center gap-3 p-3 rounded-lg border border-border transition-all text-left
                       ${isDisabled 
                         ? 'opacity-50 cursor-not-allowed bg-muted/30' 
-                        : 'hover:bg-accent/10 hover:border-accent/50 cursor-pointer'
+                        : 'hover:bg-accent/10 hover:border-accent/50 cursor-pointer bg-card'
                       }
                     `}
                   >
                     <IconComponent className="w-8 h-8 flex-shrink-0" />
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2">
-                        <span className="font-medium text-sm">{product.name} Admin</span>
+                        <span className="font-medium text-sm text-foreground">{product.name} Admin</span>
                         {isDisabled && (
                           <Badge variant="secondary" className="text-xs">
                             {product.status === 'offline' ? 'Offline' : 'Coming Soon'}

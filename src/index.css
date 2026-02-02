@@ -72,59 +72,59 @@
   }
 
   .dark {
-    /* Amineva Brand Colors - Dark Theme */
-    --background: 222 47% 6%;
+    /* Amineva Brand Colors - Dark Theme (Softer, less harsh) */
+    --background: 222 30% 14%;
     --foreground: 210 40% 98%;
 
-    --card: 222 47% 9%;
+    --card: 222 30% 17%;
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 47% 9%;
+    --popover: 222 30% 17%;
     --popover-foreground: 210 40% 98%;
 
     /* Inverted primary for dark mode */
     --primary: 210 40% 98%;
     --primary-foreground: 222 47% 11%;
 
-    --secondary: 222 40% 15%;
+    --secondary: 222 25% 22%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 222 40% 15%;
-    --muted-foreground: 220 9% 65%;
+    --muted: 222 25% 22%;
+    --muted-foreground: 220 15% 65%;
 
     /* Golden Amber stays consistent */
     --accent: 38 92% 50%;
     --accent-foreground: 222 47% 11%;
 
-    --destructive: 0 62% 30%;
+    --destructive: 0 62% 40%;
     --destructive-foreground: 210 40% 98%;
 
-    --success: 142 76% 36%;
+    --success: 142 76% 40%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
     --warning-foreground: 222 47% 11%;
 
-    --border: 222 40% 18%;
-    --input: 222 40% 18%;
+    --border: 222 20% 26%;
+    --input: 222 20% 26%;
     --ring: 210 40% 80%;
 
-    /* Sidebar Dark */
-    --sidebar-background: 222 47% 6%;
+    /* Sidebar Dark - Softer */
+    --sidebar-background: 222 30% 14%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 38 92% 50%;
     --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 222 40% 12%;
+    --sidebar-accent: 222 25% 20%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 40% 15%;
+    --sidebar-border: 222 20% 24%;
     --sidebar-ring: 38 92% 50%;
 
     /* Suite-specific tokens dark */
-    --suite-gradient-start: 222 47% 6%;
-    --suite-gradient-end: 222 47% 11%;
+    --suite-gradient-start: 222 30% 14%;
+    --suite-gradient-end: 222 30% 18%;
     --suite-glow: 38 92% 50%;
-    --suite-surface: 222 47% 6%;
-    --suite-surface-elevated: 222 47% 9%;
+    --suite-surface: 222 30% 14%;
+    --suite-surface-elevated: 222 30% 17%;
   }
 }
 
