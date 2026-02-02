@@ -6,8 +6,6 @@ import {
   storeInviteIntent, 
   getInviteIntent, 
   clearInviteIntent,
-  validateInviteWithProduct,
-  getInviteRedirectUrl,
   type InviteProduct 
 } from '@/lib/inviteBridge';
 import { Card, CardContent } from '@/components/ui/card';
@@ -55,7 +53,9 @@ export default function InviteBridge() {
     }
   }, [productKey, token, isAuthenticated, authLoading]);
 
-  // Step 3: Validate invite after auth
+  // Step 3: Route to product after auth
+  // Suite does NOT validate tokens - it only routes to the correct entry point
+  // The receiving product (AGStock/AGIS) validates the token and handles roles
   useEffect(() => {
     if (step !== 'validating') return;
 
@@ -66,35 +66,32 @@ export default function InviteBridge() {
       return;
     }
 
-    async function validate() {
-      const result = await validateInviteWithProduct(intent!.productKey, intent!.token);
-      
-      if (!result.tokenValid) {
-        setError(result.error || 'This invite is invalid or has expired.');
-        setStep('error');
-        clearInviteIntent();
-        return;
-      }
+    // Direct routing based on product - Suite only routes, products validate
+    const inviteRoutes: Record<InviteProduct, string> = {
+      agstock: 'https://stock.amineva.com/employee', // Employee entry - AGStock handles PIN + validation
+      agis: 'https://app.amineva.com/team', // Team entry - AGIS handles validation
+    };
 
-      const redirectUrl = getInviteRedirectUrl(intent!.productKey, result);
-      if (!redirectUrl) {
-        setError('Unable to determine redirect destination.');
-        setStep('error');
-        clearInviteIntent();
-        return;
-      }
-
-      // Success - redirect to product
-      setStep('redirecting');
+    const redirectUrl = inviteRoutes[intent.productKey];
+    
+    if (!redirectUrl) {
+      setError('Unable to determine redirect destination.');
+      setStep('error');
       clearInviteIntent();
-      
-      // Small delay for UX
-      setTimeout(() => {
-        window.location.href = redirectUrl;
-      }, 1000);
+      return;
     }
 
-    validate();
+    // Build redirect URL with token for product to validate
+    const urlWithToken = `${redirectUrl}?token=${encodeURIComponent(intent.token)}`;
+
+    // Success - redirect to product with token
+    setStep('redirecting');
+    clearInviteIntent();
+    
+    // Small delay for UX
+    setTimeout(() => {
+      window.location.href = urlWithToken;
+    }, 1000);
   }, [step]);
 
   // Handle successful auth
@@ -160,7 +157,7 @@ export default function InviteBridge() {
         {step === 'redirecting' && (
           <Card className="border-border/50">
             <CardContent className="py-12 text-center">
-              <CheckCircle2 className="h-10 w-10 text-green-500 mx-auto mb-4" />
+              <CheckCircle2 className="h-10 w-10 text-accent mx-auto mb-4" />
               <p className="text-foreground font-medium mb-2">Invite accepted!</p>
               <p className="text-muted-foreground text-sm">Redirecting to {productName}...</p>
             </CardContent>
