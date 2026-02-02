@@ -34,13 +34,13 @@ const PRODUCT_ENDPOINTS: Record<InviteProduct, string> = {
   agis: 'https://app.amineva.com/api/validate-invite',
 };
 
-// Post-validation redirect URLs
+// Post-validation redirect URLs (Suite routes to entry points, apps handle PIN/roles)
 const PRODUCT_REDIRECTS: Record<InviteProduct, Record<string, string>> = {
   agstock: {
-    employee: 'https://stock.amineva.com/employees',
+    employee: 'https://stock.amineva.com/employee', // Employee dashboard entry - AGStock handles PIN
   },
   agis: {
-    team: 'https://app.amineva.com/team',
+    team: 'https://app.amineva.com/team', // Team dashboard entry - no PIN required
   },
 };
 

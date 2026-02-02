@@ -142,9 +142,19 @@ export function GatewayFlow() {
     // Clear gateway state before redirect
     clearGatewayState();
 
-    // Route to external product
-    // Suite ONLY authenticates - products handle their own permissions
-    if (product.url) {
+    // Route to external product dashboard entry point
+    // Suite ONLY authenticates - products handle PIN and permissions
+    const routeConfig = {
+      agstock: 'https://stock.amineva.com/dashboard', // Shop Owner entry - AGStock handles PIN
+      agis: 'https://app.amineva.com/clients', // Client entry - no PIN
+    };
+
+    const targetUrl = routeConfig[selectedProductKey as keyof typeof routeConfig];
+    
+    if (targetUrl) {
+      window.location.href = targetUrl;
+    } else if (product.url) {
+      // Fallback to product URL for other products
       window.location.href = product.url;
     } else {
       // No URL defined - check if manager, else show error
