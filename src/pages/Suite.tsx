@@ -10,11 +10,14 @@ import { ProfilePage } from '@/components/suite/pages/ProfilePage';
 import { SettingsPage } from '@/components/suite/pages/SettingsPage';
 import { AminevaConsole } from '@/components/admin/AminevaConsole';
 import { ComsSystem } from '@/components/coms/ComsSystem';
+import { TwoFactorSetup } from '@/components/auth/TwoFactorSetup';
+import { TwoFactorVerify } from '@/components/auth/TwoFactorVerify';
+import { toast } from 'sonner';
 
 type TabView = 'overview' | 'products' | 'why' | 'how' | 'console' | 'coms' | 'profile' | 'settings';
 
 export default function SuitePage() {
-  const { user } = useAuth();
+  const { user, mfaState, completeMfaSetup, completeMfaVerification } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   
@@ -27,6 +30,42 @@ export default function SuitePage() {
     window.location.hostname.includes('127.0.0.1')
   );
   const isAdmin = isPreviewMode || user?.role === 'super_admin' || user?.role === 'manager';
+  
+  // Handle 2FA setup complete
+  const handleMfaSetupComplete = () => {
+    completeMfaSetup();
+    toast.success('Two-factor authentication enabled!');
+  };
+
+  // Handle 2FA verification complete
+  const handleMfaVerifyComplete = () => {
+    completeMfaVerification();
+    toast.success('Verification successful!');
+  };
+
+  // Handle recovery request
+  const handleMfaRecovery = () => {
+    toast.info('Please contact an administrator to reset your 2FA.');
+  };
+
+  // Block access until 2FA is complete
+  if (mfaState?.required) {
+    return (
+      <div className="min-h-screen bg-background flex items-center justify-center p-6">
+        <div className="w-full max-w-md">
+          {mfaState.setupRequired ? (
+            <TwoFactorSetup onSetupComplete={handleMfaSetupComplete} />
+          ) : (
+            <TwoFactorVerify
+              challengeId={mfaState.challengeId || ''}
+              onVerifyComplete={handleMfaVerifyComplete}
+              onRecovery={handleMfaRecovery}
+            />
+          )}
+        </div>
+      </div>
+    );
+  }
   
   // Determine current tab from URL
   const getCurrentTab = (): TabView => {

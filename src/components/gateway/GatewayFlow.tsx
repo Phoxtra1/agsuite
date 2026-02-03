@@ -1,21 +1,25 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { ProductSelectionStep } from './ProductSelectionStep';
 import { CountrySelectionStep } from './CountrySelectionStep';
 import { AuthStep } from './AuthStep';
+import { TwoFactorSetup } from '@/components/auth/TwoFactorSetup';
+import { TwoFactorVerify } from '@/components/auth/TwoFactorVerify';
 import { loadGatewayState, saveGatewayState, clearGatewayState, GatewayStep } from '@/suite/gateway/gatewayState';
 import { loadProducts } from '@/data/products';
 import { getOrCreateProfile } from '@/lib/suiteProfile';
 import { shouldRouteToSuite } from '@/lib/productRouting';
 import { toast } from '@/components/ui/sonner';
 
+// Extended step type to include 2FA steps
+type ExtendedGatewayStep = GatewayStep | 'mfa_setup' | 'mfa_verify';
+
 export function GatewayFlow() {
   const navigate = useNavigate();
-  const location = useLocation();
-  const { isAuthenticated, user } = useAuth();
+  const { isAuthenticated, user, mfaState, completeMfaSetup, completeMfaVerification } = useAuth();
   
-  const [step, setStep] = useState<GatewayStep>('product_selection');
+  const [step, setStep] = useState<ExtendedGatewayStep>('product_selection');
   const [selectedProductKey, setSelectedProductKey] = useState<string | null>(null);
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null);
   const [selectedCurrencyCode, setSelectedCurrencyCode] = useState<string | null>(null);
@@ -34,10 +38,19 @@ export function GatewayFlow() {
       } else if (!isAuthenticated) {
         setStep('auth');
       } else {
-        setStep('routing');
+        // Check MFA state after auth
+        if (mfaState?.required) {
+          if (mfaState.setupRequired) {
+            setStep('mfa_setup');
+          } else if (mfaState.challengeId) {
+            setStep('mfa_verify');
+          }
+        } else {
+          setStep('routing');
+        }
       }
     }
-  }, [isAuthenticated]);
+  }, [isAuthenticated, mfaState]);
 
   // Handle product selection
   const handleSelectProduct = (productKey: string) => {
@@ -90,7 +103,7 @@ export function GatewayFlow() {
     }
   };
 
-  // Route user after auth
+  // Route user after auth AND 2FA
   const routeToProduct = useCallback(async () => {
     const products = loadProducts();
     
@@ -167,10 +180,44 @@ export function GatewayFlow() {
     }
   }, [selectedProductKey, selectedCountryCode, selectedCurrencyCode, navigate, user]);
 
-  // Handle successful auth
+  // Handle successful auth - now check for MFA requirement
   const handleAuthSuccess = () => {
+    // After successful email/password auth, check if 2FA is required
+    if (mfaState?.required) {
+      if (mfaState.setupRequired) {
+        setStep('mfa_setup');
+      } else if (mfaState.challengeId) {
+        setStep('mfa_verify');
+      } else {
+        // MFA required but no specific state - go to setup
+        setStep('mfa_setup');
+      }
+    } else {
+      // No MFA required - proceed to routing
+      setStep('routing');
+      routeToProduct();
+    }
+  };
+
+  // Handle 2FA setup complete
+  const handleMfaSetupComplete = () => {
+    completeMfaSetup();
+    toast.success('Two-factor authentication enabled!');
     setStep('routing');
     routeToProduct();
+  };
+
+  // Handle 2FA verification complete
+  const handleMfaVerifyComplete = () => {
+    completeMfaVerification();
+    toast.success('Verification successful!');
+    setStep('routing');
+    routeToProduct();
+  };
+
+  // Handle recovery request
+  const handleMfaRecovery = () => {
+    toast.info('Please contact an administrator to reset your 2FA.');
   };
 
   // Render current step
@@ -198,6 +245,26 @@ export function GatewayFlow() {
           onBack={handleBackFromAuth}
           onAuthSuccess={handleAuthSuccess}
         />
+      );
+    
+    case 'mfa_setup':
+      return (
+        <div className="flex items-center justify-center py-8 px-4">
+          <TwoFactorSetup
+            onSetupComplete={handleMfaSetupComplete}
+          />
+        </div>
+      );
+    
+    case 'mfa_verify':
+      return (
+        <div className="flex items-center justify-center py-8 px-4">
+          <TwoFactorVerify
+            challengeId={mfaState?.challengeId || ''}
+            onVerifyComplete={handleMfaVerifyComplete}
+            onRecovery={handleMfaRecovery}
+          />
+        </div>
       );
     
     case 'routing':
