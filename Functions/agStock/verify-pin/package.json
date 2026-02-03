@@ -1,0 +1,17 @@
+{
+  "name": "verify-pin",
+  "version": "1.0.0",
+  "description": "Appwrite function to verify shop owner PIN with lockout/rate-limit logic",
+  "main": "index.js",
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "start": "node index.js",
+    "local": "node index.js"
+  },
+  "dependencies": {
+    "node-appwrite": "^11.0.0",
+    "argon2": "^0.30.0"
+  }
+}
