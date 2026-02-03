@@ -6,6 +6,13 @@ export interface User {
   name: string;
   role: UserRole;
   avatar?: string;
+  mfa?: boolean; // Whether MFA is enabled for this user
+}
+
+export interface MfaState {
+  required: boolean;
+  challengeId?: string;
+  setupRequired?: boolean; // True if user needs to set up MFA for the first time
 }
 
 export interface AuthContextType {
@@ -16,6 +23,11 @@ export interface AuthContextType {
   socialLogin: (provider: 'google' | 'microsoft' | 'facebook' | 'github') => Promise<void>;
   logout: () => Promise<void>;
   isAuthenticated: boolean;
+  // MFA-related
+  mfaState: MfaState | null;
+  completeMfaSetup: () => void;
+  completeMfaVerification: () => void;
+  checkMfaFactors: () => Promise<boolean>;
 }
 
 export const ROLE_LABELS: Record<UserRole, string> = {
