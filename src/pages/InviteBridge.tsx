@@ -43,6 +43,7 @@ export default function InviteBridge() {
   const [error, setError] = useState<string | null>(null);
   const [tokenData, setTokenData] = useState<TokenValidationResult | null>(null);
   const [sessionCleared, setSessionCleared] = useState(false);
+  const [authCompleted, setAuthCompleted] = useState(false);
 
   const productKey = product as InviteProduct;
   const token = searchParams.get('token');
@@ -128,23 +129,34 @@ export default function InviteBridge() {
     return url.toString();
   }, [authRedirect, productKey, token]);
 
-  // Handle successful auth - check MFA then accept invite
-  const handleAuthSuccess = useCallback(async () => {
-    // Check if MFA is required
+  // Handle successful auth - mark auth completed, let useEffect handle MFA routing
+  const handleAuthSuccess = useCallback(() => {
+    // Don't immediately route - set flag and let effect handle mfaState
+    setAuthCompleted(true);
+  }, []);
+
+  // Effect: Route to MFA after auth completes and mfaState updates
+  useEffect(() => {
+    if (!authCompleted) return;
+    if (!user) return; // Wait for user to be set
+    if (step !== 'auth') return; // Only process from auth step
+
+    // Now check MFA state (which should be updated by AuthContext)
     if (mfaState?.required) {
       if (mfaState.setupRequired) {
         setStep('mfa_setup');
       } else if (mfaState.challengeId) {
         setStep('mfa_verify');
       } else {
+        // MFA required but no challenge - needs setup
         setStep('mfa_setup');
       }
-      return;
+    } else {
+      // No MFA required - this should NOT happen for new accounts
+      // But handle it as a fallback (proceed to accept)
+      acceptAndRedirect();
     }
-
-    // No MFA - proceed to accept invite
-    await acceptAndRedirect();
-  }, [mfaState]);
+  }, [authCompleted, user, mfaState, step]);
 
   // Accept invite and redirect
   const acceptAndRedirect = useCallback(async () => {
