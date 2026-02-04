@@ -45,12 +45,16 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  // If already authenticated, proceed
+  // Track if we've already called onAuthSuccess to prevent loops
+  const [hasCalledAuthSuccess, setHasCalledAuthSuccess] = React.useState(false);
+
+  // If already authenticated on mount, proceed once
   useEffect(() => {
-    if (isAuthenticated) {
+    if (isAuthenticated && !hasCalledAuthSuccess) {
+      setHasCalledAuthSuccess(true);
       onAuthSuccess();
     }
-  }, [isAuthenticated, onAuthSuccess]);
+  }, [isAuthenticated, onAuthSuccess, hasCalledAuthSuccess]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
