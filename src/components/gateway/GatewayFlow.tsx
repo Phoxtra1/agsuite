@@ -5,7 +5,8 @@ import { ProductSelectionStep } from './ProductSelectionStep';
 import { CountrySelectionStep } from './CountrySelectionStep';
 import { AuthStep } from './AuthStep';
 import { TwoFactorSetup } from '@/components/auth/TwoFactorSetup';
-import { TwoFactorVerify } from '@/components/auth/TwoFactorVerify';
+import { TwoFactorDialog } from '@/components/auth/TwoFactorDialog';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { loadGatewayState, saveGatewayState, clearGatewayState, GatewayStep } from '@/suite/gateway/gatewayState';
 import { loadProducts } from '@/data/products';
 import { getOrCreateProfile } from '@/lib/suiteProfile';
@@ -275,11 +276,21 @@ export function GatewayFlow() {
     case 'mfa_verify':
       return (
         <div className="flex items-center justify-center py-8 px-4">
-          <TwoFactorVerify
-            challengeId={mfaState?.challengeId || ''}
-            onVerifyComplete={handleMfaVerifyComplete}
-            onRecovery={handleMfaRecovery}
-          />
+          <Card className="w-full max-w-md">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-medium">
+                Two-Factor Authentication
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TwoFactorDialog
+                onVerifyComplete={handleMfaVerifyComplete}
+                onEmailBackup={() => {
+                  toast.info('Email backup coming soon. Contact admin if needed.');
+                }}
+              />
+            </CardContent>
+          </Card>
         </div>
       );
     
