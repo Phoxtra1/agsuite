@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { is2FARecent } from '@/lib/stepUpAuth';
 import { ProductSelectionStep } from './ProductSelectionStep';
@@ -13,12 +13,19 @@ import { loadProducts } from '@/data/products';
 import { getOrCreateProfile } from '@/lib/suiteProfile';
 import { shouldRouteToSuite } from '@/lib/productRouting';
 import { toast } from '@/components/ui/sonner';
-
+import {
+  setAuthRedirect,
+  getAuthRedirect,
+  clearAuthRedirect,
+  getRedirectForRole,
+  isEmployeeRole,
+} from '@/lib/auth/authRedirect';
 // Extended step type to include 2FA steps
 type ExtendedGatewayStep = GatewayStep | 'mfa_setup' | 'mfa_verify';
 
 export function GatewayFlow() {
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const { isAuthenticated, user, mfaState, completeMfaSetup, completeMfaVerification } = useAuth();
   
   const [step, setStep] = useState<ExtendedGatewayStep>('product_selection');
@@ -31,6 +38,17 @@ export function GatewayFlow() {
   
   // Track if we're waiting for MFA state after auth success
   const [awaitingMfaState, setAwaitingMfaState] = useState(false);
+
+  // Get authRedirect from URL params (for step-up re-auth scenarios)
+  const authRedirectParam = searchParams.get('authRedirect');
+
+  // Store authRedirect on mount if provided via URL params
+  useEffect(() => {
+    if (authRedirectParam) {
+      // Store the redirect destination for use after 2FA
+      setAuthRedirect(authRedirectParam, searchParams.get('product') || undefined);
+    }
+  }, [authRedirectParam, searchParams]);
 
   // Load persisted state on mount - only run once
   useEffect(() => {
@@ -136,6 +154,7 @@ export function GatewayFlow() {
     // If no product selected ("Explore Later")
     if (!selectedProductKey) {
       clearGatewayState();
+      clearAuthRedirect();
       
       // Only managers/super_admins go to Suite dashboard
       if (shouldRouteToSuite(user?.role)) {
@@ -152,6 +171,7 @@ export function GatewayFlow() {
     if (!product) {
       toast.error('Product not found');
       clearGatewayState();
+      clearAuthRedirect();
       setStep('product_selection');
       return;
     }
@@ -160,6 +180,7 @@ export function GatewayFlow() {
     if (product.status === 'offline') {
       toast.error(`${product.name} is currently offline`);
       clearGatewayState();
+      clearAuthRedirect();
       setStep('product_selection');
       return;
     }
@@ -167,6 +188,7 @@ export function GatewayFlow() {
     if (product.status === 'coming_soon') {
       toast.info(`${product.name} is coming soon`);
       clearGatewayState();
+      clearAuthRedirect();
       setStep('product_selection');
       return;
     }
@@ -175,6 +197,14 @@ export function GatewayFlow() {
     // If the user's last 2FA verification is older than the product window,
     // block redirect and request a fresh authenticator code.
     if (!is2FARecent(selectedProductKey)) {
+      // Store intended destination BEFORE going to 2FA
+      // so we can redirect correctly after verification
+      const redirectUrl = getRedirectForRole(
+        selectedProductKey,
+        user?.role,
+        authRedirectParam
+      );
+      setAuthRedirect(redirectUrl, selectedProductKey, user?.role);
       setStep('mfa_verify');
       return;
     }
@@ -182,17 +212,23 @@ export function GatewayFlow() {
     // Clear gateway state before redirect
     clearGatewayState();
 
-    // Route to external product dashboard entry point
-    // Suite ONLY authenticates - products handle roles/permissions
-    const routeConfig = {
-      agstock: 'https://stock.amineva.com/shop', // Shop Owner entry
-      agis: 'https://app.amineva.com/dashboard', // Client dashboard entry
-    };
+    // Get the correct redirect URL based on:
+    // 1. authRedirect URL param (highest priority)
+    // 2. Stored authRedirect from session (for step-up scenarios)
+    // 3. Role-based default (employees -> /employees, owners -> /shop)
+    const targetUrl = getRedirectForRole(
+      selectedProductKey,
+      user?.role,
+      authRedirectParam
+    );
 
-    const targetUrl = routeConfig[selectedProductKey as keyof typeof routeConfig];
+    // Clear stored redirect after use
+    clearAuthRedirect();
     
-    if (targetUrl) {
+    if (targetUrl.startsWith('http')) {
       window.location.href = targetUrl;
+    } else if (targetUrl.startsWith('/')) {
+      navigate(targetUrl, { replace: true });
     } else if (product.url) {
       // Fallback to product URL for other products
       window.location.href = product.url;
@@ -205,7 +241,7 @@ export function GatewayFlow() {
         setStep('product_selection');
       }
     }
-  }, [selectedProductKey, selectedCountryCode, selectedCurrencyCode, navigate, user]);
+  }, [selectedProductKey, selectedCountryCode, selectedCurrencyCode, navigate, user, authRedirectParam]);
 
   // Trigger routing when step changes to 'routing'
   useEffect(() => {
