@@ -105,14 +105,20 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(mapAppwriteUser(u));
 
       // Check if user has MFA enabled
-      const mfaEnabled = await checkMfaFactors();
+      // Wrap in try-catch to prevent hanging on partial sessions
+      let mfaEnabled = false;
+      try {
+        mfaEnabled = await checkMfaFactors();
+      } catch (err) {
+        console.warn("MFA factor check failed, assuming setup required:", err);
+      }
       
       if (mfaEnabled) {
         // User has MFA - need to create challenge and verify
         try {
-          const challenge = await account.createMFAChallenge({
-            factor: AuthenticationFactor.Totp,
-          });
+          const challenge = await account.createMfaChallenge(
+            AuthenticationFactor.Totp
+          );
           setMfaState({
             required: true,
             challengeId: challenge.$id,
@@ -120,8 +126,11 @@ export function AuthProvider({ children }: AuthProviderProps) {
           });
         } catch (err) {
           console.error("MFA challenge creation failed:", err);
-          // Continue without MFA if challenge fails
-          setMfaState(null);
+          // If challenge fails, user may need to re-setup MFA
+          setMfaState({
+            required: true,
+            setupRequired: true,
+          });
         }
       } else {
         // User doesn't have MFA - needs to set it up
@@ -130,6 +139,9 @@ export function AuthProvider({ children }: AuthProviderProps) {
           setupRequired: true,
         });
       }
+    } catch (err) {
+      // Re-throw so AuthStep can display the error
+      throw err;
     } finally {
       setIsLoading(false);
     }
