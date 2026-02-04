@@ -1,18 +1,33 @@
 /**
  * Step-Up Authentication (Recurring 2FA)
  * 
- * Tracks last 2FA verification time and enforces recency windows per product.
+ * CRITICAL SECURITY REQUIREMENT:
+ * ==============================
+ * ALL products in Amineva Global Suite MUST enforce:
+ * 1. Suite account authentication (no product-level login)
+ * 2. 2FA verification before access
+ * 
+ * No product may allow access without a valid Suite session AND recent 2FA.
+ * Sub-products must use the useProductGate hook to enforce this.
  */
 
-// Security windows in milliseconds
+// Security windows in milliseconds - ALL products must be listed
 export const STEP_UP_WINDOWS = {
-  agstock: 5 * 60 * 1000,    // 5 minutes
-  agis: 10 * 60 * 1000,      // 10 minutes
-  hub: 10 * 60 * 1000,
-  ops: 10 * 60 * 1000,
-  amniva: 10 * 60 * 1000,
+  // High-security products (5 minutes)
+  agstock: 5 * 60 * 1000,    // AGStock: POS/inventory requires frequent re-auth
+  
+  // Standard products (10 minutes)
+  agis: 10 * 60 * 1000,      // AGIS: Intelligence platform
+  hub: 10 * 60 * 1000,       // Hub: Reports & publications
+  ops: 10 * 60 * 1000,       // Ops: Service operations
+  amniva: 10 * 60 * 1000,    // Amniva: Identity verification
+  
+  // Default for any unlisted product (10 minutes)
   default: 10 * 60 * 1000,
 } as const;
+
+// All registered product keys
+export const REGISTERED_PRODUCTS = Object.keys(STEP_UP_WINDOWS).filter(k => k !== 'default') as Array<keyof typeof STEP_UP_WINDOWS>;
 
 // Rate limiting
 const MAX_ATTEMPTS = 5;
