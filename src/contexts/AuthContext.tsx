@@ -129,39 +129,61 @@ export function AuthProvider({ children }: AuthProviderProps) {
       setUser(mapAppwriteUser(u));
 
       // Check if user has MFA enabled
-      // Wrap in try-catch to prevent hanging on partial sessions
-      let mfaEnabled = false;
+      // CRITICAL: Only assume setup required if we CONFIRM totp is false
+      // If the check fails, we default to verification (not setup)
+      let mfaEnabled: boolean | null = null; // null = unknown
       try {
         mfaEnabled = await checkMfaFactors();
       } catch (err) {
-        console.warn("MFA factor check failed, assuming setup required:", err);
+        console.warn("MFA factor check failed, will attempt verification:", err);
+        // Don't assume - we'll try to create a challenge
       }
       
-      if (mfaEnabled) {
-        // User has MFA - need to create challenge and verify
+      if (mfaEnabled === false) {
+        // CONFIRMED: User doesn't have MFA set up - needs to set it up
+        setMfaState({
+          required: true,
+          setupRequired: true,
+        });
+      } else {
+        // User has MFA OR check failed - try to create verification challenge
+        // This handles both mfaEnabled === true AND mfaEnabled === null (unknown)
         try {
           const challenge = await account.createMfaChallenge(
             AuthenticationFactor.Totp
           );
+          // Challenge created successfully - user has MFA, verify it
           setMfaState({
             required: true,
             challengeId: challenge.$id,
             setupRequired: false,
           });
-        } catch (err) {
-          console.error("MFA challenge creation failed:", err);
-          // If challenge fails, user may need to re-setup MFA
-          setMfaState({
-            required: true,
-            setupRequired: true,
-          });
+        } catch (err: unknown) {
+          // Challenge creation failed - check the error to determine next step
+          const errorMsg = err instanceof Error ? err.message : String(err);
+          const appwriteErr = err as { code?: number; type?: string };
+          
+          // Appwrite error codes:
+          // 401 = not authenticated (session issue)
+          // 400 "user_mfa_not_enabled" = no MFA factors set up
+          if (appwriteErr.type === 'user_mfa_not_enabled' || 
+              errorMsg.includes('MFA is not enabled') ||
+              errorMsg.includes('not enabled')) {
+            // Confirmed: User needs to set up MFA
+            setMfaState({
+              required: true,
+              setupRequired: true,
+            });
+          } else {
+            console.error("MFA challenge creation failed:", err);
+            // Unknown error - still require MFA verification
+            // The TwoFactorDialog will handle creating a new challenge
+            setMfaState({
+              required: true,
+              setupRequired: false,
+            });
+          }
         }
-      } else {
-        // User doesn't have MFA - needs to set it up
-        setMfaState({
-          required: true,
-          setupRequired: true,
-        });
       }
     } catch (err) {
       // Re-throw so AuthStep can display the error
