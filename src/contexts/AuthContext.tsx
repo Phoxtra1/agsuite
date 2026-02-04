@@ -10,7 +10,7 @@ import React, {
 import { ID, Models, OAuthProvider, AuthenticationFactor } from "appwrite";
 import { account } from "@/lib/appwrite";
 import { User, AuthContextType, MfaState } from "@/types/auth";
-import { setLast2FAVerifiedAt, clearLast2FAVerified } from "@/lib/stepUpAuth";
+import { setLast2FAVerifiedAt, clearLast2FAVerified, is2FARecent } from "@/lib/stepUpAuth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -58,7 +58,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
     }
   }, []);
 
-  // Load session and check MFA status
+  // Load session and check MFA status with step-up enforcement
   useEffect(() => {
     let active = true;
 
@@ -78,8 +78,31 @@ export function AuthProvider({ children }: AuthProviderProps) {
               setupRequired: true,
             });
           } else {
-            // MFA is already set up and verified (session is valid)
-            setMfaState(null);
+            // MFA is set up - check if 2FA verification is recent (step-up)
+            // Use default window (10 minutes) for session load checks
+            if (is2FARecent('default')) {
+              // 2FA is recent, session is valid
+              setMfaState(null);
+            } else {
+              // 2FA expired - require re-verification (no QR code, just TOTP entry)
+              try {
+                const challenge = await account.createMfaChallenge(
+                  AuthenticationFactor.Totp
+                );
+                setMfaState({
+                  required: true,
+                  challengeId: challenge.$id,
+                  setupRequired: false, // Not setup, just verification
+                });
+              } catch (err) {
+                console.error("Failed to create MFA challenge for step-up:", err);
+                // If challenge fails, still require verification
+                setMfaState({
+                  required: true,
+                  setupRequired: false,
+                });
+              }
+            }
           }
         }
       } catch {
