@@ -101,17 +101,24 @@ export default function InviteBridge() {
       return;
     }
 
-    // Build redirect URL with token for product to validate
-    const urlWithToken = `${redirectUrl}?token=${encodeURIComponent(intent.token)}`;
+    // Build redirect URL with token for product to validate.
+    // Use URL API to avoid accidentally dropping/duplicating query params.
+    const u = new URL(redirectUrl);
+    u.searchParams.set('token', intent.token);
+    const urlWithToken = u.toString();
 
     // Success - redirect to product with token
     setStep('redirecting');
-    clearInviteIntent();
     
     // Small delay for UX
     setTimeout(() => {
-      window.location.href = urlWithToken;
-    }, 1000);
+      // Keep intent until navigation is triggered to prevent losing token due to re-renders.
+      // Clear immediately before leaving.
+      clearInviteIntent();
+      // Trace the exact redirect URL for debugging (no sensitive data besides the invite token).
+      console.info('[InviteBridge] Redirecting to:', urlWithToken);
+      window.location.assign(urlWithToken);
+    }, 600);
   }, [step]);
 
   // Handle successful auth - check MFA
