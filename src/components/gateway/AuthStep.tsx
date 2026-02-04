@@ -45,16 +45,20 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState('');
 
-  // Track if we've already called onAuthSuccess to prevent loops
-  const [hasCalledAuthSuccess, setHasCalledAuthSuccess] = React.useState(false);
+  // Track if we've already triggered auth flow to prevent loops
+  const [authTriggered, setAuthTriggered] = React.useState(false);
 
-  // If already authenticated on mount, proceed once
+  // If already authenticated on mount AND has no pending MFA, proceed once
+  // This handles OAuth callbacks where user returns already authenticated
+  const { mfaState } = useAuth();
+  
   useEffect(() => {
-    if (isAuthenticated && !hasCalledAuthSuccess) {
-      setHasCalledAuthSuccess(true);
+    // Only auto-proceed if authenticated, no pending MFA, and we haven't triggered yet
+    if (isAuthenticated && !mfaState?.required && !authTriggered) {
+      setAuthTriggered(true);
       onAuthSuccess();
     }
-  }, [isAuthenticated, onAuthSuccess, hasCalledAuthSuccess]);
+  }, [isAuthenticated, mfaState, onAuthSuccess, authTriggered]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -76,9 +80,22 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
       } else {
         await login(email, password);
       }
+      // Mark that we've triggered auth - the parent GatewayFlow will now 
+      // watch for mfaState changes via its awaitingMfaState effect
+      setAuthTriggered(true);
       onAuthSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Authentication failed');
+      const errorMessage = err instanceof Error ? err.message : 'Authentication failed';
+      // Make error messages more user-friendly
+      if (errorMessage.includes('Invalid credentials') || errorMessage.includes('Invalid email or password')) {
+        setError('Invalid email or password. Please check your credentials and try again.');
+      } else if (errorMessage.includes('User not found') || errorMessage.includes('user_not_found')) {
+        setError('No account found with this email. Please register first.');
+      } else if (errorMessage.includes('too many requests') || errorMessage.includes('Rate limit')) {
+        setError('Too many login attempts. Please wait a moment and try again.');
+      } else {
+        setError(errorMessage);
+      }
     }
   };
 
