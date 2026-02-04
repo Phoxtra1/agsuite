@@ -1,129 +1,136 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { AuthStep } from '@/components/gateway/AuthStep';
+import { InviteAuthForm } from '@/components/invite/InviteAuthForm';
 import { TwoFactorSetup } from '@/components/auth/TwoFactorSetup';
 import { TwoFactorVerify } from '@/components/auth/TwoFactorVerify';
 import { 
-  storeInviteIntent, 
-  getInviteIntent, 
-  clearInviteIntent,
-  type InviteProduct 
-} from '@/lib/inviteBridge';
+  validateInviteToken, 
+  acceptInvite,
+  type TokenValidationResult 
+} from '@/lib/inviteTokenService';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
-import { Loader2, AlertCircle, CheckCircle2, ArrowLeft } from 'lucide-react';
+import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { toast } from 'sonner';
 import amvLogo from '@/assets/amv_global_logo.png';
 
-type BridgeStep = 'storing' | 'auth' | 'mfa_setup' | 'mfa_verify' | 'validating' | 'redirecting' | 'error';
+type InviteProduct = 'agstock' | 'agis';
+type BridgeStep = 'initializing' | 'validating_token' | 'auth' | 'mfa_setup' | 'mfa_verify' | 'accepting' | 'redirecting' | 'error';
+
+// Default redirect destinations after invite acceptance
+const DEFAULT_REDIRECTS: Record<InviteProduct, string> = {
+  agstock: 'https://stock.amineva.com/employees',
+  agis: 'https://app.amineva.com/team-register',
+};
 
 export default function InviteBridge() {
   const { product } = useParams<{ product: string }>();
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const { 
+    user,
     isAuthenticated, 
     isLoading: authLoading, 
+    logout,
     mfaState, 
     completeMfaSetup, 
     completeMfaVerification 
   } = useAuth();
   
-  const [step, setStep] = useState<BridgeStep>('storing');
+  const [step, setStep] = useState<BridgeStep>('initializing');
   const [error, setError] = useState<string | null>(null);
+  const [tokenData, setTokenData] = useState<TokenValidationResult | null>(null);
+  const [sessionCleared, setSessionCleared] = useState(false);
 
   const productKey = product as InviteProduct;
   const token = searchParams.get('token');
+  const authRedirect = searchParams.get('authRedirect');
 
-  // Step 1: Store invite intent
+  // Step 1: IMMEDIATELY reset auth context when token is present
+  // This MUST happen before any other auth checks
   useEffect(() => {
-    if (!productKey || !token) {
-      setError('Invalid invite link. Missing product or token.');
-      setStep('error');
-      return;
-    }
+    if (!token) return;
+    if (sessionCleared) return;
 
-    if (productKey !== 'agstock' && productKey !== 'agis') {
-      setError('Invalid product. Only AGStock and AGIS invites are supported.');
-      setStep('error');
-      return;
-    }
-
-    // Store intent for post-auth processing
-    storeInviteIntent(productKey, token);
-    
-    // If already authenticated, check MFA then proceed
-    if (isAuthenticated && !authLoading) {
-      // Check if MFA is required
-      if (mfaState?.required) {
-        if (mfaState.setupRequired) {
-          setStep('mfa_setup');
-        } else if (mfaState.challengeId) {
-          setStep('mfa_verify');
-        } else {
-          setStep('mfa_setup');
+    const clearSession = async () => {
+      // Force logout if there's any existing session
+      if (isAuthenticated && !authLoading) {
+        console.info('[InviteBridge] Token detected, clearing existing session');
+        try {
+          await logout();
+        } catch (err) {
+          console.warn('[InviteBridge] Logout failed (may already be logged out):', err);
         }
-      } else {
-        setStep('validating');
       }
-    } else {
-      setStep('auth');
-    }
-  }, [productKey, token, isAuthenticated, authLoading, mfaState]);
-
-  // Step 4: Route to product after auth + 2FA
-  // Suite does NOT validate tokens - it only routes to the correct entry point
-  // The receiving product (AGStock/AGIS) validates the token and handles roles
-  useEffect(() => {
-    if (step !== 'validating') return;
-
-    const intent = getInviteIntent();
-    if (!intent) {
-      setError('Invite session expired. Please use the invite link again.');
-      setStep('error');
-      return;
-    }
-
-    // Direct routing based on product - Suite only routes, products validate
-    const inviteRoutes: Record<InviteProduct, string> = {
-      agstock: 'https://stock.amineva.com/employees', // Employee entry based on role
-      agis: 'https://app.amineva.com/team-register', // Team registration entry
+      setSessionCleared(true);
     };
 
-    const redirectUrl = inviteRoutes[intent.productKey];
-    
-    if (!redirectUrl) {
-      setError('Unable to determine redirect destination.');
-      setStep('error');
-      clearInviteIntent();
-      return;
+    // Wait for auth to finish loading before clearing
+    if (!authLoading) {
+      clearSession();
     }
+  }, [token, isAuthenticated, authLoading, logout, sessionCleared]);
 
-    // Build redirect URL with token for product to validate.
-    // Use URL API to avoid accidentally dropping/duplicating query params.
-    const u = new URL(redirectUrl);
-    u.searchParams.set('token', intent.token);
-    const urlWithToken = u.toString();
+  // Step 2: Validate the token after session is cleared
+  useEffect(() => {
+    if (!sessionCleared) return;
+    if (step !== 'initializing') return;
 
-    // Success - redirect to product with token
-    setStep('redirecting');
+    const validateToken = async () => {
+      // Basic validation
+      if (!productKey || !token) {
+        setError('Invalid invite link. Missing product or token.');
+        setStep('error');
+        return;
+      }
+
+      if (productKey !== 'agstock' && productKey !== 'agis') {
+        setError('Invalid product. Only AGStock and AGIS invites are supported.');
+        setStep('error');
+        return;
+      }
+
+      setStep('validating_token');
+
+      // Validate token with product backend
+      const result = await validateInviteToken(productKey, token);
+      setTokenData(result);
+
+      if (result.status === 'expired' || result.status === 'used') {
+        setError('This invite link has expired or has already been used.');
+        setStep('error');
+        return;
+      }
+
+      if (result.status === 'invalid') {
+        setError('This invite link is invalid.');
+        setStep('error');
+        return;
+      }
+
+      // Token is valid - proceed to auth
+      setStep('auth');
+    };
+
+    validateToken();
+  }, [sessionCleared, step, productKey, token]);
+
+  // Get final redirect URL
+  const getFinalRedirectUrl = useCallback(() => {
+    // Use authRedirect if provided, otherwise use default
+    const baseUrl = authRedirect || DEFAULT_REDIRECTS[productKey];
     
-    // Small delay for UX
-    setTimeout(() => {
-      // Keep intent until navigation is triggered to prevent losing token due to re-renders.
-      // Clear immediately before leaving.
-      clearInviteIntent();
-      // Trace the exact redirect URL for debugging (no sensitive data besides the invite token).
-      console.info('[InviteBridge] Redirecting to:', urlWithToken);
-      window.location.assign(urlWithToken);
-    }, 600);
-  }, [step]);
+    // Append token to the redirect URL for product-side validation
+    const url = new URL(baseUrl);
+    url.searchParams.set('token', token || '');
+    return url.toString();
+  }, [authRedirect, productKey, token]);
 
-  // Handle successful auth - check MFA
-  const handleAuthSuccess = () => {
-    // After successful email/password auth, check if 2FA is required
+  // Handle successful auth - check MFA then accept invite
+  const handleAuthSuccess = useCallback(async () => {
+    // Check if MFA is required
     if (mfaState?.required) {
       if (mfaState.setupRequired) {
         setStep('mfa_setup');
@@ -132,33 +139,63 @@ export default function InviteBridge() {
       } else {
         setStep('mfa_setup');
       }
-    } else {
-      setStep('validating');
+      return;
     }
-  };
+
+    // No MFA - proceed to accept invite
+    await acceptAndRedirect();
+  }, [mfaState]);
+
+  // Accept invite and redirect
+  const acceptAndRedirect = useCallback(async () => {
+    if (!user?.id || !token) {
+      setError('Authentication error. Please try again.');
+      setStep('error');
+      return;
+    }
+
+    setStep('accepting');
+
+    // Call accept-invite endpoint
+    const result = await acceptInvite(productKey, user.id, token);
+    
+    if (!result.success) {
+      console.warn('[InviteBridge] Accept invite warning:', result.error);
+      // Continue anyway - product will validate on their end
+    }
+
+    // Success - redirect to product
+    setStep('redirecting');
+    const redirectUrl = getFinalRedirectUrl();
+    
+    console.info('[InviteBridge] Redirecting to:', redirectUrl);
+    
+    setTimeout(() => {
+      window.location.assign(redirectUrl);
+    }, 500);
+  }, [user?.id, token, productKey, getFinalRedirectUrl]);
 
   // Handle 2FA setup complete
-  const handleMfaSetupComplete = () => {
+  const handleMfaSetupComplete = useCallback(async () => {
     completeMfaSetup();
     toast.success('Two-factor authentication enabled!');
-    setStep('validating');
-  };
+    await acceptAndRedirect();
+  }, [completeMfaSetup, acceptAndRedirect]);
 
   // Handle 2FA verification complete
-  const handleMfaVerifyComplete = () => {
+  const handleMfaVerifyComplete = useCallback(async () => {
     completeMfaVerification();
     toast.success('Verification successful!');
-    setStep('validating');
-  };
+    await acceptAndRedirect();
+  }, [completeMfaVerification, acceptAndRedirect]);
 
   // Handle recovery request
   const handleMfaRecovery = () => {
     toast.info('Please contact an administrator to reset your 2FA.');
   };
 
-  // Handle back (cancel invite)
-  const handleBack = () => {
-    clearInviteIntent();
+  // Handle going back to main sign-in (abandoning invite)
+  const handleBackToSignIn = () => {
     navigate('/', { replace: true });
   };
 
@@ -182,21 +219,26 @@ export default function InviteBridge() {
           </p>
         </div>
 
-        {/* Step: Storing */}
-        {step === 'storing' && (
+        {/* Step: Initializing / Validating Token */}
+        {(step === 'initializing' || step === 'validating_token') && (
           <Card className="border-border/50">
-            <CardContent className="py-8 flex items-center justify-center">
-              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+            <CardContent className="py-12 text-center">
+              <Loader2 className="h-10 w-10 animate-spin text-accent mx-auto mb-4" />
+              <p className="text-muted-foreground">
+                {step === 'initializing' ? 'Preparing...' : 'Validating invite...'}
+              </p>
             </CardContent>
           </Card>
         )}
 
         {/* Step: Auth */}
         {step === 'auth' && (
-          <AuthStep
-            selectedProductKey={productKey}
-            onBack={handleBack}
+          <InviteAuthForm
+            productKey={productKey}
+            productName={productName}
+            prefillEmail={tokenData?.invitedEmail}
             onAuthSuccess={handleAuthSuccess}
+            onBack={handleBackToSignIn}
           />
         )}
 
@@ -216,12 +258,12 @@ export default function InviteBridge() {
           />
         )}
 
-        {/* Step: Validating */}
-        {step === 'validating' && (
+        {/* Step: Accepting */}
+        {step === 'accepting' && (
           <Card className="border-border/50">
             <CardContent className="py-12 text-center">
               <Loader2 className="h-10 w-10 animate-spin text-accent mx-auto mb-4" />
-              <p className="text-muted-foreground">Validating your invite...</p>
+              <p className="text-muted-foreground">Accepting invite...</p>
             </CardContent>
           </Card>
         )}
@@ -246,12 +288,11 @@ export default function InviteBridge() {
                 <AlertDescription>{error}</AlertDescription>
               </Alert>
               <Button
-                variant="outline"
+                variant="default"
                 className="w-full"
-                onClick={handleBack}
+                onClick={handleBackToSignIn}
               >
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Return to Gateway
+                Sign In
               </Button>
             </CardContent>
           </Card>
