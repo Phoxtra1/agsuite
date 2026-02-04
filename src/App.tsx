@@ -7,6 +7,7 @@ import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { LoginForm } from "@/components/auth/LoginForm";
+import { AuthGate } from "@/components/auth/AuthGate";
 import SuitePage from "./pages/Suite";
 import NotFound from "./pages/NotFound";
 
@@ -134,9 +135,11 @@ function AppRoutes() {
       
       {/* Protected Suite routes (managers/super_admins only) */}
       <Route path="/suite/*" element={
-        <ProtectedSuiteRoute>
-          <SuitePage />
-        </ProtectedSuiteRoute>
+        <AuthGate guest={<LoginForm />}>
+          <ProtectedSuiteRoute>
+            <SuitePage />
+          </ProtectedSuiteRoute>
+        </AuthGate>
       } />
       
       {/* Catch-all 404 */}
