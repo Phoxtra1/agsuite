@@ -7,10 +7,17 @@ import React, {
   ReactNode,
   useCallback,
 } from "react";
-import { ID, Models, OAuthProvider, AuthenticationFactor } from "appwrite";
+import { Models, OAuthProvider, AuthenticationFactor } from "appwrite";
 import { account } from "@/lib/appwrite";
 import { User, AuthContextType, MfaState } from "@/types/auth";
 import { setLast2FAVerifiedAt, clearLast2FAVerified, is2FARecent } from "@/lib/stepUpAuth";
+import {
+  getSession as appwriteGetSession,
+  login as appwriteLogin,
+  register as appwriteRegister,
+  logout as appwriteLogout,
+  formatAuthError,
+} from "@/lib/auth/appwriteAuth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -64,44 +71,49 @@ export function AuthProvider({ children }: AuthProviderProps) {
 
     async function loadSession() {
       try {
+        // HARD RULE: never call account.get() before confirming a session exists.
+        const session = await appwriteGetSession();
+        if (!active) return;
+
+        if (!session) {
+          setUser(null);
+          setMfaState(null);
+          return;
+        }
+
         const u = await account.get();
-        if (active) {
-          setUser(mapAppwriteUser(u));
-          
-          // Check if MFA is enabled
-          const mfaEnabled = await checkMfaFactors();
-          
-          if (!mfaEnabled) {
-            // User needs to set up MFA
-            setMfaState({
-              required: true,
-              setupRequired: true,
-            });
+        if (!active) return;
+        setUser(mapAppwriteUser(u));
+
+        // Check if MFA is enabled (safe now that session exists)
+        const mfaEnabled = await checkMfaFactors();
+
+        if (!mfaEnabled) {
+          // User needs to set up MFA
+          setMfaState({
+            required: true,
+            setupRequired: true,
+          });
+        } else {
+          // MFA is set up - check if 2FA verification is recent (step-up)
+          if (is2FARecent("default")) {
+            setMfaState(null);
           } else {
-            // MFA is set up - check if 2FA verification is recent (step-up)
-            // Use default window (10 minutes) for session load checks
-            if (is2FARecent('default')) {
-              // 2FA is recent, session is valid
-              setMfaState(null);
-            } else {
-              // 2FA expired - require re-verification (no QR code, just TOTP entry)
-              try {
-                const challenge = await account.createMfaChallenge(
-                  AuthenticationFactor.Totp
-                );
-                setMfaState({
-                  required: true,
-                  challengeId: challenge.$id,
-                  setupRequired: false, // Not setup, just verification
-                });
-              } catch (err) {
-                console.error("Failed to create MFA challenge for step-up:", err);
-                // If challenge fails, still require verification
-                setMfaState({
-                  required: true,
-                  setupRequired: false,
-                });
-              }
+            try {
+              const challenge = await account.createMfaChallenge(
+                AuthenticationFactor.Totp
+              );
+              setMfaState({
+                required: true,
+                challengeId: challenge.$id,
+                setupRequired: false,
+              });
+            } catch (err) {
+              console.error("Failed to create MFA challenge for step-up:", err);
+              setMfaState({
+                required: true,
+                setupRequired: false,
+              });
             }
           }
         }
@@ -124,7 +136,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const login = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      await account.createEmailPasswordSession(email.trim(), password);
+      // Deterministic login: create session -> confirm session -> then fetch user
+      await appwriteLogin(email, password);
       const u = await account.get();
       setUser(mapAppwriteUser(u));
 
@@ -187,7 +200,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
       }
     } catch (err) {
       // Re-throw so AuthStep can display the error
-      throw err;
+      // Ensure UI can surface network/CORS + Appwrite status clearly
+      throw new Error(formatAuthError(err));
     } finally {
       setIsLoading(false);
     }
@@ -196,10 +210,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const register = async (email: string, password: string) => {
     setIsLoading(true);
     try {
-      // Create REAL Appwrite user (shows in Auth → Users)
-      await account.create(ID.unique(), email.trim(), password);
-      // Then create session
-      await account.createEmailPasswordSession(email.trim(), password);
+      // Deterministic register: create user -> create session -> confirm session
+      await appwriteRegister(email, password);
       // Store default role
       await account.updatePrefs({ role: "customer" });
       // Verify session/user before completing
@@ -211,6 +223,8 @@ export function AuthProvider({ children }: AuthProviderProps) {
         required: true,
         setupRequired: true,
       });
+    } catch (err) {
+      throw new Error(formatAuthError(err));
     } finally {
       setIsLoading(false);
     }
@@ -238,7 +252,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
   const logout = async () => {
     setIsLoading(true);
     try {
-      await account.deleteSession("current");
+      await appwriteLogout();
       setUser(null);
       setMfaState(null);
       clearLast2FAVerified(); // Clear step-up 2FA timestamp
