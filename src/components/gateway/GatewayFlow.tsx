@@ -28,6 +28,9 @@ export function GatewayFlow() {
 
   // Track if initial load has been processed to prevent re-renders
   const [initialized, setInitialized] = useState(false);
+  
+  // Track if we're waiting for MFA state after auth success
+  const [awaitingMfaState, setAwaitingMfaState] = useState(false);
 
   // Load persisted state on mount - only run once
   useEffect(() => {
@@ -211,10 +214,20 @@ export function GatewayFlow() {
     }
   }, [step, initialized, routeToProduct]);
 
-  // Handle successful auth - now check for MFA requirement
+  // Handle successful auth - signal that we're waiting for MFA state
   const handleAuthSuccess = () => {
-    // After successful email/password auth, check if 2FA is required
+    // After successful email/password auth, wait for mfaState to be set by AuthContext
+    // The useEffect below will handle the actual step transition
+    setAwaitingMfaState(true);
+  };
+  
+  // Watch for MFA state changes after auth success
+  useEffect(() => {
+    if (!awaitingMfaState || !isAuthenticated) return;
+    
+    // MFA state has been set by AuthContext - now handle it
     if (mfaState?.required) {
+      setAwaitingMfaState(false);
       if (mfaState.setupRequired) {
         setStep('mfa_setup');
       } else if (mfaState.challengeId) {
@@ -223,12 +236,12 @@ export function GatewayFlow() {
         // MFA required but no specific state - go to setup
         setStep('mfa_setup');
       }
-    } else {
-      // No MFA required - proceed to routing
+    } else if (mfaState === null && user) {
+      // MFA is not required (already verified recently) - proceed to routing
+      setAwaitingMfaState(false);
       setStep('routing');
-      routeToProduct();
     }
-  };
+  }, [awaitingMfaState, isAuthenticated, mfaState, user, routeToProduct]);
 
   // Handle 2FA setup complete
   const handleMfaSetupComplete = () => {
