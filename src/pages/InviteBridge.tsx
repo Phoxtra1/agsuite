@@ -3,13 +3,13 @@ import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { InviteAuthForm } from '@/components/invite/InviteAuthForm';
 import { TwoFactorSetup } from '@/components/auth/TwoFactorSetup';
-import { TwoFactorVerify } from '@/components/auth/TwoFactorVerify';
+import { TwoFactorDialog } from '@/components/auth/TwoFactorDialog';
 import { 
   validateInviteToken, 
   acceptInvite,
   type TokenValidationResult 
 } from '@/lib/inviteTokenService';
-import { Card, CardContent } from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Loader2, AlertCircle, CheckCircle2 } from 'lucide-react';
@@ -201,11 +201,6 @@ export default function InviteBridge() {
     await acceptAndRedirect();
   }, [completeMfaVerification, acceptAndRedirect]);
 
-  // Handle recovery request
-  const handleMfaRecovery = () => {
-    toast.info('Please contact an administrator to reset your 2FA.');
-  };
-
   // Handle going back to main sign-in (abandoning invite)
   const handleBackToSignIn = () => {
     navigate('/', { replace: true });
@@ -263,11 +258,21 @@ export default function InviteBridge() {
 
         {/* Step: MFA Verify */}
         {step === 'mfa_verify' && (
-          <TwoFactorVerify
-            challengeId={mfaState?.challengeId || ''}
-            onVerifyComplete={handleMfaVerifyComplete}
-            onRecovery={handleMfaRecovery}
-          />
+          <Card className="border-border/50">
+            <CardHeader className="pb-4">
+              <CardTitle className="text-lg font-medium">
+                Two-Factor Authentication
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              <TwoFactorDialog
+                onVerifyComplete={handleMfaVerifyComplete}
+                onEmailBackup={() => {
+                  toast.info('Email backup coming soon. Contact admin if needed.');
+                }}
+              />
+            </CardContent>
+          </Card>
         )}
 
         {/* Step: Accepting */}
