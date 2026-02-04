@@ -10,6 +10,7 @@ import React, {
 import { ID, Models, OAuthProvider, AuthenticationFactor } from "appwrite";
 import { account } from "@/lib/appwrite";
 import { User, AuthContextType, MfaState } from "@/types/auth";
+import { setLast2FAVerifiedAt, clearLast2FAVerified } from "@/lib/stepUpAuth";
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
@@ -195,6 +196,7 @@ export function AuthProvider({ children }: AuthProviderProps) {
       await account.deleteSession("current");
       setUser(null);
       setMfaState(null);
+      clearLast2FAVerified(); // Clear step-up 2FA timestamp
     } finally {
       setIsLoading(false);
     }
@@ -203,11 +205,13 @@ export function AuthProvider({ children }: AuthProviderProps) {
   // Called when user completes MFA setup
   const completeMfaSetup = useCallback(() => {
     setMfaState(null);
+    setLast2FAVerifiedAt(); // Record step-up 2FA timestamp
   }, []);
 
   // Called when user completes MFA verification
   const completeMfaVerification = useCallback(() => {
     setMfaState(null);
+    setLast2FAVerifiedAt(); // Record step-up 2FA timestamp
   }, []);
 
   const value = useMemo<AuthContextType>(
