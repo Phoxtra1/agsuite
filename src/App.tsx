@@ -10,8 +10,9 @@ import { LoginForm } from "@/components/auth/LoginForm";
 import SuitePage from "./pages/Suite";
 import NotFound from "./pages/NotFound";
 
-// Lazy load invite bridge (rarely used)
+// Lazy load routes
 const InviteBridge = lazy(() => import("./pages/InviteBridge"));
+const Verify2FA = lazy(() => import("./pages/auth/Verify2FA"));
 
 const queryClient = new QueryClient();
 
@@ -121,6 +122,13 @@ function AppRoutes() {
       <Route path="/invite/:product" element={
         <Suspense fallback={<AminevaLoader />}>
           <InviteBridge />
+        </Suspense>
+      } />
+      
+      {/* Step-up 2FA verification route */}
+      <Route path="/auth/verify-2fa" element={
+        <Suspense fallback={<AminevaLoader />}>
+          <Verify2FA />
         </Suspense>
       } />
       
