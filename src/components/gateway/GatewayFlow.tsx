@@ -24,8 +24,13 @@ export function GatewayFlow() {
   const [selectedCountryCode, setSelectedCountryCode] = useState<string | null>(null);
   const [selectedCurrencyCode, setSelectedCurrencyCode] = useState<string | null>(null);
 
-  // Load persisted state on mount
+  // Track if initial load has been processed to prevent re-renders
+  const [initialized, setInitialized] = useState(false);
+
+  // Load persisted state on mount - only run once
   useEffect(() => {
+    if (initialized) return;
+    
     const state = loadGatewayState();
     setSelectedProductKey(state.selectedProductKey);
     setSelectedCountryCode(state.selectedCountryCode);
@@ -38,21 +43,25 @@ export function GatewayFlow() {
       } else if (!isAuthenticated) {
         setStep('auth');
       } else {
-        // Check MFA state after auth
+        // User is authenticated - check MFA state
         if (mfaState?.required) {
           if (mfaState.setupRequired) {
             setStep('mfa_setup');
           } else if (mfaState.challengeId) {
             setStep('mfa_verify');
+          } else {
+            setStep('mfa_setup');
           }
         } else {
+          // No MFA required - proceed to routing
           setStep('routing');
         }
       }
     }
-  }, [isAuthenticated, mfaState]);
+    
+    setInitialized(true);
+  }, [initialized, isAuthenticated, mfaState]);
 
-  // Handle product selection
   const handleSelectProduct = (productKey: string) => {
     setSelectedProductKey(productKey);
     saveGatewayState({ selectedProductKey: productKey });
@@ -179,6 +188,13 @@ export function GatewayFlow() {
       }
     }
   }, [selectedProductKey, selectedCountryCode, selectedCurrencyCode, navigate, user]);
+
+  // Trigger routing when step changes to 'routing'
+  useEffect(() => {
+    if (step === 'routing' && initialized) {
+      routeToProduct();
+    }
+  }, [step, initialized, routeToProduct]);
 
   // Handle successful auth - now check for MFA requirement
   const handleAuthSuccess = () => {
