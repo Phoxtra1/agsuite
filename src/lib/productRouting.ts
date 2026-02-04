@@ -14,12 +14,12 @@ export interface ProductRouteConfig {
 export const PRODUCT_ROUTES: Record<string, ProductRouteConfig> = {
   agstock: {
     baseUrl: 'https://stock.amineva.com',
-    defaultPath: '/shop', // Shop Owner entry - AGStock handles PIN
+    defaultPath: '/shop', // Shop Owner entry
     requiresCountry: true,
   },
   agis: {
     baseUrl: 'https://app.amineva.com',
-    defaultPath: '/dashboard', // AGIS Client dashboard entry - no PIN
+    defaultPath: '/dashboard', // AGIS Client dashboard entry
     requiresCountry: false,
   },
   hub: {

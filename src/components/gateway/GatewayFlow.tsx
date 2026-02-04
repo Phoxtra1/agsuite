@@ -165,10 +165,10 @@ export function GatewayFlow() {
     clearGatewayState();
 
     // Route to external product dashboard entry point
-    // Suite ONLY authenticates - products handle PIN and permissions
+    // Suite ONLY authenticates - products handle roles/permissions
     const routeConfig = {
-      agstock: 'https://stock.amineva.com/shop', // Shop Owner entry - AGStock handles PIN
-      agis: 'https://app.amineva.com/dashboard', // Client entry - no PIN
+      agstock: 'https://stock.amineva.com/shop', // Shop Owner entry
+      agis: 'https://app.amineva.com/dashboard', // Client dashboard entry
     };
 
     const targetUrl = routeConfig[selectedProductKey as keyof typeof routeConfig];

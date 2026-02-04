@@ -88,8 +88,8 @@ export default function InviteBridge() {
 
     // Direct routing based on product - Suite only routes, products validate
     const inviteRoutes: Record<InviteProduct, string> = {
-      agstock: 'https://stock.amineva.com/employees', // Employee entry - AGStock handles PIN + validation
-      agis: 'https://app.amineva.com/team', // Team entry - AGIS handles registration + validation
+      agstock: 'https://stock.amineva.com/employees', // Employee entry based on role
+      agis: 'https://app.amineva.com/team-register', // Team registration entry
     };
 
     const redirectUrl = inviteRoutes[intent.productKey];
