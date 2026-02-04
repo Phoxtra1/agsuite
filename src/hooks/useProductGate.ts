@@ -1,44 +1,72 @@
 /**
  * Product Gate Hook
  * 
- * Reusable hook for products to check authentication and 2FA recency.
- * Redirects to Suite login or 2FA verification as needed.
+ * CRITICAL SECURITY REQUIREMENT:
+ * ==============================
+ * ALL products in Amineva Global Suite MUST use this hook to enforce:
+ * 1. Suite account authentication (no product-level login allowed)
+ * 2. 2FA verification before access (recurring, time-limited)
+ * 
+ * NO PRODUCT MAY BYPASS THIS GATE.
+ * Any product attempting to show content without passing the gate is a security violation.
+ * 
+ * Security Windows:
+ * - AGStock: 5 minutes (high-security POS/inventory)
+ * - All other products: 10 minutes
  */
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { is2FARecent, get2FAExpiresIn, STEP_UP_WINDOWS } from '@/lib/stepUpAuth';
+import { is2FARecent, get2FAExpiresIn, STEP_UP_WINDOWS, REGISTERED_PRODUCTS } from '@/lib/stepUpAuth';
 
 export type GateStatus = 'checking' | 'passed' | 'needs_login' | 'needs_2fa';
 
 interface UseProductGateOptions {
+  /** Product key - must match a key in STEP_UP_WINDOWS */
   productKey: string;
+  /** Current path for return redirect after auth */
   currentPath?: string;
+  /** Enable/disable the gate (default: true) */
   enabled?: boolean;
 }
 
 interface UseProductGateResult {
+  /** Current gate status */
   status: GateStatus;
+  /** Seconds remaining until 2FA expires */
   expiresIn: number;
+  /** Total window in seconds for this product */
   windowSeconds: number;
+  /** Redirect to Suite 2FA verification */
   redirectTo2FA: () => void;
+  /** Redirect to Suite login */
   redirectToLogin: () => void;
+  /** Whether this product is registered in the security system */
+  isRegisteredProduct: boolean;
 }
 
 /**
- * Hook for products to gate access with step-up 2FA
+ * REQUIRED Hook for ALL products to gate access with Suite auth + 2FA
  * 
- * Usage:
+ * Usage (MANDATORY for all product entry points):
  * ```tsx
- * const { status, redirectTo2FA, redirectToLogin } = useProductGate({
- *   productKey: 'agstock',
- *   currentPath: '/shop/dashboard'
- * });
+ * function ProductDashboard() {
+ *   const { status, redirectTo2FA, redirectToLogin } = useProductGate({
+ *     productKey: 'agstock',
+ *     currentPath: '/shop/dashboard'
+ *   });
  * 
- * useEffect(() => {
- *   if (status === 'needs_login') redirectToLogin();
- *   if (status === 'needs_2fa') redirectTo2FA();
- * }, [status]);
+ *   useEffect(() => {
+ *     if (status === 'needs_login') redirectToLogin();
+ *     if (status === 'needs_2fa') redirectTo2FA();
+ *   }, [status, redirectTo2FA, redirectToLogin]);
+ * 
+ *   if (status !== 'passed') {
+ *     return <LoadingSpinner />; // MUST block content until passed
+ *   }
+ * 
+ *   return <ActualDashboardContent />;
+ * }
  * ```
  */
 export function useProductGate({
@@ -52,6 +80,17 @@ export function useProductGate({
 
   const windowMs = STEP_UP_WINDOWS[productKey as keyof typeof STEP_UP_WINDOWS] ?? STEP_UP_WINDOWS.default;
   const windowSeconds = Math.floor(windowMs / 1000);
+  const isRegisteredProduct = REGISTERED_PRODUCTS.includes(productKey as any);
+
+  // Warn if product is not registered (security audit)
+  useEffect(() => {
+    if (!isRegisteredProduct && productKey !== 'default') {
+      console.warn(
+        `[SECURITY] Product "${productKey}" is not registered in STEP_UP_WINDOWS. ` +
+        `Using default 10-minute window. Add it to src/lib/stepUpAuth.ts for explicit configuration.`
+      );
+    }
+  }, [productKey, isRegisteredProduct]);
 
   useEffect(() => {
     if (!enabled) {
@@ -113,6 +152,7 @@ export function useProductGate({
     windowSeconds,
     redirectTo2FA,
     redirectToLogin,
+    isRegisteredProduct,
   };
 }
 
