@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { is2FARecent } from '@/lib/stepUpAuth';
 import { ProductSelectionStep } from './ProductSelectionStep';
 import { CountrySelectionStep } from './CountrySelectionStep';
 import { AuthStep } from './AuthStep';
@@ -71,8 +72,13 @@ export function GatewayFlow() {
     if (productKey === 'agstock') {
       setStep('country_selection');
     } else {
-      // Other products go straight to auth
-      setStep('auth');
+      // Other products: if already authenticated and 2FA is still valid for that product,
+      // route immediately; otherwise go through auth/step-up.
+      if (isAuthenticated && !mfaState?.required && is2FARecent(productKey)) {
+        setStep('routing');
+      } else {
+        setStep('auth');
+      }
     }
   };
 
@@ -159,6 +165,14 @@ export function GatewayFlow() {
       toast.info(`${product.name} is coming soon`);
       clearGatewayState();
       setStep('product_selection');
+      return;
+    }
+
+    // 🔒 Recurring (step-up) 2FA enforcement per product:
+    // If the user's last 2FA verification is older than the product window,
+    // block redirect and request a fresh authenticator code.
+    if (!is2FARecent(selectedProductKey)) {
+      setStep('mfa_verify');
       return;
     }
 

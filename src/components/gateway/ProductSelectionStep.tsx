@@ -76,12 +76,6 @@ export function ProductSelectionStep({ onSelectProduct, onExploreLater }: Produc
   };
 
   const handleProductClick = (product: ProductData) => {
-    // AG Hub is public - open directly
-    if (product.id === 'hub') {
-      window.open(product.url, '_blank');
-      return;
-    }
-    
     // Disabled products show modal (handled elsewhere)
     if (product.status === 'coming_soon' || product.status === 'offline') {
       return;
