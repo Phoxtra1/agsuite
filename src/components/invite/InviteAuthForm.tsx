@@ -35,8 +35,12 @@ export function InviteAuthForm({
   const emailLocked = !!prefillEmail;
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+  e.preventDefault();
+
+  // HARD RESET PREVIOUS USER STATE (CRITICAL)
+  hardResetAuthState();
+
+  setError('');
 
     if (!email || !password) {
       setError('Please enter both email and password');
