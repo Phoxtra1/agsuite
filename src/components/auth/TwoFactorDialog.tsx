@@ -169,7 +169,7 @@ export function TwoFactorDialog({
   }
 
   const disabled =
-  isVerifying || isCreating || cooldown > 0;
+    isVerifying || isCreating || cooldown > 0 || code.length !== 6;
 
   /* ===============================
      UI

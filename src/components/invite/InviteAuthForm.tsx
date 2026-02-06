@@ -5,9 +5,9 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import { Separator } from '@/components/ui/separator';
 import { Loader2, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
-
+import { hardResetAuthState } from '@/lib/authReset';
+import { setAuthRedirect, isEmployeeRole } from '@/lib/auth/authRedirect';
 interface InviteAuthFormProps {
   productKey: string;
   productName: string;
@@ -69,6 +69,15 @@ export function InviteAuthForm({
       } else {
         await login(email, password);
       }
+      
+      // CRITICAL: Set redirect for employees BEFORE onAuthSuccess
+      // This ensures after 2FA, employees go to /employees not /shop
+      // The productKey prop indicates which product this invite is for
+      if (productKey === 'agstock') {
+        // Invite flow = employee role - force employee dashboard
+        setAuthRedirect('https://stock.amineva.com/employees', productKey, 'employee');
+      }
+      
       onAuthSuccess();
     } catch (err) {
       const message = err instanceof Error ? err.message : 'Authentication failed';

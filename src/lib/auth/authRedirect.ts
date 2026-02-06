@@ -126,24 +126,35 @@ export function isEmployeeRole(role?: string | null): boolean {
 
 /**
  * Get the correct redirect URL based on role and product
+ * 
+ * Priority order:
+ * 1. Stored authRedirect (from invite flow or step-up re-auth)
+ * 2. Explicit authRedirectOverride param
+ * 3. Role-based default routing
  */
 export function getRedirectForRole(
   product: string,
   role?: string | null,
   authRedirectOverride?: string | null
 ): string {
-  // If explicit authRedirect is provided, use it
+  // PRIORITY 1: Check stored auth redirect FIRST (critical for invite/step-up flows)
+  const stored = getAuthRedirect();
+  if (stored?.url) {
+    // If stored redirect has a role, validate it matches the expected employee role
+    // This prevents credential swapping attacks
+    if (stored.role && isEmployeeRole(stored.role)) {
+      // Employee stored - must use employee path
+      return stored.url;
+    }
+    return stored.url;
+  }
+
+  // PRIORITY 2: Explicit authRedirect param
   if (authRedirectOverride) {
     return authRedirectOverride;
   }
 
-  // Check stored auth redirect
-  const stored = getAuthRedirect();
-  if (stored?.url) {
-    return stored.url;
-  }
-
-  // Role-based routing for AGStock
+  // PRIORITY 3: Role-based routing for AGStock
   if (product === 'agstock') {
     if (isEmployeeRole(role)) {
       return 'https://stock.amineva.com/employees';
@@ -154,6 +165,9 @@ export function getRedirectForRole(
 
   // Role-based routing for AGIS
   if (product === 'agis') {
+    if (isEmployeeRole(role)) {
+      return 'https://app.amineva.com/team';
+    }
     return 'https://app.amineva.com/dashboard';
   }
 
