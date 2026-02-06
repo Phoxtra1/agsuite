@@ -6,30 +6,65 @@
  * - Employees returning to employee dashboard after 2FA step-up
  * - Users redirecting to specific product pages after auth
  * - Role-based routing after 2FA completion
+ * 
+ * SECURITY: This module enforces strict role separation.
+ * Employees can NEVER be redirected to owner dashboards and vice versa.
  */
+
+import { 
+  isEmployeeRole as roleGuardIsEmployee, 
+  isOwnerRole,
+  sanitizeRedirectForRole,
+  getDashboardForRole,
+  detectCredentialMismatch,
+  logSecurityEvent 
+} from './roleGuard';
 
 const AUTH_REDIRECT_KEY = 'suite_auth_redirect';
 const USER_ROLE_KEY = 'suite_pending_user_role';
+const INVITE_CONTEXT_KEY = 'suite_invite_context';
 
 export interface AuthRedirectData {
   url: string;
   product?: string;
   role?: string;
   timestamp: number;
+  source?: 'invite' | 'step_up' | 'direct';
+}
+
+export interface InviteContext {
+  productKey: string;
+  token: string;
+  email?: string;
+  roleHint?: string;
+  timestamp: number;
 }
 
 /**
  * Store intended redirect destination at login start
+ * SECURITY: Validates role-URL compatibility before storing
  */
-export function setAuthRedirect(url: string, product?: string, role?: string): void {
+export function setAuthRedirect(
+  url: string, 
+  product?: string, 
+  role?: string,
+  source: 'invite' | 'step_up' | 'direct' = 'direct'
+): void {
   try {
+    // CRITICAL: Sanitize URL for role before storing
+    const sanitizedUrl = product 
+      ? sanitizeRedirectForRole(url, role, product)
+      : url;
+
     const data: AuthRedirectData = {
-      url,
+      url: sanitizedUrl,
       product,
       role,
       timestamp: Date.now(),
+      source,
     };
     sessionStorage.setItem(AUTH_REDIRECT_KEY, JSON.stringify(data));
+    console.log('[AuthRedirect] Stored:', { url: sanitizedUrl, product, role, source });
   } catch {
     console.warn('Failed to store auth redirect');
   }
@@ -65,8 +100,47 @@ export function getAuthRedirect(): AuthRedirectData | null {
 export function clearAuthRedirect(): void {
   try {
     sessionStorage.removeItem(AUTH_REDIRECT_KEY);
+    sessionStorage.removeItem(INVITE_CONTEXT_KEY);
   } catch {
     // Ignore
+  }
+}
+
+/**
+ * Store invite context for security validation
+ */
+export function setInviteContext(context: Omit<InviteContext, 'timestamp'>): void {
+  try {
+    const data: InviteContext = {
+      ...context,
+      timestamp: Date.now(),
+    };
+    sessionStorage.setItem(INVITE_CONTEXT_KEY, JSON.stringify(data));
+  } catch {
+    // Ignore
+  }
+}
+
+/**
+ * Get stored invite context
+ */
+export function getInviteContext(): InviteContext | null {
+  try {
+    const stored = sessionStorage.getItem(INVITE_CONTEXT_KEY);
+    if (!stored) return null;
+    
+    const data: InviteContext = JSON.parse(stored);
+    
+    // Expire after 30 minutes
+    const thirtyMinutes = 30 * 60 * 1000;
+    if (Date.now() - data.timestamp > thirtyMinutes) {
+      sessionStorage.removeItem(INVITE_CONTEXT_KEY);
+      return null;
+    }
+    
+    return data;
+  } catch {
+    return null;
   }
 }
 
@@ -105,72 +179,74 @@ export function clearPendingUserRole(): void {
 
 /**
  * Employee role check - determines if user should go to employee dashboard
- * Employees include: salesperson, manager, accountant, cashier, etc.
- * NOT shop owners (they go to /shop)
+ * Re-exported from roleGuard for backwards compatibility
  */
 export function isEmployeeRole(role?: string | null): boolean {
-  if (!role) return false;
-  
-  const employeeRoles = [
-    'staff',
-    'salesperson',
-    'manager',
-    'accountant',
-    'cashier',
-    'inventory_clerk',
-    'employee',
-  ];
-  
-  return employeeRoles.includes(role.toLowerCase());
+  return roleGuardIsEmployee(role);
 }
 
 /**
  * Get the correct redirect URL based on role and product
  * 
- * Priority order:
- * 1. Stored authRedirect (from invite flow or step-up re-auth)
- * 2. Explicit authRedirectOverride param
- * 3. Role-based default routing
+ * SECURITY PRIORITY:
+ * 1. Validate invite context (highest security)
+ * 2. Stored authRedirect with role validation
+ * 3. Explicit authRedirectOverride with validation
+ * 4. Role-based default routing (safest)
  */
 export function getRedirectForRole(
   product: string,
   role?: string | null,
   authRedirectOverride?: string | null
 ): string {
-  // PRIORITY 1: Check stored auth redirect FIRST (critical for invite/step-up flows)
+  // Check for credential mismatch (security audit)
   const stored = getAuthRedirect();
+  const inviteContext = getInviteContext();
+  
+  if (stored?.role && role) {
+    const mismatch = detectCredentialMismatch(stored.role, role);
+    if (mismatch.mismatch) {
+      logSecurityEvent('credential_mismatch', {
+        storedRole: stored.role,
+        currentRole: role,
+        severity: mismatch.severity,
+        product,
+      });
+      
+      if (mismatch.severity === 'critical') {
+        // CRITICAL: Force correct dashboard, ignore stored redirect
+        console.warn('[AuthRedirect] SECURITY: Credential mismatch detected, forcing role-based redirect');
+        clearAuthRedirect();
+        return getDashboardForRole(product, role);
+      }
+    }
+  }
+
+  // PRIORITY 1: Invite context takes precedence (employee invites)
+  if (inviteContext && inviteContext.productKey === product) {
+    // For invite flows, ALWAYS use the role-based dashboard
+    // The invite implies employee role
+    if (inviteContext.roleHint === 'employee' || roleGuardIsEmployee(role)) {
+      return getDashboardForRole(product, 'employee');
+    }
+  }
+
+  // PRIORITY 2: Check stored auth redirect with validation
   if (stored?.url) {
-    // If stored redirect has a role, validate it matches the expected employee role
-    // This prevents credential swapping attacks
-    if (stored.role && isEmployeeRole(stored.role)) {
-      // Employee stored - must use employee path
-      return stored.url;
+    // Validate the stored URL is appropriate for the current role
+    const sanitized = sanitizeRedirectForRole(stored.url, role, product);
+    if (sanitized !== stored.url) {
+      console.warn('[AuthRedirect] Stored URL sanitized for role:', { original: stored.url, sanitized });
     }
-    return stored.url;
+    return sanitized;
   }
 
-  // PRIORITY 2: Explicit authRedirect param
+  // PRIORITY 3: Explicit authRedirect param with validation
   if (authRedirectOverride) {
-    return authRedirectOverride;
+    const sanitized = sanitizeRedirectForRole(authRedirectOverride, role, product);
+    return sanitized;
   }
 
-  // PRIORITY 3: Role-based routing for AGStock
-  if (product === 'agstock') {
-    if (isEmployeeRole(role)) {
-      return 'https://stock.amineva.com/employees';
-    }
-    // Shop owner (default)
-    return 'https://stock.amineva.com/shop';
-  }
-
-  // Role-based routing for AGIS
-  if (product === 'agis') {
-    if (isEmployeeRole(role)) {
-      return 'https://app.amineva.com/team';
-    }
-    return 'https://app.amineva.com/dashboard';
-  }
-
-  // Default fallback
-  return '/suite';
+  // PRIORITY 4: Role-based default routing (most secure)
+  return getDashboardForRole(product, role);
 }
