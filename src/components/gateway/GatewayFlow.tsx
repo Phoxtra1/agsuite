@@ -19,7 +19,14 @@ import {
   clearAuthRedirect,
   getRedirectForRole,
   isEmployeeRole,
+  getInviteContext,
 } from '@/lib/auth/authRedirect';
+import { 
+  sanitizeRedirectForRole, 
+  getDashboardForRole,
+  detectCredentialMismatch,
+  logSecurityEvent 
+} from '@/lib/auth/roleGuard';
 // Extended step type to include 2FA steps
 type ExtendedGatewayStep = GatewayStep | 'mfa_setup' | 'mfa_verify';
 
@@ -151,6 +158,24 @@ export function GatewayFlow() {
       });
     }
 
+    // SECURITY: Check for credential mismatch
+    const storedAuth = getAuthRedirect();
+    const inviteContext = getInviteContext();
+    
+    if (storedAuth?.role && user?.role) {
+      const mismatch = detectCredentialMismatch(storedAuth.role, user.role);
+      if (mismatch.severity === 'critical') {
+        logSecurityEvent('credential_mismatch', {
+          storedRole: storedAuth.role,
+          currentRole: user.role,
+          product: selectedProductKey,
+          action: 'forcing_role_based_redirect',
+        });
+        // Clear compromised redirect data
+        clearAuthRedirect();
+      }
+    }
+
     // If no product selected ("Explore Later")
     if (!selectedProductKey) {
       clearGatewayState();
@@ -198,13 +223,9 @@ export function GatewayFlow() {
     // block redirect and request a fresh authenticator code.
     if (!is2FARecent(selectedProductKey)) {
       // Store intended destination BEFORE going to 2FA
-      // so we can redirect correctly after verification
-      const redirectUrl = getRedirectForRole(
-        selectedProductKey,
-        user?.role,
-        authRedirectParam
-      );
-      setAuthRedirect(redirectUrl, selectedProductKey, user?.role);
+      // SECURITY: Use sanitized redirect based on actual user role
+      const redirectUrl = getDashboardForRole(selectedProductKey, user?.role);
+      setAuthRedirect(redirectUrl, selectedProductKey, user?.role, 'step_up');
       setStep('mfa_verify');
       return;
     }
@@ -212,18 +233,33 @@ export function GatewayFlow() {
     // Clear gateway state before redirect
     clearGatewayState();
 
-    // Get the correct redirect URL based on:
-    // 1. authRedirect URL param (highest priority)
-    // 2. Stored authRedirect from session (for step-up scenarios)
-    // 3. Role-based default (employees -> /employees, owners -> /shop)
-    const targetUrl = getRedirectForRole(
-      selectedProductKey,
-      user?.role,
-      authRedirectParam
-    );
+    // SECURITY: Get redirect URL with full validation
+    // Priority: invite context > stored redirect > role-based default
+    let targetUrl: string;
+    
+    if (inviteContext && inviteContext.productKey === selectedProductKey) {
+      // Invite flow - ALWAYS use employee dashboard
+      targetUrl = getDashboardForRole(selectedProductKey, 'employee');
+      console.log('[GatewayFlow] Invite context detected, using employee dashboard:', targetUrl);
+    } else if (isEmployeeRole(user?.role) || isEmployeeRole(storedAuth?.role)) {
+      // Employee role detected - force employee dashboard
+      targetUrl = getDashboardForRole(selectedProductKey, user?.role || storedAuth?.role);
+      console.log('[GatewayFlow] Employee role detected, using:', targetUrl);
+    } else {
+      // Normal flow - use role-based redirect with validation
+      targetUrl = getRedirectForRole(
+        selectedProductKey,
+        user?.role,
+        authRedirectParam
+      );
+      // Double-check: sanitize for safety
+      targetUrl = sanitizeRedirectForRole(targetUrl, user?.role, selectedProductKey);
+    }
 
     // Clear stored redirect after use
     clearAuthRedirect();
+    
+    console.log('[GatewayFlow] Final redirect:', { targetUrl, userRole: user?.role, product: selectedProductKey });
     
     if (targetUrl.startsWith('http')) {
       window.location.href = targetUrl;

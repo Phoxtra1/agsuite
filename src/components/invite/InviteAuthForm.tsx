@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Loader2, AlertCircle, Eye, EyeOff, ArrowLeft } from 'lucide-react';
 import { hardResetAuthState } from '@/lib/authReset';
-import { setAuthRedirect, isEmployeeRole } from '@/lib/auth/authRedirect';
+import { setAuthRedirect, setInviteContext } from '@/lib/auth/authRedirect';
 interface InviteAuthFormProps {
   productKey: string;
   productName: string;
@@ -70,12 +70,21 @@ export function InviteAuthForm({
         await login(email, password);
       }
       
-      // CRITICAL: Set redirect for employees BEFORE onAuthSuccess
-      // This ensures after 2FA, employees go to /employees not /shop
-      // The productKey prop indicates which product this invite is for
+      // CRITICAL: Store invite context for security validation
+      // This ensures employees are ALWAYS routed to employee dashboard
+      // regardless of any stored redirects or URL manipulation
+      setInviteContext({
+        productKey,
+        token: '', // Token is handled by InviteBridge
+        email,
+        roleHint: 'employee', // Invites are for employees
+      });
+      
+      // Set explicit redirect for employees
       if (productKey === 'agstock') {
-        // Invite flow = employee role - force employee dashboard
-        setAuthRedirect('https://stock.amineva.com/employees', productKey, 'employee');
+        setAuthRedirect('https://stock.amineva.com/employees', productKey, 'employee', 'invite');
+      } else if (productKey === 'agis') {
+        setAuthRedirect('https://app.amineva.com/team', productKey, 'employee', 'invite');
       }
       
       onAuthSuccess();

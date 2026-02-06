@@ -148,7 +148,20 @@ export function TwoFactorDialog({
           setCooldown(newCooldown);
           setError(`Too many failed attempts. Wait ${newCooldown}s.`);
         } else {
-          setError("Invalid code");
+          // Parse Appwrite error for better messaging
+          const appwriteErr = err as { type?: string; message?: string; code?: number };
+          
+          if (appwriteErr.type === 'user_invalid_token' || 
+              appwriteErr.message?.includes('Invalid token') ||
+              appwriteErr.message?.includes('invalid')) {
+            setError("Invalid code. Please check your authenticator app and try again.");
+          } else if (appwriteErr.type === 'general_rate_limit_exceeded') {
+            setError("Too many requests. Please wait a moment.");
+          } else if (appwriteErr.code === 401) {
+            setError("Session expired. Please refresh the page.");
+          } else {
+            setError("Invalid code. Enter the 6-digit code from your authenticator.");
+          }
         }
 
         setCode("");

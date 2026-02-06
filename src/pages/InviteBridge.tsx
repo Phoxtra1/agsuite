@@ -9,6 +9,7 @@ import {
   acceptInvite,
   type TokenValidationResult 
 } from '@/lib/inviteTokenService';
+import { setInviteContext, setAuthRedirect, clearAuthRedirect } from '@/lib/auth/authRedirect';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -111,6 +112,21 @@ export default function InviteBridge() {
         return;
       }
 
+      // SECURITY: Store invite context to ensure employee routing
+      // This prevents credential swapping attacks
+      setInviteContext({
+        productKey,
+        token,
+        email: result.invitedEmail,
+        roleHint: 'employee', // Invites are ALWAYS for employees
+      });
+      
+      // Also set explicit auth redirect for safety
+      const employeeDashboard = productKey === 'agstock' 
+        ? 'https://stock.amineva.com/employees'
+        : 'https://app.amineva.com/team';
+      setAuthRedirect(employeeDashboard, productKey, 'employee', 'invite');
+
       // Token is valid - proceed to auth
       setStep('auth');
     };
@@ -178,14 +194,27 @@ export default function InviteBridge() {
 
     // Success - redirect to product
     setStep('redirecting');
-    const redirectUrl = getFinalRedirectUrl();
     
-    console.info('[InviteBridge] Redirecting to:', redirectUrl);
+    // SECURITY: Always use employee dashboard for invite flows
+    // This is the final security gate - ignore any stored redirects
+    const employeeDashboard = productKey === 'agstock' 
+      ? 'https://stock.amineva.com/employees'
+      : 'https://app.amineva.com/team';
+    
+    // Append token to the redirect URL for product-side validation
+    const url = new URL(employeeDashboard);
+    url.searchParams.set('token', token);
+    const redirectUrl = url.toString();
+    
+    console.info('[InviteBridge] Redirecting employee to:', redirectUrl);
+    
+    // Clear all stored auth state
+    clearAuthRedirect();
     
     setTimeout(() => {
       window.location.assign(redirectUrl);
     }, 500);
-  }, [user?.id, token, productKey, getFinalRedirectUrl]);
+  }, [user?.id, token, productKey]);
 
   // Handle 2FA setup complete
   const handleMfaSetupComplete = useCallback(async () => {
