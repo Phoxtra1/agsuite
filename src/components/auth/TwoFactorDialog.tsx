@@ -48,25 +48,27 @@ export function TwoFactorDialog({
      CREATE FRESH CHALLENGE
   ================================ */
   async function createFreshChallenge() {
-    if (isCreating) return;
+  if (isCreating) return;
 
-    setIsCreating(true);
-    setError(null);
+  setIsCreating(true);
+  setError(null);
 
-    try {
-      const challenge = await account.createMfaChallenge(
-        AuthenticationFactor.Totp
-      );
+  try {
+    const challenge = await account.createMfaChallenge(
+      AuthenticationFactor.Totp
+    );
 
-      localStorage.setItem(CHALLENGE_KEY, challenge.$id);
-      setChallengeId(challenge.$id);
-    } catch (err) {
-      console.error("MFA challenge creation failed:", err);
-      setError("Failed to initialize authentication. Refresh page.");
-    } finally {
-      setIsCreating(false);
-    }
+    localStorage.setItem("twofa_challenge_id", challenge.$id);
+    setChallengeId(challenge.$id);
+
+  } catch (err) {
+    console.error("MFA challenge creation failed:", err);
+    setError("Failed to initialize authentication. Refresh page.");
+
+  } finally {
+    setIsCreating(false);
   }
+}
 
   /* ===============================
      RATE LIMIT INIT
@@ -167,7 +169,7 @@ export function TwoFactorDialog({
   }
 
   const disabled =
-    code.length !== 6 || isVerifying || isCreating || cooldown > 0;
+  isVerifying || isCreating || cooldown > 0;
 
   /* ===============================
      UI
