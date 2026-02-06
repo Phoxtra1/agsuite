@@ -41,6 +41,20 @@ export function TwoFactorSetup({ onSetupComplete, onSkip }: TwoFactorSetupProps)
         uri: result.uri,
       });
     } catch (err: unknown) {
+      const appwriteErr = err as { type?: string; message?: string; code?: number };
+      
+      // Check if 2FA is already set up
+      if (
+        appwriteErr.type === 'user_authenticator_already_verified' ||
+        appwriteErr.message?.includes('already verified') ||
+        appwriteErr.message?.includes('already exists')
+      ) {
+        // 2FA is already enabled - proceed directly (no setup needed)
+        console.info('[TwoFactorSetup] 2FA already enabled, proceeding...');
+        onSetupComplete();
+        return;
+      }
+      
       const message = err instanceof Error ? err.message : "Failed to initialize 2FA setup";
       setError(message);
       console.error("MFA setup error:", err);
