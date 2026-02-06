@@ -202,7 +202,7 @@ export function TwoFactorDialog({
             onChange={handleChange}
             className="font-mono tracking-widest"
             autoFocus
-            disabled={disabled}
+            disabled={isVerifying || isCreating}
           />
         </div>
 
