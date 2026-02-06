@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { BarChart3, Zap, Network, Database, Activity } from 'lucide-react';
 import { GatewayFlow } from '@/components/gateway/GatewayFlow';
 import amvLogo from '@/assets/amv_global_logo.png';
+import { hardResetAuthState } from "@/lib/authReset";
 
 // Animated text phrases
 const ANIMATED_PHRASES = [
@@ -10,6 +11,14 @@ const ANIMATED_PHRASES = [
   'EMPOWERING PROJECT OWNERS AND INVESTORS',
   'ENABLING INSTITUTIONS AND DECISION MAKERS',
 ];
+
+async function handleLogin(e) {
+  e.preventDefault();
+
+  hardResetAuthState();   // <<<<< ADD THIS FIRST
+
+  // then run email/password auth
+}
 
 // Smooth animated text component
 function AnimatedText() {
