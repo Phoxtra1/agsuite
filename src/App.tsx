@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -25,7 +25,7 @@ const queryClient = new QueryClient();
  * Detect Lovable preview/local env
  * (avoid redirect loops and allow dev testing)
  */
-const isLovablePreview = () => {
+function isLovablePreview() {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;
   return (
@@ -34,7 +34,7 @@ const isLovablePreview = () => {
     host.includes("localhost") ||
     host.includes("127.0.0.1")
   );
-};
+}
 
 // Loading UI
 function AminevaLoader() {
@@ -58,6 +58,7 @@ function AminevaLoader() {
  */
 function HashNormalizer() {
   useEffect(() => {
+    if (typeof window === "undefined") return;
     if (window.location.hash === "#" || window.location.hash === "#/") {
       window.history.replaceState(
         {},
@@ -90,7 +91,7 @@ function ProtectedSuiteRoute({ children }: { children: React.ReactNode }) {
 
 /**
  * Public gateway
- * - Preview: never force redirects (prevents confusing jumps while Appwrite/CORS is failing)
+ * - Preview: never force redirects
  * - Prod: managers go to /admin, others stay on gateway
  */
 function PublicRoute({ children }: { children: React.ReactNode }) {
@@ -120,7 +121,7 @@ function AdminEntry() {
 function AppRoutes() {
   return (
     <Routes>
-      {/* 1) Public gateway / login */}
+      {/* Public gateway / login */}
       <Route
         path="/"
         element={
@@ -130,7 +131,7 @@ function AppRoutes() {
         }
       />
 
-      {/* 2) Invite bridge */}
+      {/* Invite bridge */}
       <Route
         path="/invite/:product"
         element={
@@ -140,7 +141,7 @@ function AppRoutes() {
         }
       />
 
-      {/* 3) Step-up 2FA verification */}
+      {/* Step-up 2FA verification */}
       <Route
         path="/auth/verify-2fa"
         element={
@@ -150,25 +151,14 @@ function AppRoutes() {
         }
       />
 
-      /**
-       * 4) ✅ CANONICAL ADMIN ROUTE
-       * - /admin is the official entry
-       * - /admin/* is supported for legacy deep links
-       */
+      {/* Canonical admin routes */}
       <Route path="/admin" element={<AdminEntry />} />
       <Route path="/admin/*" element={<AdminEntry />} />
 
-      /**
-       * 5) Compatibility redirect (if someone hits /coms directly)
-       * Keep this ONLY if you expect users to type /coms
-       */
+      {/* Compatibility redirect */}
       <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
 
-      /**
-       * 6) ✅ Suite container
-       * NOTE: do NOT add a separate /suite redirect here.
-       * Your SuitePage should have <Route index ... /> so /suite never 404s.
-       */
+      {/* Suite container */}
       <Route
         path="/suite/*"
         element={
@@ -180,29 +170,29 @@ function AppRoutes() {
         }
       />
 
-      {/* 7) Catch-all */}
+      {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
 
-const App = () => (
-  <QueryClientProvider client={queryClient}>
-    <ThemeProvider>
-      <AuthProvider>
-        <TooltipProvider>
-          <Toaster />
-          <Sonner />
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            {/* Keep these only once */}
+            <Toaster />
+            <Sonner />
 
-          {/* ✅ Prevents random 404s when deployed under subpaths */}
-          <BrowserRouter basename={import.meta.env.BASE_URL}>
-            <HashNormalizer />
-            <AppRoutes />
-          </BrowserRouter>
-        </TooltipProvider>
-      </AuthProvider>
-    </ThemeProvider>
-  </QueryClientProvider>
-);
-
-export default App;
+            <BrowserRouter basename={import.meta.env.BASE_URL}>
+              <HashNormalizer />
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
+  );
+}
