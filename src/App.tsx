@@ -137,6 +137,9 @@ function AppRoutes() {
        * (You can change /suite/coms to your real Comms path inside Suite.)
        */
       <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
+      <Route path="/admin" element={<Navigate to="/suite/console" replace />} />
+      <Route path="/admin/*" element={<Navigate to="/suite/console" replace />} />
+
 
       /**
        * ✅ Suite entry guard:
