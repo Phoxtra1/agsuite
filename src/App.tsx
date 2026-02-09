@@ -1,29 +1,26 @@
-import { useEffect, Suspense, lazy } from "react";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { Suspense, lazy, useEffect } from "react";
+import { Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
 
-import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ThemeProvider } from "@/contexts/ThemeContext";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 import { LoginForm } from "@/components/auth/LoginForm";
-import { AuthGate } from "@/components/auth/AuthGate";
 
 import SuitePage from "./pages/Suite";
 import NotFound from "./pages/NotFound";
 
-// Lazy routes
 const InviteBridge = lazy(() => import("./pages/InviteBridge"));
 const Verify2FA = lazy(() => import("./pages/auth/Verify2FA"));
 
 const queryClient = new QueryClient();
 
-/* ---------- helpers ---------- */
-
-const isLovablePreview = () => {
+const isPreview = () => {
+  if (typeof window === "undefined") return false;
   const host = window.location.hostname;
   return (
     host.includes("lovable.app") ||
@@ -36,7 +33,15 @@ const isLovablePreview = () => {
 function AminevaLoader() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
-      <p className="text-sm text-muted-foreground">Loading Amineva Suite…</p>
+      <div className="flex flex-col items-center gap-4">
+        <div className="relative">
+          <div className="w-12 h-12 rounded-full border-4 border-accent/20 animate-pulse" />
+          <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-t-accent animate-spin" />
+        </div>
+        <p className="text-sm text-muted-foreground animate-pulse">
+          Loading Amineva Global...
+        </p>
+      </div>
     </div>
   );
 }
@@ -44,75 +49,64 @@ function AminevaLoader() {
 function HashNormalizer() {
   useEffect(() => {
     if (window.location.hash === "#" || window.location.hash === "#/") {
-      window.history.replaceState({}, "", window.location.pathname);
+      window.history.replaceState(
+        {},
+        "",
+        window.location.pathname + window.location.search
+      );
     }
   }, []);
   return null;
 }
 
-/* ---------- route guards ---------- */
-
-// PUBLIC HOMEPAGE (gateway)
-function PublicRoute({ children }: { children: React.ReactNode }) {
+/**
+ * Public Home/Gateway at "/"
+ * NEVER render the dashboard here.
+ */
+function PublicHome() {
   const { isAuthenticated, isLoading, user } = useAuth();
-  const preview = isLovablePreview();
 
-  if (preview) return <>{children}</>;
+  // In preview, show gateway and let you navigate manually
+  if (isPreview()) return <LoginForm />;
+
   if (isLoading) return <AminevaLoader />;
 
+  // If admin is already logged in, send them straight to dashboard
   if (isAuthenticated) {
-    const isManager =
-      user?.role === "super_admin" || user?.role === "manager";
-
-    // Managers go to Suite
-    if (isManager) {
-      return <Navigate to="/suite" replace />;
-    }
-
-    // Others stay on gateway to select product
+    const isAdmin = user?.role === "super_admin" || user?.role === "manager";
+    if (isAdmin) return <Navigate to="/admin" replace />;
   }
 
-  return <>{children}</>;
+  return <LoginForm />;
 }
 
-// SUITE (MANAGERS ONLY)
-function ProtectedSuiteRoute({ children }: { children: React.ReactNode }) {
+/**
+ * Dashboard guard for "/admin/*"
+ * NEVER render homepage here.
+ */
+function AdminGuard() {
   const { isAuthenticated, isLoading, user } = useAuth();
-  const preview = isLovablePreview();
 
-  if (preview) return <>{children}</>;
+  // Preview bypass so Appwrite/CORS doesn't lock you out
+  if (isPreview()) return <SuitePage />;
+
   if (isLoading) return <AminevaLoader />;
 
-  if (!isAuthenticated) {
-    return <Navigate to="/" replace />;
-  }
+  if (!isAuthenticated) return <Navigate to="/" replace />;
 
-  const isManager =
-    user?.role === "super_admin" || user?.role === "manager";
+  const isAdmin = user?.role === "super_admin" || user?.role === "manager";
+  if (!isAdmin) return <Navigate to="/" replace />;
 
-  if (!isManager) {
-    return <Navigate to="/" replace />;
-  }
-
-  return <>{children}</>;
+  return <SuitePage />;
 }
-
-/* ---------- routes ---------- */
 
 function AppRoutes() {
   return (
     <Routes>
-      {/* ✅ HOMEPAGE / GATEWAY */}
-      <Route
-        path="/"
-        element={
-          <PublicRoute>
-            <LoginForm />
-          </PublicRoute>
-        }
-      />
+      {/* ✅ Public homepage / gateway */}
+      <Route path="/" element={<PublicHome />} />
 
-      {/* Invite handling */}
+      {/* Invite bridge */}
       <Route
         path="/invite/:product"
         element={
@@ -122,7 +116,7 @@ function AppRoutes() {
         }
       />
 
-      {/* 2FA verification */}
+      {/* 2FA verify */}
       <Route
         path="/auth/verify-2fa"
         element={
@@ -132,25 +126,18 @@ function AppRoutes() {
         }
       />
 
-      {/* ✅ SUITE ADMIN (MANAGERS ONLY) */}
-      <Route
-        path="/suite/*"
-        element={
-          <AuthGate guest={<LoginForm />}>
-            <ProtectedSuiteRoute>
-              <SuitePage />
-            </ProtectedSuiteRoute>
-          </AuthGate>
-        }
-      />
+      {/* ✅ Dashboard container */}
+      <Route path="/admin/*" element={<AdminGuard />} />
 
-      {/* 404 */}
+      {/* Compatibility redirects (optional) */}
+      <Route path="/suite/*" element={<Navigate to="/admin" replace />} />
+      <Route path="/coms" element={<Navigate to="/admin/coms" replace />} />
+
+      {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
 }
-
-/* ---------- app ---------- */
 
 export default function App() {
   return (
@@ -160,10 +147,8 @@ export default function App() {
           <TooltipProvider>
             <Toaster />
             <Sonner />
-            <BrowserRouter>
-              <HashNormalizer />
-              <AppRoutes />
-            </BrowserRouter>
+            <HashNormalizer />
+            <AppRoutes />
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>
