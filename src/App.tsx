@@ -145,6 +145,7 @@ function AppRoutes() {
        * Change "/suite" target if your Suite default is different (e.g. "/suite/dashboard").
        */
       <Route path="/suite" element={<Navigate to="/suite/dashboard" replace />} />
+      <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
 
       {/* Protected Suite routes (managers/super_admins only) */}
       <Route
