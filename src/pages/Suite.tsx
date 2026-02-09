@@ -60,13 +60,15 @@ export default function Suite() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <SuiteNav
-        currentTab={currentTab}
-        onTabChange={handleTabChange}
-        isAdmin={true}
-      />
-
+  <div className="min-h-screen bg-background relative">
+    <div className="relative z-10 pointer-events-auto">
+      <SuiteNav ... />
+      <main className="ml-64 p-8 pointer-events-auto">
+        {/* routes */}
+      </main>
+    </div>
+  </div>
+);
       <main className="ml-64 p-8">
         <Routes>
           {/* Dashboard home */}
