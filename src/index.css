@@ -3,14 +3,14 @@
 @tailwind utilities;
 
 /* Amineva Suite Design System
-   A premium, enterprise-grade digital workspace aesthetic
-   Corporate, technical, authoritative - not playful
+   Premium, enterprise-grade digital workspace aesthetic.
+   Corporate, technical, authoritative.
    All colors MUST be HSL.
 */
 
 @layer base {
   :root {
-    /* Amineva Brand Colors - Light Theme */
+    /* Light Theme */
     --background: 220 20% 98%;
     --foreground: 222 47% 11%;
 
@@ -20,40 +20,39 @@
     --popover: 0 0% 100%;
     --popover-foreground: 222 47% 11%;
 
-    /* Deep Navy - Primary brand color */
+    /* Primary */
     --primary: 222 47% 11%;
     --primary-foreground: 210 40% 98%;
 
-    /* Soft slate for secondary elements */
+    /* Secondary / Muted */
     --secondary: 220 14% 96%;
     --secondary-foreground: 222 47% 11%;
 
     --muted: 220 14% 96%;
     --muted-foreground: 220 9% 46%;
 
-    /* Golden Amber - Accent for highlights and CTAs */
+    /* Accent (Gold) */
     --accent: 38 92% 50%;
     --accent-foreground: 222 47% 11%;
 
-    /* Coral - Status and alerts */
+    /* Status */
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    /* Success green */
     --success: 142 76% 36%;
     --success-foreground: 0 0% 100%;
 
-    /* Warning amber */
     --warning: 38 92% 50%;
     --warning-foreground: 222 47% 11%;
 
+    /* UI lines */
     --border: 220 13% 91%;
     --input: 220 13% 91%;
-    --ring: 222 47% 11%;
+    --ring: 38 92% 50%;
 
     --radius: 0.5rem;
 
-    /* Sidebar - Light mode uses dark sidebar for contrast */
+    /* Sidebar (light mode uses dark sidebar for contrast) */
     --sidebar-background: 222 47% 11%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 38 92% 50%;
@@ -63,7 +62,7 @@
     --sidebar-border: 222 40% 18%;
     --sidebar-ring: 38 92% 50%;
 
-    /* Suite-specific tokens */
+    /* Suite tokens */
     --suite-gradient-start: 222 47% 11%;
     --suite-gradient-end: 222 40% 18%;
     --suite-glow: 38 92% 50%;
@@ -72,59 +71,62 @@
   }
 
   .dark {
-    /* Amineva Brand Colors - Dark Theme (Softer, less harsh) */
-    --background: 222 30% 14%;
-    --foreground: 210 40% 98%;
+    /* Dark Theme (Premium Navy - not deep black) */
+    --background: 222 33% 12%;            /* soft navy */
+    --foreground: 210 40% 98%;            /* near-white */
 
-    --card: 222 30% 17%;
+    --card: 222 30% 16%;                  /* elevated surface */
     --card-foreground: 210 40% 98%;
 
-    --popover: 222 30% 17%;
+    --popover: 222 30% 16%;
     --popover-foreground: 210 40% 98%;
 
-    /* Inverted primary for dark mode */
+    /* Primary */
     --primary: 210 40% 98%;
-    --primary-foreground: 222 47% 11%;
+    --primary-foreground: 222 33% 12%;
 
-    --secondary: 222 25% 22%;
+    /* Secondary / Muted */
+    --secondary: 222 25% 20%;
     --secondary-foreground: 210 40% 98%;
 
-    --muted: 222 25% 22%;
-    --muted-foreground: 220 15% 65%;
+    --muted: 222 24% 18%;
+    --muted-foreground: 220 15% 70%;
 
-    /* Golden Amber stays consistent */
+    /* Accent (Gold) */
     --accent: 38 92% 50%;
-    --accent-foreground: 222 47% 11%;
+    --accent-foreground: 222 33% 12%;
 
-    --destructive: 0 62% 40%;
+    /* Status */
+    --destructive: 0 62% 42%;
     --destructive-foreground: 210 40% 98%;
 
     --success: 142 76% 40%;
     --success-foreground: 0 0% 100%;
 
     --warning: 38 92% 50%;
-    --warning-foreground: 222 47% 11%;
+    --warning-foreground: 222 33% 12%;
 
+    /* UI lines */
     --border: 222 20% 26%;
     --input: 222 20% 26%;
-    --ring: 210 40% 80%;
+    --ring: 38 92% 50%;
 
-    /* Sidebar Dark - Softer */
-    --sidebar-background: 222 30% 14%;
+    /* Sidebar (same family, slightly distinct) */
+    --sidebar-background: 222 33% 11%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 38 92% 50%;
-    --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 222 25% 20%;
+    --sidebar-primary-foreground: 222 33% 12%;
+    --sidebar-accent: 222 25% 18%;
     --sidebar-accent-foreground: 210 40% 98%;
-    --sidebar-border: 222 20% 24%;
+    --sidebar-border: 222 20% 22%;
     --sidebar-ring: 38 92% 50%;
 
-    /* Suite-specific tokens dark */
-    --suite-gradient-start: 222 30% 14%;
-    --suite-gradient-end: 222 30% 18%;
+    /* Suite tokens dark */
+    --suite-gradient-start: 222 33% 12%;
+    --suite-gradient-end: 222 30% 16%;
     --suite-glow: 38 92% 50%;
-    --suite-surface: 222 30% 14%;
-    --suite-surface-elevated: 222 30% 17%;
+    --suite-surface: 222 33% 12%;
+    --suite-surface-elevated: 222 30% 16%;
   }
 }
 
@@ -133,9 +135,16 @@
     @apply border-border;
   }
 
+  html,
+  body {
+    width: 100%;
+    overflow-x: hidden; /* prevents “scattered” horizontal drift */
+  }
+
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
+    text-rendering: geometricPrecision;
   }
 
   /* Premium typography scale */
@@ -157,7 +166,7 @@
 }
 
 @layer utilities {
-  /* Amineva Suite gradients */
+  /* Global suite gradients */
   .suite-gradient {
     background: linear-gradient(
       135deg,
@@ -166,10 +175,26 @@
     );
   }
 
-  .suite-glow {
-    box-shadow: 0 0 40px -10px hsl(var(--suite-glow) / 0.3);
+  /* Homepage/Gateway premium hero (navy + subtle gold glow) */
+  .amineva-hero {
+    background: radial-gradient(
+        circle at 20% 30%,
+        hsl(38 92% 50% / 0.10) 0%,
+        transparent 55%
+      ),
+      linear-gradient(
+        135deg,
+        hsl(var(--suite-gradient-start)) 0%,
+        hsl(var(--suite-gradient-end)) 100%
+      );
   }
 
+  /* Premium glow */
+  .suite-glow {
+    box-shadow: 0 0 40px -10px hsl(var(--suite-glow) / 0.28);
+  }
+
+  /* Card surfaces */
   .suite-card {
     @apply bg-card border border-border rounded-lg;
     box-shadow: 0 1px 3px 0 hsl(var(--foreground) / 0.05);
@@ -177,9 +202,28 @@
 
   .suite-card-elevated {
     @apply suite-card;
-    box-shadow: 
-      0 4px 6px -1px hsl(var(--foreground) / 0.05),
-      0 2px 4px -2px hsl(var(--foreground) / 0.05);
+    box-shadow:
+      0 8px 18px -12px hsl(var(--foreground) / 0.18),
+      0 2px 6px -2px hsl(var(--foreground) / 0.08);
+  }
+
+  /* Dark panel for inside forms / console blocks (matches screenshot) */
+  .amineva-panel {
+    background: hsl(var(--card));
+    border: 1px solid hsl(var(--border));
+    border-radius: var(--radius);
+  }
+
+  /* Inputs: consistent premium look */
+  .amineva-input {
+    @apply bg-background text-foreground border border-input rounded-md;
+  }
+
+  /* Focus ring: gold, consistent */
+  .amineva-focus:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px hsl(var(--accent) / 0.25);
+    border-color: hsl(var(--accent));
   }
 
   /* Premium button effects */
@@ -190,7 +234,7 @@
 
   .btn-premium:hover {
     transform: translateY(-1px);
-    box-shadow: 0 4px 12px -2px hsl(var(--suite-glow) / 0.25);
+    box-shadow: 0 10px 22px -14px hsl(var(--suite-glow) / 0.35);
   }
 
   /* Status indicators */
