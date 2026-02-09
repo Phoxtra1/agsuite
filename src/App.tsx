@@ -10,7 +10,6 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
 import { LoginForm } from "@/components/auth/LoginForm";
-
 import SuitePage from "./pages/Suite";
 import NotFound from "./pages/NotFound";
 
@@ -61,33 +60,34 @@ function HashNormalizer() {
 
 /**
  * Public Home/Gateway at "/"
- * NEVER render the dashboard here.
+ * - Managers can be redirected to /suite after login
+ * - Never mount the dashboard UI here
  */
 function PublicHome() {
   const { isAuthenticated, isLoading, user } = useAuth();
 
-  // In preview, show gateway and let you navigate manually
+  // Preview: keep gateway accessible (do not force redirect)
   if (isPreview()) return <LoginForm />;
 
   if (isLoading) return <AminevaLoader />;
 
-  // If admin is already logged in, send them straight to dashboard
   if (isAuthenticated) {
     const isAdmin = user?.role === "super_admin" || user?.role === "manager";
-    if (isAdmin) return <Navigate to="/admin" replace />;
+    if (isAdmin) return <Navigate to="/suite" replace />;
   }
 
   return <LoginForm />;
 }
 
 /**
- * Dashboard guard for "/admin/*"
- * NEVER render homepage here.
+ * Dashboard guard for "/suite/*"
+ * - Preview bypass so Appwrite/CORS doesn't lock you out
+ * - Production requires authenticated manager/super_admin
  */
-function AdminGuard() {
+function SuiteGuard() {
   const { isAuthenticated, isLoading, user } = useAuth();
 
-  // Preview bypass so Appwrite/CORS doesn't lock you out
+  // Preview bypass (keeps Suite usable even if Appwrite is unreachable)
   if (isPreview()) return <SuitePage />;
 
   if (isLoading) return <AminevaLoader />;
@@ -103,7 +103,7 @@ function AdminGuard() {
 function AppRoutes() {
   return (
     <Routes>
-      {/* ✅ Public homepage / gateway */}
+      {/* Public gateway / homepage */}
       <Route path="/" element={<PublicHome />} />
 
       {/* Invite bridge */}
@@ -126,12 +126,22 @@ function AppRoutes() {
         }
       />
 
-      {/* ✅ Dashboard container */}
-      <Route path="/admin/*" element={<AdminGuard />} />
+      {/* ✅ SUITE DASHBOARD (CANONICAL) */}
+      <Route path="/suite/*" element={<SuiteGuard />} />
 
-      {/* Compatibility redirects (optional) */}
-      <Route path="/suite/*" element={<Navigate to="/admin" replace />} />
-      <Route path="/coms" element={<Navigate to="/admin/coms" replace />} />
+      /**
+       * ✅ Legacy compatibility:
+       * If anything still points to /admin, send it into Suite.
+       * (This avoids 404s without making /admin the dashboard.)
+       */
+      <Route path="/admin" element={<Navigate to="/suite" replace />} />
+      <Route path="/admin/*" element={<Navigate to="/suite" replace />} />
+
+      /**
+       * ✅ Legacy deep link:
+       * /coms should go to suite comms
+       */
+      <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
 
       {/* Catch-all */}
       <Route path="*" element={<NotFound />} />
