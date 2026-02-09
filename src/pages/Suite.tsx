@@ -1,11 +1,5 @@
 import React from "react";
-import {
-  Routes,
-  Route,
-  Navigate,
-  useNavigate,
-  useLocation,
-} from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
 
 import { SuiteNav } from "@/components/suite/SuiteNav";
 
@@ -31,9 +25,6 @@ export default function Suite() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  /**
-   * Determine active tab from suite-relative path
-   */
   const getCurrentTab = (): TabView => {
     const path = location.pathname.replace("/suite", "");
 
@@ -49,9 +40,6 @@ export default function Suite() {
 
   const currentTab = getCurrentTab();
 
-  /**
-   * Stable dashboard navigation
-   */
   const handleTabChange = (tab: TabView) => {
     const paths: Record<TabView, string> = {
       overview: "/suite",
@@ -67,38 +55,24 @@ export default function Suite() {
   };
 
   return (
-    <div className="min-h-screen bg-background relative">
-      {/* Dashboard shell */}
-      <div className="relative z-10 pointer-events-auto">
-        <SuiteNav
-          currentTab={currentTab}
-          onTabChange={handleTabChange}
-          isAdmin={true}
-        />
+    <div className="min-h-screen bg-background">
+      <SuiteNav currentTab={currentTab} onTabChange={handleTabChange} isAdmin={true} />
 
-        {/* Main dashboard content */}
-        <main className="ml-64 p-8 pointer-events-auto">
-          <Routes>
-            {/* Dashboard home */}
-            <Route index element={<OverviewPage />} />
+      <main className="ml-64 p-8">
+        <Routes>
+          <Route index element={<OverviewPage />} />
+          <Route path="why" element={<WhyAminevaPage />} />
+          <Route path="how" element={<HowItWorksPage />} />
 
-            {/* Informational */}
-            <Route path="why" element={<WhyAminevaPage />} />
-            <Route path="how" element={<HowItWorksPage />} />
+          <Route path="console" element={<AminevaConsole />} />
+          <Route path="coms" element={<ComsSystem />} />
 
-            {/* Admin systems */}
-            <Route path="console" element={<AminevaConsole />} />
-            <Route path="coms" element={<ComsSystem />} />
+          <Route path="profile" element={<ProfilePage />} />
+          <Route path="settings" element={<SettingsPage />} />
 
-            {/* User */}
-            <Route path="profile" element={<ProfilePage />} />
-            <Route path="settings" element={<SettingsPage />} />
-
-            {/* Safety net */}
-            <Route path="*" element={<Navigate to="/suite" replace />} />
-          </Routes>
-        </main>
-      </div>
+          <Route path="*" element={<Navigate to="/suite" replace />} />
+        </Routes>
+      </main>
     </div>
   );
 }
