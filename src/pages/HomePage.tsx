@@ -70,7 +70,7 @@ function SuiteGuard() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
 
-  if (isPreview()) return <SuitePage />;
+  if (isPreview()) return <Suite />;
 
   if (isLoading) return <AminevaLoader />;
 
@@ -81,7 +81,7 @@ function SuiteGuard() {
   const isManager = user?.role === "super_admin" || user?.role === "manager";
   if (!isManager) return <Navigate to="/" replace />;
 
-  return <SuitePage />;
+  return <Suite />;
 }
 
 /**
