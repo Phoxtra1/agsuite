@@ -3,7 +3,6 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-
 import { SuiteNav } from "@/components/suite/SuiteNav";
 
 import { OverviewPage } from "@/components/suite/pages/OverviewPage";
-import { ProductsPage } from "@/components/suite/pages/ProductsPage";
 import { WhyAminevaPage } from "@/components/suite/pages/WhyAminevaPage";
 import { HowItWorksPage } from "@/components/suite/pages/HowItWorksPage";
 import { ProfilePage } from "@/components/suite/pages/ProfilePage";
@@ -14,7 +13,6 @@ import { ComsSystem } from "@/components/coms/ComsSystem";
 
 type TabView =
   | "overview"
-  | "products"
   | "why"
   | "how"
   | "console"
@@ -26,33 +24,36 @@ export default function Suite() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Suite dashboard base path (do NOT use /admin)
-  const base = "/suite";
-
+  /**
+   * Determine active tab from suite-relative path
+   */
   const getCurrentTab = (): TabView => {
-    const path = location.pathname.replace(base, "");
-    if (path.startsWith("/products")) return "products";
+    const path = location.pathname.replace("/suite", "");
+
     if (path.startsWith("/why")) return "why";
     if (path.startsWith("/how")) return "how";
     if (path.startsWith("/console")) return "console";
     if (path.startsWith("/coms")) return "coms";
     if (path.startsWith("/profile")) return "profile";
     if (path.startsWith("/settings")) return "settings";
+
     return "overview";
   };
 
   const currentTab = getCurrentTab();
 
+  /**
+   * Stable dashboard navigation
+   */
   const handleTabChange = (tab: TabView) => {
     const paths: Record<TabView, string> = {
-      overview: `${base}`,
-      products: `${base}/products`,
-      why: `${base}/why`,
-      how: `${base}/how`,
-      console: `${base}/console`,
-      coms: `${base}/coms`,
-      profile: `${base}/profile`,
-      settings: `${base}/settings`,
+      overview: "/suite",
+      why: "/suite/why",
+      how: "/suite/how",
+      console: "/suite/console",
+      coms: "/suite/coms",
+      profile: "/suite/profile",
+      settings: "/suite/settings",
     };
 
     navigate(paths[tab]);
@@ -60,29 +61,30 @@ export default function Suite() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SuiteNav currentTab={currentTab} onTabChange={handleTabChange} isAdmin={true} />
+      <SuiteNav
+        currentTab={currentTab}
+        onTabChange={handleTabChange}
+        isAdmin={true}
+      />
 
       <main className="ml-64 p-8">
         <Routes>
-          {/* /suite */}
+          {/* Dashboard home */}
           <Route index element={<OverviewPage />} />
 
-          {/* /suite/products */}
-          <Route path="products" element={<ProductsPage />} />
-
-          {/* /suite/console */}
-          <Route path="console" element={<AminevaConsole />} />
-
-          {/* /suite/coms */}
-          <Route path="coms" element={<ComsSystem />} />
-
-          {/* other suite pages */}
+          {/* Informational */}
           <Route path="why" element={<WhyAminevaPage />} />
           <Route path="how" element={<HowItWorksPage />} />
+
+          {/* Admin systems */}
+          <Route path="console" element={<AminevaConsole />} />
+          <Route path="coms" element={<ComsSystem />} />
+
+          {/* User */}
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
 
-          {/* unknown inside suite -> /suite */}
+          {/* Safety net: never escape dashboard */}
           <Route path="*" element={<Navigate to="/suite" replace />} />
         </Routes>
       </main>
