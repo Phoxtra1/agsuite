@@ -72,31 +72,27 @@
 
   .dark {
     /* Dark Theme (Premium Navy - not deep black) */
-    --background: 222 33% 12%;            /* soft navy */
-    --foreground: 210 40% 98%;            /* near-white */
+    --background: 222 33% 12%;
+    --foreground: 210 40% 98%;
 
-    --card: 222 30% 16%;                  /* elevated surface */
+    --card: 222 30% 16%;
     --card-foreground: 210 40% 98%;
 
     --popover: 222 30% 16%;
     --popover-foreground: 210 40% 98%;
 
-    /* Primary */
     --primary: 210 40% 98%;
     --primary-foreground: 222 33% 12%;
 
-    /* Secondary / Muted */
     --secondary: 222 25% 20%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 222 24% 18%;
     --muted-foreground: 220 15% 70%;
 
-    /* Accent (Gold) */
     --accent: 38 92% 50%;
     --accent-foreground: 222 33% 12%;
 
-    /* Status */
     --destructive: 0 62% 42%;
     --destructive-foreground: 210 40% 98%;
 
@@ -106,12 +102,10 @@
     --warning: 38 92% 50%;
     --warning-foreground: 222 33% 12%;
 
-    /* UI lines */
     --border: 222 20% 26%;
     --input: 222 20% 26%;
     --ring: 38 92% 50%;
 
-    /* Sidebar (same family, slightly distinct) */
     --sidebar-background: 222 33% 11%;
     --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 38 92% 50%;
@@ -121,7 +115,6 @@
     --sidebar-border: 222 20% 22%;
     --sidebar-ring: 38 92% 50%;
 
-    /* Suite tokens dark */
     --suite-gradient-start: 222 33% 12%;
     --suite-gradient-end: 222 30% 16%;
     --suite-glow: 38 92% 50%;
@@ -135,10 +128,32 @@
     @apply border-border;
   }
 
+  /* ✅ HARD FIX for “scattered / huge logo / drift”:
+     Make the root sizing deterministic across browsers and preview shells. */
+  html,
+  body,
+  #root {
+    height: 100%;
+    width: 100%;
+  }
+
+  body {
+    margin: 0;
+  }
+
+  /* Prevent horizontal drift (but keep vertical scrolling normal) */
   html,
   body {
-    width: 100%;
-    overflow-x: hidden; /* prevents “scattered” horizontal drift */
+    overflow-x: hidden;
+  }
+
+  /* Prevent images/SVGs from overflowing their containers */
+  img,
+  svg,
+  video,
+  canvas {
+    max-width: 100%;
+    height: auto;
   }
 
   body {
@@ -151,15 +166,12 @@
   h1 {
     @apply text-4xl font-semibold tracking-tight;
   }
-
   h2 {
     @apply text-2xl font-semibold tracking-tight;
   }
-
   h3 {
     @apply text-xl font-medium;
   }
-
   h4 {
     @apply text-lg font-medium;
   }
