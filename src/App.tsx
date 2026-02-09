@@ -22,11 +22,10 @@ type TabView =
   | "profile"
   | "settings";
 
-export default function SuitePage() {
+function SuiteDashboard() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // Base for dashboard routes is now /admin
   const base = "/admin";
 
   const getCurrentTab = (): TabView => {
@@ -62,30 +61,27 @@ export default function SuitePage() {
       <SuiteNav currentTab={currentTab} onTabChange={handleTabChange} isAdmin={true} />
 
       <main className="ml-64 p-8">
-        {/* Dashboard content routes */}
         <Routes>
-          {/* /admin */}
           <Route index element={<OverviewPage />} />
-
-          {/* /admin/products (includes admin product registry + links out to apps) */}
           <Route path="products" element={<ProductsPage />} />
-
-          {/* /admin/console */}
           <Route path="console" element={<AminevaConsole />} />
-
-          {/* /admin/coms */}
           <Route path="coms" element={<ComsSystem />} />
-
-          {/* Other dashboard pages */}
           <Route path="why" element={<WhyAminevaPage />} />
           <Route path="how" element={<HowItWorksPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
-
-          {/* Anything unknown inside dashboard goes back to overview */}
           <Route path="*" element={<Navigate to="/admin" replace />} />
         </Routes>
       </main>
     </div>
+  );
+}
+
+export default function App() {
+  return (
+    <Routes>
+      <Route path="/admin/*" element={<SuiteDashboard />} />
+      <Route path="*" element={<Navigate to="/admin" replace />} />
+    </Routes>
   );
 }
