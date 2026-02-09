@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-
+import React, { useEffect, useMemo, useState } from "react";
 import { loadProducts, saveProducts } from "@/data/products";
 import {
   ProductData,
@@ -8,8 +7,7 @@ import {
   ProductStatus,
 } from "@/types/product";
 
-import { getProductIcon } from '@/lib/products.ts';
-
+import { getProductIcon } from "@/lib/products";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
@@ -45,7 +43,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-import { Pencil, Plus, Save, Trash2, X, ExternalLink } from "lucide-react";
+import { Pencil, Plus, Save, Trash2, ExternalLink } from "lucide-react";
 
 interface ProductFormData {
   name: string;
@@ -63,6 +61,13 @@ const initialFormData: ProductFormData = {
   status: "coming_soon",
 };
 
+function normalizeUrl(url: string) {
+  const v = url.trim();
+  if (!v) return "";
+  if (/^https?:\/\//i.test(v)) return v;
+  return `https://${v}`;
+}
+
 export function AdminPanel() {
   const [products, setProducts] = useState<ProductData[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -75,12 +80,22 @@ export function AdminPanel() {
     setProducts(loadProducts());
   }, []);
 
-  // Save products whenever they change
+  // Save products whenever they change (after initial load)
   useEffect(() => {
-    if (products.length > 0) {
-      saveProducts(products);
-    }
+    saveProducts(products);
   }, [products]);
+
+  const isEditing = !!editingId;
+
+  const dialogTitle = useMemo(
+    () => (isEditing ? "Edit Product" : "Add Product"),
+    [isEditing]
+  );
+
+  const dialogDesc = useMemo(
+    () => (isEditing ? "Update product details" : "Add a new product to the suite"),
+    [isEditing]
+  );
 
   const handleAdd = () => {
     setFormData(initialFormData);
@@ -93,7 +108,7 @@ export function AdminPanel() {
     if (!product) return;
 
     setFormData({
-      name: product.name,
+      name: product.name || "",
       shortName: product.shortName || "",
       description: product.description || "",
       adminUrl: product.adminUrl || "",
@@ -105,26 +120,42 @@ export function AdminPanel() {
   };
 
   const handleSave = () => {
-    if (!formData.name.trim()) {
+    const name = formData.name.trim();
+    const shortName = formData.shortName.trim();
+    const description = formData.description.trim();
+    const adminUrl = normalizeUrl(formData.adminUrl);
+
+    if (!name) {
       toast.error("Product name is required");
       return;
     }
 
-    if (editingId) {
+    if (!isEditing && !shortName) {
+      toast.error("Short name is required for new products");
+      return;
+    }
+
+    if (isEditing) {
       setProducts((prev) =>
-        prev.map((p) => (p.id === editingId ? { ...p, ...formData } : p))
+        prev.map((p) =>
+          p.id === editingId
+            ? { ...p, name, shortName, description, adminUrl, status: formData.status }
+            : p
+        )
       );
       toast.success("Product updated");
     } else {
       const newId = `custom-${Date.now()}`;
+      const safeShort = shortName.toLowerCase();
+
       const newProduct: ProductData = {
         id: newId,
-        name: formData.name,
-        shortName: formData.shortName,
-        description: formData.description,
-        adminUrl: formData.adminUrl,
+        name,
+        shortName,
+        description,
+        adminUrl,
         status: formData.status,
-        url: formData.adminUrl || `https://${formData.shortName.toLowerCase()}.amineva.com`,
+        url: adminUrl || `https://${safeShort}.amineva.com`,
         isExternal: true,
         isPublic: false,
         allowedRoles: ["super_admin", "staff"],
@@ -146,7 +177,9 @@ export function AdminPanel() {
   };
 
   const openAdminUrl = (url?: string) => {
-    if (url) window.open(url, "_blank");
+    const u = normalizeUrl(url || "");
+    if (!u) return;
+    window.open(u, "_blank", "noopener,noreferrer");
   };
 
   return (
@@ -155,9 +188,7 @@ export function AdminPanel() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-foreground">Product Registry</h2>
-          <p className="text-muted-foreground">
-            Manage products in the Amineva Suite
-          </p>
+          <p className="text-muted-foreground">Manage products in the Amineva Suite</p>
         </div>
 
         <Button
@@ -197,15 +228,13 @@ export function AdminPanel() {
                       <div>
                         <p className="font-medium text-foreground">{product.name}</p>
                         <p className="text-sm text-muted-foreground line-clamp-1">
-                          {product.description || 'No description'}
+                          {product.description || "No description"}
                         </p>
                       </div>
                     </TableCell>
 
                     <TableCell>
-                      <Badge
-                        className={cn("text-xs", STATUS_COLORS[product.status])}
-                      >
+                      <Badge className={cn("text-xs", STATUS_COLORS[product.status])}>
                         {STATUS_LABELS[product.status]}
                       </Badge>
                     </TableCell>
@@ -255,41 +284,38 @@ export function AdminPanel() {
         </CardContent>
       </Card>
 
-      {/* Compact Add/Edit Dialog */}
+      {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle>{editingId ? "Edit Product" : "Add Product"}</DialogTitle>
-            <DialogDescription>
-              {editingId ? "Update product details" : "Add a new product to the suite"}
-            </DialogDescription>
+            <DialogTitle>{dialogTitle}</DialogTitle>
+            <DialogDescription>{dialogDesc}</DialogDescription>
           </DialogHeader>
 
           <div className="space-y-4 py-2">
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <Label htmlFor="name" className="text-foreground">Name</Label>
+                <Label htmlFor="name" className="text-foreground">
+                  Name
+                </Label>
                 <Input
                   id="name"
                   value={formData.name}
-                  onChange={(e) =>
-                    setFormData((prev) => ({ ...prev, name: e.target.value }))
-                  }
+                  onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
                   placeholder="Product Name"
                   className="h-9"
                 />
               </div>
 
               <div className="space-y-1.5">
-                <Label htmlFor="shortName" className="text-foreground">Short Name</Label>
+                <Label htmlFor="shortName" className="text-foreground">
+                  Short Name
+                </Label>
                 <Input
                   id="shortName"
                   value={formData.shortName}
                   onChange={(e) =>
-                    setFormData((prev) => ({
-                      ...prev,
-                      shortName: e.target.value,
-                    }))
+                    setFormData((prev) => ({ ...prev, shortName: e.target.value }))
                   }
                   placeholder="Short"
                   className="h-9"
@@ -298,15 +324,14 @@ export function AdminPanel() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="description" className="text-foreground">Description</Label>
+              <Label htmlFor="description" className="text-foreground">
+                Description
+              </Label>
               <Input
                 id="description"
                 value={formData.description}
                 onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
+                  setFormData((prev) => ({ ...prev, description: e.target.value }))
                 }
                 placeholder="Brief product description"
                 className="h-9"
@@ -314,7 +339,9 @@ export function AdminPanel() {
             </div>
 
             <div className="space-y-1.5">
-              <Label htmlFor="adminUrl" className="text-foreground">Admin URL</Label>
+              <Label htmlFor="adminUrl" className="text-foreground">
+                Admin URL
+              </Label>
               <Input
                 id="adminUrl"
                 value={formData.adminUrl}
@@ -364,14 +391,12 @@ export function AdminPanel() {
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation Dialog */}
+      {/* Delete Confirmation */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
             <DialogTitle>Delete Product?</DialogTitle>
-            <DialogDescription>
-              This action cannot be undone.
-            </DialogDescription>
+            <DialogDescription>This action cannot be undone.</DialogDescription>
           </DialogHeader>
 
           <DialogFooter className="gap-2 sm:gap-0">
