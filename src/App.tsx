@@ -1,91 +1,269 @@
 import React from "react";
-import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
-import { SuiteNav } from "@/components/suite/SuiteNav";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { OverviewPage } from "@/components/suite/pages/OverviewPage";
-import { ProductsPage } from "@/components/suite/pages/ProductsPage";
-import { WhyAminevaPage } from "@/components/suite/pages/WhyAminevaPage";
-import { HowItWorksPage } from "@/components/suite/pages/HowItWorksPage";
-import { ProfilePage } from "@/components/suite/pages/ProfilePage";
-import { SettingsPage } from "@/components/suite/pages/SettingsPage";
+import { TooltipProvider } from "@/components/ui/tooltip";
+import { Toaster } from "@/components/ui/toaster";
+import { Toaster as Sonner } from "@/components/ui/sonner";
 
-import { AminevaConsole } from "@/components/admin/AminevaConsole";
-import { ComsSystem } from "@/components/coms/ComsSystem";
+import { ErrorBoundary } from "@/components/system/ErrorBoundary";
+import IdleLogout from "@/components/system/IdleLogout";
 
-type TabView =
-  | "overview"
-  | "products"
-  | "why"
-  | "how"
-  | "console"
-  | "coms"
-  | "profile"
-  | "settings";
+import { AuthProvider } from "@/contexts/AuthContext";
+import { NotificationProvider } from "@/contexts/NotificationContext";
+import { ShopDataProvider } from "@/contexts/ShopDataContext";
+import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
+import { LanguageProvider } from "@/contexts/LanguageContext";
 
-export default function SuitePage() {
-  const navigate = useNavigate();
-  const location = useLocation();
+// Suite (homepage + suite admin area)
+import SuitePage from "./pages/Suite"; // <-- adjust if your SuitePage path differs
 
-  // Base for dashboard routes is now /admin
-  const base = "/admin";
+// Public pages
+import NotFound from "./pages/NotFound";
+import InviteAccepted from "./pages/InviteAccepted";
 
-  const getCurrentTab = (): TabView => {
-    const path = location.pathname.replace(base, "");
-    if (path.startsWith("/products")) return "products";
-    if (path.startsWith("/why")) return "why";
-    if (path.startsWith("/how")) return "how";
-    if (path.startsWith("/console")) return "console";
-    if (path.startsWith("/coms")) return "coms";
-    if (path.startsWith("/profile")) return "profile";
-    if (path.startsWith("/settings")) return "settings";
-    return "overview";
-  };
+// Employee onboarding / redirect handlers
+import EmployeeInvite from "./pages/employee/EmployeeInvite";
+import EmployeeEntry from "./pages/employee/EmployeeEntry";
+import EmployeeSetupPin from "./pages/employee/EmployeeSetupPin";
+import EmployeeSetupProfile from "./pages/employee/EmployeeSetupProfile";
 
-  const currentTab = getCurrentTab();
+// Employee workspace
+import EmployeesDashboard from "./pages/employee/EmployeesDashboard";
 
-  const handleTabChange = (tab: TabView) => {
-    const paths: Record<TabView, string> = {
-      overview: `${base}`,
-      products: `${base}/products`,
-      why: `${base}/why`,
-      how: `${base}/how`,
-      console: `${base}/console`,
-      coms: `${base}/coms`,
-      profile: `${base}/profile`,
-      settings: `${base}/settings`,
-    };
-    navigate(paths[tab]);
-  };
+// ✅ AG Stock Admin pages (software manager dashboard)
+import AdminDashboard from "./pages/admin/AdminDashboard";
+import ShopsManagement from "./pages/admin/ShopsManagement";
+import SubscriptionsManagement from "./pages/admin/SubscriptionsManagement";
+import PlatformNotifications from "./pages/admin/PlatformNotifications";
+import ManualShopCreation from "./pages/admin/ManualShopCreation";
+import AdminUsers from "./pages/admin/AdminUsers";
+import AdminSettings from "./pages/admin/AdminSettings";
 
+// Shop Owner pages
+import ShopDashboard from "./pages/shop/ShopDashboard";
+import Inventory from "./pages/shop/Inventory";
+import Sales from "./pages/shop/Sales";
+import StockIn from "./pages/shop/StockIn";
+import StockOut from "./pages/shop/StockOut";
+import Employees from "./pages/shop/Employees";
+import Settings from "./pages/shop/Settings";
+import Profile from "./pages/shop/Profile";
+
+// Subscription pages
+import Subscription from "./pages/shop/Subscription";
+import Subscribe from "./pages/Subscribe";
+
+const queryClient = new QueryClient();
+
+export default function App() {
   return (
-    <div className="min-h-screen bg-background">
-      <SuiteNav currentTab={currentTab} onTabChange={handleTabChange} isAdmin={true} />
+    <ErrorBoundary>
+      <QueryClientProvider client={queryClient}>
+        <LanguageProvider>
+          <AuthProvider>
+            <NotificationProvider>
+              <ShopDataProvider>
+                <SubscriptionProvider>
+                  <TooltipProvider>
+                    <Toaster />
+                    <Sonner />
 
-      <main className="ml-64 p-8">
-        {/* Dashboard content routes */}
-        <Routes>
-          {/* /admin */}
-          <Route index element={<OverviewPage />} />
+                    <BrowserRouter>
+                      <IdleLogout />
 
-          {/* /admin/products (includes admin product registry + links out to apps) */}
-          <Route path="products" element={<ProductsPage />} />
+                      <Routes>
+                        {/* ✅ SUITE HOMEPAGE */}
+                        <Route
+                          path="/"
+                          element={
+                            <ErrorBoundary>
+                              <SuitePage />
+                            </ErrorBoundary>
+                          }
+                        />
 
-          {/* /admin/console */}
-          <Route path="console" element={<AminevaConsole />} />
+                        {/* ✅ SUITE ADMIN AREA (tabs like /admin/products, /admin/coms, etc.) */}
+                        <Route
+                          path="/admin/*"
+                          element={
+                            <ErrorBoundary>
+                              <SuitePage />
+                            </ErrorBoundary>
+                          }
+                        />
 
-          {/* /admin/coms */}
-          <Route path="coms" element={<ComsSystem />} />
+                        {/* Invite accept */}
+                        <Route path="/invite/:token" element={<InviteAccepted />} />
 
-          {/* Other dashboard pages */}
-          <Route path="why" element={<WhyAminevaPage />} />
-          <Route path="how" element={<HowItWorksPage />} />
-          <Route path="profile" element={<ProfilePage />} />
-          <Route path="settings" element={<SettingsPage />} />
+                        {/* Employee invite / redirect flow */}
+                        <Route path="/employee/invite" element={<EmployeeInvite />} />
+                        <Route path="/employee/entry" element={<EmployeeEntry />} />
+                        <Route path="/employee/setup-pin" element={<EmployeeSetupPin />} />
+                        <Route
+                          path="/employee/setup-profile"
+                          element={<EmployeeSetupProfile />}
+                        />
 
-          {/* Anything unknown inside dashboard goes back to overview */}
-          <Route path="*" element={<Navigate to="/admin" replace />} />
-        </Routes>
-      </main>
-    </div>
+                        {/* ✅ EMPLOYEE WORKSPACE */}
+                        <Route
+                          path="/employees/*"
+                          element={
+                            <ErrorBoundary>
+                              <EmployeesDashboard />
+                            </ErrorBoundary>
+                          }
+                        />
+
+                        {/* ✅ SHOP OWNER */}
+                        <Route
+                          path="/shop"
+                          element={
+                            <ErrorBoundary>
+                              <ShopDashboard />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/shop/inventory"
+                          element={
+                            <ErrorBoundary>
+                              <Inventory />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/shop/sales"
+                          element={
+                            <ErrorBoundary>
+                              <Sales />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/shop/stock-in"
+                          element={
+                            <ErrorBoundary>
+                              <StockIn />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/shop/stock-out"
+                          element={
+                            <ErrorBoundary>
+                              <StockOut />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/shop/employees"
+                          element={
+                            <ErrorBoundary>
+                              <Employees />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/shop/subscription"
+                          element={
+                            <ErrorBoundary>
+                              <Subscription />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/shop/settings"
+                          element={
+                            <ErrorBoundary>
+                              <Settings />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/shop/profile"
+                          element={
+                            <ErrorBoundary>
+                              <Profile />
+                            </ErrorBoundary>
+                          }
+                        />
+
+                        {/* Marketing / signup */}
+                        <Route path="/shop/subscribe" element={<Subscribe />} />
+
+                        {/* ✅ AG STOCK ADMIN (SOFTWARE MANAGER) — moved away from /admin to avoid conflict */}
+                        <Route
+                          path="/agstock/admin"
+                          element={
+                            <ErrorBoundary>
+                              <AdminDashboard />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/agstock/admin/shops"
+                          element={
+                            <ErrorBoundary>
+                              <ShopsManagement />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/agstock/admin/subscriptions"
+                          element={
+                            <ErrorBoundary>
+                              <SubscriptionsManagement />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/agstock/admin/users"
+                          element={
+                            <ErrorBoundary>
+                              <AdminUsers />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/agstock/admin/notifications"
+                          element={
+                            <ErrorBoundary>
+                              <PlatformNotifications />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/agstock/admin/create-shop"
+                          element={
+                            <ErrorBoundary>
+                              <ManualShopCreation />
+                            </ErrorBoundary>
+                          }
+                        />
+                        <Route
+                          path="/agstock/admin/settings"
+                          element={
+                            <ErrorBoundary>
+                              <AdminSettings />
+                            </ErrorBoundary>
+                          }
+                        />
+
+                        {/* Old admin/support removed — keep it safe */}
+                        <Route path="/admin/support" element={<Navigate to="/admin" replace />} />
+
+                        {/* Not Found */}
+                        <Route path="*" element={<NotFound />} />
+                      </Routes>
+                    </BrowserRouter>
+                  </TooltipProvider>
+                </SubscriptionProvider>
+              </ShopDataProvider>
+            </NotificationProvider>
+          </AuthProvider>
+        </LanguageProvider>
+      </QueryClientProvider>
+    </ErrorBoundary>
   );
 }
