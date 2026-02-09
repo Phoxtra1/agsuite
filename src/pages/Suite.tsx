@@ -22,15 +22,12 @@ type TabView =
   | "profile"
   | "settings";
 
-export default function SuitePage() {
+export default function Suite() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  // ✅ Detect mode from URL
-  const isAdmin = location.pathname.startsWith("/admin");
-
-  // ✅ Base depends on mode
-  const base = isAdmin ? "/admin" : "";
+  // ✅ Suite dashboard base path (do NOT use /admin)
+  const base = "/suite";
 
   const getCurrentTab = (): TabView => {
     const path = location.pathname.replace(base, "");
@@ -48,7 +45,7 @@ export default function SuitePage() {
 
   const handleTabChange = (tab: TabView) => {
     const paths: Record<TabView, string> = {
-      overview: `${base || "/"}`,
+      overview: `${base}`,
       products: `${base}/products`,
       why: `${base}/why`,
       how: `${base}/how`,
@@ -58,48 +55,35 @@ export default function SuitePage() {
       settings: `${base}/settings`,
     };
 
-    // ✅ In public mode, block admin-only tabs from navigating anywhere
-    if (!isAdmin && (tab === "console" || tab === "coms")) {
-      navigate(base || "/", { replace: true });
-      return;
-    }
-
     navigate(paths[tab]);
   };
 
   return (
     <div className="min-h-screen bg-background">
-      {/* ✅ isAdmin is now dynamic */}
-      <SuiteNav currentTab={currentTab} onTabChange={handleTabChange} isAdmin={isAdmin} />
+      <SuiteNav currentTab={currentTab} onTabChange={handleTabChange} isAdmin={true} />
 
       <main className="ml-64 p-8">
         <Routes>
-          {/* Index route:
-              - /admin shows OverviewPage (admin mode)
-              - / shows OverviewPage (public mode homepage) */}
+          {/* /suite */}
           <Route index element={<OverviewPage />} />
 
+          {/* /suite/products */}
           <Route path="products" element={<ProductsPage />} />
 
-          {/* ✅ Admin-only routes: if someone hits these outside /admin, push back to / */}
-          <Route
-            path="console"
-            element={isAdmin ? <AminevaConsole /> : <Navigate to="/" replace />}
-          />
-          <Route
-            path="coms"
-            element={isAdmin ? <ComsSystem /> : <Navigate to="/" replace />}
-          />
+          {/* /suite/console */}
+          <Route path="console" element={<AminevaConsole />} />
 
+          {/* /suite/coms */}
+          <Route path="coms" element={<ComsSystem />} />
+
+          {/* other suite pages */}
           <Route path="why" element={<WhyAminevaPage />} />
           <Route path="how" element={<HowItWorksPage />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
 
-          {/* ✅ IMPORTANT:
-              - In admin mode, unknown inside dashboard returns to /admin
-              - In public mode, unknown returns to / */}
-          <Route path="*" element={<Navigate to={isAdmin ? "/admin" : "/"} replace />} />
+          {/* unknown inside suite -> /suite */}
+          <Route path="*" element={<Navigate to="/suite" replace />} />
         </Routes>
       </main>
     </div>
