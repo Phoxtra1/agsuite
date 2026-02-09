@@ -1,269 +1,172 @@
-import React from "react";
+import { useEffect, Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
-import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
-import { ErrorBoundary } from "@/components/system/ErrorBoundary";
-import IdleLogout from "@/components/system/IdleLogout";
+import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ThemeProvider } from "@/contexts/ThemeContext";
 
-import { AuthProvider } from "@/contexts/AuthContext";
-import { NotificationProvider } from "@/contexts/NotificationContext";
-import { ShopDataProvider } from "@/contexts/ShopDataContext";
-import { SubscriptionProvider } from "@/contexts/SubscriptionContext";
-import { LanguageProvider } from "@/contexts/LanguageContext";
+import { LoginForm } from "@/components/auth/LoginForm";
+import { AuthGate } from "@/components/auth/AuthGate";
 
-// Suite (homepage + suite admin area)
-import SuitePage from "./pages/Suite"; // <-- adjust if your SuitePage path differs
-
-// Public pages
+import SuitePage from "./pages/Suite";
 import NotFound from "./pages/NotFound";
-import InviteAccepted from "./pages/InviteAccepted";
 
-// Employee onboarding / redirect handlers
-import EmployeeInvite from "./pages/employee/EmployeeInvite";
-import EmployeeEntry from "./pages/employee/EmployeeEntry";
-import EmployeeSetupPin from "./pages/employee/EmployeeSetupPin";
-import EmployeeSetupProfile from "./pages/employee/EmployeeSetupProfile";
-
-// Employee workspace
-import EmployeesDashboard from "./pages/employee/EmployeesDashboard";
-
-// ✅ AG Stock Admin pages (software manager dashboard)
-import AdminDashboard from "./pages/admin/AdminDashboard";
-import ShopsManagement from "./pages/admin/ShopsManagement";
-import SubscriptionsManagement from "./pages/admin/SubscriptionsManagement";
-import PlatformNotifications from "./pages/admin/PlatformNotifications";
-import ManualShopCreation from "./pages/admin/ManualShopCreation";
-import AdminUsers from "./pages/admin/AdminUsers";
-import AdminSettings from "./pages/admin/AdminSettings";
-
-// Shop Owner pages
-import ShopDashboard from "./pages/shop/ShopDashboard";
-import Inventory from "./pages/shop/Inventory";
-import Sales from "./pages/shop/Sales";
-import StockIn from "./pages/shop/StockIn";
-import StockOut from "./pages/shop/StockOut";
-import Employees from "./pages/shop/Employees";
-import Settings from "./pages/shop/Settings";
-import Profile from "./pages/shop/Profile";
-
-// Subscription pages
-import Subscription from "./pages/shop/Subscription";
-import Subscribe from "./pages/Subscribe";
+// Lazy routes
+const InviteBridge = lazy(() => import("./pages/InviteBridge"));
+const Verify2FA = lazy(() => import("./pages/auth/Verify2FA"));
 
 const queryClient = new QueryClient();
 
+/* ---------- helpers ---------- */
+
+const isLovablePreview = () => {
+  const host = window.location.hostname;
+  return (
+    host.includes("lovable.app") ||
+    host.includes("lovableproject.com") ||
+    host.includes("localhost") ||
+    host.includes("127.0.0.1")
+  );
+};
+
+function AminevaLoader() {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <p className="text-sm text-muted-foreground">Loading Amineva Suite…</p>
+    </div>
+  );
+}
+
+function HashNormalizer() {
+  useEffect(() => {
+    if (window.location.hash === "#" || window.location.hash === "#/") {
+      window.history.replaceState({}, "", window.location.pathname);
+    }
+  }, []);
+  return null;
+}
+
+/* ---------- route guards ---------- */
+
+// PUBLIC HOMEPAGE (gateway)
+function PublicRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const preview = isLovablePreview();
+
+  if (preview) return <>{children}</>;
+  if (isLoading) return <AminevaLoader />;
+
+  if (isAuthenticated) {
+    const isManager =
+      user?.role === "super_admin" || user?.role === "manager";
+
+    // Managers go to Suite
+    if (isManager) {
+      return <Navigate to="/suite" replace />;
+    }
+
+    // Others stay on gateway to select product
+  }
+
+  return <>{children}</>;
+}
+
+// SUITE (MANAGERS ONLY)
+function ProtectedSuiteRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading, user } = useAuth();
+  const preview = isLovablePreview();
+
+  if (preview) return <>{children}</>;
+  if (isLoading) return <AminevaLoader />;
+
+  if (!isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+
+  const isManager =
+    user?.role === "super_admin" || user?.role === "manager";
+
+  if (!isManager) {
+    return <Navigate to="/" replace />;
+  }
+
+  return <>{children}</>;
+}
+
+/* ---------- routes ---------- */
+
+function AppRoutes() {
+  return (
+    <Routes>
+      {/* ✅ HOMEPAGE / GATEWAY */}
+      <Route
+        path="/"
+        element={
+          <PublicRoute>
+            <LoginForm />
+          </PublicRoute>
+        }
+      />
+
+      {/* Invite handling */}
+      <Route
+        path="/invite/:product"
+        element={
+          <Suspense fallback={<AminevaLoader />}>
+            <InviteBridge />
+          </Suspense>
+        }
+      />
+
+      {/* 2FA verification */}
+      <Route
+        path="/auth/verify-2fa"
+        element={
+          <Suspense fallback={<AminevaLoader />}>
+            <Verify2FA />
+          </Suspense>
+        }
+      />
+
+      {/* ✅ SUITE ADMIN (MANAGERS ONLY) */}
+      <Route
+        path="/suite/*"
+        element={
+          <AuthGate guest={<LoginForm />}>
+            <ProtectedSuiteRoute>
+              <SuitePage />
+            </ProtectedSuiteRoute>
+          </AuthGate>
+        }
+      />
+
+      {/* 404 */}
+      <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+/* ---------- app ---------- */
+
 export default function App() {
   return (
-    <ErrorBoundary>
-      <QueryClientProvider client={queryClient}>
-        <LanguageProvider>
-          <AuthProvider>
-            <NotificationProvider>
-              <ShopDataProvider>
-                <SubscriptionProvider>
-                  <TooltipProvider>
-                    <Toaster />
-                    <Sonner />
-
-                    <BrowserRouter>
-                      <IdleLogout />
-
-                      <Routes>
-                        {/* ✅ SUITE HOMEPAGE */}
-                        <Route
-                          path="/"
-                          element={
-                            <ErrorBoundary>
-                              <SuitePage />
-                            </ErrorBoundary>
-                          }
-                        />
-
-                        {/* ✅ SUITE ADMIN AREA (tabs like /admin/products, /admin/coms, etc.) */}
-                        <Route
-                          path="/admin/*"
-                          element={
-                            <ErrorBoundary>
-                              <SuitePage />
-                            </ErrorBoundary>
-                          }
-                        />
-
-                        {/* Invite accept */}
-                        <Route path="/invite/:token" element={<InviteAccepted />} />
-
-                        {/* Employee invite / redirect flow */}
-                        <Route path="/employee/invite" element={<EmployeeInvite />} />
-                        <Route path="/employee/entry" element={<EmployeeEntry />} />
-                        <Route path="/employee/setup-pin" element={<EmployeeSetupPin />} />
-                        <Route
-                          path="/employee/setup-profile"
-                          element={<EmployeeSetupProfile />}
-                        />
-
-                        {/* ✅ EMPLOYEE WORKSPACE */}
-                        <Route
-                          path="/employees/*"
-                          element={
-                            <ErrorBoundary>
-                              <EmployeesDashboard />
-                            </ErrorBoundary>
-                          }
-                        />
-
-                        {/* ✅ SHOP OWNER */}
-                        <Route
-                          path="/shop"
-                          element={
-                            <ErrorBoundary>
-                              <ShopDashboard />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/shop/inventory"
-                          element={
-                            <ErrorBoundary>
-                              <Inventory />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/shop/sales"
-                          element={
-                            <ErrorBoundary>
-                              <Sales />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/shop/stock-in"
-                          element={
-                            <ErrorBoundary>
-                              <StockIn />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/shop/stock-out"
-                          element={
-                            <ErrorBoundary>
-                              <StockOut />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/shop/employees"
-                          element={
-                            <ErrorBoundary>
-                              <Employees />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/shop/subscription"
-                          element={
-                            <ErrorBoundary>
-                              <Subscription />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/shop/settings"
-                          element={
-                            <ErrorBoundary>
-                              <Settings />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/shop/profile"
-                          element={
-                            <ErrorBoundary>
-                              <Profile />
-                            </ErrorBoundary>
-                          }
-                        />
-
-                        {/* Marketing / signup */}
-                        <Route path="/shop/subscribe" element={<Subscribe />} />
-
-                        {/* ✅ AG STOCK ADMIN (SOFTWARE MANAGER) — moved away from /admin to avoid conflict */}
-                        <Route
-                          path="/agstock/admin"
-                          element={
-                            <ErrorBoundary>
-                              <AdminDashboard />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/agstock/admin/shops"
-                          element={
-                            <ErrorBoundary>
-                              <ShopsManagement />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/agstock/admin/subscriptions"
-                          element={
-                            <ErrorBoundary>
-                              <SubscriptionsManagement />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/agstock/admin/users"
-                          element={
-                            <ErrorBoundary>
-                              <AdminUsers />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/agstock/admin/notifications"
-                          element={
-                            <ErrorBoundary>
-                              <PlatformNotifications />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/agstock/admin/create-shop"
-                          element={
-                            <ErrorBoundary>
-                              <ManualShopCreation />
-                            </ErrorBoundary>
-                          }
-                        />
-                        <Route
-                          path="/agstock/admin/settings"
-                          element={
-                            <ErrorBoundary>
-                              <AdminSettings />
-                            </ErrorBoundary>
-                          }
-                        />
-
-                        {/* Old admin/support removed — keep it safe */}
-                        <Route path="/admin/support" element={<Navigate to="/admin" replace />} />
-
-                        {/* Not Found */}
-                        <Route path="*" element={<NotFound />} />
-                      </Routes>
-                    </BrowserRouter>
-                  </TooltipProvider>
-                </SubscriptionProvider>
-              </ShopDataProvider>
-            </NotificationProvider>
-          </AuthProvider>
-        </LanguageProvider>
-      </QueryClientProvider>
-    </ErrorBoundary>
+    <QueryClientProvider client={queryClient}>
+      <ThemeProvider>
+        <AuthProvider>
+          <TooltipProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <HashNormalizer />
+              <AppRoutes />
+            </BrowserRouter>
+          </TooltipProvider>
+        </AuthProvider>
+      </ThemeProvider>
+    </QueryClientProvider>
   );
 }
