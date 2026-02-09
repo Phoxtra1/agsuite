@@ -53,14 +53,14 @@
 
     --radius: 0.5rem;
 
-    /* Sidebar - Light mode uses light sidebar */
-    --sidebar-background: 220 20% 98%;
-    --sidebar-foreground: 222 47% 11%;
+    /* Sidebar - Light mode uses dark sidebar for contrast */
+    --sidebar-background: 222 47% 11%;
+    --sidebar-foreground: 210 40% 98%;
     --sidebar-primary: 38 92% 50%;
     --sidebar-primary-foreground: 222 47% 11%;
-    --sidebar-accent: 220 14% 92%;
-    --sidebar-accent-foreground: 222 47% 11%;
-    --sidebar-border: 220 13% 91%;
+    --sidebar-accent: 222 40% 18%;
+    --sidebar-accent-foreground: 210 40% 98%;
+    --sidebar-border: 222 40% 18%;
     --sidebar-ring: 38 92% 50%;
 
     /* Suite-specific tokens */
