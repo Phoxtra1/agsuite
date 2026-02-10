@@ -97,15 +97,7 @@ export default function HomePage() {
     setAgStepConfirmed(false);
   };
 
-  const handleSignIn = async () => {
-    // Keep current behavior (we'll fix auth flow after you paste AuthCard/auth code)
-    navigate(`/auth/verify-2fa?product=${selectedProduct?.id || ""}`);
-  };
-
-  const handleRegister = async () => {
-    // Keep current behavior (we'll fix auth flow after you paste AuthCard/auth code)
-    navigate(`/auth/verify-2fa?product=${selectedProduct?.id || ""}`);
-  };
+  // Auth is now handled entirely inside AuthCard (calls useAuth().login/register)
 
   const getStatusBadge = (status: ProductData["status"]) => {
     switch (status) {
@@ -427,7 +419,7 @@ export default function HomePage() {
 
               {/* Auth UI (All products; AG Stock shows only after Continue) */}
               {canShowAuthCard && (
-                <AuthCard
+              <AuthCard
                   product={selectedProduct}
                   authTab={authTab}
                   setAuthTab={setAuthTab}
@@ -436,8 +428,6 @@ export default function HomePage() {
                   password={password}
                   setPassword={setPassword}
                   onChangeSelection={onChangeSelection}
-                  onSignIn={handleSignIn}
-                  onRegister={handleRegister}
                 />
               )}
             </>
