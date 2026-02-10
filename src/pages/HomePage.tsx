@@ -1,27 +1,16 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { loadProducts } from "@/data/products";
 import { DEFAULT_CATEGORIES, ProductData } from "@/types/product";
 import { getProductIcon } from "@/lib/products";
+import { useProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
 import { Clock, XCircle, ArrowRight, ExternalLink } from "lucide-react";
 import amvLogo from "@/assets/amv_global_logo.png";
+import AuthCard from "@/components/home/AuthCard";
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const [products, setProducts] = useState<ProductData[]>([]);
-
-  // Load products from registry and listen for updates
-  useEffect(() => {
-    setProducts(loadProducts());
-    const handleUpdate = () => setProducts(loadProducts());
-    window.addEventListener("productsUpdated", handleUpdate);
-    window.addEventListener("storage", handleUpdate);
-    return () => {
-      window.removeEventListener("productsUpdated", handleUpdate);
-      window.removeEventListener("storage", handleUpdate);
-    };
-  }, []);
+  const { products } = useProducts();
 
   // Group products by category dynamically from registry
   const categories = DEFAULT_CATEGORIES.map((cat) => ({
@@ -92,104 +81,135 @@ export default function HomePage() {
   };
 
   return (
-    <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2 bg-background text-foreground">
-      {/* LEFT PANEL - Brand */}
-      <div className="relative overflow-hidden amineva-hero text-white min-h-[50vh] lg:min-h-screen">
+    <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2">
+      {/* LEFT PANEL - Always deep dark-blue regardless of theme */}
+      <div className="relative overflow-hidden min-h-[50vh] lg:min-h-screen" style={{
+        background: `radial-gradient(circle at 20% 30%, hsla(38,92%,50%,0.10) 0%, transparent 55%), linear-gradient(135deg, hsl(222,47%,11%) 0%, hsl(222,40%,18%) 100%)`
+      }}>
+        {/* Yellow star dots */}
+        {[
+          { top: "8%", left: "5%" },
+          { top: "12%", left: "35%" },
+          { top: "8%", left: "60%" },
+          { top: "15%", left: "85%" },
+          { top: "42%", left: "3%" },
+          { top: "38%", left: "90%" },
+          { top: "68%", left: "5%" },
+          { top: "72%", left: "38%" },
+          { top: "65%", left: "82%" },
+          { top: "88%", left: "3%" },
+          { top: "85%", left: "90%" },
+        ].map((pos, i) => (
+          <div
+            key={i}
+            className="absolute w-1.5 h-1.5 rounded-full"
+            style={{
+              top: pos.top,
+              left: pos.left,
+              backgroundColor: "hsl(38, 92%, 50%)",
+              opacity: 0.6,
+            }}
+          />
+        ))}
+
         {/* Logo + tagline */}
         <div className="p-8 flex items-start gap-4 relative z-10">
           <img src={amvLogo} alt="Amineva Global" className="h-14 w-14 rounded-full" />
           <div>
-            <div className="text-accent font-semibold tracking-wide text-sm">
+            <div className="font-semibold tracking-wide text-sm" style={{ color: "hsl(38,92%,50%)" }}>
               ENABLING INSTITUTIONS AND
             </div>
-            <div className="text-accent font-semibold tracking-wide text-sm">
+            <div className="font-semibold tracking-wide text-sm" style={{ color: "hsl(38,92%,50%)" }}>
               DECISION MAKERS
             </div>
           </div>
         </div>
 
-        {/* Animated illustration cards */}
+        {/* Animated orbital illustration */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          {/* Orbital circles */}
-          <div className="relative w-[420px] h-[420px]">
-            <div className="absolute inset-0 rounded-full border border-accent/10" />
-            <div className="absolute inset-6 rounded-full border border-accent/15" />
-            <div className="absolute inset-12 rounded-full border border-accent/10" />
+          <div className="relative w-[420px] h-[420px] animate-[spin_60s_linear_infinite]">
+            {/* Orbital circles */}
+            <div className="absolute inset-0 rounded-full border border-white/10" />
+            <div className="absolute inset-6 rounded-full border border-white/15" />
+            <div className="absolute inset-12 rounded-full border border-white/10" />
 
-            {/* Dots */}
+            {/* Orbit dots */}
             {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
               <div
                 key={deg}
-                className="absolute w-2 h-2 rounded-full bg-accent/60"
+                className="absolute w-2 h-2 rounded-full"
                 style={{
                   top: `${50 - 48 * Math.cos((deg * Math.PI) / 180)}%`,
                   left: `${50 + 48 * Math.sin((deg * Math.PI) / 180)}%`,
                   transform: "translate(-50%, -50%)",
+                  backgroundColor: "hsl(38, 92%, 50%)",
+                  opacity: 0.6,
                 }}
               />
             ))}
 
             {/* Center bolt */}
             <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-16 h-16 rounded-full bg-accent/20 flex items-center justify-center">
-                <span className="text-accent text-2xl">⚡</span>
+              <div className="w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(38,92%,50%,0.2)" }}>
+                <span className="text-2xl" style={{ color: "hsl(38,92%,50%)" }}>⚡</span>
               </div>
             </div>
+          </div>
 
-            {/* Card: Analytics */}
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-sm rounded-lg p-3 w-40">
-              <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
-                <span className="text-accent">📊</span> Analytics
-              </div>
-              <div className="space-y-1">
-                <div className="h-1.5 rounded bg-accent/70 w-full" />
-                <div className="h-1.5 rounded bg-accent/50 w-3/4" />
-                <div className="h-1.5 rounded bg-accent/40 w-1/2" />
-              </div>
+          {/* Cards (not spinning - positioned outside the spin container) */}
+          {/* Card: Analytics */}
+          <div className="absolute top-[12%] left-[15%] bg-white/10 backdrop-blur-sm rounded-lg p-3 w-40">
+            <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
+              <span style={{ color: "hsl(38,92%,50%)" }}>📊</span> Analytics
             </div>
-
-            {/* Card: Network */}
-            <div className="absolute top-1/2 -left-12 -translate-y-1/2 bg-white/10 backdrop-blur-sm rounded-lg p-3 w-36">
-              <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
-                <span className="text-accent">🔗</span> Network
-              </div>
-              <div className="grid grid-cols-3 gap-1">
-                {Array.from({ length: 6 }).map((_, i) => (
-                  <div key={i} className="w-3 h-3 rounded-full bg-accent/30" />
-                ))}
-              </div>
+            <div className="space-y-1">
+              <div className="h-1.5 rounded w-full" style={{ backgroundColor: "hsla(38,92%,50%,0.7)" }} />
+              <div className="h-1.5 rounded w-3/4" style={{ backgroundColor: "hsla(38,92%,50%,0.5)" }} />
+              <div className="h-1.5 rounded w-1/2" style={{ backgroundColor: "hsla(38,92%,50%,0.4)" }} />
             </div>
+          </div>
 
-            {/* Card: Data Flow */}
-            <div className="absolute top-1/2 -right-16 -translate-y-1/2 bg-white/10 backdrop-blur-sm rounded-lg p-3 w-40">
-              <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
-                <span className="text-accent">📋</span> Data Flow
-              </div>
-              <div className="flex items-center gap-1">
-                <div className="w-2 h-2 rounded-full bg-success" />
-                <div className="flex-1 h-1 rounded bg-accent/30" />
-                <div className="w-2 h-2 rounded-full bg-accent/50" />
-              </div>
-              <div className="flex items-center gap-1 mt-1">
-                <div className="w-2 h-2 rounded-full bg-success" />
-                <div className="flex-1 h-1 rounded bg-accent/40" />
-              </div>
+          {/* Card: Network */}
+          <div className="absolute top-[40%] left-[3%] bg-white/10 backdrop-blur-sm rounded-lg p-3 w-36">
+            <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
+              <span style={{ color: "hsl(38,92%,50%)" }}>🔗</span> Network
             </div>
+            <div className="grid grid-cols-3 gap-1">
+              {Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: "hsla(38,92%,50%,0.3)" }} />
+              ))}
+            </div>
+          </div>
 
-            {/* Card: Monitoring */}
-            <div className="absolute -bottom-4 left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-sm rounded-lg p-3 w-40">
-              <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
-                <span className="text-accent">⚙️</span> Monitoring
-              </div>
-              <div className="flex items-end gap-0.5 h-6">
-                {[60, 80, 40, 90, 50, 70, 85].map((h, i) => (
-                  <div
-                    key={i}
-                    className="flex-1 rounded-sm bg-success/60"
-                    style={{ height: `${h}%` }}
-                  />
-                ))}
-              </div>
+          {/* Card: Data Flow */}
+          <div className="absolute top-[40%] right-[3%] bg-white/10 backdrop-blur-sm rounded-lg p-3 w-40">
+            <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
+              <span style={{ color: "hsl(38,92%,50%)" }}>📋</span> Data Flow
+            </div>
+            <div className="flex items-center gap-1">
+              <div className="w-2 h-2 rounded-full bg-success" />
+              <div className="flex-1 h-1 rounded" style={{ backgroundColor: "hsla(38,92%,50%,0.3)" }} />
+              <div className="w-2 h-2 rounded-full" style={{ backgroundColor: "hsla(38,92%,50%,0.5)" }} />
+            </div>
+            <div className="flex items-center gap-1 mt-1">
+              <div className="w-2 h-2 rounded-full bg-success" />
+              <div className="flex-1 h-1 rounded" style={{ backgroundColor: "hsla(38,92%,50%,0.4)" }} />
+            </div>
+          </div>
+
+          {/* Card: Monitoring */}
+          <div className="absolute bottom-[12%] left-[18%] bg-white/10 backdrop-blur-sm rounded-lg p-3 w-40">
+            <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
+              <span style={{ color: "hsl(38,92%,50%)" }}>⚙️</span> Monitoring
+            </div>
+            <div className="flex items-end gap-0.5 h-6">
+              {[60, 80, 40, 90, 50, 70, 85].map((h, i) => (
+                <div
+                  key={i}
+                  className="flex-1 rounded-sm"
+                  style={{ height: `${h}%`, backgroundColor: "hsla(142,76%,36%,0.6)" }}
+                />
+              ))}
             </div>
           </div>
         </div>
@@ -197,18 +217,18 @@ export default function HomePage() {
         {/* Bottom stats */}
         <div className="absolute bottom-10 left-8 flex gap-16 text-white/80 z-10">
           <div>
-            <div className="text-3xl font-semibold">99.9%</div>
-            <div className="text-sm">Uptime SLA</div>
+            <div className="text-3xl font-semibold text-white">99.9%</div>
+            <div className="text-sm text-white/70">Uptime SLA</div>
           </div>
           <div>
-            <div className="text-3xl font-semibold">256-bit</div>
-            <div className="text-sm">Encryption</div>
+            <div className="text-3xl font-semibold text-white">256-bit</div>
+            <div className="text-sm text-white/70">Encryption</div>
           </div>
         </div>
       </div>
 
-      {/* RIGHT PANEL */}
-      <div className="flex items-start justify-center p-6 lg:p-10">
+      {/* RIGHT PANEL - respects theme */}
+      <div className="flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
         <div className="w-full max-w-xl">
           {selectedProduct ? (
             <AuthCard
@@ -226,13 +246,13 @@ export default function HomePage() {
           ) : (
             <>
               <div className="text-center mt-4">
-                <h1 className="text-3xl font-semibold">What are you here to do?</h1>
+                <h1 className="text-3xl font-semibold text-foreground">What are you here to do?</h1>
                 <p className="text-muted-foreground mt-2">Select a product to get started</p>
               </div>
 
               <div className="mt-8 space-y-4">
                 {allCategories.map((cat) => (
-                  <details key={cat.id} className="group border rounded-xl bg-card">
+                  <details key={cat.id} className="group border border-border rounded-xl bg-card">
                     <summary className="cursor-pointer list-none flex items-center justify-between p-5">
                       <span className="text-lg font-semibold text-foreground">{cat.name}</span>
                       <span className="text-muted-foreground group-open:rotate-180 transition">▾</span>
@@ -253,7 +273,7 @@ export default function HomePage() {
                               type="button"
                               onClick={() => onPickProduct(p)}
                               disabled={isDisabled}
-                              className={`w-full flex items-center gap-4 text-left border rounded-lg px-4 py-3 transition-all ${
+                              className={`w-full flex items-center gap-4 text-left border border-border rounded-lg px-4 py-3 transition-all ${
                                 isDisabled
                                   ? "opacity-50 cursor-not-allowed bg-muted/30"
                                   : "hover:bg-accent/10 hover:border-accent/50 cursor-pointer"
@@ -286,9 +306,22 @@ export default function HomePage() {
                 ))}
               </div>
 
-              <div className="mt-10 flex justify-center gap-6 text-sm text-muted-foreground">
-                <button type="button" className="hover:text-foreground">Explore later</button>
-                <button type="button" className="hover:text-foreground">Skip for now</button>
+              <div className="mt-10 flex justify-center gap-2 text-sm text-muted-foreground">
+                <button
+                  type="button"
+                  className="hover:text-foreground transition cursor-pointer"
+                  onClick={() => navigate("/")}
+                >
+                  Explore Later
+                </button>
+                <span>—</span>
+                <button
+                  type="button"
+                  className="hover:text-foreground transition cursor-pointer"
+                  onClick={() => navigate("/")}
+                >
+                  Skip for now
+                </button>
               </div>
             </>
           )}
@@ -300,133 +333,5 @@ export default function HomePage() {
         </div>
       </div>
     </div>
-  );
-}
-
-/* ─── Auth Card (extracted) ─── */
-function AuthCard({
-  product,
-  authTab,
-  setAuthTab,
-  email,
-  setEmail,
-  password,
-  setPassword,
-  onChangeSelection,
-  onSignIn,
-  onRegister,
-}: {
-  product: ProductData;
-  authTab: "signin" | "register";
-  setAuthTab: (t: "signin" | "register") => void;
-  email: string;
-  setEmail: (v: string) => void;
-  password: string;
-  setPassword: (v: string) => void;
-  onChangeSelection: () => void;
-  onSignIn: () => void;
-  onRegister: () => void;
-}) {
-  return (
-    <>
-      <button
-        type="button"
-        onClick={onChangeSelection}
-        className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2 mb-4"
-      >
-        ← Change selection
-      </button>
-
-      <div className="border rounded-2xl bg-card text-card-foreground shadow-sm p-8">
-        <div className="text-center">
-          <h2 className="text-2xl font-semibold">Sign in to continue</h2>
-          <p className="text-sm text-muted-foreground mt-1">Access {product.name}</p>
-        </div>
-
-        <div className="mt-6 flex justify-between text-sm font-medium">
-          <button
-            type="button"
-            onClick={() => setAuthTab("signin")}
-            className={`pb-3 w-1/2 text-center border-b-2 ${
-              authTab === "signin"
-                ? "border-accent text-foreground"
-                : "border-transparent text-muted-foreground"
-            }`}
-          >
-            Sign In
-          </button>
-          <button
-            type="button"
-            onClick={() => setAuthTab("register")}
-            className={`pb-3 w-1/2 text-center border-b-2 ${
-              authTab === "register"
-                ? "border-accent text-foreground"
-                : "border-transparent text-muted-foreground"
-            }`}
-          >
-            Register
-          </button>
-        </div>
-
-        <div className="mt-6 space-y-4">
-          <div>
-            <label className="text-sm font-medium text-foreground">Email Address</label>
-            <input
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              className="mt-2 w-full rounded-lg border border-input bg-background text-foreground px-4 py-3 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
-              placeholder="name@organization.com"
-              type="email"
-            />
-          </div>
-
-          <div>
-            <label className="text-sm font-medium text-foreground">Password</label>
-            <input
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              className="mt-2 w-full rounded-lg border border-input bg-background text-foreground px-4 py-3 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
-              placeholder="Enter your password"
-              type="password"
-            />
-          </div>
-
-          {authTab === "signin" ? (
-            <button
-              type="button"
-              onClick={onSignIn}
-              className="w-full rounded-lg bg-accent text-accent-foreground font-semibold py-3 hover:opacity-90 transition"
-            >
-              Sign In
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onRegister}
-              className="w-full rounded-lg bg-accent text-accent-foreground font-semibold py-3 hover:opacity-90 transition"
-            >
-              Register
-            </button>
-          )}
-
-          <div className="text-center text-xs text-muted-foreground">or continue with</div>
-
-          <div className="grid grid-cols-2 gap-3">
-            <button className="rounded-lg border border-input py-2 text-sm text-foreground hover:bg-muted transition">
-              Google
-            </button>
-            <button className="rounded-lg border border-input py-2 text-sm text-foreground hover:bg-muted transition">
-              Microsoft
-            </button>
-            <button className="rounded-lg border border-input py-2 text-sm text-foreground hover:bg-muted transition">
-              Facebook
-            </button>
-            <button className="rounded-lg border border-input py-2 text-sm text-foreground hover:bg-muted transition">
-              GitHub
-            </button>
-          </div>
-        </div>
-      </div>
-    </>
   );
 }
