@@ -11,8 +11,7 @@ import AuthCard from "@/components/home/AuthCard";
 type CountryCurrencyOption = {
   id: string;
   label: string; // what user sees (country/zone)
-  currencyCode: string;
-  currencyLabel: string; // what shows beneath (currency)
+  currencyCode: string; // what we store/use
 };
 
 export default function HomePage() {
@@ -46,7 +45,8 @@ export default function HomePage() {
   // Country/Currency step (AG Stock only)
   const [agCountry, setAgCountry] = useState<string>("");
   const [agCurrencyCode, setAgCurrencyCode] = useState<string>("USD");
-  const [agCurrencyLabel, setAgCurrencyLabel] = useState<string>("USD — US Dollar (Default)");
+  // IMPORTANT: do NOT auto-advance on selection; require Continue.
+  const [agStepConfirmed, setAgStepConfirmed] = useState<boolean>(false);
 
   // IMPORTANT: Update this if your AG Stock product id differs
   const isAgStock = useMemo(() => {
@@ -56,14 +56,14 @@ export default function HomePage() {
 
   const countryCurrencyOptions: CountryCurrencyOption[] = useMemo(
     () => [
-      { id: "ghana", label: "Ghana", currencyCode: "GHS", currencyLabel: "GHS — Ghanaian Cedi" },
-      { id: "nigeria", label: "Nigeria", currencyCode: "NGN", currencyLabel: "NGN — Nigerian Naira" },
-      { id: "kenya", label: "Kenya", currencyCode: "KES", currencyLabel: "KES — Kenyan Shilling" },
-      { id: "south-africa", label: "South Africa", currencyCode: "ZAR", currencyLabel: "ZAR — South African Rand" },
-      { id: "cfa-zone", label: "CFA Zone", currencyCode: "CFA", currencyLabel: "CFA — Franc (French monetary area)" },
-      { id: "finland", label: "Finland", currencyCode: "EUR", currencyLabel: "EUR — Euro" },
-      { id: "united-kingdom", label: "United Kingdom", currencyCode: "GBP", currencyLabel: "GBP — Pound Sterling" },
-      { id: "other", label: "Other Countries", currencyCode: "USD", currencyLabel: "USD — US Dollar (Default)" },
+      { id: "ghana", label: "Ghana", currencyCode: "GHS" },
+      { id: "nigeria", label: "Nigeria", currencyCode: "NGN" },
+      { id: "kenya", label: "Kenya", currencyCode: "KES" },
+      { id: "south-africa", label: "South Africa", currencyCode: "ZAR" },
+      { id: "cfa-zone", label: "CFA Zone", currencyCode: "CFA" },
+      { id: "finland", label: "Finland", currencyCode: "EUR" },
+      { id: "united-kingdom", label: "United Kingdom", currencyCode: "GBP" },
+      { id: "other", label: "Other Countries", currencyCode: "USD" },
     ],
     []
   );
@@ -84,7 +84,7 @@ export default function HomePage() {
     // Reset AG Stock country selection when switching products
     setAgCountry("");
     setAgCurrencyCode("USD");
-    setAgCurrencyLabel("USD — US Dollar (Default)");
+    setAgStepConfirmed(false);
   };
 
   const onChangeSelection = () => {
@@ -94,7 +94,7 @@ export default function HomePage() {
     // Reset AG Stock selections when going back
     setAgCountry("");
     setAgCurrencyCode("USD");
-    setAgCurrencyLabel("USD — US Dollar (Default)");
+    setAgStepConfirmed(false);
   };
 
   const handleSignIn = async () => {
@@ -132,34 +132,35 @@ export default function HomePage() {
 
   const handleAgCountryChange = (value: string) => {
     setAgCountry(value);
-    const opt = countryCurrencyOptions.find((o) => o.id === value);
-    if (opt) {
-      setAgCurrencyCode(opt.currencyCode);
-      setAgCurrencyLabel(opt.currencyLabel);
 
-      // Persist for later pages (auth, pricing, dashboard)
-      try {
-        localStorage.setItem(
-          "agstock_region",
-          JSON.stringify({
-            countryId: opt.id,
-            countryLabel: opt.label,
-            currencyCode: opt.currencyCode,
-            currencyLabel: opt.currencyLabel,
-            updatedAt: new Date().toISOString(),
-          })
-        );
-      } catch {
-        // ignore storage failures
-      }
+    // Selecting a country should NOT auto-advance to auth:
+    setAgStepConfirmed(false);
+
+    const opt = countryCurrencyOptions.find((o) => o.id === value);
+    const currencyCode = opt?.currencyCode || "USD";
+    setAgCurrencyCode(currencyCode);
+
+    // Persist for later pages (auth, pricing, dashboard)
+    try {
+      localStorage.setItem(
+        "agstock_region",
+        JSON.stringify({
+          countryId: opt?.id || "other",
+          countryLabel: opt?.label || "Other Countries",
+          currencyCode,
+          updatedAt: new Date().toISOString(),
+        })
+      );
+    } catch {
+      // ignore storage failures
     }
   };
 
   const canShowAuthCard = useMemo(() => {
-    // For AG Stock, require country selection before auth UI appears
-    if (isAgStock) return !!agCountry;
+    // For AG Stock, require explicit Continue click after choosing country
+    if (isAgStock) return agStepConfirmed;
     return true;
-  }, [isAgStock, agCountry]);
+  }, [isAgStock, agStepConfirmed]);
 
   return (
     <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2">
@@ -188,7 +189,7 @@ export default function HomePage() {
           `}
         </style>
 
-        {/* Yellow star dots */}
+        {/* Yellow star dots (twinkling) */}
         {[
           { top: "8%", left: "5%" },
           { top: "12%", left: "35%" },
@@ -216,7 +217,7 @@ export default function HomePage() {
           />
         ))}
 
-        {/* Logo + tagline */}
+        {/* Logo + tagline (animated text beside logo) */}
         <div className="p-8 flex items-start gap-4 relative z-10">
           <img src={amvLogo} alt="Amineva Global" className="h-14 w-14 rounded-full" />
           <div style={{ animation: "amvFadeUp 700ms ease-out, amvShimmer 3.6s ease-in-out infinite" }}>
@@ -231,13 +232,12 @@ export default function HomePage() {
 
         {/* Animated orbital illustration */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          {/* Orbit spinner (UNCHANGED) */}
           <div className="relative w-[420px] h-[420px] animate-[spin_60s_linear_infinite]">
-            {/* Orbital circles */}
             <div className="absolute inset-0 rounded-full border border-white/10" />
             <div className="absolute inset-6 rounded-full border border-white/15" />
             <div className="absolute inset-12 rounded-full border border-white/10" />
 
-            {/* Orbit dots */}
             {[0, 45, 90, 135, 180, 225, 270, 315].map((deg) => (
               <div
                 key={deg}
@@ -252,7 +252,7 @@ export default function HomePage() {
               />
             ))}
 
-            {/* Center bolt (sun-like core) */}
+            {/* Center core */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center"
@@ -265,8 +265,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Cards (not spinning - positioned outside the spin container) */}
-          {/* Card: Analytics (TOP - centered) */}
+          {/* Cards (alignment fixed; orbit untouched) */}
           <div className="absolute top-[12%] left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-sm rounded-lg p-3 w-40">
             <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
               <span style={{ color: "hsl(38,92%,50%)" }}>📊</span> Analytics
@@ -278,7 +277,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Card: Network (WEST - centered vertically) */}
           <div className="absolute top-1/2 left-[3%] -translate-y-1/2 bg-white/10 backdrop-blur-sm rounded-lg p-3 w-36">
             <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
               <span style={{ color: "hsl(38,92%,50%)" }}>🔗</span> Network
@@ -290,7 +288,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Card: Data Flow (EAST - centered vertically) */}
           <div className="absolute top-1/2 right-[3%] -translate-y-1/2 bg-white/10 backdrop-blur-sm rounded-lg p-3 w-40">
             <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
               <span style={{ color: "hsl(38,92%,50%)" }}>📋</span> Data Flow
@@ -306,7 +303,6 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Card: Monitoring (BOTTOM - centered) */}
           <div className="absolute bottom-[12%] left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-sm rounded-lg p-3 w-40">
             <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
               <span style={{ color: "hsl(38,92%,50%)" }}>⚙️</span> Monitoring
@@ -341,36 +337,50 @@ export default function HomePage() {
         <div className="w-full max-w-xl">
           {selectedProduct ? (
             <>
-              {/* AG Stock: Country/Currency selector step (must pick before auth shows) */}
+              {/* AG Stock: Country/Currency selector step (no auto-advance) */}
               {isAgStock && !canShowAuthCard && (
                 <div className="border border-border rounded-xl bg-card p-5">
                   <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <div className="text-lg font-semibold text-foreground">Select Country</div>
-                      <div className="text-sm text-muted-foreground mt-1">
-                        This sets your currency for AG Stock.
-                      </div>
-                    </div>
                     <button
                       type="button"
-                      className="text-sm text-muted-foreground hover:text-foreground transition"
+                      className="text-sm text-muted-foreground hover:text-foreground transition flex items-center gap-2"
                       onClick={onChangeSelection}
                     >
-                      Change Product
+                      <span aria-hidden>←</span> Change product
                     </button>
+                    <div />
                   </div>
 
-                  <div className="mt-5 space-y-3">
-                    <label className="block text-sm font-medium text-foreground">
-                      Country / Region
+                  <div className="mt-4 text-center">
+                    <div
+                      className="mx-auto w-14 h-14 rounded-full flex items-center justify-center"
+                      style={{ backgroundColor: "hsla(38,92%,50%,0.12)" }}
+                    >
+                      <span className="text-2xl" style={{ color: "hsl(38,92%,50%)" }}>
+                        📍
+                      </span>
+                    </div>
+
+                    <h2 className="mt-4 text-3xl font-semibold text-foreground">
+                      Where is your business located?
+                    </h2>
+                    <p className="mt-2 text-muted-foreground">
+                      This helps us set up your currency and regional settings
+                    </p>
+                  </div>
+
+                  <div className="mt-6 space-y-3">
+                    <label className="block text-sm font-semibold text-foreground">
+                      Select your Country
                     </label>
+
                     <select
                       value={agCountry}
                       onChange={(e) => handleAgCountryChange(e.target.value)}
-                      className="w-full h-11 rounded-lg border border-border bg-background px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
+                      className="w-full h-12 rounded-lg border border-border bg-background px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-accent"
                     >
                       <option value="" disabled>
-                        Choose your country…
+                        Choose a country
                       </option>
                       {countryCurrencyOptions.map((opt) => (
                         <option key={opt.id} value={opt.id}>
@@ -379,35 +389,43 @@ export default function HomePage() {
                       ))}
                     </select>
 
-                    <div className="text-sm text-muted-foreground">
-                      Currency:{" "}
-                      <span className="text-foreground font-medium">
-                        {selectedAgOption?.currencyLabel || agCurrencyLabel}
-                      </span>
-                    </div>
+                    {/* Currency preview: updates immediately after selection (no 'default' text, no long label) */}
+                    {agCountry ? (
+                      <div className="text-sm text-muted-foreground">
+                        Currency:{" "}
+                        <span className="text-foreground font-semibold">
+                          {selectedAgOption?.currencyCode || agCurrencyCode}
+                        </span>
+                      </div>
+                    ) : null}
 
-                    <div className="pt-2">
+                    <div className="pt-3">
                       <button
                         type="button"
                         disabled={!agCountry}
                         onClick={() => {
-                          // Once selected, we simply reveal AuthCard (no navigation needed)
-                          // (Selection already persisted to localStorage)
+                          // Require explicit confirmation to proceed:
+                          setAgStepConfirmed(true);
                         }}
-                        className={`w-full h-11 rounded-lg font-medium transition ${
+                        className={`w-full h-12 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
                           agCountry
-                            ? "bg-foreground text-background hover:opacity-90"
+                            ? "text-white"
                             : "bg-muted text-muted-foreground cursor-not-allowed"
                         }`}
+                        style={
+                          agCountry
+                            ? { backgroundColor: "hsl(38,92%,35%)" }
+                            : undefined
+                        }
                       >
-                        Continue
+                        Continue <span aria-hidden>→</span>
                       </button>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* Auth UI (All products, but AG Stock requires country selection first) */}
+              {/* Auth UI (All products; AG Stock shows only after Continue) */}
               {canShowAuthCard && (
                 <AuthCard
                   product={selectedProduct}
@@ -426,7 +444,9 @@ export default function HomePage() {
           ) : (
             <>
               <div className="text-center mt-4">
-                <h1 className="text-3xl font-semibold text-foreground">What are you here to do?</h1>
+                <h1 className="text-3xl font-semibold text-foreground">
+                  What are you here to do?
+                </h1>
                 <p className="text-muted-foreground mt-2">Select a product to get started</p>
               </div>
 
@@ -466,7 +486,9 @@ export default function HomePage() {
                                   {getStatusBadge(p.status)}
                                 </div>
                                 {p.description && (
-                                  <p className="text-xs text-muted-foreground truncate mt-0.5">{p.description}</p>
+                                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                    {p.description}
+                                  </p>
                                 )}
                               </div>
                               {!isDisabled &&
