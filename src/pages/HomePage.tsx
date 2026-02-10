@@ -9,7 +9,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 
-import Suite from "./pages/Suite";
 import NotFound from "./pages/NotFound";
 
 // ✅ NEW: Homepage must be its own page component (create ./pages/HomePage.tsx)
