@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useMemo, useState } from "react";
 import { account } from "@/lib/appwrite";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -13,11 +13,30 @@ interface TwoFactorVerifyProps {
   onRecovery?: () => void;
 }
 
-function normalizeError(err: unknown) {
-  if (err && typeof err === "object" && "message" in err) {
-    return String((err as any).message);
+function normalizeError(err: unknown): string {
+  if (err && typeof err === "object") {
+    // Appwrite errors often have message/code/type
+    const anyErr = err as any;
+    if (typeof anyErr.message === "string" && anyErr.message.trim()) return anyErr.message;
   }
+  if (err instanceof Error && err.message.trim()) return err.message;
   return "Verification failed. Please try again.";
+}
+
+function friendlyMfaMessage(raw: string): string {
+  const msg = raw.toLowerCase();
+
+  // These patterns commonly show up for stale challenge IDs / retries / expired requests
+  if (msg.includes("challenge") || msg.includes("expired")) {
+    return "This verification request has expired or changed. Please restart sign-in to generate a new verification request.";
+  }
+
+  // Generic invalid code: could be wrong code OR device time drift OR stale challenge
+  if (msg.includes("invalid") || msg.includes("otp") || msg.includes("code")) {
+    return "Code rejected. Ensure your phone time is set to Automatic and try the next code. If it still fails, restart sign-in to generate a fresh request.";
+  }
+
+  return raw;
 }
 
 export function TwoFactorVerify({
@@ -30,10 +49,22 @@ export function TwoFactorVerify({
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const isCodeReady = verificationCode.length === 6;
+  const safeChallengeId = useMemo(() => (challengeId ?? "").trim(), [challengeId]);
+
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
 
-    if (verificationCode.length !== 6) {
+    // Prevent double submit
+    if (isVerifying) return;
+
+    // Hard validation: no challengeId => cannot verify
+    if (!safeChallengeId) {
+      setError("Authentication request expired. Please sign in again.");
+      return;
+    }
+
+    if (!isCodeReady) {
       setError("Please enter a 6-digit code");
       return;
     }
@@ -44,19 +75,19 @@ export function TwoFactorVerify({
     try {
       // 1) Complete the MFA challenge
       await account.updateMFAChallenge({
-        challengeId,
+        challengeId: safeChallengeId,
         otp: verificationCode,
       });
 
-      // 2) Confirm session/user is now available before completing the flow.
-      // If this fails, it means the session isn't actually usable yet.
+      // 2) Confirm the session/user is actually live before continuing
+      // This prevents “verified then bounced” due to stale auth state.
       await account.get();
 
-      // 3) Now we can safely proceed (navigate / update UI / refresh gate)
+      // 3) Now safe to proceed (navigate / refresh gate / load dashboard)
       onVerifyComplete();
     } catch (err: unknown) {
-      const message = normalizeError(err);
-      setError(message);
+      const raw = normalizeError(err);
+      setError(friendlyMfaMessage(raw));
       setVerificationCode("");
     } finally {
       setIsVerifying(false);
@@ -66,7 +97,7 @@ export function TwoFactorVerify({
   function handleCodeChange(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value.replace(/\D/g, "").slice(0, 6);
     setVerificationCode(value);
-    setError(null);
+    if (error) setError(null);
   }
 
   return (
@@ -83,6 +114,7 @@ export function TwoFactorVerify({
 
       <CardContent>
         <form onSubmit={handleVerify} className="space-y-6">
+          {/* Verification Code Input */}
           <div className="space-y-2">
             <Label htmlFor="totp-code">Verification Code</Label>
             <Input
@@ -97,9 +129,11 @@ export function TwoFactorVerify({
               className="text-center text-2xl tracking-widest font-mono"
               autoComplete="one-time-code"
               autoFocus
+              disabled={isVerifying}
             />
           </div>
 
+          {/* Error Message */}
           {error && (
             <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -107,11 +141,8 @@ export function TwoFactorVerify({
             </div>
           )}
 
-          <Button
-            type="submit"
-            className="w-full"
-            disabled={verificationCode.length !== 6 || isVerifying}
-          >
+          {/* Submit Button */}
+          <Button type="submit" className="w-full" disabled={!isCodeReady || isVerifying}>
             {isVerifying ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -122,20 +153,29 @@ export function TwoFactorVerify({
             )}
           </Button>
 
+          {/* Recovery Option */}
           {onRecovery && (
             <Button
               type="button"
               variant="link"
               className="w-full text-muted-foreground"
               onClick={onRecovery}
+              disabled={isVerifying}
             >
               <KeyRound className="mr-2 h-4 w-4" />
               Lost your authenticator?
             </Button>
           )}
 
+          {/* Cancel Option */}
           {onCancel && (
-            <Button type="button" variant="ghost" className="w-full" onClick={onCancel}>
+            <Button
+              type="button"
+              variant="ghost"
+              className="w-full"
+              onClick={onCancel}
+              disabled={isVerifying}
+            >
               Cancel
             </Button>
           )}
