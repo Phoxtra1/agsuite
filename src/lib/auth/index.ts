@@ -1,1 +1,1 @@
-export * from "./appwriteAuth";
+export { getSession } from "./appwriteAuth";
