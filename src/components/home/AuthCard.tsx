@@ -26,7 +26,7 @@ export default function AuthCard({
   onChangeSelection,
 }: AuthCardProps) {
   const navigate = useNavigate();
-  const { login, register, socialLogin, isLoading } = useAuth();
+  const { login, register, isLoading, mfaState } = useAuth();
 
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
@@ -61,11 +61,15 @@ export default function AuthCard({
       } else {
         await login(email.trim(), password);
       }
-      // Only navigate AFTER successful auth
+
+      // Auth succeeded — session is confirmed. Navigate to 2FA page.
+      // Verify2FA will detect if user needs setup (QR) or verification (code).
+      console.log("[AuthCard] Auth success, navigating to verify-2fa");
       navigate(`/auth/verify-2fa?product=${product.id}&returnTo=/suite`, {
         replace: true,
       });
     } catch (err: unknown) {
+      console.error("[AuthCard] Auth failed:", err);
       setError(formatAuthError(err));
     } finally {
       setBusy(false);
@@ -73,7 +77,12 @@ export default function AuthCard({
   };
 
   const handleSocial = (provider: "google" | "microsoft" | "facebook" | "github") => {
-    socialLogin(provider);
+    // Social login triggers Appwrite OAuth redirect flow
+    import("@/lib/appwrite").then(({ account }) => {
+      const successUrl = `${window.location.origin}/auth/callback?returnTo=/suite&product=${product.id}`;
+      const failureUrl = `${window.location.origin}/?auth=failed`;
+      (account as any).createOAuth2Session(provider, successUrl, failureUrl);
+    });
   };
 
   return (
