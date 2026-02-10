@@ -1,7 +1,6 @@
 import React, { useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface AuthCardProps {
   product: ProductData;
