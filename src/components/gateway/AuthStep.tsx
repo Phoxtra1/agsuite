@@ -1,4 +1,6 @@
-import React, { useState, useEffect } from "react";
+// Path: src/suite/gateway/AuthStep.tsx
+
+import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
@@ -38,13 +40,11 @@ interface AuthStepProps {
 
 export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStepProps) {
   const navigate = useNavigate();
-
-  const { login, register, socialLogin, isLoading, isAuthenticated, mfaState } = useAuth();
+  const { login, register, socialLogin, isLoading, isAuthenticated } = useAuth();
 
   const [isRegister, setIsRegister] = useState(false);
 
   const [email, setEmail] = useState("");
-  const [confirmEmail, setConfirmEmail] = useState("");
 
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -55,6 +55,14 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
   // Prevent loops: only proceed once auth is truly set
   const [authTriggered, setAuthTriggered] = useState(false);
 
+  // Clear errors when switching tabs
+  useEffect(() => {
+    setError("");
+    // Also clear confirm password when leaving register mode (keeps UX clean)
+    if (!isRegister) setConfirmPassword("");
+  }, [isRegister]);
+
+  // Only proceed when AuthContext confirms we are authenticated
   useEffect(() => {
     if (!isAuthenticated) return;
     if (authTriggered) return;
@@ -62,10 +70,6 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     setAuthTriggered(true);
     onAuthSuccess();
   }, [isAuthenticated, authTriggered, onAuthSuccess]);
-
-  useEffect(() => {
-    setError("");
-  }, [isRegister]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -77,15 +81,6 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     }
 
     if (isRegister) {
-      if (!confirmEmail) {
-        setError("Please confirm your email address");
-        return;
-      }
-      if (email.trim().toLowerCase() !== confirmEmail.trim().toLowerCase()) {
-        setError("Email addresses do not match");
-        return;
-      }
-
       if (!confirmPassword) {
         setError("Please confirm your password");
         return;
@@ -98,10 +93,13 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
 
     try {
       // Do NOT call onAuthSuccess here; wait for AuthContext state update
-      if (isRegister) await register(email, password);
-      else await login(email, password);
+      if (isRegister) {
+        await register(email, password);
+      } else {
+        await login(email, password);
+      }
 
-      // Mark attempt started; effect will proceed once isAuthenticated updates
+      // Allow the auth effect to run once isAuthenticated becomes true
       setAuthTriggered(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Authentication failed";
@@ -201,24 +199,6 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
               />
             </div>
 
-            {isRegister && (
-              <div className="space-y-2 animate-fade-in">
-                <Label htmlFor="confirmEmail" className="text-sm">
-                  Confirm Email Address
-                </Label>
-                <Input
-                  id="confirmEmail"
-                  type="email"
-                  placeholder="Re-enter your email"
-                  value={confirmEmail}
-                  onChange={(e) => setConfirmEmail(e.target.value)}
-                  disabled={isLoading}
-                  className="h-11 bg-background/50"
-                  autoComplete="email"
-                />
-              </div>
-            )}
-
             <div className="space-y-2">
               <Label htmlFor="password" className="text-sm">
                 Password
@@ -239,12 +219,14 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors"
                   tabIndex={-1}
+                  aria-label={showPassword ? "Hide password" : "Show password"}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
+            {/* ✅ Confirm Password (Register only) */}
             {isRegister && (
               <div className="space-y-2 animate-fade-in">
                 <Label htmlFor="confirmPassword" className="text-sm">
