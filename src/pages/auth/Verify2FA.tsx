@@ -10,7 +10,7 @@ import {
   getAttemptsRemaining,
   STEP_UP_WINDOWS,
 } from "@/lib/stepUpAuth";
-import { getSession } from "@/lib/auth"; // ✅ uses your existing session checker (change path if needed)
+import { getSession } from "@/lib/auth/appwriteAuth"; // ✅ uses your existing session checker (change path if needed)
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
