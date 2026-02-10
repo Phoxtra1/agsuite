@@ -1,27 +1,13 @@
-import React, { useState, useEffect } from 'react';
-import { loadProducts } from '@/data/products';
+import React from 'react';
 import { DEFAULT_CATEGORIES, ProductData } from '@/types/product';
 import { getProductIcon } from '@/lib/products';
+import { useProducts } from '@/hooks/useProducts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink, Settings } from 'lucide-react';
 
 export function AdminProductLinks() {
-  const [products, setProducts] = useState<ProductData[]>([]);
-
-  // Load products and listen for updates from Console
-  useEffect(() => {
-    setProducts(loadProducts());
-
-    const handleUpdate = () => setProducts(loadProducts());
-    window.addEventListener('productsUpdated', handleUpdate);
-    window.addEventListener('storage', handleUpdate);
-
-    return () => {
-      window.removeEventListener('productsUpdated', handleUpdate);
-      window.removeEventListener('storage', handleUpdate);
-    };
-  }, []);
+  const { products } = useProducts();
   
   // Group products by category for admin links
   const adminProducts = DEFAULT_CATEGORIES.map(category => ({

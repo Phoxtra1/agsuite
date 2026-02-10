@@ -1,5 +1,5 @@
-import React, { useEffect, useMemo, useState } from "react";
-import { loadProducts, saveProducts } from "@/data/products";
+import React, { useMemo, useState } from "react";
+import { useProducts, useProductMutations } from "@/hooks/useProducts";
 import {
   ProductData,
   STATUS_COLORS,
@@ -69,21 +69,18 @@ function normalizeUrl(url: string) {
 }
 
 export function AdminPanel() {
-  const [products, setProducts] = useState<ProductData[]>([]);
+  const { products: currentProducts } = useProducts();
+  const { updateProducts } = useProductMutations();
+  const [products, setProducts] = useState<ProductData[]>(currentProducts);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<ProductFormData>(initialFormData);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
 
-  // Load products on mount
-  useEffect(() => {
-    setProducts(loadProducts());
-  }, []);
-
-  // Save products whenever they change (after initial load)
-  useEffect(() => {
-    saveProducts(products);
-  }, [products]);
+  // Sync from query
+  React.useEffect(() => {
+    setProducts(currentProducts);
+  }, [currentProducts]);
 
   const isEditing = !!editingId;
 
@@ -136,6 +133,13 @@ export function AdminPanel() {
     }
 
     if (isEditing) {
+      updateProducts((prev) =>
+        prev.map((p) =>
+          p.id === editingId
+            ? { ...p, name, shortName, description, adminUrl, status: formData.status }
+            : p
+        )
+      );
       setProducts((prev) =>
         prev.map((p) =>
           p.id === editingId
@@ -162,6 +166,7 @@ export function AdminPanel() {
         order: products.length + 1,
       };
 
+      updateProducts((prev) => [...prev, newProduct]);
       setProducts((prev) => [...prev, newProduct]);
       toast.success("Product added");
     }
@@ -171,6 +176,7 @@ export function AdminPanel() {
   };
 
   const handleDelete = (productId: string) => {
+    updateProducts((prev) => prev.filter((p) => p.id !== productId));
     setProducts((prev) => prev.filter((p) => p.id !== productId));
     setDeleteConfirm(null);
     toast.success("Product deleted");
