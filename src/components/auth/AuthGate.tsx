@@ -3,47 +3,66 @@ import { getSession, formatAuthError } from "@/lib/auth/appwriteAuth";
 
 type AuthStatus = "loading" | "authed" | "guest";
 
-export function AuthGate({
-  children,
-  guest,
-  loading,
-}: {
+type AltGateProps = {
   children: React.ReactNode;
   guest: React.ReactNode;
   loading?: React.ReactNode;
-}) {
+
+  /**
+   * OPTIONAL: change this value after login/2FA success to force a re-check.
+   * Example usage: refreshKey={Date.now()} or refreshKey={authVersion}
+   */
+  refreshKey?: string | number;
+
+  /**
+   * OPTIONAL: temporary safety net if you can’t wire refreshKey yet.
+   * Example: pollMs={1500}. Leave undefined to disable.
+   */
+  pollMs?: number;
+};
+
+export function AltGate({ children, guest, loading, refreshKey, pollMs }: AltGateProps) {
   const [authStatus, setAuthStatus] = useState<AuthStatus>("loading");
   const [error, setError] = useState<string | null>(null);
 
-  // On mount: check session exactly once
-  useEffect(() => {
-    let active = true;
+  async function checkSession(activeRef: { active: boolean }) {
+    setAuthStatus("loading");
+    setError(null);
 
-    (async () => {
-      setAuthStatus("loading");
-      setError(null);
-      try {
-        const session = await getSession();
-        if (!active) return;
-        if (session) {
-          setAuthStatus("authed");
-        } else {
-          setAuthStatus("guest");
-        }
-      } catch (e) {
-        if (!active) return;
-        setError(formatAuthError(e));
-        // If session check errors, treat as guest but show error inline.
-        setAuthStatus("guest");
-      }
-    })();
+    try {
+      const session = await getSession();
+      if (!activeRef.active) return;
+      setAuthStatus(session ? "authed" : "guest");
+    } catch (e) {
+      if (!activeRef.active) return;
+      setError(formatAuthError(e));
+      setAuthStatus("guest");
+    }
+  }
+
+  // Re-check on mount + whenever refreshKey changes
+  useEffect(() => {
+    const activeRef = { active: true };
+    checkSession(activeRef);
 
     return () => {
-      active = false;
+      activeRef.active = false;
     };
-  }, []);
+  }, [refreshKey]);
 
-  // Hard rule: do not redirect during loading; we also avoid redirects entirely here.
+  // Optional polling (temporary)
+  useEffect(() => {
+    if (!pollMs || pollMs <= 0) return;
+
+    const activeRef = { active: true };
+    const id = window.setInterval(() => checkSession(activeRef), pollMs);
+
+    return () => {
+      activeRef.active = false;
+      window.clearInterval(id);
+    };
+  }, [pollMs]);
+
   if (authStatus === "loading") {
     return (
       <>
