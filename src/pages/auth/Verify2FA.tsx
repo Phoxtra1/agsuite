@@ -10,16 +10,28 @@ import {
   getAttemptsRemaining,
   STEP_UP_WINDOWS,
 } from "@/lib/stepUpAuth";
-import { getSession } from "@/lib/auth/appwriteAuth"; // ✅ uses your existing session checker (change path if needed)
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { getSession } from "@/lib/auth/appwriteAuth";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, AlertCircle, Loader2, Clock, ArrowLeft, RefreshCw } from "lucide-react";
+import {
+  ShieldCheck,
+  AlertCircle,
+  Loader2,
+  Clock,
+  ArrowLeft,
+  RefreshCw,
+} from "lucide-react";
 import amvLogo from "@/assets/amv_logo.png";
 
 function pickChallengeId(challenge: any): string | null {
-  // Appwrite SDKs vary: $id, id, challengeId
   return (
     (typeof challenge?.$id === "string" && challenge.$id) ||
     (typeof challenge?.id === "string" && challenge.id) ||
@@ -32,6 +44,60 @@ function normalizeError(err: unknown): string {
   if (err && typeof err === "object" && "message" in err) return String((err as any).message);
   if (err instanceof Error) return err.message;
   return "Something went wrong. Please try again.";
+}
+
+/**
+ * Appwrite SDK compatibility helpers:
+ * - Some versions use AuthenticationFactor.TOTP, others Totp
+ * - Some versions expose createMfaChallenge / updateMfaChallenge,
+ *   but signatures vary (positional vs object param)
+ */
+function getTotpFactor(): any {
+  // Prefer TOTP if present, fallback to Totp.
+  const anyFactor: any = AuthenticationFactor as any;
+  return anyFactor?.TOTP ?? anyFactor?.Totp ?? "totp";
+}
+
+async function createTotpChallengeCompat(): Promise<any> {
+  const acc: any = account as any;
+  const factor = getTotpFactor();
+
+  // Most common: createMfaChallenge(factor)
+  if (typeof acc.createMfaChallenge === "function") {
+    return acc.createMfaChallenge(factor);
+  }
+
+  // If your SDK uses another name, add here; otherwise throw for visibility:
+  throw new Error("Appwrite Account.createMfaChallenge is not available in this SDK version.");
+}
+
+async function verifyTotpChallengeCompat(challengeId: string, otp: string): Promise<void> {
+  const acc: any = account as any;
+
+  // Most common: updateMfaChallenge(challengeId, otp)
+  if (typeof acc.updateMfaChallenge === "function") {
+    // Some SDKs accept (challengeId, otp), others accept ({ challengeId, otp })
+    try {
+      await acc.updateMfaChallenge(challengeId, otp);
+      return;
+    } catch {
+      await acc.updateMfaChallenge({ challengeId, otp });
+      return;
+    }
+  }
+
+  // Some people mistakenly use updateMFAChallenge; try it safely if it exists.
+  if (typeof acc.updateMFAChallenge === "function") {
+    try {
+      await acc.updateMFAChallenge(challengeId, otp);
+      return;
+    } catch {
+      await acc.updateMFAChallenge({ challengeId, otp });
+      return;
+    }
+  }
+
+  throw new Error("Appwrite Account.updateMfaChallenge is not available in this SDK version.");
 }
 
 export default function Verify2FA() {
@@ -52,15 +118,17 @@ export default function Verify2FA() {
   const [cooldown, setCooldown] = useState(0);
   const [attemptsLeft, setAttemptsLeft] = useState(5);
 
-  // ✅ New: prevent "blink" by confirming session independently of AuthContext timing
+  // Prevent “blink”: confirm session independently of AuthContext timing
   const [sessionChecked, setSessionChecked] = useState(false);
   const [hasSession, setHasSession] = useState(false);
 
   const windowMs =
-    STEP_UP_WINDOWS[productKey as keyof typeof STEP_UP_WINDOWS] ?? STEP_UP_WINDOWS.default;
-  const windowMinutes = Math.floor(windowMs / 60000);
+    STEP_UP_WINDOWS[productKey as keyof typeof STEP_UP_WINDOWS] ??
+    STEP_UP_WINDOWS.default;
 
-  // ✅ Robust redirect guard: only redirect if BOTH AuthContext says no AND Appwrite session is missing
+  const windowMinutes = Math.max(1, Math.floor(windowMs / 60000));
+
+  // Redirect guard: only redirect if BOTH AuthContext says no AND Appwrite session is missing
   useEffect(() => {
     let cancelled = false;
 
@@ -80,11 +148,8 @@ export default function Verify2FA() {
         }
       } catch (err) {
         if (cancelled) return;
-
         setHasSession(false);
         setSessionChecked(true);
-
-        // Network/CORS errors: do NOT bounce instantly; show message
         setError("Network error while checking session. Please refresh and try again.");
         console.error("Session check failed:", err);
       }
@@ -115,12 +180,11 @@ export default function Verify2FA() {
         return c - 1;
       });
     }, 1000);
+
     return () => window.clearInterval(timer);
   }, [cooldown]);
 
-  // Create MFA challenge (explicit function so we can retry)
   const createChallenge = useCallback(async () => {
-    // Use either AuthContext OR confirmed session to allow challenge creation
     if (!isAuthenticated && !hasSession) return;
     if (isCreatingChallenge) return;
 
@@ -128,12 +192,10 @@ export default function Verify2FA() {
     setError(null);
 
     try {
-      const challenge = await account.createMfaChallenge(AuthenticationFactor.Totp);
+      const challenge = await createTotpChallengeCompat();
       const id = pickChallengeId(challenge);
 
-      if (!id) {
-        throw new Error("Challenge ID missing from server response.");
-      }
+      if (!id) throw new Error("Challenge ID missing from server response.");
 
       setChallengeId(id);
     } catch (err) {
@@ -141,14 +203,11 @@ export default function Verify2FA() {
 
       const msg = normalizeError(err);
 
-      // ✅ If MFA isn't enabled/configured for this user, don't trap them here — proceed.
+      // If MFA isn't enabled/configured for this user, don’t trap them here — proceed.
       if (/mfa|factor|totp|disabled|not enabled|not configured/i.test(msg)) {
         setLast2FAVerifiedAt();
-        if (returnTo.startsWith("http")) {
-          window.location.assign(returnTo);
-        } else {
-          navigate(returnTo, { replace: true });
-        }
+        if (returnTo.startsWith("http")) window.location.assign(returnTo);
+        else navigate(returnTo, { replace: true });
         return;
       }
 
@@ -181,7 +240,6 @@ export default function Verify2FA() {
   const handleVerify = useCallback(
     async (e: React.FormEvent) => {
       e.preventDefault();
-
       if (isVerifying) return;
 
       if (code.length !== 6) {
@@ -189,7 +247,6 @@ export default function Verify2FA() {
         return;
       }
 
-      // Rate limit
       const { limited, cooldownRemaining } = isRateLimited();
       if (limited) {
         setCooldown(cooldownRemaining);
@@ -197,7 +254,6 @@ export default function Verify2FA() {
         return;
       }
 
-      // No challenge? Recreate it immediately (permanent recovery)
       if (!challengeId) {
         setError("No active verification request. Re-initializing 2FA…");
         await createChallenge();
@@ -208,10 +264,7 @@ export default function Verify2FA() {
       setError(null);
 
       try {
-        await account.updateMFAChallenge({
-          challengeId,
-          otp: code,
-        });
+        await verifyTotpChallengeCompat(challengeId, code);
 
         // Confirm user still reachable before redirect
         await account.get();
@@ -219,11 +272,8 @@ export default function Verify2FA() {
         recordOTPAttempt(true);
         setLast2FAVerifiedAt();
 
-        if (returnTo.startsWith("http")) {
-          window.location.assign(returnTo);
-        } else {
-          navigate(returnTo, { replace: true });
-        }
+        if (returnTo.startsWith("http")) window.location.assign(returnTo);
+        else navigate(returnTo, { replace: true });
       } catch (err: unknown) {
         recordOTPAttempt(false);
         setAttemptsLeft(getAttemptsRemaining());
@@ -298,7 +348,10 @@ export default function Verify2FA() {
           <form onSubmit={handleVerify} className="space-y-6">
             {user && (
               <div className="text-center text-sm text-muted-foreground">
-                Signed in as <span className="font-medium text-foreground">{user.email}</span>
+                Signed in as{" "}
+                <span className="font-medium text-foreground">
+                  {(user as any)?.email ?? "your account"}
+                </span>
               </div>
             )}
 
