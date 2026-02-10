@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useAuth } from "@/contexts/AuthContext";
@@ -13,9 +13,15 @@ interface AuthCardProps {
   setPassword: (v: string) => void;
   onChangeSelection: () => void;
 
-  // keep props in case other code relies on them, but we won't use them
-  onSignIn: () => void;
-  onRegister: () => void;
+  // Kept for compatibility with older callers (not used here)
+  onSignIn?: () => void;
+  onRegister?: () => void;
+}
+
+function normalizeError(e: unknown): string {
+  if (e && typeof e === "object" && "message" in e) return String((e as any).message);
+  if (e instanceof Error) return e.message;
+  return "Authentication failed.";
 }
 
 export default function AuthCard({
@@ -49,12 +55,21 @@ export default function AuthCard({
   }, [isRegister, confirmPassword, password]);
 
   const canSubmit = useMemo(() => {
+    if (isLoading) return false;
     if (!isEmailValid || !isPasswordValid) return false;
     if (isRegister && !confirmOk) return false;
-    return !isLoading;
+    return true;
   }, [isEmailValid, isPasswordValid, isRegister, confirmOk, isLoading]);
 
-  const submit = async () => {
+  const goTo2FA = useCallback(() => {
+    const productId = (product as any)?.id ?? "default";
+    navigate(
+      `/auth/verify-2fa?product=${encodeURIComponent(productId)}&returnTo=/suite`,
+      { replace: true }
+    );
+  }, [navigate, product]);
+
+  const submit = useCallback(async () => {
     setErrMsg("");
 
     if (!isEmailValid) return setErrMsg("Please enter a valid email address.");
@@ -62,19 +77,39 @@ export default function AuthCard({
     if (isRegister && !confirmOk) return setErrMsg("Passwords do not match.");
 
     try {
+      const cleanEmail = email.trim();
+
       if (isRegister) {
-        await register(email.trim(), password);
+        await register(cleanEmail, password);
       } else {
-        await login(email.trim(), password);
+        await login(cleanEmail, password);
       }
 
-      // After successful session creation, proceed to 2FA step
-      navigate(`/auth/verify-2fa?product=${encodeURIComponent(product.id)}&returnTo=/suite`, {
-        replace: true,
-      });
-    } catch (e: any) {
-      setErrMsg(e?.message || "Authentication failed.");
+      goTo2FA();
+    } catch (e: unknown) {
+      setErrMsg(normalizeError(e));
     }
+  }, [
+    email,
+    password,
+    isRegister,
+    isEmailValid,
+    isPasswordValid,
+    confirmOk,
+    login,
+    register,
+    goTo2FA,
+  ]);
+
+  const switchToSignIn = () => {
+    setAuthTab("signin");
+    setConfirmPassword("");
+    setErrMsg("");
+  };
+
+  const switchToRegister = () => {
+    setAuthTab("register");
+    setErrMsg("");
   };
 
   return (
@@ -92,17 +127,13 @@ export default function AuthCard({
           <h2 className="text-2xl font-semibold text-foreground">
             {isRegister ? "Create account" : "Sign in to continue"}
           </h2>
-          <p className="text-sm text-muted-foreground mt-1">Access {product.name}</p>
+          <p className="text-sm text-muted-foreground mt-1">Access {product?.name}</p>
         </div>
 
         <div className="mt-6 flex justify-between text-sm font-medium">
           <button
             type="button"
-            onClick={() => {
-              setAuthTab("signin");
-              setConfirmPassword("");
-              setErrMsg("");
-            }}
+            onClick={switchToSignIn}
             className={`pb-3 w-1/2 text-center border-b-2 cursor-pointer ${
               authTab === "signin"
                 ? "border-accent text-foreground"
@@ -111,12 +142,10 @@ export default function AuthCard({
           >
             Sign In
           </button>
+
           <button
             type="button"
-            onClick={() => {
-              setAuthTab("register");
-              setErrMsg("");
-            }}
+            onClick={switchToRegister}
             className={`pb-3 w-1/2 text-center border-b-2 cursor-pointer ${
               authTab === "register"
                 ? "border-accent text-foreground"
@@ -194,7 +223,13 @@ export default function AuthCard({
                 : "bg-muted text-muted-foreground cursor-not-allowed"
             }`}
           >
-            {isLoading ? (isRegister ? "Creating account..." : "Signing in...") : isRegister ? "Register" : "Sign In"}
+            {isLoading
+              ? isRegister
+                ? "Creating account..."
+                : "Signing in..."
+              : isRegister
+                ? "Register"
+                : "Sign In"}
           </button>
 
           <div className="text-center text-xs text-muted-foreground">or continue with</div>
@@ -203,28 +238,32 @@ export default function AuthCard({
             <button
               type="button"
               onClick={() => socialLogin("google")}
-              className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer"
+              disabled={isLoading}
+              className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Google
             </button>
             <button
               type="button"
               onClick={() => socialLogin("microsoft")}
-              className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer"
+              disabled={isLoading}
+              className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Microsoft
             </button>
             <button
               type="button"
               onClick={() => socialLogin("facebook")}
-              className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer"
+              disabled={isLoading}
+              className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               Facebook
             </button>
             <button
               type="button"
               onClick={() => socialLogin("github")}
-              className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer"
+              disabled={isLoading}
+              className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer disabled:opacity-60 disabled:cursor-not-allowed"
             >
               GitHub
             </button>
