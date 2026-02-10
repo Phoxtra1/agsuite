@@ -10,6 +10,8 @@
 
 @layer base {
   :root {
+    color-scheme: light;
+
     /* Light Theme */
     --background: 220 20% 98%;
     --foreground: 222 47% 11%;
@@ -71,6 +73,8 @@
   }
 
   .dark {
+    color-scheme: dark;
+
     /* Dark Theme (Premium Navy - not deep black) */
     --background: 222 33% 12%;
     --foreground: 210 40% 98%;
@@ -121,15 +125,18 @@
     --suite-surface: 222 33% 12%;
     --suite-surface-elevated: 222 30% 16%;
   }
-}
 
-@layer base {
   * {
     @apply border-border;
   }
 
-  /* ✅ HARD FIX for “scattered / huge logo / drift”:
-     Make the root sizing deterministic across browsers and preview shells. */
+  /* ✅ Stability: consistent sizing & no “drift” */
+  *,
+  *::before,
+  *::after {
+    box-sizing: border-box;
+  }
+
   html,
   body,
   #root {
@@ -141,19 +148,19 @@
     margin: 0;
   }
 
-  /* Prevent horizontal drift (but keep vertical scrolling normal) */
   html,
   body {
     overflow-x: hidden;
   }
 
-  /* Prevent images/SVGs from overflowing their containers */
+  /* ✅ Prevent images/SVGs from overflowing / stretching weirdly */
   img,
   svg,
   video,
   canvas {
     max-width: 100%;
     height: auto;
+    display: block;
   }
 
   body {
@@ -219,19 +226,19 @@
       0 2px 6px -2px hsl(var(--foreground) / 0.08);
   }
 
-  /* Dark panel for inside forms / console blocks (matches screenshot) */
+  /* Panel blocks */
   .amineva-panel {
     background: hsl(var(--card));
     border: 1px solid hsl(var(--border));
     border-radius: var(--radius);
   }
 
-  /* Inputs: consistent premium look */
+  /* Inputs */
   .amineva-input {
     @apply bg-background text-foreground border border-input rounded-md;
   }
 
-  /* Focus ring: gold, consistent */
+  /* Focus ring */
   .amineva-focus:focus-visible {
     outline: none;
     box-shadow: 0 0 0 3px hsl(var(--accent) / 0.25);
@@ -253,11 +260,9 @@
   .status-live {
     @apply bg-success text-success-foreground;
   }
-
   .status-restricted {
     @apply bg-warning text-warning-foreground;
   }
-
   .status-offline {
     @apply bg-muted text-muted-foreground;
   }
