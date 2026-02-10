@@ -8,6 +8,7 @@ import { AuthStep } from "./AuthStep";
 import { TwoFactorSetup } from "@/components/auth/TwoFactorSetup";
 import { TwoFactorDialog } from "@/components/auth/TwoFactorDialog";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+
 import {
   loadGatewayState,
   saveGatewayState,
@@ -64,72 +65,70 @@ export function GatewayFlow() {
   // Store authRedirect on mount if provided via URL params
   useEffect(() => {
     if (authRedirectParam) {
-      // Store the redirect destination for use after 2FA
       setAuthRedirect(authRedirectParam, searchParams.get("product") || undefined);
     }
   }, [authRedirectParam, searchParams]);
 
   // Load persisted state on mount - only run once
-  // Load persisted state on mount - only run once
-useEffect(() => {
-  if (initialized) return;
+  useEffect(() => {
+    if (initialized) return;
 
-  const state = loadGatewayState();
-  setSelectedProductKey(state.selectedProductKey);
-  setSelectedCountryCode(state.selectedCountryCode);
-  setSelectedCurrencyCode(state.selectedCurrencyCode);
+    const state = loadGatewayState();
+    setSelectedProductKey(state.selectedProductKey);
+    setSelectedCountryCode(state.selectedCountryCode);
+    setSelectedCurrencyCode(state.selectedCurrencyCode);
 
-  // ✅ HARD RULE: AGStock ALWAYS shows country step before auth
-  if (state.selectedProductKey === "agstock") {
-    setStep("country_selection");
-    setInitialized(true);
-    return;
-  }
+    // ✅ HARD RULE: AGStock ALWAYS shows country step before auth
+    if (state.selectedProductKey === "agstock") {
+      setStep("country_selection");
+      setInitialized(true);
+      return;
+    }
 
-  // Existing logic for other products
-  if (state.selectedProductKey) {
-    if (!isAuthenticated) {
-      setStep("auth");
-    } else {
-      if (mfaState?.required) {
-        if (mfaState.setupRequired) setStep("mfa_setup");
-        else if (mfaState.challengeId) setStep("mfa_verify");
-        else setStep("mfa_setup");
+    // Existing logic for other products
+    if (state.selectedProductKey) {
+      if (!isAuthenticated) {
+        setStep("auth");
       } else {
-        setStep("routing");
+        if (mfaState?.required) {
+          if (mfaState.setupRequired) setStep("mfa_setup");
+          else if (mfaState.challengeId) setStep("mfa_verify");
+          else setStep("mfa_setup");
+        } else {
+          setStep("routing");
+        }
       }
     }
-  }
 
-  setInitialized(true);
-}, [initialized, isAuthenticated, mfaState]);
+    setInitialized(true);
+  }, [initialized, isAuthenticated, mfaState]);
 
- const handleSelectProduct = (productKey: string) => {
-  setSelectedProductKey(productKey);
+  const handleSelectProduct = (productKey: string) => {
+    setSelectedProductKey(productKey);
 
-  if (productKey === "agstock") {
-    // ✅ Always ask country again for AGStock
-    setSelectedCountryCode(null);
-    setSelectedCurrencyCode(null);
+    if (productKey === "agstock") {
+      // ✅ Always ask country again for AGStock
+      setSelectedCountryCode(null);
+      setSelectedCurrencyCode(null);
 
-    saveGatewayState({
-      selectedProductKey: productKey,
-      selectedCountryCode: null,
-      selectedCurrencyCode: null,
-    });
+      saveGatewayState({
+        selectedProductKey: productKey,
+        selectedCountryCode: null,
+        selectedCurrencyCode: null,
+      });
 
-    setStep("country_selection");
-    return;
-  }
+      setStep("country_selection");
+      return;
+    }
 
-  saveGatewayState({ selectedProductKey: productKey });
+    saveGatewayState({ selectedProductKey: productKey });
 
-  if (isAuthenticated && !mfaState?.required && is2FARecent(productKey)) {
-    setStep("routing");
-  } else {
-    setStep("auth");
-  }
-};
+    if (isAuthenticated && !mfaState?.required && is2FARecent(productKey)) {
+      setStep("routing");
+    } else {
+      setStep("auth");
+    }
+  };
 
   // Handle back to product selection
   const handleBackToProducts = () => {
@@ -149,15 +148,47 @@ useEffect(() => {
     }
   };
 
+  // ✅ Added: Handle "Explore Later"
+  const handleExploreLater = () => {
+    setSelectedProductKey(null);
+    setSelectedCountryCode(null);
+    setSelectedCurrencyCode(null);
+    clearGatewayState();
+
+    // If already authenticated and no MFA needed, we can route based on role rules
+    if (isAuthenticated && !mfaState?.required) {
+      setStep("routing");
+    } else {
+      setStep("auth");
+    }
+  };
+
+  // ✅ Added: Handle country selection completion
+  // Assumes CountrySelectionStep calls onContinue(countryCode, currencyCode?)
+  const handleCountrySelected = (countryCode: string, currencyCode?: string | null) => {
+    setSelectedCountryCode(countryCode);
+    setSelectedCurrencyCode(currencyCode ?? null);
+
+    saveGatewayState({
+      selectedProductKey,
+      selectedCountryCode: countryCode,
+      selectedCurrencyCode: currencyCode ?? null,
+    });
+
+    if (isAuthenticated && !mfaState?.required && selectedProductKey && is2FARecent(selectedProductKey)) {
+      setStep("routing");
+    } else {
+      setStep("auth");
+    }
+  };
+
   // Route user after auth AND 2FA
   const routeToProduct = useCallback(async () => {
     const products = loadProducts();
 
     // Create/update lightweight Suite profile (non-blocking)
     if (user?.id) {
-      getOrCreateProfile(user.id).catch(() => {
-        // Profile failure should not block routing
-      });
+      getOrCreateProfile(user.id).catch(() => {});
     }
 
     // SECURITY: Check for credential mismatch
@@ -173,7 +204,6 @@ useEffect(() => {
           product: selectedProductKey,
           action: "forcing_role_based_redirect",
         });
-        // Clear compromised redirect data
         clearAuthRedirect();
       }
     }
@@ -187,7 +217,6 @@ useEffect(() => {
       if (shouldRouteToSuite(user?.role)) {
         navigate("/suite", { replace: true });
       } else {
-        // Normal users stay on gateway - they must select a product
         setStep("product_selection");
         toast.info("Please select a product to continue");
       }
@@ -220,9 +249,7 @@ useEffect(() => {
       return;
     }
 
-    // 🔒 Recurring (step-up) 2FA enforcement per product:
-    // If the user's last 2FA verification is older than the product window,
-    // block redirect and request a fresh authenticator code.
+    // 🔒 Step-up 2FA enforcement per product window
     if (!is2FARecent(selectedProductKey)) {
       const redirectUrl = getDashboardForRole(selectedProductKey, user?.role);
       setAuthRedirect(redirectUrl, selectedProductKey, user?.role, "step_up");
@@ -234,25 +261,19 @@ useEffect(() => {
     clearGatewayState();
 
     // SECURITY: Get redirect URL with full validation
-    // Priority: invite context > stored redirect > role-based default
     let targetUrl: string;
 
     if (inviteContext && inviteContext.productKey === selectedProductKey) {
-      // Invite flow - ALWAYS use employee dashboard
       targetUrl = getDashboardForRole(selectedProductKey, "employee");
       console.log("[GatewayFlow] Invite context detected, using employee dashboard:", targetUrl);
     } else if (isEmployeeRole(user?.role) || isEmployeeRole(storedAuth?.role)) {
-      // Employee role detected - force employee dashboard
       targetUrl = getDashboardForRole(selectedProductKey, user?.role || storedAuth?.role);
       console.log("[GatewayFlow] Employee role detected, using:", targetUrl);
     } else {
-      // Normal flow - use role-based redirect with validation
       targetUrl = getRedirectForRole(selectedProductKey, user?.role, authRedirectParam);
-      // Double-check: sanitize for safety
       targetUrl = sanitizeRedirectForRole(targetUrl, user?.role, selectedProductKey);
     }
 
-    // Clear stored redirect after use
     clearAuthRedirect();
 
     console.log("[GatewayFlow] Final redirect:", {
@@ -266,10 +287,8 @@ useEffect(() => {
     } else if (targetUrl.startsWith("/")) {
       navigate(targetUrl, { replace: true });
     } else if (product.url) {
-      // Fallback to product URL for other products
       window.location.href = product.url;
     } else {
-      // No URL defined - check if manager, else show error
       if (shouldRouteToSuite(user?.role)) {
         navigate("/suite", { replace: true });
       } else {
@@ -291,7 +310,7 @@ useEffect(() => {
     setAwaitingMfaState(true);
   };
 
-  // Watch for MFA state changes after auth success (settle cleanly)
+  // Watch for MFA state changes after auth success
   useEffect(() => {
     if (!awaitingMfaState || !isAuthenticated) return;
 
@@ -303,21 +322,20 @@ useEffect(() => {
       return;
     }
 
-    // If user exists and MFA isn't required, proceed
     if (user) {
       setAwaitingMfaState(false);
       setStep("routing");
     }
   }, [awaitingMfaState, isAuthenticated, mfaState, user]);
 
-  // Handle 2FA setup complete (NO manual route call — prevents double redirect blink)
+  // Handle 2FA setup complete
   const handleMfaSetupComplete = () => {
     completeMfaSetup();
     toast.success("Two-factor authentication enabled!");
     setStep("routing");
   };
 
-  // Handle 2FA verification complete (NO manual route call — prevents double redirect blink)
+  // Handle 2FA verification complete
   const handleMfaVerifyComplete = () => {
     completeMfaVerification();
     toast.success("Verification successful!");
@@ -333,14 +351,28 @@ useEffect(() => {
   switch (step) {
     case "product_selection":
       return (
-        <ProductSelectionStep onSelectProduct={handleSelectProduct} onExploreLater={handleExploreLater} />
+        <ProductSelectionStep
+          onSelectProduct={handleSelectProduct}
+          onExploreLater={handleExploreLater}
+        />
       );
 
     case "country_selection":
-      return <CountrySelectionStep onContinue={handleCountrySelected} onBack={handleBackToProducts} />;
+      return (
+        <CountrySelectionStep
+          onContinue={handleCountrySelected}
+          onBack={handleBackToProducts}
+        />
+      );
 
     case "auth":
-      return <AuthStep selectedProductKey={selectedProductKey} onBack={handleBackFromAuth} onAuthSuccess={handleAuthSuccess} />;
+      return (
+        <AuthStep
+          selectedProductKey={selectedProductKey}
+          onBack={handleBackFromAuth}
+          onAuthSuccess={handleAuthSuccess}
+        />
+      );
 
     case "mfa_setup":
       return (
