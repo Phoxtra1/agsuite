@@ -12,14 +12,6 @@ const ANIMATED_PHRASES = [
   'ENABLING INSTITUTIONS AND DECISION MAKERS',
 ];
 
-async function handleLogin(e) {
-  e.preventDefault();
-
-  hardResetAuthState();   // <<<<< ADD THIS FIRST
-
-  // then run email/password auth
-}
-
 // Smooth animated text component
 function AnimatedText() {
   const [currentIndex, setCurrentIndex] = useState(0);
