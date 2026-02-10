@@ -328,7 +328,7 @@ export default function HomePage() {
 
           {/* Footer */}
           <div className="mt-10 text-center text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Suite Powered By Amineva Global. All Rights Reserved.
+            © {new Date().getFullYear()} Amineva Global. All Rights Reserved.
           </div>
         </div>
       </div>
