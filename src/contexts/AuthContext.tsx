@@ -5,6 +5,7 @@ import React, {
   useState,
   useCallback,
   useEffect,
+  useRef,
 } from "react";
 import { account } from "@/lib/appwrite";
 import {
@@ -49,33 +50,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isLoading, setIsLoading] = useState(true);
   const [mfaState, setMfaState] = useState<MfaState>(null);
 
-  /**
-   * Check MFA factors for the current user.
-   * Returns true if TOTP is already set up & verified.
-   * Does NOT create any challenge — that's Verify2FA's job.
-   */
+  // Prevent loadSession from resetting state after login/register
+  const authActionInProgress = useRef(false);
+
   const checkMfaFactors = useCallback(async (): Promise<boolean> => {
     try {
       const factors = await (account as any).listMfaFactors();
       const totpVerified = !!factors?.totp;
 
       if (!totpVerified) {
-        // User hasn't set up TOTP yet → needs setup
         setMfaState({ required: true, setupRequired: true });
         return false;
       }
 
-      // TOTP is set up. Check if step-up is recent.
       if (is2FARecent()) {
         setMfaState(null);
         return true;
       }
 
-      // TOTP set up but not recently verified → needs verification
       setMfaState({ required: true, setupRequired: false });
       return false;
     } catch (err: any) {
-      // If the endpoint fails (e.g., MFA not enabled on project), treat as no MFA required
       const msg = String(err?.message || "");
       if (/mfa|not enabled|not configured|disabled/i.test(msg)) {
         setMfaState(null);
@@ -87,16 +82,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  /**
-   * Load session on mount — determines initial auth state.
-   */
+  // Load session ONCE on mount
   useEffect(() => {
     let cancelled = false;
 
     const loadSession = async () => {
+      // Don't reset state if login/register is in progress
+      if (authActionInProgress.current) return;
+
       try {
         const session = await getSession();
-        if (cancelled) return;
+        if (cancelled || authActionInProgress.current) return;
 
         if (!session) {
           setUser(null);
@@ -106,22 +102,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           return;
         }
 
-        // Session exists — get user
         const currentUser = await account.get();
-        if (cancelled) return;
+        if (cancelled || authActionInProgress.current) return;
 
         setUser(currentUser);
         setIsAuthenticated(true);
-
-        // Check MFA (no challenge creation!)
         await checkMfaFactors();
       } catch {
-        if (cancelled) return;
+        if (cancelled || authActionInProgress.current) return;
         setUser(null);
         setIsAuthenticated(false);
         setMfaState(null);
       } finally {
-        if (!cancelled) setIsLoading(false);
+        if (!cancelled && !authActionInProgress.current) setIsLoading(false);
       }
     };
 
@@ -133,6 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const login = useCallback(
     async (email: string, password: string) => {
+      authActionInProgress.current = true;
       setIsLoading(true);
       try {
         await appwriteLogin(email, password);
@@ -142,6 +136,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         await checkMfaFactors();
       } finally {
         setIsLoading(false);
+        authActionInProgress.current = false;
       }
     },
     [checkMfaFactors]
@@ -149,16 +144,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const register = useCallback(
     async (email: string, password: string) => {
+      authActionInProgress.current = true;
       setIsLoading(true);
       try {
         await appwriteRegister(email, password);
         const currentUser = await account.get();
         setUser(currentUser);
         setIsAuthenticated(true);
-        // New user → always needs MFA setup
+        // New user → always needs MFA setup (QR code)
         setMfaState({ required: true, setupRequired: true });
       } finally {
         setIsLoading(false);
+        authActionInProgress.current = false;
       }
     },
     []
@@ -166,8 +163,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const socialLogin = useCallback(
     async (provider: "google" | "microsoft" | "facebook" | "github") => {
-      // Appwrite OAuth creates a redirect flow
-      const successUrl = `${window.location.origin}/suite`;
+      const successUrl = `${window.location.origin}/auth/callback?returnTo=/suite`;
       const failureUrl = `${window.location.origin}/?auth=failed`;
       await (account as any).createOAuth2Session(provider, successUrl, failureUrl);
     },

@@ -3,6 +3,7 @@ import { useNavigate, useSearchParams } from "react-router-dom";
 import { account } from "@/lib/appwrite";
 import { AuthenticationFactor } from "appwrite";
 import { useAuth } from "@/contexts/AuthContext";
+import { TwoFactorSetup } from "@/components/auth/TwoFactorSetup";
 import {
   setLast2FAVerifiedAt,
   isRateLimited,
@@ -46,14 +47,7 @@ function normalizeError(err: unknown): string {
   return "Something went wrong. Please try again.";
 }
 
-/**
- * Appwrite SDK compatibility helpers:
- * - Some versions use AuthenticationFactor.TOTP, others Totp
- * - Some versions expose createMfaChallenge / updateMfaChallenge,
- *   but signatures vary (positional vs object param)
- */
 function getTotpFactor(): any {
-  // Prefer TOTP if present, fallback to Totp.
   const anyFactor: any = AuthenticationFactor as any;
   return anyFactor?.TOTP ?? anyFactor?.Totp ?? "totp";
 }
@@ -61,22 +55,15 @@ function getTotpFactor(): any {
 async function createTotpChallengeCompat(): Promise<any> {
   const acc: any = account as any;
   const factor = getTotpFactor();
-
-  // Most common: createMfaChallenge(factor)
   if (typeof acc.createMfaChallenge === "function") {
     return acc.createMfaChallenge(factor);
   }
-
-  // If your SDK uses another name, add here; otherwise throw for visibility:
   throw new Error("Appwrite Account.createMfaChallenge is not available in this SDK version.");
 }
 
 async function verifyTotpChallengeCompat(challengeId: string, otp: string): Promise<void> {
   const acc: any = account as any;
-
-  // Most common: updateMfaChallenge(challengeId, otp)
   if (typeof acc.updateMfaChallenge === "function") {
-    // Some SDKs accept (challengeId, otp), others accept ({ challengeId, otp })
     try {
       await acc.updateMfaChallenge(challengeId, otp);
       return;
@@ -85,8 +72,6 @@ async function verifyTotpChallengeCompat(challengeId: string, otp: string): Prom
       return;
     }
   }
-
-  // Some people mistakenly use updateMFAChallenge; try it safely if it exists.
   if (typeof acc.updateMFAChallenge === "function") {
     try {
       await acc.updateMFAChallenge(challengeId, otp);
@@ -96,14 +81,31 @@ async function verifyTotpChallengeCompat(challengeId: string, otp: string): Prom
       return;
     }
   }
-
   throw new Error("Appwrite Account.updateMfaChallenge is not available in this SDK version.");
+}
+
+/**
+ * Detect if user needs TOTP setup (no factor) or verification (has factor).
+ */
+async function detectMfaMode(): Promise<"setup" | "verify" | "none"> {
+  try {
+    const factors = await (account as any).listMfaFactors();
+    const hasTotp = !!factors?.totp;
+    if (!hasTotp) return "setup";
+    return "verify";
+  } catch (err: any) {
+    const msg = String(err?.message || "");
+    // MFA not enabled on this Appwrite project at all
+    if (/mfa|not enabled|not configured|disabled/i.test(msg)) return "none";
+    console.warn("[Verify2FA] detectMfaMode error:", err);
+    return "none";
+  }
 }
 
 export default function Verify2FA() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
-  const { user, isAuthenticated, isLoading: authLoading } = useAuth();
+  const { user, isAuthenticated, isLoading: authLoading, completeMfaSetup, completeMfaVerification } = useAuth();
 
   const returnTo = searchParams.get("returnTo") || "/suite";
   const productKey = searchParams.get("product") || "default";
@@ -118,21 +120,24 @@ export default function Verify2FA() {
   const [cooldown, setCooldown] = useState(0);
   const [attemptsLeft, setAttemptsLeft] = useState(5);
 
-  // Prevent “blink”: confirm session independently of AuthContext timing
+  // Session check state — prevents "blink" redirect
   const [sessionChecked, setSessionChecked] = useState(false);
   const [hasSession, setHasSession] = useState(false);
+
+  // MFA mode: "loading" | "setup" | "verify" | "none"
+  const [mfaMode, setMfaMode] = useState<"loading" | "setup" | "verify" | "none">("loading");
 
   const windowMs =
     STEP_UP_WINDOWS[productKey as keyof typeof STEP_UP_WINDOWS] ??
     STEP_UP_WINDOWS.default;
-
   const windowMinutes = Math.max(1, Math.floor(windowMs / 60000));
 
-  // Redirect guard: only redirect if BOTH AuthContext says no AND Appwrite session is missing
+  // Step 1: Check session exists (independent of AuthContext timing)
   useEffect(() => {
     let cancelled = false;
 
     const check = async () => {
+      // Wait for AuthContext to finish initial load
       if (authLoading) return;
 
       try {
@@ -143,25 +148,53 @@ export default function Verify2FA() {
         setHasSession(ok);
         setSessionChecked(true);
 
+        // ONLY redirect if BOTH AuthContext AND direct session check say no auth
         if (!isAuthenticated && !ok) {
+          console.log("[Verify2FA] No session, redirecting to homepage");
           navigate(`/?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
         }
       } catch (err) {
         if (cancelled) return;
         setHasSession(false);
         setSessionChecked(true);
-        setError("Network error while checking session. Please refresh and try again.");
-        console.error("Session check failed:", err);
+
+        // If we're authenticated in context, don't redirect on network error
+        if (!isAuthenticated) {
+          setError("Network error while checking session. Please refresh.");
+          console.error("Session check failed:", err);
+        }
       }
     };
 
     check();
-    return () => {
-      cancelled = true;
-    };
+    return () => { cancelled = true; };
   }, [authLoading, isAuthenticated, navigate, returnTo]);
 
-  // Update rate limit state on mount
+  // Step 2: Detect MFA mode once session is confirmed
+  useEffect(() => {
+    if (!sessionChecked) return;
+    if (!isAuthenticated && !hasSession) return;
+
+    let cancelled = false;
+    const detect = async () => {
+      const mode = await detectMfaMode();
+      if (cancelled) return;
+
+      setMfaMode(mode);
+
+      // If MFA is not enabled on this project, skip 2FA entirely
+      if (mode === "none") {
+        console.log("[Verify2FA] MFA not enabled, skipping to destination");
+        setLast2FAVerifiedAt();
+        completeMfaVerification();
+        navigate(returnTo, { replace: true });
+      }
+    };
+    detect();
+    return () => { cancelled = true; };
+  }, [sessionChecked, isAuthenticated, hasSession, returnTo, navigate, completeMfaVerification]);
+
+  // Rate limit state
   useEffect(() => {
     const { limited, cooldownRemaining } = isRateLimited();
     if (limited) setCooldown(cooldownRemaining);
@@ -173,17 +206,14 @@ export default function Verify2FA() {
     if (cooldown <= 0) return;
     const timer = window.setInterval(() => {
       setCooldown((c) => {
-        if (c <= 1) {
-          setAttemptsLeft(5);
-          return 0;
-        }
+        if (c <= 1) { setAttemptsLeft(5); return 0; }
         return c - 1;
       });
     }, 1000);
-
     return () => window.clearInterval(timer);
   }, [cooldown]);
 
+  // Create challenge (only for verify mode)
   const createChallenge = useCallback(async () => {
     if (!isAuthenticated && !hasSession) return;
     if (isCreatingChallenge) return;
@@ -194,20 +224,16 @@ export default function Verify2FA() {
     try {
       const challenge = await createTotpChallengeCompat();
       const id = pickChallengeId(challenge);
-
       if (!id) throw new Error("Challenge ID missing from server response.");
-
       setChallengeId(id);
     } catch (err) {
       setChallengeId(null);
-
       const msg = normalizeError(err);
 
-      // If MFA isn't enabled/configured for this user, don’t trap them here — proceed.
+      // If challenge fails because TOTP not set up, switch to setup mode
       if (/mfa|factor|totp|disabled|not enabled|not configured/i.test(msg)) {
-        setLast2FAVerifiedAt();
-        if (returnTo.startsWith("http")) window.location.assign(returnTo);
-        else navigate(returnTo, { replace: true });
+        console.log("[Verify2FA] Challenge failed, switching to setup mode");
+        setMfaMode("setup");
         return;
       }
 
@@ -216,26 +242,17 @@ export default function Verify2FA() {
     } finally {
       setIsCreatingChallenge(false);
     }
-  }, [isAuthenticated, hasSession, isCreatingChallenge, returnTo, navigate]);
+  }, [isAuthenticated, hasSession, isCreatingChallenge]);
 
-  // Auto-create challenge once when arriving here (only after auth/session is ready)
+  // Auto-create challenge when in verify mode
   useEffect(() => {
-    if (authLoading) return;
-    if (!sessionChecked) return;
+    if (mfaMode !== "verify") return;
+    if (authLoading || !sessionChecked) return;
     if (!isAuthenticated && !hasSession) return;
-    if (challengeId) return;
-    if (isCreatingChallenge) return;
+    if (challengeId || isCreatingChallenge) return;
 
     createChallenge();
-  }, [
-    authLoading,
-    sessionChecked,
-    isAuthenticated,
-    hasSession,
-    challengeId,
-    isCreatingChallenge,
-    createChallenge,
-  ]);
+  }, [mfaMode, authLoading, sessionChecked, isAuthenticated, hasSession, challengeId, isCreatingChallenge, createChallenge]);
 
   const handleVerify = useCallback(
     async (e: React.FormEvent) => {
@@ -255,7 +272,7 @@ export default function Verify2FA() {
       }
 
       if (!challengeId) {
-        setError("No active verification request. Re-initializing 2FA…");
+        setError("No active verification request. Re-initializing…");
         await createChallenge();
         return;
       }
@@ -265,13 +282,13 @@ export default function Verify2FA() {
 
       try {
         await verifyTotpChallengeCompat(challengeId, code);
-
-        // Confirm user still reachable before redirect
         await account.get();
 
         recordOTPAttempt(true);
         setLast2FAVerifiedAt();
+        completeMfaVerification();
 
+        console.log("[Verify2FA] Verification successful, navigating to:", returnTo);
         if (returnTo.startsWith("http")) window.location.assign(returnTo);
         else navigate(returnTo, { replace: true });
       } catch (err: unknown) {
@@ -286,9 +303,9 @@ export default function Verify2FA() {
           const msg = normalizeError(err);
           setError(
             /challenge|expired/i.test(msg)
-              ? "Verification request expired/changed. Tap “Retry 2FA” to generate a fresh request."
+              ? 'Verification expired. Tap "Retry 2FA" to get a fresh code.'
               : /invalid|otp|code/i.test(msg)
-                ? "Code rejected. Try the next code. If it still fails, tap “Retry 2FA”."
+                ? 'Code rejected. Try the next code or tap "Retry 2FA".'
                 : msg
           );
         }
@@ -297,13 +314,21 @@ export default function Verify2FA() {
         setIsVerifying(false);
       }
     },
-    [code, challengeId, returnTo, navigate, isVerifying, createChallenge]
+    [code, challengeId, returnTo, navigate, isVerifying, createChallenge, completeMfaVerification]
   );
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "").slice(0, 6);
     setCode(value);
     if (error) setError(null);
+  };
+
+  // Handle MFA setup completion (first-time users)
+  const handleSetupComplete = () => {
+    setLast2FAVerifiedAt();
+    completeMfaSetup();
+    console.log("[Verify2FA] MFA setup complete, navigating to:", returnTo);
+    navigate(returnTo, { replace: true });
   };
 
   const attemptsText = useMemo(() => {
@@ -315,7 +340,8 @@ export default function Verify2FA() {
     );
   }, [attemptsLeft, cooldown]);
 
-  if (authLoading || !sessionChecked) {
+  // Loading states
+  if (authLoading || !sessionChecked || mfaMode === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -323,6 +349,22 @@ export default function Verify2FA() {
     );
   }
 
+  // SETUP MODE: First-time users scan QR code
+  if (mfaMode === "setup") {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
+        <div className="mb-8">
+          <img src={amvLogo} alt="Amineva" className="h-10" />
+        </div>
+        <TwoFactorSetup onSetupComplete={handleSetupComplete} />
+        <p className="mt-6 text-xs text-muted-foreground text-center max-w-sm">
+          Two-factor authentication is required to secure your account.
+        </p>
+      </div>
+    );
+  }
+
+  // VERIFY MODE: Existing users enter TOTP code
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
       <div className="mb-8">
