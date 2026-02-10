@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { account } from "@/lib/appwrite";
 import { AuthenticationFactor } from "appwrite";
@@ -14,8 +14,24 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, AlertCircle, Loader2, Clock, ArrowLeft } from "lucide-react";
+import { ShieldCheck, AlertCircle, Loader2, Clock, ArrowLeft, RefreshCw } from "lucide-react";
 import amvLogo from "@/assets/amv_logo.png";
+
+function pickChallengeId(challenge: any): string | null {
+  // Appwrite SDKs vary: $id, id, challengeId
+  return (
+    (typeof challenge?.$id === "string" && challenge.$id) ||
+    (typeof challenge?.id === "string" && challenge.id) ||
+    (typeof challenge?.challengeId === "string" && challenge.challengeId) ||
+    null
+  );
+}
+
+function normalizeError(err: unknown): string {
+  if (err && typeof err === "object" && "message" in err) return String((err as any).message);
+  if (err instanceof Error) return err.message;
+  return "Something went wrong. Please try again.";
+}
 
 export default function Verify2FA() {
   const navigate = useNavigate();
@@ -28,130 +44,171 @@ export default function Verify2FA() {
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [isCreatingChallenge, setIsCreatingChallenge] = useState(false);
+
   const [cooldown, setCooldown] = useState(0);
   const [attemptsLeft, setAttemptsLeft] = useState(5);
 
-  // Calculate window for display
-  const windowMs = STEP_UP_WINDOWS[productKey as keyof typeof STEP_UP_WINDOWS] ?? STEP_UP_WINDOWS.default;
+  const windowMs =
+    STEP_UP_WINDOWS[productKey as keyof typeof STEP_UP_WINDOWS] ?? STEP_UP_WINDOWS.default;
   const windowMinutes = Math.floor(windowMs / 60000);
 
-  // Redirect if not authenticated
+  // Redirect if not authenticated (don’t do it while auth is still loading)
   useEffect(() => {
     if (!authLoading && !isAuthenticated) {
-      navigate(`/?returnTo=${encodeURIComponent(returnTo)}`);
+      navigate(`/?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
     }
   }, [authLoading, isAuthenticated, navigate, returnTo]);
 
-  // Create MFA challenge on mount
-  useEffect(() => {
-    if (!isAuthenticated || challengeId || isCreatingChallenge) return;
-
-    async function createChallenge() {
-      setIsCreatingChallenge(true);
-      try {
-        const challenge = await account.createMfaChallenge(AuthenticationFactor.Totp);
-        setChallengeId(challenge.$id);
-      } catch (err) {
-        console.error("Failed to create MFA challenge:", err);
-        setError("Failed to initialize 2FA. Please try again.");
-      } finally {
-        setIsCreatingChallenge(false);
-      }
-    }
-
-    createChallenge();
-  }, [isAuthenticated, challengeId, isCreatingChallenge]);
-
-  // Update rate limit state
+  // Update rate limit state on mount
   useEffect(() => {
     const { limited, cooldownRemaining } = isRateLimited();
-    if (limited) {
-      setCooldown(cooldownRemaining);
-    }
+    if (limited) setCooldown(cooldownRemaining);
     setAttemptsLeft(getAttemptsRemaining());
   }, []);
 
   // Cooldown countdown
   useEffect(() => {
     if (cooldown <= 0) return;
-    const timer = setInterval(() => {
+    const timer = window.setInterval(() => {
       setCooldown((c) => {
         if (c <= 1) {
-          setAttemptsLeft(5); // Reset after cooldown
+          setAttemptsLeft(5);
           return 0;
         }
         return c - 1;
       });
     }, 1000);
-    return () => clearInterval(timer);
+    return () => window.clearInterval(timer);
   }, [cooldown]);
 
-  const handleVerify = useCallback(async (e: React.FormEvent) => {
-    e.preventDefault();
+  // Create MFA challenge (explicit function so we can retry)
+  const createChallenge = useCallback(async () => {
+    if (!isAuthenticated) return;
+    if (isCreatingChallenge) return;
 
-    if (code.length !== 6) {
-      setError("Please enter a 6-digit code");
-      return;
-    }
-
-    // Check rate limit
-    const { limited, cooldownRemaining } = isRateLimited();
-    if (limited) {
-      setCooldown(cooldownRemaining);
-      setError(`Too many attempts. Please wait ${cooldownRemaining}s.`);
-      return;
-    }
-
-    if (!challengeId) {
-      setError("No active challenge. Refreshing...");
-      setChallengeId(null);
-      return;
-    }
-
-    setIsVerifying(true);
+    setIsCreatingChallenge(true);
     setError(null);
 
     try {
-      await account.updateMFAChallenge({
-        challengeId,
-        otp: code,
-      });
+      // Some SDKs name this createMfaChallenge; yours compiles, so keep it.
+      // Factor enum can vary; AuthenticationFactor.Totp is correct in your codebase.
+      const challenge = await account.createMfaChallenge(AuthenticationFactor.Totp);
+      const id = pickChallengeId(challenge);
 
-      // Success - record and update timestamp
-      recordOTPAttempt(true);
-      setLast2FAVerifiedAt();
-
-      // Redirect back to product
-      if (returnTo.startsWith("http")) {
-        window.location.href = returnTo;
-      } else {
-        navigate(returnTo);
+      if (!id) {
+        throw new Error("Challenge ID missing from server response.");
       }
-    } catch (err: unknown) {
-      recordOTPAttempt(false);
-      setAttemptsLeft(getAttemptsRemaining());
 
-      const { limited: nowLimited, cooldownRemaining: newCooldown } = isRateLimited();
-      if (nowLimited) {
-        setCooldown(newCooldown);
-        setError(`Too many failed attempts. Wait ${newCooldown}s.`);
-      } else {
-        const message = err instanceof Error ? err.message : "Invalid code";
-        setError(message);
-      }
-      setCode("");
+      setChallengeId(id);
+    } catch (err) {
+      setChallengeId(null);
+      setError("Failed to initialize 2FA. Please try again.");
+      console.error("Failed to create MFA challenge:", err);
     } finally {
-      setIsVerifying(false);
+      setIsCreatingChallenge(false);
     }
-  }, [code, challengeId, returnTo, navigate]);
+  }, [isAuthenticated, isCreatingChallenge]);
+
+  // Auto-create challenge once when arriving here (only after auth is ready)
+  useEffect(() => {
+    if (authLoading) return;
+    if (!isAuthenticated) return;
+    if (challengeId) return;
+    if (isCreatingChallenge) return;
+
+    createChallenge();
+  }, [authLoading, isAuthenticated, challengeId, isCreatingChallenge, createChallenge]);
+
+  const handleVerify = useCallback(
+    async (e: React.FormEvent) => {
+      e.preventDefault();
+
+      if (isVerifying) return;
+
+      if (code.length !== 6) {
+        setError("Please enter a 6-digit code");
+        return;
+      }
+
+      // Rate limit
+      const { limited, cooldownRemaining } = isRateLimited();
+      if (limited) {
+        setCooldown(cooldownRemaining);
+        setError(`Too many attempts. Please wait ${cooldownRemaining}s.`);
+        return;
+      }
+
+      // No challenge? Recreate it immediately (permanent recovery)
+      if (!challengeId) {
+        setError("No active verification request. Re-initializing 2FA…");
+        await createChallenge();
+        return;
+      }
+
+      setIsVerifying(true);
+      setError(null);
+
+      try {
+        await account.updateMFAChallenge({
+          challengeId,
+          otp: code,
+        });
+
+        // ✅ Critical: confirm session/user exists before redirect (prevents blink → home)
+        await account.get();
+
+        recordOTPAttempt(true);
+        setLast2FAVerifiedAt();
+
+        if (returnTo.startsWith("http")) {
+          window.location.assign(returnTo);
+        } else {
+          navigate(returnTo, { replace: true });
+        }
+      } catch (err: unknown) {
+        recordOTPAttempt(false);
+        setAttemptsLeft(getAttemptsRemaining());
+
+        const { limited: nowLimited, cooldownRemaining: newCooldown } = isRateLimited();
+        if (nowLimited) {
+          setCooldown(newCooldown);
+          setError(`Too many failed attempts. Wait ${newCooldown}s.`);
+        } else {
+          const msg = normalizeError(err);
+          // Friendly, permanent guidance (covers stale challenge / drift / generic invalid)
+          setError(
+            /challenge|expired/i.test(msg)
+              ? "Verification request expired/changed. Tap “Retry 2FA” to generate a fresh request."
+              : /invalid|otp|code/i.test(msg)
+                ? "Code rejected. Try the next code. If it still fails, tap “Retry 2FA”."
+                : msg
+          );
+        }
+        setCode("");
+      } finally {
+        setIsVerifying(false);
+      }
+    },
+    [code, challengeId, returnTo, navigate, isVerifying, createChallenge]
+  );
 
   const handleCodeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value.replace(/\D/g, "").slice(0, 6);
     setCode(value);
-    setError(null);
+    if (error) setError(null);
   };
+
+  const attemptsText = useMemo(() => {
+    if (attemptsLeft >= 5 || cooldown > 0) return null;
+    return (
+      <p className="text-xs text-muted-foreground text-center">
+        {attemptsLeft} attempt{attemptsLeft !== 1 ? "s" : ""} remaining
+      </p>
+    );
+  }, [attemptsLeft, cooldown]);
 
   if (authLoading) {
     return (
@@ -163,7 +220,6 @@ export default function Verify2FA() {
 
   return (
     <div className="min-h-screen flex flex-col items-center justify-center bg-background p-4">
-      {/* Logo */}
       <div className="mb-8">
         <img src={amvLogo} alt="Amineva" className="h-10" />
       </div>
@@ -175,9 +231,7 @@ export default function Verify2FA() {
           </div>
           <CardTitle className="text-xl">Verify Your Identity</CardTitle>
           <CardDescription className="space-y-1">
-            <span className="block">
-              Enter the 6-digit code from your authenticator app.
-            </span>
+            <span className="block">Enter the 6-digit code from your authenticator app.</span>
             <span className="flex items-center justify-center gap-1 text-xs text-muted-foreground">
               <Clock className="h-3 w-3" />
               Valid for {windowMinutes} minutes after verification
@@ -187,14 +241,12 @@ export default function Verify2FA() {
 
         <CardContent>
           <form onSubmit={handleVerify} className="space-y-6">
-            {/* User info */}
             {user && (
               <div className="text-center text-sm text-muted-foreground">
                 Signed in as <span className="font-medium text-foreground">{user.email}</span>
               </div>
             )}
 
-            {/* Code input */}
             <div className="space-y-2">
               <Label htmlFor="totp-code">Verification Code</Label>
               <Input
@@ -209,16 +261,11 @@ export default function Verify2FA() {
                 className="text-center text-2xl tracking-widest font-mono"
                 autoComplete="one-time-code"
                 autoFocus
-                disabled={cooldown > 0 || isCreatingChallenge}
+                disabled={cooldown > 0 || isCreatingChallenge || isVerifying}
               />
-              {attemptsLeft < 5 && cooldown === 0 && (
-                <p className="text-xs text-muted-foreground text-center">
-                  {attemptsLeft} attempt{attemptsLeft !== 1 ? "s" : ""} remaining
-                </p>
-              )}
+              {attemptsText}
             </div>
 
-            {/* Error */}
             {error && (
               <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
                 <AlertCircle className="h-4 w-4 shrink-0" />
@@ -226,7 +273,6 @@ export default function Verify2FA() {
               </div>
             )}
 
-            {/* Cooldown display */}
             {cooldown > 0 && (
               <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
                 <Clock className="h-4 w-4" />
@@ -234,7 +280,6 @@ export default function Verify2FA() {
               </div>
             )}
 
-            {/* Submit */}
             <Button
               type="submit"
               className="w-full"
@@ -255,13 +300,19 @@ export default function Verify2FA() {
               )}
             </Button>
 
-            {/* Back */}
+            {/* Permanent recovery button */}
             <Button
               type="button"
-              variant="ghost"
+              variant="secondary"
               className="w-full"
-              onClick={() => navigate(-1)}
+              onClick={createChallenge}
+              disabled={isCreatingChallenge || isVerifying}
             >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Retry 2FA
+            </Button>
+
+            <Button type="button" variant="ghost" className="w-full" onClick={() => navigate(-1)}>
               <ArrowLeft className="mr-2 h-4 w-4" />
               Go Back
             </Button>
