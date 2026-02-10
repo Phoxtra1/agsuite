@@ -16,6 +16,9 @@ import NotFound from "./pages/NotFound";
 const HomePage = lazy(() => import("./pages/HomePage"));
 const InviteBridge = lazy(() => import("./pages/InviteBridge"));
 const Verify2FA = lazy(() => import("./pages/auth/Verify2FA"));
+const Recovery = lazy(() => import("./pages/auth/Recovery"));
+const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const AuthCallback = lazy(() => import("./pages/suite/AuthCallback"));
 
 const queryClient = new QueryClient();
 
@@ -125,6 +128,30 @@ function AppRoutes() {
         element={
           <Suspense fallback={<AminevaLoader />}>
             <Verify2FA />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/auth/recovery"
+        element={
+          <Suspense fallback={<AminevaLoader />}>
+            <Recovery />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/auth/reset-password"
+        element={
+          <Suspense fallback={<AminevaLoader />}>
+            <ResetPassword />
+          </Suspense>
+        }
+      />
+      <Route
+        path="/auth/callback"
+        element={
+          <Suspense fallback={<AminevaLoader />}>
+            <AuthCallback />
           </Suspense>
         }
       />

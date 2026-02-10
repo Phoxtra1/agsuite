@@ -1,9 +1,8 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
-
-// CHANGE THIS PATH if your file lives elsewhere
-import { login, register, formatAuthError } from "@/lib/auth";
+import { useAuth } from "@/contexts/AuthContext";
+import { formatAuthError } from "@/lib/auth";
 
 interface AuthCardProps {
   product: ProductData;
@@ -31,6 +30,7 @@ export default function AuthCard({
   onChangeSelection,
 }: AuthCardProps) {
   const navigate = useNavigate();
+  const { login, register: authRegister, isLoading } = useAuth();
 
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -78,7 +78,7 @@ export default function AuthCard({
     setLoading(true);
     try {
       if (isRegister) {
-        await register(email, password);
+        await authRegister(email, password);
       } else {
         await login(email, password);
       }
@@ -178,8 +178,17 @@ export default function AuthCard({
               type="password"
               autoComplete={isRegister ? "new-password" : "current-password"}
             />
-            <div className="mt-1 text-xs text-muted-foreground">
-              Minimum 8 characters.
+            <div className="mt-1 flex items-center justify-between">
+              <span className="text-xs text-muted-foreground">Minimum 8 characters.</span>
+              {!isRegister && (
+                <button
+                  type="button"
+                  onClick={() => navigate("/auth/recovery")}
+                  className="text-xs text-accent hover:underline cursor-pointer"
+                >
+                  Forgot password?
+                </button>
+              )}
             </div>
           </div>
 
