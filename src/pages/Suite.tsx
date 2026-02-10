@@ -4,6 +4,7 @@ import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-
 import { SuiteNav } from "@/components/suite/SuiteNav";
 
 import { OverviewPage } from "@/components/suite/pages/OverviewPage";
+import { ProductsPage } from "@/components/suite/pages/ProductsPage";
 import { WhyAminevaPage } from "@/components/suite/pages/WhyAminevaPage";
 import { HowItWorksPage } from "@/components/suite/pages/HowItWorksPage";
 import { ProfilePage } from "@/components/suite/pages/ProfilePage";
@@ -14,6 +15,7 @@ import { ComsSystem } from "@/components/coms/ComsSystem";
 
 type TabView =
   | "overview"
+  | "products"
   | "why"
   | "how"
   | "console"
@@ -27,7 +29,7 @@ export default function Suite() {
 
   const getCurrentTab = (): TabView => {
     const path = location.pathname.replace("/suite", "");
-
+    if (path.startsWith("/products")) return "products";
     if (path.startsWith("/why")) return "why";
     if (path.startsWith("/how")) return "how";
     if (path.startsWith("/console")) return "console";
@@ -43,6 +45,7 @@ export default function Suite() {
   const handleTabChange = (tab: TabView) => {
     const paths: Record<TabView, string> = {
       overview: "/suite",
+      products: "/suite/products",
       why: "/suite/why",
       how: "/suite/how",
       console: "/suite/console",
@@ -61,6 +64,7 @@ export default function Suite() {
       <main className="ml-64 p-8">
         <Routes>
           <Route index element={<OverviewPage />} />
+          <Route path="products" element={<ProductsPage />} />
           <Route path="why" element={<WhyAminevaPage />} />
           <Route path="how" element={<HowItWorksPage />} />
 

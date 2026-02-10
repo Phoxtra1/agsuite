@@ -135,16 +135,6 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
           )}
         </Button>
         
-        {/* Profile Button - Fixed visibility */}
-        <Button
-          variant="ghost"
-          onClick={handleProfile}
-          className="w-full justify-start gap-3 h-10 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-        >
-          <User className="h-4 w-4" />
-          <span className="text-sm">Profile</span>
-        </Button>
-        
         {/* User Account Menu */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
