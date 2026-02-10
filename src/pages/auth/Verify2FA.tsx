@@ -10,6 +10,7 @@ import {
   getAttemptsRemaining,
   STEP_UP_WINDOWS,
 } from "@/lib/stepUpAuth";
+import { getSession } from "@/lib/auth"; // ✅ uses your existing session checker (change path if needed)
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -51,15 +52,48 @@ export default function Verify2FA() {
   const [cooldown, setCooldown] = useState(0);
   const [attemptsLeft, setAttemptsLeft] = useState(5);
 
+  // ✅ New: prevent "blink" by confirming session independently of AuthContext timing
+  const [sessionChecked, setSessionChecked] = useState(false);
+  const [hasSession, setHasSession] = useState(false);
+
   const windowMs =
     STEP_UP_WINDOWS[productKey as keyof typeof STEP_UP_WINDOWS] ?? STEP_UP_WINDOWS.default;
   const windowMinutes = Math.floor(windowMs / 60000);
 
-  // Redirect if not authenticated (don’t do it while auth is still loading)
+  // ✅ Robust redirect guard: only redirect if BOTH AuthContext says no AND Appwrite session is missing
   useEffect(() => {
-    if (!authLoading && !isAuthenticated) {
-      navigate(`/?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
-    }
+    let cancelled = false;
+
+    const check = async () => {
+      if (authLoading) return;
+
+      try {
+        const session = await getSession();
+        if (cancelled) return;
+
+        const ok = !!session;
+        setHasSession(ok);
+        setSessionChecked(true);
+
+        if (!isAuthenticated && !ok) {
+          navigate(`/?returnTo=${encodeURIComponent(returnTo)}`, { replace: true });
+        }
+      } catch (err) {
+        if (cancelled) return;
+
+        setHasSession(false);
+        setSessionChecked(true);
+
+        // Network/CORS errors: do NOT bounce instantly; show message
+        setError("Network error while checking session. Please refresh and try again.");
+        console.error("Session check failed:", err);
+      }
+    };
+
+    check();
+    return () => {
+      cancelled = true;
+    };
   }, [authLoading, isAuthenticated, navigate, returnTo]);
 
   // Update rate limit state on mount
@@ -86,15 +120,14 @@ export default function Verify2FA() {
 
   // Create MFA challenge (explicit function so we can retry)
   const createChallenge = useCallback(async () => {
-    if (!isAuthenticated) return;
+    // Use either AuthContext OR confirmed session to allow challenge creation
+    if (!isAuthenticated && !hasSession) return;
     if (isCreatingChallenge) return;
 
     setIsCreatingChallenge(true);
     setError(null);
 
     try {
-      // Some SDKs name this createMfaChallenge; yours compiles, so keep it.
-      // Factor enum can vary; AuthenticationFactor.Totp is correct in your codebase.
       const challenge = await account.createMfaChallenge(AuthenticationFactor.Totp);
       const id = pickChallengeId(challenge);
 
@@ -105,22 +138,45 @@ export default function Verify2FA() {
       setChallengeId(id);
     } catch (err) {
       setChallengeId(null);
+
+      const msg = normalizeError(err);
+
+      // ✅ If MFA isn't enabled/configured for this user, don't trap them here — proceed.
+      if (/mfa|factor|totp|disabled|not enabled|not configured/i.test(msg)) {
+        setLast2FAVerifiedAt();
+        if (returnTo.startsWith("http")) {
+          window.location.assign(returnTo);
+        } else {
+          navigate(returnTo, { replace: true });
+        }
+        return;
+      }
+
       setError("Failed to initialize 2FA. Please try again.");
       console.error("Failed to create MFA challenge:", err);
     } finally {
       setIsCreatingChallenge(false);
     }
-  }, [isAuthenticated, isCreatingChallenge]);
+  }, [isAuthenticated, hasSession, isCreatingChallenge, returnTo, navigate]);
 
-  // Auto-create challenge once when arriving here (only after auth is ready)
+  // Auto-create challenge once when arriving here (only after auth/session is ready)
   useEffect(() => {
     if (authLoading) return;
-    if (!isAuthenticated) return;
+    if (!sessionChecked) return;
+    if (!isAuthenticated && !hasSession) return;
     if (challengeId) return;
     if (isCreatingChallenge) return;
 
     createChallenge();
-  }, [authLoading, isAuthenticated, challengeId, isCreatingChallenge, createChallenge]);
+  }, [
+    authLoading,
+    sessionChecked,
+    isAuthenticated,
+    hasSession,
+    challengeId,
+    isCreatingChallenge,
+    createChallenge,
+  ]);
 
   const handleVerify = useCallback(
     async (e: React.FormEvent) => {
@@ -157,7 +213,7 @@ export default function Verify2FA() {
           otp: code,
         });
 
-        // ✅ Critical: confirm session/user exists before redirect (prevents blink → home)
+        // Confirm user still reachable before redirect
         await account.get();
 
         recordOTPAttempt(true);
@@ -178,7 +234,6 @@ export default function Verify2FA() {
           setError(`Too many failed attempts. Wait ${newCooldown}s.`);
         } else {
           const msg = normalizeError(err);
-          // Friendly, permanent guidance (covers stale challenge / drift / generic invalid)
           setError(
             /challenge|expired/i.test(msg)
               ? "Verification request expired/changed. Tap “Retry 2FA” to generate a fresh request."
@@ -210,7 +265,7 @@ export default function Verify2FA() {
     );
   }, [attemptsLeft, cooldown]);
 
-  if (authLoading) {
+  if (authLoading || !sessionChecked) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <Loader2 className="h-8 w-8 animate-spin text-primary" />
@@ -300,7 +355,6 @@ export default function Verify2FA() {
               )}
             </Button>
 
-            {/* Permanent recovery button */}
             <Button
               type="button"
               variant="secondary"
