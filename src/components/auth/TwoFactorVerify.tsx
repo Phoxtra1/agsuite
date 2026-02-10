@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { account } from "@/lib/appwrite";
-import { AuthenticationFactor } from "appwrite";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -14,11 +13,18 @@ interface TwoFactorVerifyProps {
   onRecovery?: () => void;
 }
 
-export function TwoFactorVerify({ 
-  challengeId, 
-  onVerifyComplete, 
+function normalizeError(err: unknown) {
+  if (err && typeof err === "object" && "message" in err) {
+    return String((err as any).message);
+  }
+  return "Verification failed. Please try again.";
+}
+
+export function TwoFactorVerify({
+  challengeId,
+  onVerifyComplete,
   onCancel,
-  onRecovery 
+  onRecovery,
 }: TwoFactorVerifyProps) {
   const [verificationCode, setVerificationCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
@@ -26,6 +32,7 @@ export function TwoFactorVerify({
 
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
+
     if (verificationCode.length !== 6) {
       setError("Please enter a 6-digit code");
       return;
@@ -35,14 +42,20 @@ export function TwoFactorVerify({
     setError(null);
 
     try {
-      // Complete the MFA challenge
+      // 1) Complete the MFA challenge
       await account.updateMFAChallenge({
         challengeId,
         otp: verificationCode,
       });
+
+      // 2) Confirm session/user is now available before completing the flow.
+      // If this fails, it means the session isn't actually usable yet.
+      await account.get();
+
+      // 3) Now we can safely proceed (navigate / update UI / refresh gate)
       onVerifyComplete();
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Invalid verification code";
+      const message = normalizeError(err);
       setError(message);
       setVerificationCode("");
     } finally {
@@ -67,9 +80,9 @@ export function TwoFactorVerify({
           Enter the 6-digit code from your authenticator app to continue.
         </CardDescription>
       </CardHeader>
+
       <CardContent>
         <form onSubmit={handleVerify} className="space-y-6">
-          {/* Verification Code Input */}
           <div className="space-y-2">
             <Label htmlFor="totp-code">Verification Code</Label>
             <Input
@@ -87,7 +100,6 @@ export function TwoFactorVerify({
             />
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -95,7 +107,6 @@ export function TwoFactorVerify({
             </div>
           )}
 
-          {/* Submit Button */}
           <Button
             type="submit"
             className="w-full"
@@ -111,7 +122,6 @@ export function TwoFactorVerify({
             )}
           </Button>
 
-          {/* Recovery Option */}
           {onRecovery && (
             <Button
               type="button"
@@ -124,14 +134,8 @@ export function TwoFactorVerify({
             </Button>
           )}
 
-          {/* Cancel Option */}
           {onCancel && (
-            <Button
-              type="button"
-              variant="ghost"
-              className="w-full"
-              onClick={onCancel}
-            >
+            <Button type="button" variant="ghost" className="w-full" onClick={onCancel}>
               Cancel
             </Button>
           )}
