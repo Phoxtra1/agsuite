@@ -10,7 +10,7 @@ import {
   getAttemptsRemaining,
   STEP_UP_WINDOWS,
 } from "@/lib/stepUpAuth";
-import { getSession } from "@/lib/auth/appwriteAuth";
+import { getSession } from "@/lib/auth";
 import {
   Card,
   CardContent,
