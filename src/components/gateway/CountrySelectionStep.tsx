@@ -1,15 +1,15 @@
-import React, { useState } from 'react';
-import { SUPPORTED_COUNTRIES, getCurrencyFromCountry } from '@/lib/countries';
-import { Button } from '@/components/ui/button';
-import { Label } from '@/components/ui/label';
+import React, { useMemo, useState, useEffect, useCallback } from "react";
+import { SUPPORTED_COUNTRIES, getCurrencyFromCountry } from "@/lib/countries";
+import { Button } from "@/components/ui/button";
+import { Label } from "@/components/ui/label";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from '@/components/ui/select';
-import { ArrowLeft, ArrowRight, MapPin } from 'lucide-react';
+} from "@/components/ui/select";
+import { ArrowLeft, ArrowRight, MapPin } from "lucide-react";
 
 interface CountrySelectionStepProps {
   onContinue: (countryCode: string, currencyCode: string) => void;
@@ -17,19 +17,40 @@ interface CountrySelectionStepProps {
 }
 
 export function CountrySelectionStep({ onContinue, onBack }: CountrySelectionStepProps) {
-  const [selectedCountry, setSelectedCountry] = useState<string>('');
-  
-  const selectedCurrency = selectedCountry ? getCurrencyFromCountry(selectedCountry) : null;
+  const [selectedCountry, setSelectedCountry] = useState<string>("");
 
-  const handleContinue = () => {
-    if (selectedCountry && selectedCurrency) {
-      onContinue(selectedCountry, selectedCurrency.currency);
+  // Memoize lookup so it doesn't recompute on every render
+  const selectedCurrency = useMemo(() => {
+    if (!selectedCountry) return null;
+    return getCurrencyFromCountry(selectedCountry);
+  }, [selectedCountry]);
+
+  // Future-proof: if supported list changes, don’t keep an invalid selection
+  useEffect(() => {
+    if (!selectedCountry) return;
+    const exists = SUPPORTED_COUNTRIES.some((c) => c.code === selectedCountry);
+    if (!exists) setSelectedCountry("");
+  }, [selectedCountry]);
+
+  const canContinue = Boolean(selectedCountry && selectedCurrency?.currency);
+
+  const handleContinue = useCallback(() => {
+    if (!canContinue || !selectedCurrency) return;
+    onContinue(selectedCountry, selectedCurrency.currency);
+  }, [canContinue, onContinue, selectedCountry, selectedCurrency]);
+
+  // Allow Enter key to continue (helpful when Select is closed)
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLDivElement>) => {
+    if (e.key === "Enter" && canContinue) {
+      e.preventDefault();
+      handleContinue();
     }
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6" onKeyDown={handleKeyDown}>
       <button
+        type="button"
         onClick={onBack}
         className="flex items-center gap-2 text-muted-foreground hover:text-foreground transition-colors text-sm"
       >
@@ -53,7 +74,7 @@ export function CountrySelectionStep({ onContinue, onBack }: CountrySelectionSte
         <div className="space-y-2">
           <Label htmlFor="country">Select your Country</Label>
           <Select value={selectedCountry} onValueChange={setSelectedCountry}>
-            <SelectTrigger id="country" className="h-12">
+            <SelectTrigger id="country" className="h-12" aria-label="Select your country">
               <SelectValue placeholder="Choose a country" />
             </SelectTrigger>
             <SelectContent>
@@ -79,8 +100,9 @@ export function CountrySelectionStep({ onContinue, onBack }: CountrySelectionSte
       </div>
 
       <Button
+        type="button"
         onClick={handleContinue}
-        disabled={!selectedCountry}
+        disabled={!canContinue}
         className="w-full h-12 btn-premium bg-accent text-accent-foreground hover:bg-accent/90"
       >
         Continue
