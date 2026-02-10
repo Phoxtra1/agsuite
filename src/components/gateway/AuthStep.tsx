@@ -1,7 +1,6 @@
 // Path: src/suite/gateway/AuthStep.tsx
 
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -11,12 +10,13 @@ import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/sonner";
 import { Loader2, AlertCircle, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { hardResetAuthState } from "@/lib/authReset";
 
 // Social login button component
 const SocialButton = React.forwardRef<
   HTMLButtonElement,
-  { icon: React.ReactNode; label: string; onClick?: () => void }
->(({ icon, label, onClick }, ref) => {
+  { icon: React.ReactNode; label: string; onClick?: () => void; disabled?: boolean }
+>(({ icon, label, onClick, disabled }, ref) => {
   return (
     <Button
       ref={ref}
@@ -24,6 +24,7 @@ const SocialButton = React.forwardRef<
       variant="outline"
       className="flex-1 h-11 gap-2 bg-background/50 hover:bg-muted/50 border-border/50"
       onClick={onClick}
+      disabled={disabled}
     >
       {icon}
       <span className="sr-only md:not-sr-only md:text-xs">{label}</span>
@@ -39,13 +40,11 @@ interface AuthStepProps {
 }
 
 export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStepProps) {
-  const navigate = useNavigate();
   const { login, register, socialLogin, isLoading, isAuthenticated } = useAuth();
 
   const [isRegister, setIsRegister] = useState(false);
 
   const [email, setEmail] = useState("");
-
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
 
@@ -58,8 +57,9 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
   // Clear errors when switching tabs
   useEffect(() => {
     setError("");
-    // Also clear confirm password when leaving register mode (keeps UX clean)
     if (!isRegister) setConfirmPassword("");
+    // Allow success effect to fire again if user re-attempts
+    setAuthTriggered(false);
   }, [isRegister]);
 
   // Only proceed when AuthContext confirms we are authenticated
@@ -75,8 +75,19 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     e.preventDefault();
     setError("");
 
-    if (!email || !password) {
+    // Reset the trigger so the post-auth effect can fire cleanly
+    setAuthTriggered(false);
+
+    const cleanEmail = email.trim();
+
+    if (!cleanEmail || !password) {
       setError("Please enter both email and password");
+      return;
+    }
+
+    // Basic minimum sanity check (keeps register predictable)
+    if (isRegister && password.length < 8) {
+      setError("Password must be at least 8 characters");
       return;
     }
 
@@ -92,15 +103,15 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     }
 
     try {
+      // ✅ Critical: clears stale state/session artifacts before any auth attempt
+      hardResetAuthState();
+
       // Do NOT call onAuthSuccess here; wait for AuthContext state update
       if (isRegister) {
-        await register(email, password);
+        await register(cleanEmail, password);
       } else {
-        await login(email, password);
+        await login(cleanEmail, password);
       }
-
-      // Allow the auth effect to run once isAuthenticated becomes true
-      setAuthTriggered(false);
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Authentication failed";
 
@@ -275,21 +286,25 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
               icon={<span className="text-sm font-bold">G</span>}
               label="Google"
               onClick={() => handleSocialLogin("google")}
+              disabled={isLoading}
             />
             <SocialButton
               icon={<span className="text-sm font-bold">M</span>}
               label="Microsoft"
               onClick={() => handleSocialLogin("microsoft")}
+              disabled={isLoading}
             />
             <SocialButton
               icon={<span className="text-sm font-bold">F</span>}
               label="Facebook"
               onClick={() => handleSocialLogin("facebook")}
+              disabled={isLoading}
             />
             <SocialButton
               icon={<span className="text-sm font-bold">GH</span>}
               label="GitHub"
               onClick={() => handleSocialLogin("github")}
+              disabled={isLoading}
             />
           </div>
         </CardContent>
