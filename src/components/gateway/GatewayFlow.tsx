@@ -70,73 +70,66 @@ export function GatewayFlow() {
   }, [authRedirectParam, searchParams]);
 
   // Load persisted state on mount - only run once
-  useEffect(() => {
-    if (initialized) return;
+  // Load persisted state on mount - only run once
+useEffect(() => {
+  if (initialized) return;
 
-    const state = loadGatewayState();
-    setSelectedProductKey(state.selectedProductKey);
-    setSelectedCountryCode(state.selectedCountryCode);
-    setSelectedCurrencyCode(state.selectedCurrencyCode);
+  const state = loadGatewayState();
+  setSelectedProductKey(state.selectedProductKey);
+  setSelectedCountryCode(state.selectedCountryCode);
+  setSelectedCurrencyCode(state.selectedCurrencyCode);
 
-    // Resume from correct step
-    if (state.selectedProductKey) {
-      if (state.selectedProductKey === "agstock" && !state.selectedCountryCode) {
-        setStep("country_selection");
-      } else if (!isAuthenticated) {
-        setStep("auth");
+  // ✅ HARD RULE: AGStock ALWAYS shows country step before auth
+  if (state.selectedProductKey === "agstock") {
+    setStep("country_selection");
+    setInitialized(true);
+    return;
+  }
+
+  // Existing logic for other products
+  if (state.selectedProductKey) {
+    if (!isAuthenticated) {
+      setStep("auth");
+    } else {
+      if (mfaState?.required) {
+        if (mfaState.setupRequired) setStep("mfa_setup");
+        else if (mfaState.challengeId) setStep("mfa_verify");
+        else setStep("mfa_setup");
       } else {
-        // User is authenticated - check MFA state
-        if (mfaState?.required) {
-          if (mfaState.setupRequired) setStep("mfa_setup");
-          else if (mfaState.challengeId) setStep("mfa_verify");
-          else setStep("mfa_setup");
-        } else {
-          // No MFA required - proceed to routing
-          setStep("routing");
-        }
+        setStep("routing");
       }
     }
+  }
 
-    setInitialized(true);
-  }, [initialized, isAuthenticated, mfaState]);
+  setInitialized(true);
+}, [initialized, isAuthenticated, mfaState]);
 
-  const handleSelectProduct = (productKey: string) => {
-    setSelectedProductKey(productKey);
-    saveGatewayState({ selectedProductKey: productKey });
+ const handleSelectProduct = (productKey: string) => {
+  setSelectedProductKey(productKey);
 
-    // AGStock requires country selection first
-    if (productKey === "agstock") {
-      setStep("country_selection");
-      return;
-    }
+  if (productKey === "agstock") {
+    // ✅ Always ask country again for AGStock
+    setSelectedCountryCode(null);
+    setSelectedCurrencyCode(null);
 
-    // Other products: if already authenticated and 2FA is still valid for that product,
-    // route immediately; otherwise go through auth/step-up.
-    if (isAuthenticated && !mfaState?.required && is2FARecent(productKey)) {
-      setStep("routing");
-    } else {
-      setStep("auth");
-    }
-  };
-
-  // Handle "Explore Later" - go to auth without product selection
-  // Only managers/super_admins will be routed to suite dashboard
-  const handleExploreLater = () => {
-    setSelectedProductKey(null);
-    saveGatewayState({ selectedProductKey: null });
-    setStep("auth");
-  };
-
-  // Handle country selection (AGStock only)
-  const handleCountrySelected = (countryCode: string, currencyCode: string) => {
-    setSelectedCountryCode(countryCode);
-    setSelectedCurrencyCode(currencyCode);
     saveGatewayState({
-      selectedCountryCode: countryCode,
-      selectedCurrencyCode: currencyCode,
+      selectedProductKey: productKey,
+      selectedCountryCode: null,
+      selectedCurrencyCode: null,
     });
+
+    setStep("country_selection");
+    return;
+  }
+
+  saveGatewayState({ selectedProductKey: productKey });
+
+  if (isAuthenticated && !mfaState?.required && is2FARecent(productKey)) {
+    setStep("routing");
+  } else {
     setStep("auth");
-  };
+  }
+};
 
   // Handle back to product selection
   const handleBackToProducts = () => {
