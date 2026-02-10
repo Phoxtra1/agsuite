@@ -35,7 +35,7 @@ import {
 } from "@/lib/auth/roleGuard";
 
 // Extended step type to include 2FA steps
-type ExtendedGatewayStep = GatewayStep | "mfa_setup" | "mfa_verify";
+type ExtendedGatewayStep = GatewayStep | "mfa_setup" | "mfa_verify" | "auth_processing";
 
 export function GatewayFlow() {
   const navigate = useNavigate();
@@ -307,27 +307,39 @@ export function GatewayFlow() {
 
   // Handle successful auth - signal that we're waiting for MFA state
   const handleAuthSuccess = () => {
-    setAwaitingMfaState(true);
-  };
+  // Move off the AuthStep immediately to prevent any redirect/reset loops inside AuthStep
+  setAwaitingMfaState(true);
+  setStep("auth_processing");
+};
 
   // Watch for MFA state changes after auth success
   useEffect(() => {
-    if (!awaitingMfaState || !isAuthenticated) return;
+  if (!awaitingMfaState || !isAuthenticated) return;
 
-    if (mfaState?.required) {
-      setAwaitingMfaState(false);
-      if (mfaState.setupRequired) setStep("mfa_setup");
-      else if (mfaState.challengeId) setStep("mfa_verify");
-      else setStep("mfa_setup");
-      return;
-    }
+  // If MFA is required, route to correct MFA step immediately
+  if (mfaState?.required) {
+    setAwaitingMfaState(false);
+    if (mfaState.setupRequired) setStep("mfa_setup");
+    else if (mfaState.challengeId) setStep("mfa_verify");
+    else setStep("mfa_setup");
+    return;
+  }
 
-    if (user) {
-      setAwaitingMfaState(false);
-      setStep("routing");
-    }
-  }, [awaitingMfaState, isAuthenticated, mfaState, user]);
+  // If user exists but MFA state hasn't arrived yet, wait briefly (prevents skipping setup)
+  const waitedMs = authSuccessAt ? Date.now() - authSuccessAt : 0;
+  const graceMs = 1200;
 
+  if (!mfaState && waitedMs < graceMs) {
+    return; // keep waiting for MFA state
+  }
+
+  // After grace window, proceed only if we have user
+  if (user) {
+    setAwaitingMfaState(false);
+    setStep("routing");
+  }
+}, [awaitingMfaState, isAuthenticated, mfaState, user, authSuccessAt]);
+  
   // Handle 2FA setup complete
   const handleMfaSetupComplete = () => {
     completeMfaSetup();
@@ -349,68 +361,79 @@ export function GatewayFlow() {
 
   // Render current step
   switch (step) {
-    case "product_selection":
-      return (
-        <ProductSelectionStep
-          onSelectProduct={handleSelectProduct}
-          onExploreLater={handleExploreLater}
-        />
-      );
+  case "product_selection":
+    return (
+      <ProductSelectionStep
+        onSelectProduct={handleSelectProduct}
+        onExploreLater={handleExploreLater}
+      />
+    );
 
-    case "country_selection":
-      return (
-        <CountrySelectionStep
-          onContinue={handleCountrySelected}
-          onBack={handleBackToProducts}
-        />
-      );
+  case "country_selection":
+    return (
+      <CountrySelectionStep
+        onContinue={handleCountrySelected}
+        onBack={handleBackToProducts}
+      />
+    );
 
-    case "auth":
-      return (
-        <AuthStep
-          selectedProductKey={selectedProductKey}
-          onBack={handleBackFromAuth}
-          onAuthSuccess={handleAuthSuccess}
-        />
-      );
+  case "auth":
+    return (
+      <AuthStep
+        selectedProductKey={selectedProductKey}
+        onBack={handleBackFromAuth}
+        onAuthSuccess={handleAuthSuccess}
+      />
+    );
 
-    case "mfa_setup":
-      return (
-        <div className="flex items-center justify-center py-8 px-4">
-          <TwoFactorSetup onSetupComplete={handleMfaSetupComplete} />
+  case "auth_processing":
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-accent/20 animate-pulse" />
+          <p className="text-muted-foreground">Signing you in...</p>
         </div>
-      );
+      </div>
+    );
 
-    case "mfa_verify":
-      return (
-        <div className="flex items-center justify-center py-8 px-4">
-          <Card className="w-full max-w-md">
-            <CardHeader className="pb-4">
-              <CardTitle className="text-lg font-medium">Two-Factor Authentication</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <TwoFactorDialog
-                onVerifyComplete={handleMfaVerifyComplete}
-                onEmailBackup={() => {
-                  toast.info("Email backup coming soon. Contact admin if needed.");
-                }}
-              />
-            </CardContent>
-          </Card>
+  case "mfa_setup":
+    return (
+      <div className="flex items-center justify-center py-8 px-4">
+        <TwoFactorSetup onSetupComplete={handleMfaSetupComplete} />
+      </div>
+    );
+
+  case "mfa_verify":
+    return (
+      <div className="flex items-center justify-center py-8 px-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="pb-4">
+            <CardTitle className="text-lg font-medium">
+              Two-Factor Authentication
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <TwoFactorDialog
+              onVerifyComplete={handleMfaVerifyComplete}
+              onEmailBackup={() => {
+                toast.info("Email backup coming soon. Contact admin if needed.");
+              }}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    );
+
+  case "routing":
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="text-center">
+          <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-accent/20 animate-pulse" />
+          <p className="text-muted-foreground">Redirecting...</p>
         </div>
-      );
+      </div>
+    );
 
-    case "routing":
-      return (
-        <div className="flex items-center justify-center py-12">
-          <div className="text-center">
-            <div className="w-12 h-12 mx-auto mb-4 rounded-full border-4 border-accent/20 animate-pulse" />
-            <p className="text-muted-foreground">Redirecting...</p>
-          </div>
-        </div>
-      );
-
-    default:
-      return null;
-  }
+  default:
+    return null;
 }
