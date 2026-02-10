@@ -1,4 +1,8 @@
+import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
+import { useAuth } from "@/contexts/AuthContext";
+import { formatAuthError } from "@/lib/auth";
 
 interface AuthCardProps {
   product: ProductData;
@@ -9,8 +13,6 @@ interface AuthCardProps {
   password: string;
   setPassword: (v: string) => void;
   onChangeSelection: () => void;
-  onSignIn: () => void;
-  onRegister: () => void;
 }
 
 export default function AuthCard({
@@ -22,9 +24,58 @@ export default function AuthCard({
   password,
   setPassword,
   onChangeSelection,
-  onSignIn,
-  onRegister,
 }: AuthCardProps) {
+  const navigate = useNavigate();
+  const { login, register, socialLogin, isLoading } = useAuth();
+
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+
+  const isRegister = authTab === "register";
+  const loading = isLoading || busy;
+
+  const handleSubmit = async () => {
+    setError("");
+
+    if (!email.trim() || !password) {
+      setError("Please enter email and password.");
+      return;
+    }
+
+    if (isRegister) {
+      if (password.length < 8) {
+        setError("Password must be at least 8 characters.");
+        return;
+      }
+      if (confirmPassword !== password) {
+        setError("Passwords do not match.");
+        return;
+      }
+    }
+
+    setBusy(true);
+    try {
+      if (isRegister) {
+        await register(email.trim(), password);
+      } else {
+        await login(email.trim(), password);
+      }
+      // Only navigate AFTER successful auth
+      navigate(`/auth/verify-2fa?product=${product.id}&returnTo=/suite`, {
+        replace: true,
+      });
+    } catch (err: unknown) {
+      setError(formatAuthError(err));
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleSocial = (provider: "google" | "microsoft" | "facebook" | "github") => {
+    socialLogin(provider);
+  };
+
   return (
     <>
       <button
@@ -37,14 +88,16 @@ export default function AuthCard({
 
       <div className="border border-border rounded-2xl bg-card text-card-foreground shadow-sm p-8">
         <div className="text-center">
-          <h2 className="text-2xl font-semibold text-foreground">Sign in to continue</h2>
+          <h2 className="text-2xl font-semibold text-foreground">
+            {isRegister ? "Create your account" : "Sign in to continue"}
+          </h2>
           <p className="text-sm text-muted-foreground mt-1">Access {product.name}</p>
         </div>
 
         <div className="mt-6 flex justify-between text-sm font-medium">
           <button
             type="button"
-            onClick={() => setAuthTab("signin")}
+            onClick={() => { setAuthTab("signin"); setError(""); setConfirmPassword(""); }}
             className={`pb-3 w-1/2 text-center border-b-2 cursor-pointer ${
               authTab === "signin"
                 ? "border-accent text-foreground"
@@ -55,7 +108,7 @@ export default function AuthCard({
           </button>
           <button
             type="button"
-            onClick={() => setAuthTab("register")}
+            onClick={() => { setAuthTab("register"); setError(""); }}
             className={`pb-3 w-1/2 text-center border-b-2 cursor-pointer ${
               authTab === "register"
                 ? "border-accent text-foreground"
@@ -66,6 +119,12 @@ export default function AuthCard({
           </button>
         </div>
 
+        {error && (
+          <div className="mt-4 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+            {error}
+          </div>
+        )}
+
         <div className="mt-6 space-y-4">
           <div>
             <label className="text-sm font-medium text-foreground">Email Address</label>
@@ -75,6 +134,7 @@ export default function AuthCard({
               className="mt-2 w-full rounded-lg border border-input bg-background text-foreground px-4 py-3 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
               placeholder="name@organization.com"
               type="email"
+              disabled={loading}
             />
           </div>
 
@@ -86,42 +146,59 @@ export default function AuthCard({
               className="mt-2 w-full rounded-lg border border-input bg-background text-foreground px-4 py-3 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
               placeholder="Enter your password"
               type="password"
+              disabled={loading}
             />
           </div>
 
-          {authTab === "signin" ? (
-            <button
-              type="button"
-              onClick={onSignIn}
-              className="w-full rounded-lg bg-accent text-accent-foreground font-semibold py-3 hover:opacity-90 transition cursor-pointer"
-            >
-              Sign In
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={onRegister}
-              className="w-full rounded-lg bg-accent text-accent-foreground font-semibold py-3 hover:opacity-90 transition cursor-pointer"
-            >
-              Register
-            </button>
+          {isRegister && (
+            <div>
+              <label className="text-sm font-medium text-foreground">Confirm Password</label>
+              <input
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                className="mt-2 w-full rounded-lg border border-input bg-background text-foreground px-4 py-3 outline-none focus:border-accent focus:ring-1 focus:ring-accent"
+                placeholder="Confirm your password"
+                type="password"
+                disabled={loading}
+              />
+            </div>
           )}
+
+          {!isRegister && (
+            <div className="text-right">
+              <button
+                type="button"
+                onClick={() => navigate("/auth/recovery")}
+                className="text-xs text-accent hover:underline cursor-pointer"
+              >
+                Forgot password?
+              </button>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={handleSubmit}
+            disabled={loading}
+            className="w-full rounded-lg bg-accent text-accent-foreground font-semibold py-3 hover:opacity-90 transition cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            {loading ? "Please wait…" : isRegister ? "Register" : "Sign In"}
+          </button>
 
           <div className="text-center text-xs text-muted-foreground">or continue with</div>
 
           <div className="grid grid-cols-2 gap-3">
-            <button className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer">
-              Google
-            </button>
-            <button className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer">
-              Microsoft
-            </button>
-            <button className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer">
-              Facebook
-            </button>
-            <button className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer">
-              GitHub
-            </button>
+            {(["google", "microsoft", "facebook", "github"] as const).map((p) => (
+              <button
+                key={p}
+                type="button"
+                onClick={() => handleSocial(p)}
+                disabled={loading}
+                className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer disabled:opacity-50"
+              >
+                {p === "microsoft" ? "Microsoft" : p.charAt(0).toUpperCase() + p.slice(1)}
+              </button>
+            ))}
           </div>
         </div>
       </div>
