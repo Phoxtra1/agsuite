@@ -58,6 +58,7 @@ export function GatewayFlow() {
 
   // Track if we're waiting for MFA state after auth success
   const [awaitingMfaState, setAwaitingMfaState] = useState(false);
+  const [authSuccessAt, setAuthSuccessAt] = useState<number | null>(null);
 
   // Get authRedirect from URL params (for step-up re-auth scenarios)
   const authRedirectParam = searchParams.get("authRedirect");
@@ -307,10 +308,10 @@ export function GatewayFlow() {
 
   // Handle successful auth - signal that we're waiting for MFA state
   const handleAuthSuccess = () => {
-  // Move off the AuthStep immediately to prevent any redirect/reset loops inside AuthStep
-  setAwaitingMfaState(true);
-  setStep("auth_processing");
-};
+    setAwaitingMfaState(true);
+    setAuthSuccessAt(Date.now());
+    setStep("auth_processing");
+  };
 
   // Watch for MFA state changes after auth success
   useEffect(() => {
@@ -436,4 +437,5 @@ export function GatewayFlow() {
 
   default:
     return null;
+  }
 }

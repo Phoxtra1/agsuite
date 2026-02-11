@@ -59,6 +59,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const totpVerified = !!factors?.totp;
 
       if (!totpVerified) {
+        // User has no TOTP set up → needs QR code setup
         setMfaState({ required: true, setupRequired: true });
         return false;
       }
@@ -68,17 +69,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return true;
       }
 
+      // TOTP is set up but not recently verified → needs code entry
       setMfaState({ required: true, setupRequired: false });
       return false;
     } catch (err: any) {
-      const msg = String(err?.message || "");
-      if (/mfa|not enabled|not configured|disabled/i.test(msg)) {
-        setMfaState(null);
-        return true;
-      }
+      // If listMfaFactors fails, assume MFA setup is needed (safe default)
       console.warn("[AuthContext] checkMfaFactors error:", err);
-      setMfaState(null);
-      return true;
+      setMfaState({ required: true, setupRequired: true });
+      return false;
     }
   }, []);
 
