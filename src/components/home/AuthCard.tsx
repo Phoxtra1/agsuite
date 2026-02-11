@@ -27,7 +27,7 @@ export default function AuthCard({
   onChangeSelection,
 }: AuthCardProps) {
   const navigate = useNavigate();
-  const { login, register, isLoading, mfaState } = useAuth();
+  const { login, register, isLoading } = useAuth();
 
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");

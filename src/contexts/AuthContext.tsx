@@ -14,32 +14,20 @@ import {
   register as appwriteRegister,
   logout as appwriteLogout,
 } from "@/lib/auth";
-import { is2FARecent } from "@/lib/stepUpAuth";
+import { clearLast2FAVerified } from "@/lib/stepUpAuth";
 
 type AuthUser = any;
-
-export type MfaState = {
-  required: boolean;
-  setupRequired?: boolean;
-  challengeId?: string;
-} | null;
 
 type AuthContextValue = {
   user: AuthUser;
   isAuthenticated: boolean;
   isLoading: boolean;
-  mfaState: MfaState;
-
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string) => Promise<void>;
   socialLogin: (
     provider: "google" | "microsoft" | "facebook" | "github"
   ) => Promise<void>;
   logout: () => Promise<void>;
-
-  completeMfaSetup: () => void;
-  completeMfaVerification: () => void;
-  checkMfaFactors: () => Promise<boolean>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
@@ -48,44 +36,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<AuthUser>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-  const [mfaState, setMfaState] = useState<MfaState>(null);
 
   // Prevent loadSession from resetting state after login/register
   const authActionInProgress = useRef(false);
-
-  const checkMfaFactors = useCallback(async (): Promise<boolean> => {
-    try {
-      const factors = await (account as any).listMfaFactors();
-      const totpVerified = !!factors?.totp;
-
-      if (!totpVerified) {
-        // User has no TOTP set up → needs QR code setup
-        setMfaState({ required: true, setupRequired: true });
-        return false;
-      }
-
-      if (is2FARecent()) {
-        setMfaState(null);
-        return true;
-      }
-
-      // TOTP is set up but not recently verified → needs code entry
-      setMfaState({ required: true, setupRequired: false });
-      return false;
-    } catch (err: any) {
-      // If listMfaFactors fails, assume MFA setup is needed (safe default)
-      console.warn("[AuthContext] checkMfaFactors error:", err);
-      setMfaState({ required: true, setupRequired: true });
-      return false;
-    }
-  }, []);
 
   // Load session ONCE on mount
   useEffect(() => {
     let cancelled = false;
 
     const loadSession = async () => {
-      // Don't reset state if login/register is in progress
       if (authActionInProgress.current) return;
 
       try {
@@ -95,7 +54,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (!session) {
           setUser(null);
           setIsAuthenticated(false);
-          setMfaState(null);
           setIsLoading(false);
           return;
         }
@@ -105,12 +63,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
         setUser(currentUser);
         setIsAuthenticated(true);
-        await checkMfaFactors();
       } catch {
         if (cancelled || authActionInProgress.current) return;
         setUser(null);
         setIsAuthenticated(false);
-        setMfaState(null);
       } finally {
         if (!cancelled && !authActionInProgress.current) setIsLoading(false);
       }
@@ -120,44 +76,35 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [checkMfaFactors]);
+  }, []);
 
-  const login = useCallback(
-    async (email: string, password: string) => {
-      authActionInProgress.current = true;
-      setIsLoading(true);
-      try {
-        await appwriteLogin(email, password);
-        const currentUser = await account.get();
-        setUser(currentUser);
-        setIsAuthenticated(true);
-        await checkMfaFactors();
-      } finally {
-        setIsLoading(false);
-        authActionInProgress.current = false;
-      }
-    },
-    [checkMfaFactors]
-  );
+  const login = useCallback(async (email: string, password: string) => {
+    authActionInProgress.current = true;
+    setIsLoading(true);
+    try {
+      await appwriteLogin(email, password);
+      const currentUser = await account.get();
+      setUser(currentUser);
+      setIsAuthenticated(true);
+    } finally {
+      setIsLoading(false);
+      authActionInProgress.current = false;
+    }
+  }, []);
 
-  const register = useCallback(
-    async (email: string, password: string) => {
-      authActionInProgress.current = true;
-      setIsLoading(true);
-      try {
-        await appwriteRegister(email, password);
-        const currentUser = await account.get();
-        setUser(currentUser);
-        setIsAuthenticated(true);
-        // New user → always needs MFA setup (QR code)
-        setMfaState({ required: true, setupRequired: true });
-      } finally {
-        setIsLoading(false);
-        authActionInProgress.current = false;
-      }
-    },
-    []
-  );
+  const register = useCallback(async (email: string, password: string) => {
+    authActionInProgress.current = true;
+    setIsLoading(true);
+    try {
+      await appwriteRegister(email, password);
+      const currentUser = await account.get();
+      setUser(currentUser);
+      setIsAuthenticated(true);
+    } finally {
+      setIsLoading(false);
+      authActionInProgress.current = false;
+    }
+  }, []);
 
   const socialLogin = useCallback(
     async (provider: "google" | "microsoft" | "facebook" | "github") => {
@@ -172,20 +119,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     setIsLoading(true);
     try {
       await appwriteLogout();
+      clearLast2FAVerified();
       setUser(null);
       setIsAuthenticated(false);
-      setMfaState(null);
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  const completeMfaSetup = useCallback(() => {
-    setMfaState(null);
-  }, []);
-
-  const completeMfaVerification = useCallback(() => {
-    setMfaState(null);
   }, []);
 
   const value = useMemo(
@@ -193,28 +132,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       isAuthenticated,
       isLoading,
-      mfaState,
       login,
       register,
       socialLogin,
       logout,
-      completeMfaSetup,
-      completeMfaVerification,
-      checkMfaFactors,
     }),
-    [
-      user,
-      isAuthenticated,
-      isLoading,
-      mfaState,
-      login,
-      register,
-      socialLogin,
-      logout,
-      completeMfaSetup,
-      completeMfaVerification,
-      checkMfaFactors,
-    ]
+    [user, isAuthenticated, isLoading, login, register, socialLogin, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;

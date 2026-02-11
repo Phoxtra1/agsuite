@@ -1,94 +1,136 @@
-import React, { useMemo, useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { account } from "@/lib/appwrite";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { AuthenticationFactor } from "appwrite";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { ShieldCheck, AlertCircle, Loader2, KeyRound } from "lucide-react";
+import {
+  ShieldCheck,
+  AlertCircle,
+  Loader2,
+  KeyRound,
+  RefreshCw,
+} from "lucide-react";
 
 interface TwoFactorVerifyProps {
-  challengeId: string;
   onVerifyComplete: () => void;
   onCancel?: () => void;
   onRecovery?: () => void;
 }
 
-function normalizeError(err: unknown): string {
-  if (err && typeof err === "object") {
-    // Appwrite errors often have message/code/type
-    const anyErr = err as any;
-    if (typeof anyErr.message === "string" && anyErr.message.trim()) return anyErr.message;
-  }
-  if (err instanceof Error && err.message.trim()) return err.message;
-  return "Verification failed. Please try again.";
-}
+/**
+ * Self-managing TOTP verification component.
+ * Creates its own MFA challenge on mount and verifies the user's code.
+ */
 
-function friendlyMfaMessage(raw: string): string {
-  const msg = raw.toLowerCase();
-
-  // These patterns commonly show up for stale challenge IDs / retries / expired requests
-  if (msg.includes("challenge") || msg.includes("expired")) {
-    return "This verification request has expired or changed. Please restart sign-in to generate a new verification request.";
-  }
-
-  // Generic invalid code: could be wrong code OR device time drift OR stale challenge
-  if (msg.includes("invalid") || msg.includes("otp") || msg.includes("code")) {
-    return "Code rejected. Ensure your phone time is set to Automatic and try the next code. If it still fails, restart sign-in to generate a fresh request.";
-  }
-
-  return raw;
+function getTotpFactor(): any {
+  const af: any = AuthenticationFactor;
+  return af?.Totp ?? af?.TOTP ?? "totp";
 }
 
 export function TwoFactorVerify({
-  challengeId,
   onVerifyComplete,
   onCancel,
   onRecovery,
 }: TwoFactorVerifyProps) {
-  const [verificationCode, setVerificationCode] = useState("");
-  const [isVerifying, setIsVerifying] = useState(false);
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
+  const [isCreating, setIsCreating] = useState(true);
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  const isCodeReady = verificationCode.length === 6;
-  const safeChallengeId = useMemo(() => (challengeId ?? "").trim(), [challengeId]);
+  const createChallenge = useCallback(async () => {
+    setIsCreating(true);
+    setError(null);
+    setChallengeId(null);
+
+    try {
+      const factor = getTotpFactor();
+      const challenge = await (account as any).createMfaChallenge(factor);
+      const id =
+        challenge?.$id || challenge?.id || challenge?.challengeId || null;
+      if (!id) throw new Error("No challenge ID returned from server");
+      setChallengeId(id);
+    } catch (err: any) {
+      console.error("[TwoFactorVerify] Challenge creation failed:", err);
+      setError(
+        "Failed to start verification. Tap 'New Code' or refresh the page."
+      );
+    } finally {
+      setIsCreating(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    createChallenge();
+  }, [createChallenge]);
 
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
-
-    // Prevent double submit
-    if (isVerifying) return;
-
-    // Hard validation: no challengeId => cannot verify
-    if (!safeChallengeId) {
-      setError("Authentication request expired. Please sign in again.");
-      return;
-    }
-
-    if (!isCodeReady) {
-      setError("Please enter a 6-digit code");
-      return;
-    }
+    if (!challengeId || code.length !== 6 || isVerifying) return;
 
     setIsVerifying(true);
     setError(null);
 
     try {
-      // 1) Complete the MFA challenge
-      await account.updateMFAChallenge({
-        challengeId: safeChallengeId,
-        otp: verificationCode,
-      });
+      // Try positional args first, then object arg (SDK version compat)
+      const acc: any = account;
+      let verified = false;
 
-      // 2) Confirm the session/user is actually live before continuing
-      // This prevents “verified then bounced” due to stale auth state.
+      // Method 1: updateMfaChallenge(id, otp)
+      if (typeof acc.updateMfaChallenge === "function" && !verified) {
+        try {
+          await acc.updateMfaChallenge(challengeId, code);
+          verified = true;
+        } catch (e1: any) {
+          // If it's an invalid OTP error, don't try other methods
+          if (/invalid|otp|token/i.test(e1?.message || "")) throw e1;
+          // Try object format
+          try {
+            await acc.updateMfaChallenge({ challengeId, otp: code });
+            verified = true;
+          } catch (e2: any) {
+            if (/invalid|otp|token/i.test(e2?.message || "")) throw e2;
+          }
+        }
+      }
+
+      // Method 2: updateMFAChallenge (capital MFA)
+      if (!verified && typeof acc.updateMFAChallenge === "function") {
+        try {
+          await acc.updateMFAChallenge(challengeId, code);
+          verified = true;
+        } catch (e3: any) {
+          if (/invalid|otp|token/i.test(e3?.message || "")) throw e3;
+          await acc.updateMFAChallenge({ challengeId, otp: code });
+          verified = true;
+        }
+      }
+
+      if (!verified) {
+        throw new Error("No compatible MFA verification method found in SDK");
+      }
+
+      // Confirm session is still valid
       await account.get();
-
-      // 3) Now safe to proceed (navigate / refresh gate / load dashboard)
       onVerifyComplete();
-    } catch (err: unknown) {
-      const raw = normalizeError(err);
-      setError(friendlyMfaMessage(raw));
-      setVerificationCode("");
+    } catch (err: any) {
+      const msg = err?.message || "";
+      if (/expired|challenge/i.test(msg)) {
+        setError("Verification expired. Tap 'New Code' to try again.");
+      } else if (/invalid|otp|token/i.test(msg)) {
+        setError("Invalid code. Check your authenticator app and try again.");
+      } else {
+        setError("Verification failed. Please try again.");
+      }
+      setCode("");
     } finally {
       setIsVerifying(false);
     }
@@ -96,7 +138,7 @@ export function TwoFactorVerify({
 
   function handleCodeChange(e: React.ChangeEvent<HTMLInputElement>) {
     const value = e.target.value.replace(/\D/g, "").slice(0, 6);
-    setVerificationCode(value);
+    setCode(value);
     if (error) setError(null);
   }
 
@@ -108,13 +150,12 @@ export function TwoFactorVerify({
         </div>
         <CardTitle className="text-xl">Two-Factor Authentication</CardTitle>
         <CardDescription>
-          Enter the 6-digit code from your authenticator app to continue.
+          Enter the 6-digit code from your authenticator app.
         </CardDescription>
       </CardHeader>
 
       <CardContent>
         <form onSubmit={handleVerify} className="space-y-6">
-          {/* Verification Code Input */}
           <div className="space-y-2">
             <Label htmlFor="totp-code">Verification Code</Label>
             <Input
@@ -123,17 +164,16 @@ export function TwoFactorVerify({
               inputMode="numeric"
               pattern="[0-9]*"
               maxLength={6}
-              value={verificationCode}
+              value={code}
               onChange={handleCodeChange}
               placeholder="000000"
               className="text-center text-2xl tracking-widest font-mono"
               autoComplete="one-time-code"
               autoFocus
-              disabled={isVerifying}
+              disabled={isVerifying || isCreating}
             />
           </div>
 
-          {/* Error Message */}
           {error && (
             <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
               <AlertCircle className="h-4 w-4 shrink-0" />
@@ -141,19 +181,40 @@ export function TwoFactorVerify({
             </div>
           )}
 
-          {/* Submit Button */}
-          <Button type="submit" className="w-full" disabled={!isCodeReady || isVerifying}>
+          <Button
+            type="submit"
+            className="w-full"
+            disabled={code.length !== 6 || isVerifying || isCreating}
+          >
             {isVerifying ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                 Verifying...
               </>
+            ) : isCreating ? (
+              <>
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Preparing...
+              </>
             ) : (
-              "Verify"
+              "Verify & Continue"
             )}
           </Button>
 
-          {/* Recovery Option */}
+          <Button
+            type="button"
+            variant="secondary"
+            className="w-full"
+            onClick={() => {
+              setCode("");
+              createChallenge();
+            }}
+            disabled={isCreating || isVerifying}
+          >
+            <RefreshCw className="mr-2 h-4 w-4" />
+            New Code
+          </Button>
+
           {onRecovery && (
             <Button
               type="button"
@@ -167,7 +228,6 @@ export function TwoFactorVerify({
             </Button>
           )}
 
-          {/* Cancel Option */}
           {onCancel && (
             <Button
               type="button"
