@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatAuthError } from "@/lib/auth";
+import { getProductRedirectUrl } from "@/lib/productRouting";
 
 interface AuthCardProps {
   product: ProductData;
@@ -62,10 +63,12 @@ export default function AuthCard({
         await login(email.trim(), password);
       }
 
-      // Auth succeeded — session is confirmed. Navigate to 2FA page.
-      // Verify2FA will detect if user needs setup (QR) or verification (code).
-      console.log("[AuthCard] Auth success, navigating to verify-2fa");
-      navigate(`/auth/verify-2fa?product=${product.id}&returnTo=/suite`, {
+      // Auth succeeded — route to 2FA, then to product's actual URL
+      const productDestination = product.url
+        ? `${product.url}${product.id === 'agstock' ? '/shop' : product.id === 'agis' ? '/dashboard' : ''}`
+        : getProductRedirectUrl(product.id);
+      console.log("[AuthCard] Auth success, navigating to verify-2fa, destination:", productDestination);
+      navigate(`/auth/verify-2fa?product=${product.id}&returnTo=${encodeURIComponent(productDestination)}`, {
         replace: true,
       });
     } catch (err: unknown) {

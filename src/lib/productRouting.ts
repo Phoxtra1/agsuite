@@ -29,12 +29,12 @@ export const PRODUCT_ROUTES: Record<string, ProductRouteConfig> = {
   },
   ops: {
     baseUrl: 'https://ops.amineva.com',
-    defaultPath: '/',
+    defaultPath: '/client',
     requiresCountry: false,
   },
   amniva: {
-    baseUrl: 'https://www.amniva.io',
-    defaultPath: '/',
+    baseUrl: 'https://amniva.com',
+    defaultPath: '/dashboard',
     requiresCountry: false,
   },
 };

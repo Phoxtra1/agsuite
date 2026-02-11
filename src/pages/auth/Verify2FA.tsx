@@ -11,6 +11,7 @@ import {
   getAttemptsRemaining,
   STEP_UP_WINDOWS,
 } from "@/lib/stepUpAuth";
+import { getProductRedirectUrl } from "@/lib/productRouting";
 import { getSession } from "@/lib/auth/index";
 import {
   Card,
@@ -105,8 +106,19 @@ export default function Verify2FA() {
   const [searchParams] = useSearchParams();
   const { user, isAuthenticated, isLoading: authLoading, completeMfaSetup, completeMfaVerification } = useAuth();
 
-  const returnTo = searchParams.get("returnTo") || "/suite";
+  const rawReturnTo = searchParams.get("returnTo");
   const productKey = searchParams.get("product") || "default";
+
+  // If returnTo is /suite (internal) and user isn't a manager, use the product URL instead
+  const returnTo = useMemo(() => {
+    if (rawReturnTo && rawReturnTo.startsWith("http")) return rawReturnTo;
+    if (!rawReturnTo || rawReturnTo === "/suite") {
+      // Use product-specific URL as destination
+      const productUrl = getProductRedirectUrl(productKey);
+      if (productUrl !== "/suite") return productUrl;
+    }
+    return rawReturnTo || "/suite";
+  }, [rawReturnTo, productKey]);
 
   const [code, setCode] = useState("");
   const [isVerifying, setIsVerifying] = useState(false);
