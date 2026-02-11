@@ -95,8 +95,16 @@ async function detectMfaMode(): Promise<"setup" | "verify" | "none"> {
     if (!hasTotp) return "setup";
     return "verify";
   } catch (err: any) {
-    // If MFA check fails, default to setup (safe)
-    console.warn("[Verify2FA] detectMfaMode error:", err);
+    // If listMfaFactors fails, try creating a challenge to determine mode
+    // This handles the case where the API errors but TOTP is actually set up
+    console.warn("[Verify2FA] detectMfaMode listMfaFactors error, trying challenge:", err);
+    try {
+      const challenge = await createTotpChallengeCompat();
+      const id = pickChallengeId(challenge);
+      if (id) return "verify"; // Challenge created = TOTP exists
+    } catch {
+      // Challenge also failed — user genuinely needs setup
+    }
     return "setup";
   }
 }
@@ -299,8 +307,7 @@ export default function Verify2FA() {
         completeMfaVerification();
 
         console.log("[Verify2FA] Verification successful, navigating to:", returnTo);
-        if (returnTo.startsWith("http")) window.location.assign(returnTo);
-        else navigate(returnTo, { replace: true });
+        safeNavigate(returnTo);
       } catch (err: unknown) {
         recordOTPAttempt(false);
         setAttemptsLeft(getAttemptsRemaining());
@@ -333,12 +340,21 @@ export default function Verify2FA() {
     if (error) setError(null);
   };
 
+  // Safe navigation helper — external URLs use location.assign, internal use navigate
+  const safeNavigate = useCallback((url: string) => {
+    if (url.startsWith("http")) {
+      window.location.assign(url);
+    } else {
+      navigate(url, { replace: true });
+    }
+  }, [navigate]);
+
   // Handle MFA setup completion (first-time users)
   const handleSetupComplete = () => {
     setLast2FAVerifiedAt();
     completeMfaSetup();
     console.log("[Verify2FA] MFA setup complete, navigating to:", returnTo);
-    navigate(returnTo, { replace: true });
+    safeNavigate(returnTo);
   };
 
   const attemptsText = useMemo(() => {
