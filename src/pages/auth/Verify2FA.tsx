@@ -94,11 +94,9 @@ async function detectMfaMode(): Promise<"setup" | "verify" | "none"> {
     if (!hasTotp) return "setup";
     return "verify";
   } catch (err: any) {
-    const msg = String(err?.message || "");
-    // MFA not enabled on this Appwrite project at all
-    if (/mfa|not enabled|not configured|disabled/i.test(msg)) return "none";
+    // If MFA check fails, default to setup (safe)
     console.warn("[Verify2FA] detectMfaMode error:", err);
-    return "none";
+    return "setup";
   }
 }
 

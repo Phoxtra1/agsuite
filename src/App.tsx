@@ -88,11 +88,12 @@ function SuiteGuard() {
    PUBLIC HOME
    ========================= */
 function PublicHome() {
-  const { isAuthenticated, isLoading, user } = useAuth();
+  const { isAuthenticated, isLoading, user, mfaState } = useAuth();
 
   if (isLoading) return <AminevaLoader />;
 
-  if (!isPreview() && isAuthenticated) {
+  // Only auto-redirect to /suite if authenticated, MFA cleared, and is manager
+  if (!isPreview() && isAuthenticated && !mfaState?.required) {
     const isManager = user?.role === "super_admin" || user?.role === "manager";
     if (isManager) return <Navigate to="/suite" replace />;
   }
