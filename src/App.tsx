@@ -8,6 +8,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { is2FAVerifiedThisSession } from "@/lib/stepUpAuth";
 
 import Suite from "./pages/Suite";
 import NotFound from "./pages/NotFound";
@@ -88,12 +89,12 @@ function SuiteGuard() {
    PUBLIC HOME
    ========================= */
 function PublicHome() {
-  const { isAuthenticated, isLoading, user, mfaState } = useAuth();
+  const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) return <AminevaLoader />;
 
-  // Only auto-redirect to /suite if authenticated, MFA cleared, and is manager
-  if (!isPreview() && isAuthenticated && !mfaState?.required) {
+  // Auto-redirect authenticated + 2FA-verified managers to Suite
+  if (!isPreview() && isAuthenticated && is2FAVerifiedThisSession()) {
     const isManager = user?.role === "super_admin" || user?.role === "manager";
     if (isManager) return <Navigate to="/suite" replace />;
   }
