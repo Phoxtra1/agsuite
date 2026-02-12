@@ -502,7 +502,7 @@ export default function HomePage() {
                   className="hover:text-foreground transition cursor-pointer"
                   onClick={() => navigate("/")}
                 >
-                  Explore Later
+                  Explore More
                 </button>
                 <span>—</span>
                 <button
@@ -510,12 +510,13 @@ export default function HomePage() {
                   className="hover:text-foreground transition cursor-pointer"
                   onClick={() => navigate("/")}
                 >
-                  Skip for now
                 </button>
               </div>
             </>
           )}
 
+         
+          
           {/* Footer */}
           <div className="mt-10 text-center text-xs text-muted-foreground">
             © {new Date().getFullYear()} Amineva Global. All Rights Reserved.
