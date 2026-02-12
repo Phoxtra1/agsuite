@@ -1,57 +1,70 @@
-import { useMemo, useState } from "react";
+import React, { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DEFAULT_CATEGORIES, ProductData } from "@/types/product";
-import { getProductIcon } from "@/lib/products";
 import { useProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
-import { Clock, XCircle, ArrowRight, ExternalLink } from "lucide-react";
+import { Clock, XCircle, ArrowRight, ExternalLink, Grid3X3 } from "lucide-react";
 import amvLogo from "@/assets/amv_global_logo.png";
 import AuthCard from "@/components/home/AuthCard";
 
 type CountryCurrencyOption = {
   id: string;
-  label: string; // what user sees (country/zone)
-  currencyCode: string; // what we store/use
+  label: string;
+  currencyCode: string;
 };
+
+// ✅ Deployment-safe icon resolver (removes dependency on "@/lib/products")
+function getProductIconSafe(productId: string) {
+  // If you later add a dedicated icon map, do it here without extra imports.
+  // Return any Lucide icon component.
+  const id = (productId || "").toLowerCase();
+
+  // Examples (optional):
+  // if (id.includes("stock")) return Boxes;
+  // if (id.includes("ops")) return Settings;
+
+  return Grid3X3;
+}
+
+function getStatusBadge(status: ProductData["status"]) {
+  switch (status) {
+    case "live":
+      return <Badge className="bg-success/20 text-success text-xs">Live</Badge>;
+    case "coming_soon":
+      return (
+        <Badge variant="secondary" className="text-xs gap-1">
+          <Clock className="w-3 h-3" />
+          Coming Soon
+        </Badge>
+      );
+    case "offline":
+      return (
+        <Badge variant="destructive" className="text-xs gap-1">
+          <XCircle className="w-3 h-3" />
+          Offline
+        </Badge>
+      );
+    default:
+      return null;
+  }
+}
 
 export default function HomePage() {
   const navigate = useNavigate();
   const { products } = useProducts();
 
-  // Top nav CTA state (CTAs only)
   const [productsMenuOpen, setProductsMenuOpen] = useState(false);
-
-  // Group products by category dynamically from registry
-  const categories = DEFAULT_CATEGORIES.map((cat) => ({
-    ...cat,
-    products: cat.products
-      .map((id) => products.find((p) => p.id === id))
-      .filter(Boolean) as ProductData[],
-  }));
-
-  // Uncategorized products
-  const categorizedIds = new Set(DEFAULT_CATEGORIES.flatMap((c) => c.products));
-  const uncategorized = products.filter((p) => !categorizedIds.has(p.id));
-  const allCategories =
-    uncategorized.length > 0
-      ? [
-          ...categories,
-          { id: "other", name: "Other Applications", order: 99, products: uncategorized },
-        ]
-      : categories;
 
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
   const [authTab, setAuthTab] = useState<"signin" | "register">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Country/Currency step (AG Stock only)
+  // AG Stock: region step
   const [agCountry, setAgCountry] = useState<string>("");
   const [agCurrencyCode, setAgCurrencyCode] = useState<string>("USD");
-  // IMPORTANT: do NOT auto-advance on selection; require Continue.
   const [agStepConfirmed, setAgStepConfirmed] = useState<boolean>(false);
 
-  // IMPORTANT: Update this if your AG Stock product id differs
   const isAgStock = useMemo(() => {
     const id = selectedProduct?.id?.toLowerCase() || "";
     return id === "ag-stock" || id === "agstock" || id.includes("ag-stock") || id.includes("agstock");
@@ -76,6 +89,29 @@ export default function HomePage() {
     [agCountry, countryCurrencyOptions]
   );
 
+  // Build categories from registry + live products list
+  const categories = useMemo(() => {
+    return DEFAULT_CATEGORIES.map((cat) => ({
+      ...cat,
+      products: cat.products
+        .map((id) => products.find((p) => p.id === id))
+        .filter(Boolean) as ProductData[],
+    }));
+  }, [products]);
+
+  const allCategories = useMemo(() => {
+    const categorizedIds = new Set(DEFAULT_CATEGORIES.flatMap((c) => c.products));
+    const uncategorized = products.filter((p) => !categorizedIds.has(p.id));
+    return uncategorized.length > 0
+      ? [...categories, { id: "other", name: "Other Applications", order: 99, products: uncategorized }]
+      : categories;
+  }, [categories, products]);
+
+  const canShowAuthCard = useMemo(() => {
+    if (isAgStock) return agStepConfirmed; // require Continue
+    return true;
+  }, [isAgStock, agStepConfirmed]);
+
   const onPickProduct = (p: ProductData) => {
     if (p.status === "coming_soon" || p.status === "offline") return;
 
@@ -84,7 +120,7 @@ export default function HomePage() {
     setEmail("");
     setPassword("");
 
-    // Reset AG Stock country selection when switching products
+    // reset AG Stock step
     setAgCountry("");
     setAgCurrencyCode("USD");
     setAgStepConfirmed(false);
@@ -94,48 +130,19 @@ export default function HomePage() {
     setSelectedProduct(null);
     setAuthTab("signin");
 
-    // Reset AG Stock selections when going back
     setAgCountry("");
     setAgCurrencyCode("USD");
     setAgStepConfirmed(false);
   };
 
-  // Auth is now handled entirely inside AuthCard (calls useAuth().login/register)
-
-  const getStatusBadge = (status: ProductData["status"]) => {
-    switch (status) {
-      case "live":
-        return <Badge className="bg-success/20 text-success text-xs">Live</Badge>;
-      case "coming_soon":
-        return (
-          <Badge variant="secondary" className="text-xs gap-1">
-            <Clock className="w-3 h-3" />
-            Coming Soon
-          </Badge>
-        );
-      case "offline":
-        return (
-          <Badge variant="destructive" className="text-xs gap-1">
-            <XCircle className="w-3 h-3" />
-            Offline
-          </Badge>
-        );
-      default:
-        return null;
-    }
-  };
-
   const handleAgCountryChange = (value: string) => {
     setAgCountry(value);
-
-    // Selecting a country should NOT auto-advance to auth:
     setAgStepConfirmed(false);
 
     const opt = countryCurrencyOptions.find((o) => o.id === value);
     const currencyCode = opt?.currencyCode || "USD";
     setAgCurrencyCode(currencyCode);
 
-    // Persist for later pages (auth, pricing, dashboard)
     try {
       localStorage.setItem(
         "agstock_region",
@@ -147,26 +154,20 @@ export default function HomePage() {
         })
       );
     } catch {
-      // ignore storage failures
+      // ignore
     }
   };
 
-  const canShowAuthCard = useMemo(() => {
-    // For AG Stock, require explicit Continue click after choosing country
-    if (isAgStock) return agStepConfirmed;
-    return true;
-  }, [isAgStock, agStepConfirmed]);
-
   return (
     <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2 relative">
-      {/* LEFT PANEL - Always deep dark-blue regardless of theme */}
+      {/* LEFT PANEL */}
       <div
         className="relative overflow-hidden min-h-[50vh] lg:min-h-screen"
         style={{
-          background: `radial-gradient(circle at 20% 30%, hsla(38,92%,50%,0.10) 0%, transparent 55%), linear-gradient(135deg, hsl(222,47%,11%) 0%, hsl(222,40%,18%) 100%)`,
+          background:
+            "radial-gradient(circle at 20% 30%, hsla(38,92%,50%,0.10) 0%, transparent 55%), linear-gradient(135deg, hsl(222,47%,11%) 0%, hsl(222,40%,18%) 100%)",
         }}
       >
-        {/* Animations (scoped) */}
         <style>
           {`
             @keyframes amvTwinkle {
@@ -184,7 +185,7 @@ export default function HomePage() {
           `}
         </style>
 
-        {/* Yellow star dots (twinkling) */}
+        {/* Stars */}
         {[
           { top: "8%", left: "5%" },
           { top: "12%", left: "35%" },
@@ -212,7 +213,7 @@ export default function HomePage() {
           />
         ))}
 
-        {/* Logo + tagline (animated text beside logo) */}
+        {/* Logo + tagline */}
         <div className="p-8 flex items-start gap-4 relative z-10">
           <img src={amvLogo} alt="Amineva Global" className="h-14 w-14 rounded-full" />
           <div style={{ animation: "amvFadeUp 700ms ease-out, amvShimmer 3.6s ease-in-out infinite" }}>
@@ -225,9 +226,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Animated orbital illustration */}
+        {/* Orbital */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          {/* Orbit spinner (UNCHANGED) */}
           <div className="relative w-[420px] h-[420px] animate-[spin_60s_linear_infinite]">
             <div className="absolute inset-0 rounded-full border border-white/10" />
             <div className="absolute inset-6 rounded-full border border-white/15" />
@@ -247,7 +247,6 @@ export default function HomePage() {
               />
             ))}
 
-            {/* Center core */}
             <div className="absolute inset-0 flex items-center justify-center">
               <div
                 className="w-16 h-16 rounded-full flex items-center justify-center"
@@ -260,7 +259,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Cards (alignment fixed; orbit untouched) */}
+          {/* Cards */}
           <div className="absolute top-[12%] left-1/2 -translate-x-1/2 bg-white/10 backdrop-blur-sm rounded-lg p-3 w-40">
             <div className="text-xs text-white/80 mb-1 flex items-center gap-1">
               <span style={{ color: "hsl(38,92%,50%)" }}>📊</span> Analytics
@@ -278,7 +277,11 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-3 gap-1">
               {Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="w-3 h-3 rounded-full" style={{ backgroundColor: "hsla(38,92%,50%,0.3)" }} />
+                <div
+                  key={i}
+                  className="w-3 h-3 rounded-full"
+                  style={{ backgroundColor: "hsla(38,92%,50%,0.3)" }}
+                />
               ))}
             </div>
           </div>
@@ -304,11 +307,7 @@ export default function HomePage() {
             </div>
             <div className="flex items-end gap-0.5 h-6">
               {[60, 80, 40, 90, 50, 70, 85].map((h, i) => (
-                <div
-                  key={i}
-                  className="flex-1 rounded-sm"
-                  style={{ height: `${h}%`, backgroundColor: "hsla(142,76%,36%,0.6)" }}
-                />
+                <div key={i} className="flex-1 rounded-sm" style={{ height: `${h}%`, backgroundColor: "hsla(142,76%,36%,0.6)" }} />
               ))}
             </div>
           </div>
@@ -325,16 +324,14 @@ export default function HomePage() {
             <div className="text-sm text-white/70">Encryption</div>
           </div>
         </div>
+      </div>
 
-      {/* RIGHT PANEL - respects theme */}
+      {/* RIGHT PANEL */}
       <div className="relative flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
         <div className="w-full max-w-xl">
           {/* TOP RIGHT CTAs */}
           <div className="w-full flex justify-end gap-8 text-base font-semibold text-muted-foreground">
-            <button
-              type="button"
-              className="hover:text-foreground transition cursor-pointer"
-            >
+            <button type="button" className="hover:text-foreground transition cursor-pointer">
               About Us
             </button>
 
@@ -348,7 +345,7 @@ export default function HomePage() {
               </button>
 
               {productsMenuOpen && (
-                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-card shadow-lg overflow-hidden">
+                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-card shadow-lg overflow-hidden z-20">
                   {["AGStock", "AGIS", "Amniva", "AminevaOps"].map((label) => (
                     <button
                       key={label}
@@ -372,26 +369,20 @@ export default function HomePage() {
               Insights &amp; Reports
             </a>
 
-            <button
-              type="button"
-              className="hover:text-foreground transition cursor-pointer"
-            >
+            <button type="button" className="hover:text-foreground transition cursor-pointer">
               FAQs
             </button>
 
-            <button
-              type="button"
-              className="hover:text-foreground transition cursor-pointer"
-            >
+            <button type="button" className="hover:text-foreground transition cursor-pointer">
               Support
             </button>
           </div>
 
           {selectedProduct ? (
             <>
-              {/* AG Stock: Country/Currency selector step (no auto-advance) */}
+              {/* AG Stock region step */}
               {isAgStock && !canShowAuthCard && (
-                <div className="border border-border rounded-xl bg-card p-5">
+                <div className="border border-border rounded-xl bg-card p-5 mt-8">
                   <div className="flex items-start justify-between gap-3">
                     <button
                       type="button"
@@ -413,18 +404,12 @@ export default function HomePage() {
                       </span>
                     </div>
 
-                    <h2 className="mt-4 text-3xl font-semibold text-foreground">
-                      Where is your business located?
-                    </h2>
-                    <p className="mt-2 text-muted-foreground">
-                      This helps us set up your currency and regional settings
-                    </p>
+                    <h2 className="mt-4 text-3xl font-semibold text-foreground">Where is your business located?</h2>
+                    <p className="mt-2 text-muted-foreground">This helps us set up your currency and regional settings</p>
                   </div>
 
                   <div className="mt-6 space-y-3">
-                    <label className="block text-sm font-semibold text-foreground">
-                      Select your Country
-                    </label>
+                    <label className="block text-sm font-semibold text-foreground">Select your Country</label>
 
                     <select
                       value={agCountry}
@@ -454,19 +439,11 @@ export default function HomePage() {
                       <button
                         type="button"
                         disabled={!agCountry}
-                        onClick={() => {
-                          setAgStepConfirmed(true);
-                        }}
+                        onClick={() => setAgStepConfirmed(true)}
                         className={`w-full h-12 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-                          agCountry
-                            ? "text-white"
-                            : "bg-muted text-muted-foreground cursor-not-allowed"
+                          agCountry ? "text-white" : "bg-muted text-muted-foreground cursor-not-allowed"
                         }`}
-                        style={
-                          agCountry
-                            ? { backgroundColor: "hsl(38,92%,35%)" }
-                            : undefined
-                        }
+                        style={agCountry ? { backgroundColor: "hsl(38,92%,35%)" } : undefined}
                       >
                         Continue <span aria-hidden>→</span>
                       </button>
@@ -475,25 +452,24 @@ export default function HomePage() {
                 </div>
               )}
 
-              {/* Auth UI (All products; AG Stock shows only after Continue) */}
+              {/* Auth */}
               {canShowAuthCard && (
-                <AuthCard
-                  product={selectedProduct}
-                  authTab={authTab}
-                  setAuthTab={setAuthTab}
-                  email={email}
-                  setEmail={setEmail}
-                  password={password}
-                  setPassword={setPassword}
-                  onChangeSelection={onChangeSelection}
-                />
+                <div className="mt-8">
+                  <AuthCard
+                    product={selectedProduct}
+                    authTab={authTab}
+                    setAuthTab={setAuthTab}
+                    email={email}
+                    setEmail={setEmail}
+                    password={password}
+                    setPassword={setPassword}
+                    onChangeSelection={onChangeSelection}
+                  />
+                </div>
               )}
             </>
           ) : (
             <>
-              {/* Removed "What are you here to do?" and removed "Select a product to get started" */}
-              <div className="text-center mt-4" />
-
               <div className="mt-8 space-y-4">
                 {allCategories.map((cat) => (
                   <details key={cat.id} className="group border border-border rounded-xl bg-card">
@@ -507,9 +483,9 @@ export default function HomePage() {
                         <div className="text-sm text-muted-foreground">Coming soon</div>
                       ) : (
                         cat.products.map((p) => {
-                          const IconComponent = getProductIcon(p.id);
+                          const IconComponent = getProductIconSafe(p.id);
                           const isDisabled = p.status === "coming_soon" || p.status === "offline";
-                          const isPublic = p.isPublic && p.isExternal;
+                          const isPublic = Boolean(p.isPublic && p.isExternal);
 
                           return (
                             <button
@@ -529,12 +505,11 @@ export default function HomePage() {
                                   <span className="font-medium text-foreground">{p.name}</span>
                                   {getStatusBadge(p.status)}
                                 </div>
-                                {p.description && (
-                                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                    {p.description}
-                                  </p>
-                                )}
+                                {p.description ? (
+                                  <p className="text-xs text-muted-foreground truncate mt-0.5">{p.description}</p>
+                                ) : null}
                               </div>
+
                               {!isDisabled &&
                                 (isPublic ? (
                                   <ExternalLink className="w-4 h-4 text-muted-foreground" />
@@ -550,48 +525,26 @@ export default function HomePage() {
                 ))}
               </div>
 
-              {/* Removed dash and removed the empty extra button */}
               <div className="mt-10 flex justify-center text-sm text-muted-foreground">
-                <button
-                  type="button"
-                  className="hover:text-foreground transition cursor-pointer"
-                  onClick={() => navigate("/")}
-                >
+                <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/")}>
                   Explore More
                 </button>
               </div>
             </>
           )}
-
-              {/* RIGHT PANEL - respects theme */}
-      <div className="relative flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
-        <div className="w-full max-w-xl">
-          {/* ...your existing RIGHT panel content stays here... */}
-
-          {/* Removed old centered copyright here (now moved to bottom-right row) */}
         </div>
 
-        {/* Bottom-right row: Copyright + Terms + Privacy */}
+        {/* Footer */}
         <div className="absolute bottom-4 right-8 flex items-center gap-6 text-xs text-muted-foreground">
-          <span>
-            © {new Date().getFullYear()} Amineva Global.
-          </span>
-
-          <button
-            type="button"
-            className="hover:text-foreground transition cursor-pointer"
-          >
+          <span>© {new Date().getFullYear()} Amineva Global.</span>
+          <button type="button" className="hover:text-foreground transition cursor-pointer">
             Terms of Service
           </button>
-
-          <button
-            type="button"
-            className="hover:text-foreground transition cursor-pointer"
-          >
+          <button type="button" className="hover:text-foreground transition cursor-pointer">
             Privacy Policy
           </button>
         </div>
-      </div>  {/* closes RIGHT PANEL */}
-    </div>    {/* closes MAIN GRID */}
+      </div>
+    </div>
   );
 }
