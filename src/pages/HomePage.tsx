@@ -18,7 +18,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { products } = useProducts();
 
-  // Top nav CTA state (CTAs only; no pages created here)
+  // Top nav CTA state (CTAs only)
   const [productsMenuOpen, setProductsMenuOpen] = useState(false);
 
   // Group products by category dynamically from registry
@@ -158,7 +158,7 @@ export default function HomePage() {
   }, [isAgStock, agStepConfirmed]);
 
   return (
-    <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2">
+    <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2 relative">
       {/* LEFT PANEL - Always deep dark-blue regardless of theme */}
       <div
         className="relative overflow-hidden min-h-[50vh] lg:min-h-screen"
@@ -326,30 +326,39 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Copyright moved to LEFT panel (bottom-left, below the animation area) */}
-        <div className="absolute bottom-3 left-8 text-xs text-white/60 z-10">
+        {/* Gold thin horizontal line under Uptime SLA (left-to-right) */}
+        <div
+          className="absolute left-0 right-0 z-10"
+          style={{
+            bottom: "78px",
+            height: "1px",
+            background: "linear-gradient(to right, hsla(38,92%,50%,0.75), transparent)",
+          }}
+        />
+
+        {/* Copyright bottom-left (LEFT panel) */}
+        <div className="absolute bottom-4 left-8 text-xs text-white/60 z-10">
           © {new Date().getFullYear()} Amineva Global. All Rights Reserved.
         </div>
       </div>
 
       {/* RIGHT PANEL - respects theme */}
-      <div className="flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
+      <div className="relative flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
         <div className="w-full max-w-xl">
-          {/* TOP-RIGHT NAV CTAs (CTAs only; no pages created here) */}
-          <div className="w-full flex justify-end gap-6 text-sm text-muted-foreground">
-            <button type="button" className="hover:text-foreground transition">
+          {/* TOP RIGHT CTAs */}
+          <div className="w-full flex justify-end gap-8 text-base font-semibold text-muted-foreground">
+            <button
+              type="button"
+              className="hover:text-foreground transition cursor-pointer"
+            >
               About Us
             </button>
 
             <div className="relative">
               <button
                 type="button"
-                className="hover:text-foreground transition"
+                className="hover:text-foreground transition cursor-pointer"
                 onClick={() => setProductsMenuOpen((v) => !v)}
-                onBlur={() => {
-                  // close after focus moves away
-                  window.setTimeout(() => setProductsMenuOpen(false), 120);
-                }}
               >
                 Products
               </button>
@@ -361,6 +370,7 @@ export default function HomePage() {
                       key={label}
                       type="button"
                       className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent/10 transition"
+                      onClick={() => setProductsMenuOpen(false)}
                     >
                       {label}
                     </button>
@@ -370,19 +380,25 @@ export default function HomePage() {
             </div>
 
             <a
-              href="https://www.hub.amineva.com"
+              href="https://hub.amineva.com"
               target="_blank"
               rel="noreferrer"
               className="hover:text-foreground transition"
             >
-              Insights &amp; Reports
+              hub.amineva.com
             </a>
 
-            <button type="button" className="hover:text-foreground transition">
+            <button
+              type="button"
+              className="hover:text-foreground transition cursor-pointer"
+            >
               FAQs
             </button>
 
-            <button type="button" className="hover:text-foreground transition">
+            <button
+              type="button"
+              className="hover:text-foreground transition cursor-pointer"
+            >
               Support
             </button>
           </div>
@@ -441,7 +457,6 @@ export default function HomePage() {
                       ))}
                     </select>
 
-                    {/* Currency preview: updates immediately after selection (no 'default' text, no long label) */}
                     {agCountry ? (
                       <div className="text-sm text-muted-foreground">
                         Currency:{" "}
@@ -456,13 +471,18 @@ export default function HomePage() {
                         type="button"
                         disabled={!agCountry}
                         onClick={() => {
-                          // Require explicit confirmation to proceed:
                           setAgStepConfirmed(true);
                         }}
                         className={`w-full h-12 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-                          agCountry ? "text-white" : "bg-muted text-muted-foreground cursor-not-allowed"
+                          agCountry
+                            ? "text-white"
+                            : "bg-muted text-muted-foreground cursor-not-allowed"
                         }`}
-                        style={agCountry ? { backgroundColor: "hsl(38,92%,35%)" } : undefined}
+                        style={
+                          agCountry
+                            ? { backgroundColor: "hsl(38,92%,35%)" }
+                            : undefined
+                        }
                       >
                         Continue <span aria-hidden>→</span>
                       </button>
@@ -487,10 +507,8 @@ export default function HomePage() {
             </>
           ) : (
             <>
-              {/* Heading removed as requested */}
-              <div className="text-center mt-4">
-                <p className="text-muted-foreground mt-2">Select a product to get started</p>
-              </div>
+              {/* Removed "What are you here to do?" and removed "Select a product to get started" */}
+              <div className="text-center mt-4" />
 
               <div className="mt-8 space-y-4">
                 {allCategories.map((cat) => (
@@ -528,7 +546,9 @@ export default function HomePage() {
                                   {getStatusBadge(p.status)}
                                 </div>
                                 {p.description && (
-                                  <p className="text-xs text-muted-foreground truncate mt-0.5">{p.description}</p>
+                                  <p className="text-xs text-muted-foreground truncate mt-0.5">
+                                    {p.description}
+                                  </p>
                                 )}
                               </div>
                               {!isDisabled &&
@@ -546,7 +566,8 @@ export default function HomePage() {
                 ))}
               </div>
 
-              <div className="mt-10 flex justify-center gap-2 text-sm text-muted-foreground">
+              {/* Removed dash and removed the empty extra button */}
+              <div className="mt-10 flex justify-center text-sm text-muted-foreground">
                 <button
                   type="button"
                   className="hover:text-foreground transition cursor-pointer"
@@ -554,26 +575,21 @@ export default function HomePage() {
                 >
                   Explore More
                 </button>
-                <span>—</span>
-                <button
-                  type="button"
-                  className="hover:text-foreground transition cursor-pointer"
-                  onClick={() => navigate("/")}
-                >
-                </button>
               </div>
             </>
           )}
 
-          {/* Footer (right side): CTAs on bottom-right only */}
-          <div className="mt-10 flex justify-end gap-4 text-xs text-muted-foreground">
-            <button type="button" className="hover:text-foreground transition">
-              Terms of Service
-            </button>
-            <button type="button" className="hover:text-foreground transition">
-              Privacy Policy
-            </button>
-          </div>
+          {/* Removed old centered copyright here (now on LEFT panel) */}
+        </div>
+
+        {/* Bottom-right Terms & Privacy (page footer) */}
+        <div className="absolute bottom-4 right-8 flex gap-6 text-xs text-muted-foreground">
+          <button type="button" className="hover:text-foreground transition cursor-pointer">
+            Terms of Service
+          </button>
+          <button type="button" className="hover:text-foreground transition cursor-pointer">
+            Privacy Policy
+          </button>
         </div>
       </div>
     </div>
