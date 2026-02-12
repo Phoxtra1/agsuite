@@ -563,30 +563,35 @@ export default function HomePage() {
             </>
           )}
 
-          {/* Removed old centered copyright here (now on LEFT panel) */}
+              {/* RIGHT PANEL - respects theme */}
+      <div className="relative flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
+        <div className="w-full max-w-xl">
+          {/* ...your existing RIGHT panel content stays here... */}
+
+          {/* Removed old centered copyright here (now moved to bottom-right row) */}
         </div>
 
-        {/* Bottom-right Terms & Privacy (page footer) */}
+        {/* Bottom-right row: Copyright + Terms + Privacy */}
         <div className="absolute bottom-4 right-8 flex items-center gap-6 text-xs text-muted-foreground">
-       <span className="text-muted-foreground">
-       © {new Date().getFullYear()} Amineva Global.
-       </span>
+          <span>
+            © {new Date().getFullYear()} Amineva Global.
+          </span>
 
-       <button
-      type="button"
-      className="hover:text-foreground transition cursor-pointer"
-      >
-      Terms of Service
-      </button>
+          <button
+            type="button"
+            className="hover:text-foreground transition cursor-pointer"
+          >
+            Terms of Service
+          </button>
 
-         <button
-        type="button"
-         className="hover:text-foreground transition cursor-pointer"
-           >
-           Privacy Policy
-         </button>
-       </div>
-     </div>
-   </div>
+          <button
+            type="button"
+            className="hover:text-foreground transition cursor-pointer"
+          >
+            Privacy Policy
+          </button>
+        </div>
+      </div>  {/* closes RIGHT PANEL */}
+    </div>    {/* closes MAIN GRID */}
   );
 }
