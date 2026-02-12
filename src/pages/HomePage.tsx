@@ -535,7 +535,7 @@ export default function HomePage() {
         </div>
 
         {/* Footer */}
-        <div className="absolute bottom-4 right-8 flex items-center gap-6 text-xs text-muted-foreground">
+        <div className="absolute bottom-4 right-8 flex items-left gap-6 text-xs text-muted-foreground">
           <span>© {new Date().getFullYear()} Amineva Global . All Right Reserved.</span>
           <button type="button" className="hover:text-foreground transition cursor-pointer">
             Terms of Service
