@@ -18,6 +18,9 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { products } = useProducts();
 
+  // Top nav CTA state (CTAs only; no pages created here)
+  const [productsMenuOpen, setProductsMenuOpen] = useState(false);
+
   // Group products by category dynamically from registry
   const categories = DEFAULT_CATEGORIES.map((cat) => ({
     ...cat,
@@ -322,11 +325,68 @@ export default function HomePage() {
             <div className="text-sm text-white/70">Encryption</div>
           </div>
         </div>
+
+        {/* Copyright moved to LEFT panel (bottom-left, below the animation area) */}
+        <div className="absolute bottom-3 left-8 text-xs text-white/60 z-10">
+          © {new Date().getFullYear()} Amineva Global. All Rights Reserved.
+        </div>
       </div>
 
       {/* RIGHT PANEL - respects theme */}
       <div className="flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
         <div className="w-full max-w-xl">
+          {/* TOP-RIGHT NAV CTAs (CTAs only; no pages created here) */}
+          <div className="w-full flex justify-end gap-6 text-sm text-muted-foreground">
+            <button type="button" className="hover:text-foreground transition">
+              About Us
+            </button>
+
+            <div className="relative">
+              <button
+                type="button"
+                className="hover:text-foreground transition"
+                onClick={() => setProductsMenuOpen((v) => !v)}
+                onBlur={() => {
+                  // close after focus moves away
+                  window.setTimeout(() => setProductsMenuOpen(false), 120);
+                }}
+              >
+                Products
+              </button>
+
+              {productsMenuOpen && (
+                <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-card shadow-lg overflow-hidden">
+                  {["AGStock", "AGIS", "Amniva", "AminevaOps"].map((label) => (
+                    <button
+                      key={label}
+                      type="button"
+                      className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent/10 transition"
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <a
+              href="https://www.hub.amineva.com"
+              target="_blank"
+              rel="noreferrer"
+              className="hover:text-foreground transition"
+            >
+              Insights &amp; Reports
+            </a>
+
+            <button type="button" className="hover:text-foreground transition">
+              FAQs
+            </button>
+
+            <button type="button" className="hover:text-foreground transition">
+              Support
+            </button>
+          </div>
+
           {selectedProduct ? (
             <>
               {/* AG Stock: Country/Currency selector step (no auto-advance) */}
@@ -400,15 +460,9 @@ export default function HomePage() {
                           setAgStepConfirmed(true);
                         }}
                         className={`w-full h-12 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${
-                          agCountry
-                            ? "text-white"
-                            : "bg-muted text-muted-foreground cursor-not-allowed"
+                          agCountry ? "text-white" : "bg-muted text-muted-foreground cursor-not-allowed"
                         }`}
-                        style={
-                          agCountry
-                            ? { backgroundColor: "hsl(38,92%,35%)" }
-                            : undefined
-                        }
+                        style={agCountry ? { backgroundColor: "hsl(38,92%,35%)" } : undefined}
                       >
                         Continue <span aria-hidden>→</span>
                       </button>
@@ -419,7 +473,7 @@ export default function HomePage() {
 
               {/* Auth UI (All products; AG Stock shows only after Continue) */}
               {canShowAuthCard && (
-              <AuthCard
+                <AuthCard
                   product={selectedProduct}
                   authTab={authTab}
                   setAuthTab={setAuthTab}
@@ -433,10 +487,8 @@ export default function HomePage() {
             </>
           ) : (
             <>
+              {/* Heading removed as requested */}
               <div className="text-center mt-4">
-                <h1 className="text-3xl font-semibold text-foreground">
-                  What are you here to do?
-                </h1>
                 <p className="text-muted-foreground mt-2">Select a product to get started</p>
               </div>
 
@@ -476,9 +528,7 @@ export default function HomePage() {
                                   {getStatusBadge(p.status)}
                                 </div>
                                 {p.description && (
-                                  <p className="text-xs text-muted-foreground truncate mt-0.5">
-                                    {p.description}
-                                  </p>
+                                  <p className="text-xs text-muted-foreground truncate mt-0.5">{p.description}</p>
                                 )}
                               </div>
                               {!isDisabled &&
@@ -515,11 +565,14 @@ export default function HomePage() {
             </>
           )}
 
-         
-          
-          {/* Footer */}
-          <div className="mt-10 text-center text-xs text-muted-foreground">
-            © {new Date().getFullYear()} Amineva Global. All Rights Reserved.
+          {/* Footer (right side): CTAs on bottom-right only */}
+          <div className="mt-10 flex justify-end gap-4 text-xs text-muted-foreground">
+            <button type="button" className="hover:text-foreground transition">
+              Terms of Service
+            </button>
+            <button type="button" className="hover:text-foreground transition">
+              Privacy Policy
+            </button>
           </div>
         </div>
       </div>
