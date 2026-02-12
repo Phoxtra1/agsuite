@@ -326,15 +326,6 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Gold thin horizontal line under Uptime SLA (left-to-right) */}
-        <div
-          className="absolute left-0 right-0 z-10"
-          style={{
-            bottom: "78px",
-            height: "1px",
-            background: "linear-gradient(to right, hsla(38,92%,50%,0.75), transparent)",
-          }}
-        />
 
         {/* Copyright bottom-left (LEFT panel) */}
         <div className="absolute bottom-4 left-8 text-xs text-white/60 z-10">
@@ -385,7 +376,7 @@ export default function HomePage() {
               rel="noreferrer"
               className="hover:text-foreground transition"
             >
-              hub.amineva.com
+              Insights &amp; Reports
             </a>
 
             <button
