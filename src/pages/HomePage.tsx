@@ -326,13 +326,6 @@ export default function HomePage() {
           </div>
         </div>
 
-
-        {/* Copyright bottom-left (LEFT panel) */}
-        <div className="absolute bottom-4 left-8 text-xs text-white/60 z-10">
-          © {new Date().getFullYear()} Amineva Global. All Rights Reserved.
-        </div>
-      </div>
-
       {/* RIGHT PANEL - respects theme */}
       <div className="relative flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
         <div className="w-full max-w-xl">
@@ -574,15 +567,26 @@ export default function HomePage() {
         </div>
 
         {/* Bottom-right Terms & Privacy (page footer) */}
-        <div className="absolute bottom-4 right-8 flex gap-6 text-xs text-muted-foreground">
-          <button type="button" className="hover:text-foreground transition cursor-pointer">
-            Terms of Service
-          </button>
-          <button type="button" className="hover:text-foreground transition cursor-pointer">
-            Privacy Policy
-          </button>
-        </div>
-      </div>
-    </div>
+        <div className="absolute bottom-4 right-8 flex items-center gap-6 text-xs text-muted-foreground">
+       <span className="text-muted-foreground">
+       © {new Date().getFullYear()} Amineva Global.
+       </span>
+
+       <button
+      type="button"
+      className="hover:text-foreground transition cursor-pointer"
+      >
+      Terms of Service
+      </button>
+
+         <button
+        type="button"
+         className="hover:text-foreground transition cursor-pointer"
+           >
+           Privacy Policy
+         </button>
+       </div>
+     </div>
+   </div>
   );
 }
