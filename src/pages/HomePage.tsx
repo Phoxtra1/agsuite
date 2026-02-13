@@ -397,9 +397,8 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Bottom stats */}
           {/* Bottom stats */}
-        <div className="absolute bottom-0 left-8 translate-y-10 flex gap-16 text-white/80 z-10">
+        <div className="absolute bottom-5 left-8 translate-y-10 flex gap-16 text-white/80 z-10">
        <div>
        <div className="text-2xl font-medium text-white">99.9%</div>
       <div className="text-sm text-white/70">Uptime SLA</div>
