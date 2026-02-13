@@ -408,7 +408,8 @@ export default function HomePage() {
  <div className="text-sm text-white/70">Encryption</div>
 </div>
 </div>
-
+</div>
+      
       {/* RIGHT PANEL */}
       <div className="relative flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
         <div className="w-full max-w-xl">
