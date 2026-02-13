@@ -62,31 +62,33 @@ export function GatewayFlow() {
 
   // Load persisted state on mount — only run once
   useEffect(() => {
-    if (initialized) return;
+  if (initialized) return;
 
-    const state = loadGatewayState();
-    setSelectedProductKey(state.selectedProductKey);
-    setSelectedCountryCode(state.selectedCountryCode);
-    setSelectedCurrencyCode(state.selectedCurrencyCode);
+  const state = loadGatewayState();
+  setSelectedProductKey(state.selectedProductKey);
+  setSelectedCountryCode(state.selectedCountryCode);
+  setSelectedCurrencyCode(state.selectedCurrencyCode);
 
-    // AGStock ALWAYS shows country step before auth
-    if (state.selectedProductKey === "agstock") {
-      setStep("country_selection");
-      setInitialized(true);
-      return;
-    }
-
-    if (state.selectedProductKey) {
-      if (isAuthenticated && user?.twoFactorVerified) {
-            setStep("routing");
-         } else if (isAuthenticated) {
-            navigateToVerify2FA(productKey);
-         }
-        }
-
+  // AGStock always shows country step first
+  if (state.selectedProductKey === "agstock") {
+    setStep("country_selection");
     setInitialized(true);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [initialized, isAuthenticated]);
+    return;
+  }
+
+  if (state.selectedProductKey) {
+    if (isAuthenticated && is2FAVerifiedThisSession()) {
+      setStep("routing");
+    } else if (isAuthenticated) {
+      navigateToVerify2FA(state.selectedProductKey);
+    } else {
+      setStep("auth");
+    }
+  }
+
+  setInitialized(true);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [initialized, isAuthenticated]);
 
   const handleSelectProduct = (productKey: string) => {
     setSelectedProductKey(productKey);
