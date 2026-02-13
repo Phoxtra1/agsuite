@@ -398,16 +398,17 @@ export default function HomePage() {
         </div>
 
         {/* Bottom stats */}
-        <div className="absolute bottom-12 left-8 flex gap-16 text-white/80 z-10">
+          {/* Bottom stats */}
+        <div className="absolute bottom-0 left-8 translate-y-10 flex gap-16 text-white/80 z-10">
        <div>
-      <div className="text-2xl font-medium text-white">99.9%</div>
-     <div className="text-sm text-white/70">Uptime SLA</div>
-    </div>
-   <div>
-  <div className="text-2xl font-medium text-white">256-bit</div>
- <div className="text-sm text-white/70">Encryption</div>
-</div>
-</div>
+       <div className="text-2xl font-medium text-white">99.9%</div>
+      <div className="text-sm text-white/70">Uptime SLA</div>
+     </div>
+    <div>
+    <div className="text-2xl font-medium text-white">256-bit</div>
+    <div className="text-sm text-white/70">Encryption</div>
+  </div>
+ </div>
 </div>
       
       {/* RIGHT PANEL */}
