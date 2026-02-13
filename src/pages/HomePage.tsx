@@ -62,7 +62,7 @@ function readRegionFromStorage(): RegionState | null {
 function getTimeZone(countryId: string): string {
   const id = (countryId || "").toLowerCase();
   switch (id) {
-    case "ghana":
+    case "ashanti":
       return "Africa/Accra";
     case "nigeria":
       return "Africa/Lagos";
