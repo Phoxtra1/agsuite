@@ -1,4 +1,4 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { DEFAULT_CATEGORIES, ProductData } from "@/types/product";
 import { useProducts } from "@/hooks/useProducts";
@@ -15,14 +15,7 @@ type CountryCurrencyOption = {
 
 // ✅ Deployment-safe icon resolver (removes dependency on "@/lib/products")
 function getProductIconSafe(productId: string) {
-  // If you later add a dedicated icon map, do it here without extra imports.
-  // Return any Lucide icon component.
   const id = (productId || "").toLowerCase();
-
-  // Examples (optional):
-  // if (id.includes("stock")) return Boxes;
-  // if (id.includes("ops")) return Settings;
-
   return Grid3X3;
 }
 
@@ -49,6 +42,46 @@ function getStatusBadge(status: ProductData["status"]) {
   }
 }
 
+type RegionState = { countryId: string; countryLabel: string };
+
+function readRegionFromStorage(): RegionState | null {
+  try {
+    const raw = localStorage.getItem("agstock_region");
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    const countryId = String(parsed?.countryId || "").trim();
+    const countryLabel = String(parsed?.countryLabel || "").trim();
+    if (!countryId || !countryLabel) return null;
+    return { countryId, countryLabel };
+  } catch {
+    return null;
+  }
+}
+
+// Map countryId -> IANA timezone (deployment-safe)
+function getTimeZone(countryId: string): string {
+  const id = (countryId || "").toLowerCase();
+  switch (id) {
+    case "ghana":
+      return "Africa/Accra";
+    case "nigeria":
+      return "Africa/Lagos";
+    case "kenya":
+      return "Africa/Nairobi";
+    case "south-africa":
+      return "Africa/Johannesburg";
+    case "cfa-zone":
+      // Closest stable representation for many CFA countries (GMT)
+      return "Africa/Abidjan";
+    case "finland":
+      return "Europe/Helsinki";
+    case "united-kingdom":
+      return "Europe/London";
+    default:
+      return "Etc/UTC";
+  }
+}
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { products } = useProducts();
@@ -64,6 +97,51 @@ export default function HomePage() {
   const [agCountry, setAgCountry] = useState<string>("");
   const [agCurrencyCode, setAgCurrencyCode] = useState<string>("USD");
   const [agStepConfirmed, setAgStepConfirmed] = useState<boolean>(false);
+
+  // Live clock tick
+  const [now, setNow] = useState(() => new Date());
+  useEffect(() => {
+    const id = window.setInterval(() => setNow(new Date()), 1000);
+    return () => window.clearInterval(id);
+  }, []);
+
+  // Read stored region (so homepage can show time even before selection)
+  const storedRegion = useMemo(() => readRegionFromStorage(), [agCountry, agStepConfirmed]);
+
+  // Determine region to display: selected country > stored region > default Ghana
+  const displayCountryId = useMemo(() => {
+    return agCountry || storedRegion?.countryId || "ghana";
+  }, [agCountry, storedRegion]);
+
+  const displayCountryLabel = useMemo(() => {
+    if (agCountry) {
+      // if user is selecting now, derive label from options later (below) via selectedAgOption
+      return "";
+    }
+    return storedRegion?.countryLabel || "Ghana";
+  }, [agCountry, storedRegion]);
+
+  const displayTimeZone = useMemo(() => getTimeZone(displayCountryId), [displayCountryId]);
+
+  // Time: HH:MM (24h)
+  const displayTime = useMemo(() => {
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: displayTimeZone,
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(now);
+  }, [now, displayTimeZone]);
+
+  // Date: 13 February 2026 (updates daily automatically)
+  const displayDate = useMemo(() => {
+    return new Intl.DateTimeFormat("en-GB", {
+      timeZone: displayTimeZone,
+      day: "2-digit",
+      month: "long",
+      year: "numeric",
+    }).format(now);
+  }, [now, displayTimeZone]);
 
   const isAgStock = useMemo(() => {
     const id = selectedProduct?.id?.toLowerCase() || "";
@@ -88,6 +166,11 @@ export default function HomePage() {
     () => countryCurrencyOptions.find((o) => o.id === agCountry) || null,
     [agCountry, countryCurrencyOptions]
   );
+
+  const effectiveCountryLabel = useMemo(() => {
+    // if user actively selected a country, show that label; else show stored/default
+    return selectedAgOption?.label || displayCountryLabel || "Ghana";
+  }, [selectedAgOption, displayCountryLabel]);
 
   // Build categories from registry + live products list
   const categories = useMemo(() => {
@@ -213,15 +296,16 @@ export default function HomePage() {
           />
         ))}
 
-        {/* Logo + tagline */}
+        {/* Logo + TIME/DATE/COUNTRY */}
         <div className="p-8 flex items-start gap-4 relative z-10">
           <img src={amvLogo} alt="Amineva Global" className="h-14 w-14 rounded-full" />
+
           <div style={{ animation: "amvFadeUp 700ms ease-out, amvShimmer 3.6s ease-in-out infinite" }}>
-            <div className="font-semibold tracking-wide text-sm" style={{ color: "hsl(38,92%,50%)" }}>
-              ENABLING INSTITUTIONS AND
+            <div className="font-semibold tracking-wide leading-none" style={{ color: "hsl(38,92%,50%)", fontSize: "22px" }}>
+              {displayTime}, {effectiveCountryLabel}
             </div>
-            <div className="font-semibold tracking-wide text-sm" style={{ color: "hsl(38,92%,50%)" }}>
-              DECISION MAKERS
+            <div className="font-medium tracking-wide text-xs mt-1" style={{ color: "hsla(38,92%,50%,0.85)" }}>
+              {displayDate}
             </div>
           </div>
         </div>
@@ -534,28 +618,20 @@ export default function HomePage() {
           )}
         </div>
 
-        {/* Footer */}
-        <div className="absolute bottom-4 right-8 left-8 flex justify-between items-center text-xs text-muted-foreground">
-  <span>
-    © {new Date().getFullYear()} Amineva Global. All Rights Reserved.
-  </span>
+        {/* Footer (right panel): copyright left, terms/privacy right */}
+        <div className="absolute bottom-4 left-8 right-8 flex justify-between items-center text-xs text-muted-foreground">
+          <span>© {new Date().getFullYear()} Amineva Global. All Rights Reserved.</span>
 
-  <div className="flex gap-6">
-    <button
-      type="button"
-      className="hover:text-foreground transition cursor-pointer"
-    >
-      Terms of Service
-    </button>
-
-    <button
-      type="button"
-      className="hover:text-foreground transition cursor-pointer"
-    >
-      Privacy Policy
-    </button>
-  </div>
-</div>
-</div>
-);
+          <div className="flex gap-6">
+            <button type="button" className="hover:text-foreground transition cursor-pointer">
+              Terms of Service
+            </button>
+            <button type="button" className="hover:text-foreground transition cursor-pointer">
+              Privacy Policy
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
 }
