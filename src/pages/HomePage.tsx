@@ -535,16 +535,27 @@ export default function HomePage() {
         </div>
 
         {/* Footer */}
-        <div className="absolute bottom-4 right-8 flex items-left gap-6 text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} Amineva Global . All Right Reserved.</span>
-          <button type="button" className="hover:text-foreground transition cursor-pointer">
-            Terms of Service
-          </button>
-          <button type="button" className="hover:text-foreground transition cursor-pointer">
-            Privacy Policy
-          </button>
-        </div>
-      </div>
-    </div>
-  );
+        <div className="absolute bottom-4 right-8 left-8 flex justify-between items-center text-xs text-muted-foreground">
+  <span>
+    © {new Date().getFullYear()} Amineva Global. All Rights Reserved.
+  </span>
+
+  <div className="flex gap-6">
+    <button
+      type="button"
+      className="hover:text-foreground transition cursor-pointer"
+    >
+      Terms of Service
+    </button>
+
+    <button
+      type="button"
+      className="hover:text-foreground transition cursor-pointer"
+    >
+      Privacy Policy
+    </button>
+  </div>
+</div>
+</div>
+);
 }
