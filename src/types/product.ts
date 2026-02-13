@@ -65,7 +65,7 @@ export interface ProductCategory {
 export const DEFAULT_CATEGORIES: ProductCategory[] = [
   {
     id: "inventory",
-    name: "Inventory &amp Sales Management",
+    name: "Inventory & Sales Management",
     order: 1,
     products: ["agstock"],
   },
@@ -77,7 +77,7 @@ export const DEFAULT_CATEGORIES: ProductCategory[] = [
   },
   {
     id: "trust-forecasting",
-    name: "Trust &amp Forecasting",
+    name: "Trust & Forecasting",
     order: 3,
     products: ["amniva"],
   },
