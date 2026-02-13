@@ -1,8 +1,14 @@
-import { UserRole } from './auth';
+import type { UserRole } from "./auth";
 
-export type ProductStatus = 'live' | 'restricted' | 'offline' | 'coming_soon';
+export type ProductStatus =
+  | "live"
+  | "restricted"
+  | "offline"
+  | "coming_soon";
 
-// Base product data for storage
+/**
+ * Base product data for storage & sync
+ */
 export type ProductData = {
   id: string;
   name: string;
@@ -18,29 +24,33 @@ export type ProductData = {
   allowedRoles?: UserRole[];
 };
 
-// Product with icon for display
+/**
+ * Product with icon (UI layer)
+ */
 export interface Product extends ProductData {
   icon?: React.ReactNode;
 }
 
-// Alias for clarity
-export type ProductWithIcon = Product;
-
+/**
+ * Status helpers
+ */
 export const STATUS_LABELS: Record<ProductStatus, string> = {
-  live: 'Live',
-  restricted: 'Restricted',
-  offline: 'Offline',
-  coming_soon: 'Coming Soon',
+  live: "Live",
+  restricted: "Restricted",
+  offline: "Offline",
+  coming_soon: "Coming Soon",
 };
 
 export const STATUS_COLORS: Record<ProductStatus, string> = {
-  live: 'bg-success text-success-foreground',
-  restricted: 'bg-warning text-warning-foreground',
-  offline: 'bg-muted text-muted-foreground',
-  coming_soon: 'bg-accent/20 text-accent-foreground',
+  live: "bg-success text-success-foreground",
+  restricted: "bg-warning text-warning-foreground",
+  offline: "bg-muted text-muted-foreground",
+  coming_soon: "bg-accent/20 text-accent-foreground",
 };
 
-// Category structure for gateway flow
+/**
+ * Category structure (Homepage + Suite shared)
+ */
 export interface ProductCategory {
   id: string;
   name: string;
@@ -48,10 +58,33 @@ export interface ProductCategory {
   products: string[]; // product IDs
 }
 
+/**
+ * ✅ FINAL categories (NO HUB)
+ * Software / Web apps only
+ */
 export const DEFAULT_CATEGORIES: ProductCategory[] = [
-  { id: 'sell-manage', name: 'Sell & Manage Business', order: 1, products: ['agstock'] },
-  { id: 'data-intel', name: 'Data & Intelligence', order: 2, products: ['agis'] },
-  { id: 'reports', name: 'Reports & Publications', order: 3, products: ['hub'] },
-  { id: 'verify-predict', name: 'Verify & Predict', order: 4, products: ['amniva'] },
-  { id: 'operations', name: 'Service Operations', order: 5, products: ['ops'] },
+  {
+    id: "inventory",
+    name: "Inventory &amp Sales Management",
+    order: 1,
+    products: ["agstock"],
+  },
+  {
+    id: "data-intelligence",
+    name: "Data Intelligence",
+    order: 2,
+    products: ["agis"],
+  },
+  {
+    id: "trust-forecasting",
+    name: "Trust &amp Forecasting",
+    order: 3,
+    products: ["amniva"],
+  },
+  {
+    id: "service-operations",
+    name: "Service Operations",
+    order: 4,
+    products: ["ops"],
+  },
 ];
