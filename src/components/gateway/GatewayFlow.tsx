@@ -77,14 +77,12 @@ export function GatewayFlow() {
     }
 
     if (state.selectedProductKey) {
-      if (!isAuthenticated) {
-        setStep("auth");
-      } else if (is2FAVerifiedThisSession()) {
-        setStep("routing");
-      } else {
-        navigateToVerify2FA(state.selectedProductKey);
-      }
-    }
+      if (isAuthenticated && user?.twoFactorVerified) {
+            setStep("routing");
+         } else if (isAuthenticated) {
+            navigateToVerify2FA(productKey);
+         }
+        }
 
     setInitialized(true);
     // eslint-disable-next-line react-hooks/exhaustive-deps
