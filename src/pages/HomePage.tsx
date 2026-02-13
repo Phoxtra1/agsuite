@@ -118,7 +118,7 @@ export default function HomePage() {
       // if user is selecting now, derive label from options later (below) via selectedAgOption
       return "";
     }
-    return storedRegion?.countryLabel || "Ghana";
+    return storedRegion?.countryLabel || "Ashanti";
   }, [agCountry, storedRegion]);
 
   const displayTimeZone = useMemo(() => getTimeZone(displayCountryId), [displayCountryId]);
@@ -398,7 +398,7 @@ export default function HomePage() {
         </div>
 
           {/* Bottom stats */}
-        <div className="absolute bottom-10 left-8 translate-y-10 flex gap-16 text-white/80 z-10">
+        <div className="absolute bottom-12 left-8 translate-y-10 flex gap-16 text-white/80 z-10">
        <div>
        <div className="text-2xl font-medium text-white">99.9%</div>
       <div className="text-sm text-white/70">Uptime SLA</div>
