@@ -398,17 +398,16 @@ export default function HomePage() {
         </div>
 
         {/* Bottom stats */}
-        <div className="absolute bottom-10 left-8 flex gap-16 text-white/80 z-10">
-          <div>
-            <div className="text-3xl font-semibold text-white">99.9%</div>
-            <div className="text-sm text-white/70">Uptime SLA</div>
-          </div>
-          <div>
-            <div className="text-3xl font-semibold text-white">256-bit</div>
-            <div className="text-sm text-white/70">Encryption</div>
-          </div>
-        </div>
-      </div>
+        <div className="absolute bottom-12 left-8 flex gap-16 text-white/80 z-10">
+       <div>
+      <div className="text-2xl font-medium text-white">99.9%</div>
+     <div className="text-sm text-white/70">Uptime SLA</div>
+    </div>
+   <div>
+  <div className="text-2xl font-medium text-white">256-bit</div>
+ <div className="text-sm text-white/70">Encryption</div>
+</div>
+</div>
 
       {/* RIGHT PANEL */}
       <div className="relative flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
