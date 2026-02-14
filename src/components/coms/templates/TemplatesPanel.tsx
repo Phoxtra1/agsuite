@@ -92,7 +92,6 @@ export function TemplatesPanel() {
   const [activeTab, setActiveTab] = useState<'preview' | 'edit'>('preview');
   const [filterCategory, setFilterCategory] = useState<string>('all');
 
-  // Fetch templates on mount
   useEffect(() => {
     async function fetchTemplates() {
       try {
@@ -263,4 +262,159 @@ export function TemplatesPanel() {
                 <span>Updated {template.lastUpdated}</span>
               </div>
               <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm"
+                <Button variant="outline" size="sm" className="flex-1 gap-1 text-foreground border-border" onClick={() => handlePreviewTemplate(template)}>
+                  <Eye className="h-3 w-3" /> Preview
+                </Button>
+                <Button variant="outline" size="sm" className="flex-1 gap-1 text-foreground border-border" onClick={() => handleEditTemplate(template)}>
+                  <Edit className="h-3 w-3" /> Edit
+                </Button>
+                <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => handleDuplicateTemplate(template)}>
+                  <Copy className="h-3 w-3" />
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* --- Preview Dialog --- */}
+      <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2 text-foreground">
+              <FileText className="h-5 w-5" /> {selectedTemplate?.name}
+            </DialogTitle>
+            <DialogDescription>{selectedTemplate?.description}</DialogDescription>
+          </DialogHeader>
+
+          <Tabs value={activeTab} onValueChange={(v) => setActiveTab(v as 'preview' | 'edit')}>
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="preview" className="gap-2 text-foreground">
+                <Eye className="h-4 w-4" /> Preview
+              </TabsTrigger>
+              <TabsTrigger value="edit" className="gap-2 text-foreground">
+                <Edit className="h-4 w-4" /> Edit
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="preview" className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label className="text-foreground">Subject</Label>
+                <div className="p-3 bg-muted rounded-md text-sm text-foreground">{selectedTemplate?.subject}</div>
+              </div>
+              <div className="space-y-2">
+                <Label className="text-foreground">Body</Label>
+                <div className="p-4 bg-muted rounded-md text-sm whitespace-pre-wrap text-foreground">{selectedTemplate?.body}</div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="edit" className="space-y-4 mt-4">
+              <div className="space-y-2">
+                <Label htmlFor="edit-subject" className="text-foreground">Subject</Label>
+                <Input
+                  id="edit-subject"
+                  value={selectedTemplate?.subject || ''}
+                  onChange={(e) => {
+                    if (selectedTemplate) setSelectedTemplate({ ...selectedTemplate, subject: e.target.value });
+                  }}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="edit-body" className="text-foreground">Body</Label>
+                <Textarea
+                  id="edit-body"
+                  value={selectedTemplate?.body || ''}
+                  onChange={(e) => {
+                    if (selectedTemplate) setSelectedTemplate({ ...selectedTemplate, body: e.target.value });
+                  }}
+                  className="min-h-[200px]"
+                />
+              </div>
+              <DialogFooter>
+                <Button onClick={() => {
+                  if (selectedTemplate) {
+                    const variables = selectedTemplate.body.match(/\{\{[^}]+\}\}/g) || [];
+                    setTemplates(prev => prev.map(t => t.id === selectedTemplate.id ? { ...selectedTemplate, variables, lastUpdated: new Date().toISOString().split('T')[0] } : t));
+                    toast.success('Template saved');
+                    setIsPreviewDialogOpen(false);
+                  }
+                }} className="gap-2">
+                  <Save className="h-4 w-4" /> Save Changes
+                </Button>
+              </DialogFooter>
+            </TabsContent>
+          </Tabs>
+        </DialogContent>
+      </Dialog>
+
+      {/* --- New/Edit Dialog --- */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-foreground">{editingTemplate ? 'Edit Template' : 'Create New Template'}</DialogTitle>
+            <DialogDescription>{editingTemplate ? 'Update template details' : 'Create a new email or notification template'}</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-3">
+              <div className="space-y-1.5">
+                <Label htmlFor="name" className="text-foreground">Name</Label>
+                <Input id="name" value={formData.name} onChange={(e) => setFormData(prev => ({ ...prev, name: e.target.value }))} placeholder="Template name" />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="category" className="text-foreground">Category</Label>
+                <Input id="category" value={formData.category} onChange={(e) => setFormData(prev => ({ ...prev, category: e.target.value }))} placeholder="e.g., billing, security" />
+              </div>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label className="text-foreground">Type</Label>
+              <Select value={formData.type} onValueChange={(v) => setFormData(prev => ({ ...prev, type: v as any }))}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="transactional">Transactional</SelectItem>
+                  <SelectItem value="notification">Notification</SelectItem>
+                  <SelectItem value="marketing">Marketing</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="description" className="text-foreground">Description</Label>
+              <Input id="description" value={formData.description} onChange={(e) => setFormData(prev => ({ ...prev, description: e.target.value }))} placeholder="Brief description" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="subject" className="text-foreground">Subject Line</Label>
+              <Input id="subject" value={formData.subject} onChange={(e) => setFormData(prev => ({ ...prev, subject: e.target.value }))} placeholder="Email subject with {{variables}}" />
+            </div>
+
+            <div className="space-y-1.5">
+              <Label htmlFor="body" className="text-foreground">Template Body</Label>
+              <Textarea id="body" value={formData.body} onChange={(e) => setFormData(prev => ({ ...prev, body: e.target.value }))} placeholder="Template content with {{variables}}..." className="min-h-[150px]" />
+              <p className="text-xs text-muted-foreground">Use {"{{variable}}"} syntax for dynamic content</p>
+            </div>
+          </div>
+
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveTemplate} className="gap-2"><Save className="h-4 w-4" /> {editingTemplate ? 'Save Changes' : 'Create Template'}</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* --- Settings Dialog --- */}
+      <Dialog open={isSettingsDialogOpen} onOpenChange={setIsSettingsDialogOpen}>
+        <DialogContent className="max-w-md">
+          <DialogHeader>
+            <DialogTitle>Template Settings</DialogTitle>
+            <DialogDescription>Configure global template preferences and options.</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button onClick={() => setIsSettingsDialogOpen(false)}>Close</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
