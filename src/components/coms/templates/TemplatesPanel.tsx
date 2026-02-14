@@ -3,9 +3,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import {
   Dialog,
   DialogContent,
@@ -15,18 +13,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select';
-import {
   Plus,
-  FileText,
-  Mail,
-  Bell,
-  Megaphone,
   Edit,
   Copy,
   Trash2,
@@ -70,11 +57,9 @@ interface TemplateFormData {
 
 /* ================= HELPERS ================= */
 
-const today = (): string =>
-  new Date().toISOString().split('T')[0];
+const today = (): string => new Date().toISOString().split('T')[0];
 
-const extractVariables = (text: string): string[] =>
-  text.match(/\{\{[^}]+\}\}/g) ?? [];
+const extractVariables = (text: string): string[] => text.match(/\{\{[^}]+\}\}/g) ?? [];
 
 const initialFormData: TemplateFormData = {
   name: '',
@@ -97,7 +82,6 @@ export function TemplatesPanel() {
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
   const [isSettingsDialogOpen, setIsSettingsDialogOpen] = useState(false);
 
-  const [activeTab, setActiveTab] = useState<'preview' | 'edit'>('preview');
   const [filterCategory, setFilterCategory] = useState<'all' | TemplateType>('all');
 
   /* ================= LOAD ================= */
@@ -139,7 +123,6 @@ export function TemplatesPanel() {
 
   const handlePreviewTemplate = (template: Template) => {
     setSelectedTemplate(template);
-    setActiveTab('preview');
     setIsPreviewDialogOpen(true);
   };
 
@@ -227,8 +210,131 @@ export function TemplatesPanel() {
 
   return (
     <div className="space-y-4">
-      {/* UI remains exactly like your original */}
-      {/* Nothing removed, only logic refined */}
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h3 className="font-semibold">Email & Notification Templates</h3>
+        </div>
+
+        <div className="flex gap-2">
+          <Button variant="outline" size="sm" onClick={() => setIsSettingsDialogOpen(true)}>
+            <Settings className="h-4 w-4 mr-1" />
+            Settings
+          </Button>
+
+          <Button onClick={handleNewTemplate}>
+            <Plus className="h-4 w-4 mr-1" />
+            New Template
+          </Button>
+        </div>
+      </div>
+
+      {/* Filters */}
+      <div className="flex gap-2 flex-wrap">
+        <Badge
+          variant={filterCategory === 'all' ? 'default' : 'secondary'}
+          className="cursor-pointer"
+          onClick={() => setFilterCategory('all')}
+        >
+          All ({templates.length})
+        </Badge>
+
+        {(['transactional', 'notification', 'marketing'] as TemplateType[]).map(type => (
+          <Badge
+            key={type}
+            variant={filterCategory === type ? 'default' : 'outline'}
+            className="cursor-pointer capitalize"
+            onClick={() => setFilterCategory(type)}
+          >
+            {type}
+          </Badge>
+        ))}
+      </div>
+
+      {/* Grid */}
+      <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {filteredTemplates.map(template => (
+          <Card key={template.id}>
+            <CardHeader>
+              <CardTitle className="text-sm">{template.name}</CardTitle>
+              <p className="text-xs text-muted-foreground">{template.category}</p>
+            </CardHeader>
+
+            <CardContent className="space-y-3">
+              <p className="text-sm text-muted-foreground">{template.description}</p>
+
+              <div className="flex gap-1 flex-wrap">
+                {template.variables.slice(0, 3).map(variable => (
+                  <Badge key={variable} variant="outline" className="text-xs font-mono">
+                    {variable}
+                  </Badge>
+                ))}
+              </div>
+
+              <div className="flex gap-1">
+                <Button size="sm" variant="outline" onClick={() => handlePreviewTemplate(template)}>
+                  <Eye className="h-3 w-3 mr-1" /> Preview
+                </Button>
+
+                <Button size="sm" variant="outline" onClick={() => handleEditTemplate(template)}>
+                  <Edit className="h-3 w-3 mr-1" /> Edit
+                </Button>
+
+                <Button size="sm" variant="ghost" onClick={() => handleDuplicateTemplate(template)}>
+                  <Copy className="h-3 w-3" /> Duplicate
+                </Button>
+
+                <Button size="sm" variant="ghost" className="text-destructive" onClick={() => handleDeleteTemplate(template.id)}>
+                  <Trash2 className="h-3 w-3" /> Delete
+                </Button>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{editingTemplate ? 'Edit Template' : 'Create Template'}</DialogTitle>
+            <DialogDescription>Configure template details below.</DialogDescription>
+          </DialogHeader>
+
+          <div className="space-y-3">
+            <Input
+              placeholder="Template Name"
+              value={formData.name}
+              onChange={e => setFormData(prev => ({ ...prev, name: e.target.value }))}
+            />
+
+            <Input
+              placeholder="Category"
+              value={formData.category}
+              onChange={e => setFormData(prev => ({ ...prev, category: e.target.value }))}
+            />
+
+            <Textarea
+              placeholder="Subject"
+              value={formData.subject}
+              onChange={e => setFormData(prev => ({ ...prev, subject: e.target.value }))}
+            />
+
+            <Textarea
+              placeholder="Body"
+              value={formData.body}
+              onChange={e => setFormData(prev => ({ ...prev, body: e.target.value }))}
+            />
+          </div>
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>Cancel</Button>
+            <Button onClick={handleSaveTemplate}>
+              <Save className="h-4 w-4 mr-1" /> Save
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
