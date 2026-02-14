@@ -225,57 +225,85 @@ export function TemplatesPanel() {
         </Badge>
       </div>
 
-      {/* Templates Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {filteredTemplates.map(template => (
-          <Card key={template.id} className="hover:border-primary/50 transition-colors">
-            <CardHeader className="pb-2">
-              <div className="flex items-start justify-between">
-                <div className="flex items-center gap-2">
-                  <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${typeColors[template.type]}`}>
-                    {typeIcons[template.type]}
-                  </div>
-                  <div>
-                    <CardTitle className="text-sm text-foreground">{template.name}</CardTitle>
-                    <p className="text-xs text-muted-foreground">{template.category}</p>
-                  </div>
-                </div>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive hover:text-destructive/80" onClick={() => handleDeleteTemplate(template.id)}>
-                  <Trash2 className="h-4 w-4" />
-                </Button>
-              </div>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              <p className="text-sm text-muted-foreground">{template.description}</p>
-              <div className="flex flex-wrap gap-1">
-                {template.variables.slice(0, 3).map(v => (
-                  <Badge key={v} variant="outline" className="text-xs font-mono text-foreground border-border">{v}</Badge>
-                ))}
-                {template.variables.length > 3 && (
-                  <Badge variant="outline" className="text-xs text-foreground border-border">
-                    +{template.variables.length - 3} more
-                  </Badge>
-                )}
-              </div>
-              <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
-                <span>Used {template.usageCount.toLocaleString()} times</span>
-                <span>Updated {template.lastUpdated}</span>
-              </div>
-              <div className="flex items-center gap-1">
-                <Button variant="outline" size="sm" className="flex-1 gap-1 text-foreground border-border" onClick={() => handlePreviewTemplate(template)}>
-                  <Eye className="h-3 w-3" /> Preview
-                </Button>
-                <Button variant="outline" size="sm" className="flex-1 gap-1 text-foreground border-border" onClick={() => handleEditTemplate(template)}>
-                  <Edit className="h-3 w-3" /> Edit
-                </Button>
-                <Button variant="ghost" size="icon" className="h-8 w-8 text-foreground" onClick={() => handleDuplicateTemplate(template)}>
-                  <Copy className="h-3 w-3" />
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
-        ))}
-      </div>
+     {/* Templates Grid */}
+<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+  {filteredTemplates.map(template => (
+    <Card key={template.id} className="hover:border-primary/50 transition-colors">
+      <CardHeader className="pb-2">
+        <div className="flex items-start justify-between">
+          <div className="flex items-center gap-2">
+            <div className={`h-8 w-8 rounded-full flex items-center justify-center text-white ${typeColors[template.type]}`}>
+              {typeIcons[template.type]}
+            </div>
+            <div>
+              <CardTitle className="text-sm text-foreground">{template.name}</CardTitle>
+              <p className="text-xs text-muted-foreground">{template.category}</p>
+            </div>
+          </div>
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 text-destructive hover:text-destructive/80" 
+            onClick={() => handleDeleteTemplate(template.id)}
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-3">
+        <p className="text-sm text-muted-foreground">{template.description}</p>
+
+        <div className="flex flex-wrap gap-1">
+          {template.variables.slice(0, 3).map(v => (
+            <Badge key={v} variant="outline" className="text-xs font-mono text-foreground border-border">
+              {v}
+            </Badge>
+          ))}
+          {template.variables.length > 3 && (
+            <Badge variant="outline" className="text-xs text-foreground border-border">
+              +{template.variables.length - 3} more
+            </Badge>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between text-xs text-muted-foreground pt-2 border-t">
+          <span>Used {template.usageCount.toLocaleString()} times</span>
+          <span>Updated {template.lastUpdated}</span>
+        </div>
+
+        <div className="flex items-center gap-1">
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1 gap-1 text-foreground border-border" 
+            onClick={() => handlePreviewTemplate(template)}
+          >
+            <Eye className="h-3 w-3" /> Preview
+          </Button>
+
+          <Button 
+            variant="outline" 
+            size="sm" 
+            className="flex-1 gap-1 text-foreground border-border" 
+            onClick={() => handleEditTemplate(template)}
+          >
+            <Edit className="h-3 w-3" /> Edit
+          </Button>
+
+          <Button 
+            variant="ghost" 
+            size="icon" 
+            className="h-8 w-8 text-foreground" 
+            onClick={() => handleDuplicateTemplate(template)}
+          >
+            <Copy className="h-3 w-3" />
+          </Button>
+        </div>
+      </CardContent>
+    </Card>
+  ))}
+</div>
 
       {/* --- Preview Dialog --- */}
       <Dialog open={isPreviewDialogOpen} onOpenChange={setIsPreviewDialogOpen}>
