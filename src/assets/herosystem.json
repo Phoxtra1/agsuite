@@ -1,0 +1,37 @@
+{
+  "heroSection": {
+    "id": "about-hero",
+    "title": "About Amineva Global",
+    "subtitle": "Delivering intelligent, unified solutions to empower businesses across the digital ecosystem.",
+    "backgroundImage": "/assets/images/about-hero-bg.jpg",
+    "ctaButtons": [
+      {
+        "text": "Explore Suite",
+        "url": "/suite",
+        "type": "primary"
+      },
+      {
+        "text": "Contact Us",
+        "url": "/contact",
+        "type": "secondary"
+      }
+    ],
+    "highlights": [
+      {
+        "icon": "/assets/icons/analytics.svg",
+        "title": "Data Intelligence",
+        "description": "Transform raw data into actionable insights to drive better business decisions."
+      },
+      {
+        "icon": "/assets/icons/optimization.svg",
+        "title": "Operational Excellence",
+        "description": "Streamline processes, enhance workflows, and increase efficiency across teams."
+      },
+      {
+        "icon": "/assets/icons/connected.svg",
+        "title": "Connected Ecosystem",
+        "description": "Integrate tools, platforms, and teams into one seamless experience."
+      }
+    ]
+  }
+}
