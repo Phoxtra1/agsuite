@@ -112,12 +112,15 @@ function PublicHome() {
   if (isLoading) return <AminevaLoader />;
 
   if (!isPreview() && isAuthenticated && is2FAVerifiedThisSession()) {
-    const isManager =
-      user?.role === "super_admin" || user?.role === "manager";
+    const isManager = user?.role === "super_admin" || user?.role === "manager";
     if (isManager) return <Navigate to="/suite" replace />;
   }
 
-  return <HomePage />;
+  return (
+    <Suspense fallback={<AminevaLoader />}>
+      <HomePage />
+    </Suspense>
+  );
 }
 
 /* =========================
