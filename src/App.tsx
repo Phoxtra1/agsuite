@@ -18,8 +18,8 @@ import { is2FAVerifiedThisSession } from "@/lib/stepUpAuth";
 const Landing = lazy(() => import("./pages/landing/Landing"));
 
 /* Landing Pages */
-const HomePage = lazy(() => import("./pages/landing/Home"));
-const AboutUs = lazy(() => import("./pages/landing/about/About"));
+const HomePage = lazy(() => import("./pages/HomePage"));
+const AboutUs = lazy(() => import("./pages/landing/AboutUs"));
 
 /* Suite */
 const Suite = lazy(() => import("./pages/Suite"));
