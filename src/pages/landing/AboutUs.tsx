@@ -1,6 +1,10 @@
 import { FC } from "react";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
+import heroAnimation from "./assets/heroSystem.json";
+import whoWeAreIllustration from "./assets/illustrations/systemFlow.png";
+import { CogIcon, ChartBarIcon, CheckCircleIcon, CubeIcon } from "@heroicons/react/outline";
+>>>>>>> 31e8572 (fix: correct heroSystem.json import path in AboutUs)
 
 import heroAnimation from "@/assets/hero-system.json"; 
 import whoWeAreIllustration from "@/assets/illustrations/system-flow.png";
