@@ -13,10 +13,8 @@ import { is2FAVerifiedThisSession } from "@/lib/stepUpAuth";
 import Suite from "./pages/Suite";
 import NotFound from "./pages/NotFound";
 import AboutUs from "./pages/landing/AboutUs";
-import Home from "./pages/HomePage"; // Assuming homepage component
 
-
-/* Pages */
+// Lazy-loaded pages
 const HomePage = lazy(() => import("./pages/HomePage"));
 const InviteBridge = lazy(() => import("./pages/InviteBridge"));
 const Verify2FA = lazy(() => import("./pages/auth/Verify2FA"));
@@ -26,7 +24,9 @@ const AuthCallback = lazy(() => import("./pages/suite/AuthCallback"));
 
 const queryClient = new QueryClient();
 
-/* Preview detection (unchanged) */
+/* =========================
+   Preview Detection
+   ========================= */
 const isPreview = () => {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;
@@ -38,6 +38,9 @@ const isPreview = () => {
   );
 };
 
+/* =========================
+   Loader
+   ========================= */
 function AminevaLoader() {
   return (
     <div className="min-h-screen flex items-center justify-center bg-background">
@@ -54,6 +57,9 @@ function AminevaLoader() {
   );
 }
 
+/* =========================
+   Hash Normalizer
+   ========================= */
 function HashNormalizer() {
   useEffect(() => {
     if (window.location.hash === "#" || window.location.hash === "#/") {
@@ -96,7 +102,6 @@ function PublicHome() {
 
   if (isLoading) return <AminevaLoader />;
 
-  // Auto-redirect authenticated + 2FA-verified managers to Suite
   if (!isPreview() && isAuthenticated && is2FAVerifiedThisSession()) {
     const isManager = user?.role === "super_admin" || user?.role === "manager";
     if (isManager) return <Navigate to="/suite" replace />;
@@ -110,13 +115,14 @@ function PublicHome() {
 }
 
 /* =========================
-   ROUTES
+   APP ROUTES
    ========================= */
 function AppRoutes() {
   return (
     <Routes>
-      {/* Public Homepage */}
+      {/* Public Pages */}
       <Route path="/" element={<PublicHome />} />
+      <Route path="/about-us" element={<AboutUs />} />
 
       {/* Invite / Auth */}
       <Route
@@ -127,7 +133,6 @@ function AppRoutes() {
           </Suspense>
         }
       />
-
       <Route
         path="/auth/verify-2fa"
         element={
@@ -161,26 +166,15 @@ function AppRoutes() {
         }
       />
 
-      {/* Dashboard */}
+      {/* Protected Suite */}
       <Route path="/suite/*" element={<SuiteGuard />} />
 
-      {/* Compatibility */}
+      {/* Compatibility / Redirects */}
       <Route path="/admin/*" element={<Navigate to="/suite" replace />} />
       <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
 
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
-    </Routes>
-  );
-}
-
-function App() {
-  return (
-    <Routes>
-      <Route path="/" element={<HomePage />} />        {/* Homepage */}
-      <Route path="/about-us" element={<AboutUs />} />{/* About Us page */}
-      <Route path="/suite" element={<Suite />} />
-      <Route path="*" element={<NotFound />} />       {/* 404 page */}
     </Routes>
   );
 }
