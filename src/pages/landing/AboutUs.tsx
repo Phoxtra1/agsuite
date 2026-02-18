@@ -3,17 +3,7 @@ import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 import heroAnimation from "./assets/heroSystem.json";
 import whoWeAreIllustration from "./assets/illustration/systemFlow.png";
-import { CogIcon, ChartBarIcon, CheckCircleIcon, CubeIcon } from "@heroicons/react/outline";
-
-import heroAnimation from "@/assets/hero-system.json"; 
-import whoWeAreIllustration from "@/assets/illustrations/system-flow.png";
-
-import {
-  CogIcon,
-  ChartBarIcon,
-  CheckCircleIcon,
-  CubeIcon,
-} from "@heroicons/react/24/outline";
+import { CogIcon, ChartBarIcon, CheckCircleIcon, CubeIcon } from "@heroicons/react/24/outline";
 
 interface Feature {
   icon: FC<{ className?: string }>;
@@ -155,9 +145,7 @@ const About: FC = () => {
               className="p-6 border rounded-lg text-center shadow hover:shadow-lg"
             >
               <feature.icon className="h-12 w-12 text-blue-600 mx-auto mb-4" />
-              <h3 className="text-xl font-semibold mb-2">
-                {feature.title}
-              </h3>
+              <h3 className="text-xl font-semibold mb-2">{feature.title}</h3>
               <p className="text-gray-600">{feature.description}</p>
             </motion.div>
           ))}
@@ -166,10 +154,7 @@ const About: FC = () => {
 
       {/* Who We Serve */}
       <section className="max-w-7xl mx-auto py-20 px-6">
-        <h2 className="text-3xl font-semibold mb-12 text-center">
-          Who We Serve
-        </h2>
-
+        <h2 className="text-3xl font-semibold mb-12 text-center">Who We Serve</h2>
         <div className="grid md:grid-cols-4 gap-8">
           {audiences.map((aud) => (
             <div
@@ -185,9 +170,7 @@ const About: FC = () => {
 
       {/* Principles */}
       <section className="bg-gray-50 py-20 px-6 text-center">
-        <h2 className="text-3xl font-semibold mb-10">
-          Principles & Standards
-        </h2>
+        <h2 className="text-3xl font-semibold mb-10">Principles & Standards</h2>
         <ul className="max-w-4xl mx-auto space-y-4 text-gray-700">
           {principles.map((p) => (
             <li key={p}>{p}</li>
