@@ -1,4 +1,4 @@
-import { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
@@ -10,12 +10,12 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { is2FAVerifiedThisSession } from "@/lib/stepUpAuth";
 
-import Suite from "./pages/Suite";
-import NotFound from "./pages/NotFound";
-import AboutUs from "./pages/landing/AboutUs";
-
-// Lazy-loaded pages
+/* Lazy-loaded pages */
 const HomePage = lazy(() => import("./pages/HomePage"));
+const AboutUs = lazy(() => import("./pages/landing/AboutUs"));
+const Suite = lazy(() => import("./pages/Suite"));
+const NotFound = lazy(() => import("./pages/NotFound"));
+
 const InviteBridge = lazy(() => import("./pages/InviteBridge"));
 const Verify2FA = lazy(() => import("./pages/auth/Verify2FA"));
 const Recovery = lazy(() => import("./pages/auth/Recovery"));
@@ -24,42 +24,31 @@ const AuthCallback = lazy(() => import("./pages/suite/AuthCallback"));
 
 const queryClient = new QueryClient();
 
-/* =========================
-   Preview Detection
-   ========================= */
+/* Preview Detection */
 const isPreview = () => {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;
-  return (
-    host.includes("lovable.app") ||
-    host.includes("lovableproject.com") ||
-    host.includes("localhost") ||
-    host.includes("127.0.0.1")
+  return ["lovable.app", "lovableproject.com", "localhost", "127.0.0.1"].some((h) =>
+    host.includes(h)
   );
 };
 
-/* =========================
-   Loader
-   ========================= */
-function AminevaLoader() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-background">
-      <div className="flex flex-col items-center gap-4">
-        <div className="relative">
-          <div className="w-12 h-12 rounded-full border-4 border-accent/20 animate-pulse" />
-          <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-t-accent animate-spin" />
-        </div>
-        <p className="text-sm text-muted-foreground animate-pulse">
-          Loading Amineva Global...
-        </p>
+/* Loader */
+const AminevaLoader = () => (
+  <div className="min-h-screen flex items-center justify-center bg-background">
+    <div className="flex flex-col items-center gap-4">
+      <div className="relative">
+        <div className="w-12 h-12 rounded-full border-4 border-accent/20 animate-pulse" />
+        <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-t-accent animate-spin" />
       </div>
+      <p className="text-sm text-muted-foreground animate-pulse">
+        Loading Amineva Global...
+      </p>
     </div>
-  );
-}
+  </div>
+);
 
-/* =========================
-   Hash Normalizer
-   ========================= */
+/* Hash Normalizer */
 function HashNormalizer() {
   useEffect(() => {
     if (window.location.hash === "#" || window.location.hash === "#/") {
@@ -73,9 +62,7 @@ function HashNormalizer() {
   return null;
 }
 
-/* =========================
-   SUITE GUARD
-   ========================= */
+/* Suite Guard */
 function SuiteGuard() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
@@ -94,9 +81,7 @@ function SuiteGuard() {
   return <Suite />;
 }
 
-/* =========================
-   PUBLIC HOME
-   ========================= */
+/* Public Home */
 function PublicHome() {
   const { isAuthenticated, isLoading, user } = useAuth();
 
@@ -114,74 +99,37 @@ function PublicHome() {
   );
 }
 
-/* =========================
-   APP ROUTES
-   ========================= */
+/* App Routes */
 function AppRoutes() {
   return (
-    <Routes>
-      {/* Public Pages */}
-      <Route path="/" element={<PublicHome />} />
-      <Route path="/about-us" element={<AboutUs />} />
+    <Suspense fallback={<AminevaLoader />}>
+      <Routes>
+        {/* Public Pages */}
+        <Route path="/" element={<PublicHome />} />
+        <Route path="/about-us" element={<AboutUs />} />
 
-      {/* Invite / Auth */}
-      <Route
-        path="/invite/:product"
-        element={
-          <Suspense fallback={<AminevaLoader />}>
-            <InviteBridge />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/auth/verify-2fa"
-        element={
-          <Suspense fallback={<AminevaLoader />}>
-            <Verify2FA />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/auth/recovery"
-        element={
-          <Suspense fallback={<AminevaLoader />}>
-            <Recovery />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/auth/reset-password"
-        element={
-          <Suspense fallback={<AminevaLoader />}>
-            <ResetPassword />
-          </Suspense>
-        }
-      />
-      <Route
-        path="/auth/callback"
-        element={
-          <Suspense fallback={<AminevaLoader />}>
-            <AuthCallback />
-          </Suspense>
-        }
-      />
+        {/* Invite / Auth */}
+        <Route path="/invite/:product" element={<InviteBridge />} />
+        <Route path="/auth/verify-2fa" element={<Verify2FA />} />
+        <Route path="/auth/recovery" element={<Recovery />} />
+        <Route path="/auth/reset-password" element={<ResetPassword />} />
+        <Route path="/auth/callback" element={<AuthCallback />} />
 
-      {/* Protected Suite */}
-      <Route path="/suite/*" element={<SuiteGuard />} />
+        {/* Protected Suite */}
+        <Route path="/suite/*" element={<SuiteGuard />} />
 
-      {/* Compatibility / Redirects */}
-      <Route path="/admin/*" element={<Navigate to="/suite" replace />} />
-      <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
+        {/* Compatibility / Redirects */}
+        <Route path="/admin/*" element={<Navigate to="/suite" replace />} />
+        <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
 
-      {/* 404 */}
-      <Route path="*" element={<NotFound />} />
-    </Routes>
+        {/* 404 */}
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </Suspense>
   );
 }
 
-/* =========================
-   APP ROOT
-   ========================= */
+/* App Root */
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
