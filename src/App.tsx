@@ -12,6 +12,9 @@ import { is2FAVerifiedThisSession } from "@/lib/stepUpAuth";
 
 import Suite from "./pages/Suite";
 import NotFound from "./pages/NotFound";
+import AboutUs from "./pages/landing/AboutUs";
+import Home from "./pages/HomePage"; // Assuming homepage component
+
 
 /* Pages */
 const HomePage = lazy(() => import("./pages/HomePage"));
@@ -167,6 +170,17 @@ function AppRoutes() {
 
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
+    </Routes>
+  );
+}
+
+function App() {
+  return (
+    <Routes>
+      <Route path="/" element={<HomePage />} />        {/* Homepage */}
+      <Route path="/about-us" element={<AboutUs />} />{/* About Us page */}
+      <Route path="/suite" element={<Suite />} />
+      <Route path="*" element={<NotFound />} />       {/* 404 page */}
     </Routes>
   );
 }
