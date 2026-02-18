@@ -10,30 +10,46 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { is2FAVerifiedThisSession } from "@/lib/stepUpAuth";
 
-/* Lazy-loaded pages */
-const HomePage = lazy(() => import("./pages/HomePage"));
-const AboutUs = lazy(() => import("./pages/landing/AboutUs"));
-const Suite = lazy(() => import("./pages/Suite"));
-const NotFound = lazy(() => import("./pages/NotFound"));
+/* =========================
+   LAZY PAGES (TSX ONLY)
+   ========================= */
 
+/* Landing Controller */
+const Landing = lazy(() => import("./pages/landing/Landing"));
+
+/* Landing Pages */
+const HomePage = lazy(() => import("./pages/landing/Home"));
+const AboutUs = lazy(() => import("./pages/landing/about/About"));
+
+/* Suite */
+const Suite = lazy(() => import("./pages/Suite"));
+
+/* Auth / Utility */
 const InviteBridge = lazy(() => import("./pages/InviteBridge"));
 const Verify2FA = lazy(() => import("./pages/auth/Verify2FA"));
 const Recovery = lazy(() => import("./pages/auth/Recovery"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const AuthCallback = lazy(() => import("./pages/suite/AuthCallback"));
 
+/* Fallback */
+const NotFound = lazy(() => import("./pages/NotFound"));
+
 const queryClient = new QueryClient();
 
-/* Preview Detection */
-const isPreview = () => {
+/* =========================
+   PREVIEW DETECTION
+   ========================= */
+const isPreview = (): boolean => {
   if (typeof window === "undefined") return false;
   const host = window.location.hostname;
-  return ["lovable.app", "lovableproject.com", "localhost", "127.0.0.1"].some((h) =>
+  return ["lovable.app", "lovableproject.com", "localhost", "127.0.0.1"].some(h =>
     host.includes(h)
   );
 };
 
-/* Loader */
+/* =========================
+   LOADER
+   ========================= */
 const AminevaLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
     <div className="flex flex-col items-center gap-4">
@@ -42,13 +58,15 @@ const AminevaLoader = () => (
         <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-t-accent animate-spin" />
       </div>
       <p className="text-sm text-muted-foreground animate-pulse">
-        Loading Amineva Global...
+        Loading Amineva Global…
       </p>
     </div>
   </div>
 );
 
-/* Hash Normalizer */
+/* =========================
+   HASH NORMALIZER
+   ========================= */
 function HashNormalizer() {
   useEffect(() => {
     if (window.location.hash === "#" || window.location.hash === "#/") {
@@ -62,7 +80,9 @@ function HashNormalizer() {
   return null;
 }
 
-/* Suite Guard */
+/* =========================
+   SUITE GUARD
+   ========================= */
 function SuiteGuard() {
   const { isAuthenticated, isLoading, user } = useAuth();
   const location = useLocation();
@@ -75,55 +95,62 @@ function SuiteGuard() {
     return <Navigate to="/" replace state={{ from: location.pathname }} />;
   }
 
-  const isManager = user?.role === "super_admin" || user?.role === "manager";
+  const isManager =
+    user?.role === "super_admin" || user?.role === "manager";
+
   if (!isManager) return <Navigate to="/" replace />;
 
   return <Suite />;
 }
 
-/* Public Home */
+/* =========================
+   PUBLIC HOME CONTROLLER
+   ========================= */
 function PublicHome() {
   const { isAuthenticated, isLoading, user } = useAuth();
 
   if (isLoading) return <AminevaLoader />;
 
   if (!isPreview() && isAuthenticated && is2FAVerifiedThisSession()) {
-    const isManager = user?.role === "super_admin" || user?.role === "manager";
+    const isManager =
+      user?.role === "super_admin" || user?.role === "manager";
     if (isManager) return <Navigate to="/suite" replace />;
   }
 
-  return (
-    <Suspense fallback={<AminevaLoader />}>
-      <HomePage />
-    </Suspense>
-  );
+  return <HomePage />;
 }
 
-/* App Routes */
+/* =========================
+   ROUTES (SLC-CORRECT)
+   ========================= */
 function AppRoutes() {
   return (
     <Suspense fallback={<AminevaLoader />}>
       <Routes>
-        {/* Public Pages */}
-        <Route path="/" element={<PublicHome />} />
-        <Route path="/about-us" element={<AboutUs />} />
 
-        {/* Invite / Auth */}
+        {/* LANDING (SINGLE CONTROLLER) */}
+        <Route path="/" element={<Landing />}>
+          <Route index element={<PublicHome />} />
+          <Route path="about-us" element={<AboutUs />} />
+        </Route>
+
+        {/* AUTH / INVITE */}
         <Route path="/invite/:product" element={<InviteBridge />} />
         <Route path="/auth/verify-2fa" element={<Verify2FA />} />
         <Route path="/auth/recovery" element={<Recovery />} />
         <Route path="/auth/reset-password" element={<ResetPassword />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
 
-        {/* Protected Suite */}
+        {/* SUITE */}
         <Route path="/suite/*" element={<SuiteGuard />} />
 
-        {/* Compatibility / Redirects */}
+        {/* LEGACY REDIRECTS */}
         <Route path="/admin/*" element={<Navigate to="/suite" replace />} />
         <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
 
         {/* 404 */}
         <Route path="*" element={<NotFound />} />
+
       </Routes>
     </Suspense>
   );
