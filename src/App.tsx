@@ -129,7 +129,9 @@ function AppRoutes() {
   );
 }
 
-/* App Root */
+/* =========================
+   APP ROOT
+   ========================= */
 export default function App() {
   return (
     <QueryClientProvider client={queryClient}>
