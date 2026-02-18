@@ -2,8 +2,8 @@ import { FC } from "react";
 import { motion } from "framer-motion";
 import Lottie from "lottie-react";
 
-import heroAnimation from "./assets/animations/heroSystem.json";
-import whoWeAreIllustration from "./assets/illustrations/systemFlow.png";
+import heroAnimation from "@/assets/hero-system.json"; 
+import whoWeAreIllustration from "@/assets/illustrations/system-flow.png";
 
 import {
   CogIcon,
