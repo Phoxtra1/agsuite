@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { handleComms } from "@/core/coms";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { 
@@ -84,6 +85,19 @@ export function ComsSystem() {
   }) => {
     if (!message.recipients.length) return toast.error('No recipients');
     const now = new Date().toISOString();
+
+  const result = handleComs({
+  channel: "email",
+  from: senderEmail,
+  subject,
+  message: body,
+});
+    
+if (result.decision.action === "auto-reply") {
+  // send result.response.reply automatically
+} else {
+  // route to admin inbox / escalation queue
+}
 
     // Add to logs
     const newLogs: LogEntry[] = message.recipients.map((r, idx) => ({
