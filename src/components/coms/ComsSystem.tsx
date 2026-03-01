@@ -1,26 +1,24 @@
 import React, { useState } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
 import { handleComms } from "@/core/coms";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
-import { 
+import {
   Inbox, Send, Megaphone, FileText, Activity, Clock, TrendingUp, Plus, Settings,
-  CheckCircle, XCircle, AlertTriangle, Search, Mail, Bell, MessageSquare, Users,
-  Bold, Italic, Underline, List, Link2, Image, X
+  CheckCircle, XCircle, AlertTriangle, Mail, Bell, MessageSquare,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UnifiedInbox } from './inbox/UnifiedInbox';
 import { CampaignsPanel } from './campaigns/CampaignsPanel';
 import { TemplatesPanel } from './templates/TemplatesPanel';
+import { InAppNotificationsPanel } from './notifications/InAppNotificationsPanel';
+import { ComsLogsPanel } from './logs/ComsLogsPanel';
+import { ComposeMessageModal } from './compose/ComposeMessageModal';
+import { ComsSettingsModal } from './settings/ComsSettingsModal';
 
-// ======== LOGS & NOTIFICATIONS STORAGE ========
-interface LogEntry {
+// ======== TYPES ========
+export interface LogEntry {
   id: string;
   timestamp: string;
   event: 'delivered' | 'bounced' | 'failed' | 'queued' | 'opened' | 'clicked';
@@ -32,7 +30,7 @@ interface LogEntry {
   details?: string;
 }
 
-interface InAppNotification {
+export interface InAppNotification {
   id: string;
   title: string;
   message: string;
@@ -42,36 +40,18 @@ interface InAppNotification {
   isRead: boolean;
 }
 
-// start empty
-const initialLogs: LogEntry[] = [];
-const initialNotifications: InAppNotification[] = [];
-
-// ======== EVENT ICONS ========
-const eventConfig = {
-  delivered: { icon: CheckCircle, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
-  opened: { icon: Mail, color: 'text-blue-500', bg: 'bg-blue-500/10' },
-  clicked: { icon: Activity, color: 'text-purple-500', bg: 'bg-purple-500/10' },
-  bounced: { icon: AlertTriangle, color: 'text-amber-500', bg: 'bg-amber-500/10' },
-  failed: { icon: XCircle, color: 'text-destructive', bg: 'bg-destructive/10' },
-  queued: { icon: Clock, color: 'text-muted-foreground', bg: 'bg-muted' },
-};
-
-const channelIcons = { email: Mail, 'in-app': Bell, sms: MessageSquare };
-
 // ======== MAIN COMS SYSTEM ========
 export function ComsSystem() {
-  const [logs, setLogs] = useState<LogEntry[]>(initialLogs);
-  const [notifications, setNotifications] = useState<InAppNotification[]>(initialNotifications);
-
+  const [logs, setLogs] = useState<LogEntry[]>([]);
+  const [notifications, setNotifications] = useState<InAppNotification[]>([]);
   const [composeOpen, setComposeOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
-  // stats dynamic
   const comsStats = {
     totalMessages: logs.length,
     unreadMessages: notifications.filter(n => !n.isRead).length,
     pendingReplies: logs.filter(l => l.event === 'queued').length,
-    activeCampaigns: 0, // can be connected later
+    activeCampaigns: 0,
     sentToday: logs.filter(l => new Date(l.timestamp).toDateString() === new Date().toDateString()).length,
     deliveryRate: logs.length ? Math.round((logs.filter(l => l.event === 'delivered').length / logs.length) * 100) : 0,
   };
@@ -86,44 +66,43 @@ export function ComsSystem() {
     if (!message.recipients.length) return toast.error('No recipients');
     const now = new Date().toISOString();
 
-  const result = handleComs({
-  channel: "email",
-  from: senderEmail,
-  subject,
-  message: body,
-});
-    
-if (result.decision.action === "auto-reply") {
-  // send result.response.reply automatically
-} else {
-  // route to admin inbox / escalation queue
-}
+    // Run through Odeneho AI pipeline
+    const result = handleComms({
+      channel: "email",
+      from: message.recipients[0],
+      subject: message.subject,
+      message: message.content,
+    });
+
+    if (result.decision.action === "auto-reply") {
+      toast.info(`AI auto-reply: ${result.response.reply.slice(0, 80)}…`);
+    }
 
     // Add to logs
     const newLogs: LogEntry[] = message.recipients.map((r, idx) => ({
       id: `log-${Date.now()}-${idx}`,
       timestamp: now,
-      event: 'queued',
+      event: 'queued' as const,
       channel: message.channel,
       recipient: r,
       subject: message.subject,
       sourceApp: 'ComsSystem',
-      messageType: 'transactional',
+      messageType: 'transactional' as const,
     }));
     setLogs(prev => [...newLogs, ...prev]);
 
     // Add to notifications if in-app
     if (message.channel === 'in-app') {
-      const newNotifications: InAppNotification[] = message.recipients.map((r, idx) => ({
+      const newNotifs: InAppNotification[] = message.recipients.map((r, idx) => ({
         id: `notif-${Date.now()}-${idx}`,
         title: message.subject,
         message: message.content,
-        type: 'info',
+        type: 'info' as const,
         sourceApp: 'ComsSystem',
         createdAt: now,
         isRead: false,
       }));
-      setNotifications(prev => [...newNotifications, ...prev]);
+      setNotifications(prev => [...newNotifs, ...prev]);
     }
 
     toast.success('Message queued for delivery');
@@ -171,8 +150,8 @@ if (result.decision.action === "auto-reply") {
                 <p className="text-sm text-muted-foreground">Pending Replies</p>
                 <p className="text-2xl font-bold text-foreground">{comsStats.pendingReplies}</p>
               </div>
-              <div className="h-10 w-10 rounded-full bg-accent flex items-center justify-center">
-                <Clock className="h-5 w-5 text-accent-foreground" />
+              <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center">
+                <Clock className="h-5 w-5 text-accent" />
               </div>
             </div>
           </CardContent>
@@ -232,7 +211,6 @@ if (result.decision.action === "auto-reply") {
         </TabsList>
         <TabsContent value="inbox"><UnifiedInbox /></TabsContent>
         <TabsContent value="notifications">
-          {/* pass dynamic notifications */}
           <InAppNotificationsPanel notifications={notifications} setNotifications={setNotifications} />
         </TabsContent>
         <TabsContent value="campaigns"><CampaignsPanel /></TabsContent>
@@ -242,7 +220,7 @@ if (result.decision.action === "auto-reply") {
         </TabsContent>
       </Tabs>
 
-      <ComposeMessageModal open={composeOpen} onOpenChange={setComposeOpen} onSend={handleSendMessage} />
+      <ComposeMessageModal open={composeOpen} onOpenChange={setComposeOpen} />
       <ComsSettingsModal open={settingsOpen} onOpenChange={setSettingsOpen} />
     </div>
   );

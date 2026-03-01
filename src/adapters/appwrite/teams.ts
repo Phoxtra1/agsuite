@@ -1,14 +1,15 @@
 // src/adapters/appwrite/teams.ts
-// PURPOSE: Team & membership management via Appwrite Teams API
+import { appwriteTeams } from "@/lib/appwrite";
+import type { TeamsAdapter } from "@/core/backend/teams";
 
-import { teams as appwriteTeams } from "@/lib/appwrite";
-
-export const teams = {
+export const teams: TeamsAdapter = {
   async inviteMember(email: string, role: string) {
     await appwriteTeams.createMembership(
       import.meta.env.VITE_APPWRITE_TEAM_ID,
-      email,
       [role],
+      email,
+      undefined,
+      undefined,
       `${window.location.origin}/invite`
     );
   },

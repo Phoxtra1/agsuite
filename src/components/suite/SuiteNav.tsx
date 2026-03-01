@@ -13,10 +13,10 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Sun, Moon, LogOut, User, Settings, LayoutDashboard, Package, HelpCircle, Workflow, Terminal, Megaphone } from 'lucide-react';
+import { Sun, Moon, LogOut, User, Settings, LayoutDashboard, Package, HelpCircle, Workflow, Terminal, Megaphone, Database } from 'lucide-react';
 import amvLogo from '@/assets/amv_global_logo.png';
 
-type TabView = 'overview' | 'products' | 'why' | 'how' | 'console' | 'coms' | 'profile' | 'settings';
+type TabView = 'overview' | 'products' | 'why' | 'how' | 'console' | 'coms' | 'acs' | 'profile' | 'settings';
 
 interface SuiteNavProps {
   currentTab: TabView;
@@ -109,6 +109,16 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
             >
               <Megaphone className="h-4 w-4" />
               <span className="text-sm">ComsSystem</span>
+            </Button>
+            <Button
+              variant="ghost"
+              onClick={() => onTabChange('acs')}
+              className={`w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+                currentTab === 'acs' ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : ''
+              }`}
+            >
+              <Database className="h-4 w-4" />
+              <span className="text-sm">ACS</span>
             </Button>
           </>
         )}

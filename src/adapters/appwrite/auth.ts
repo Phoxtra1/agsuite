@@ -1,11 +1,10 @@
 // src/adapters/appwrite/auth.ts
-// PURPOSE: Appwrite authentication adapter for Amineva Suite
+import { account, ID } from "@/lib/appwrite";
+import type { AuthAdapter } from "@/core/backend/auth";
 
-import { account } from "@/lib/appwrite"; // ← use your existing Appwrite account instance
-
-export const auth = {
+export const auth: AuthAdapter = {
   async login(email: string, password: string) {
-    return await account.createEmailSession(email, password);
+    return await account.createEmailPasswordSession(email, password);
   },
 
   async logout() {
@@ -21,11 +20,6 @@ export const auth = {
   },
 
   async register(email: string, password: string, name?: string) {
-    return await account.create(
-      "unique()",
-      email,
-      password,
-      name
-    );
+    return await account.create(ID.unique(), email, password, name);
   },
 };
