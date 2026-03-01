@@ -1,11 +1,11 @@
-import { ComsMessage, ComsResponse } from "../../types";
+// src/adapters/appwrite/coms.ts
+import type { CommsMessage, CommsResponse } from "@/core/coms/types";
 
-export async function sendMessage(message: ComsMessage): Promise<ComsResponse> {
-    // Implement Appwrite SDK logic here
-    return { success: true, message: "Sent via Appwrite", data: message };
+export async function sendMessage(message: CommsMessage): Promise<CommsResponse> {
+  // Appwrite SDK logic placeholder
+  return { success: true, message: "Sent via Appwrite", data: message };
 }
 
-export async function receiveMessages(): Promise<ComsResponse> {
-    // Fetch messages using Appwrite SDK
-    return { success: true, data: [] };
+export async function receiveMessages(): Promise<CommsResponse> {
+  return { success: true, data: [] };
 }

@@ -1,9 +1,8 @@
 // src/adapters/appwrite/users.ts
-// PURPOSE: User profile adapter using Appwrite
+import { account } from "@/lib/appwrite";
+import type { UsersAdapter } from "@/core/backend/users";
 
-import { account, users as appwriteUsers } from "@/lib/appwrite";
-
-export const users = {
+export const users: UsersAdapter = {
   async getCurrentUser() {
     try {
       return await account.get();
@@ -19,11 +18,5 @@ export const users = {
     if (data.password) {
       await account.updatePassword(data.password);
     }
-  },
-
-  async listUsers() {
-    // ⚠️ Admin-only (Console usage)
-    const result = await appwriteUsers.list();
-    return result.users;
   },
 };
