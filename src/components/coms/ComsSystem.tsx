@@ -13,7 +13,7 @@ import { UnifiedInbox } from './inbox/UnifiedInbox';
 import { CampaignsPanel } from './campaigns/CampaignsPanel';
 import { TemplatesPanel } from './templates/TemplatesPanel';
 import { InAppNotificationsPanel } from './notifications/InAppNotificationsPanel';
-import { ComsLogsPanel } from './logs/ComsLogsPanel';
+import { ComsLogsPanel } from './ComsLogsPanel';
 import { ComposeMessageModal } from './compose/ComposeMessageModal';
 import { ComsSettingsModal } from './settings/ComsSettingsModal';
 

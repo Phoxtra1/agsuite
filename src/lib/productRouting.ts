@@ -1,8 +1,5 @@
 /**
  * Product Routing Configuration
- * 
- * Defines external product URLs for routing after authentication.
- * Suite only routes users - it does NOT manage permissions.
  */
 
 export interface ProductRouteConfig {
@@ -14,22 +11,12 @@ export interface ProductRouteConfig {
 export const PRODUCT_ROUTES: Record<string, ProductRouteConfig> = {
   agstock: {
     baseUrl: 'https://stock.amineva.com',
-    defaultPath: '/shop', // Shop Owner entry
+    defaultPath: '/shop',
     requiresCountry: true,
   },
   agis: {
     baseUrl: 'https://app.amineva.com',
-    defaultPath: '/dashboard', // AGIS Client dashboard entry
-    requiresCountry: false,
-  },
-  hub: {
-    baseUrl: 'https://hub.amineva.com',
-    defaultPath: '/',
-    requiresCountry: false,
-  },
-  ops: {
-    baseUrl: 'https://ops.amineva.com',
-    defaultPath: '/client',
+    defaultPath: '/dashboard',
     requiresCountry: false,
   },
   amniva: {
@@ -37,32 +24,24 @@ export const PRODUCT_ROUTES: Record<string, ProductRouteConfig> = {
     defaultPath: '/dashboard',
     requiresCountry: false,
   },
+  agroclimate: {
+    baseUrl: 'https://agro.amineva.com',
+    defaultPath: '/',
+    requiresCountry: false,
+  },
 };
 
-/**
- * Get the full redirect URL for a product
- */
 export function getProductRedirectUrl(productKey: string, path?: string): string {
   const config = PRODUCT_ROUTES[productKey];
-  if (!config) {
-    return '/suite'; // Fallback to suite dashboard
-  }
-  
+  if (!config) return '/suite';
   const targetPath = path || config.defaultPath;
   return `${config.baseUrl}${targetPath}`;
 }
 
-/**
- * Check if a product requires country selection
- */
 export function productRequiresCountry(productKey: string): boolean {
   return PRODUCT_ROUTES[productKey]?.requiresCountry ?? false;
 }
 
-/**
- * Determine if a user should be routed to Suite dashboard
- * Only managers/super_admins access Suite dashboard
- */
 export function shouldRouteToSuite(userRole?: string): boolean {
   return userRole === 'super_admin' || userRole === 'manager';
 }

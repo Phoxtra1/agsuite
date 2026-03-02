@@ -6,9 +6,6 @@ export type ProductStatus =
   | "offline"
   | "coming_soon";
 
-/**
- * Base product data for storage & sync
- */
 export type ProductData = {
   id: string;
   name: string;
@@ -24,16 +21,10 @@ export type ProductData = {
   allowedRoles?: UserRole[];
 };
 
-/**
- * Product with icon (UI layer)
- */
 export interface Product extends ProductData {
   icon?: React.ReactNode;
 }
 
-/**
- * Status helpers
- */
 export const STATUS_LABELS: Record<ProductStatus, string> = {
   live: "Live",
   restricted: "Restricted",
@@ -48,43 +39,33 @@ export const STATUS_COLORS: Record<ProductStatus, string> = {
   coming_soon: "bg-accent/20 text-accent-foreground",
 };
 
-/**
- * Category structure (Homepage + Suite shared)
- */
 export interface ProductCategory {
   id: string;
   name: string;
   order: number;
-  products: string[]; // product IDs
+  products: string[];
 }
 
 /**
- * ✅ FINAL categories (NO HUB)
- * Software / Web apps only
+ * Updated categories — no "Inventory & Sales Management", AminevaOps replaced with AgroClimate
  */
 export const DEFAULT_CATEGORIES: ProductCategory[] = [
   {
-    id: "inventory",
-    name: "Inventory & Sales Management",
-    order: 1,
-    products: ["agstock"],
-  },
-  {
     id: "data-intelligence",
     name: "Data Intelligence",
-    order: 2,
-    products: ["agis"],
+    order: 1,
+    products: ["agstock", "agis"],
   },
   {
-    id: "trust-forecasting",
-    name: "Trust & Forecasting",
-    order: 3,
+    id: "trend-forecasting",
+    name: "Trend & Forecasting",
+    order: 2,
     products: ["amniva"],
   },
   {
-    id: "service-operations",
-    name: "Service Operations",
-    order: 4,
-    products: ["ops"],
+    id: "smart-agriculture",
+    name: "Smart Agriculture",
+    order: 3,
+    products: ["agroclimate"],
   },
 ];
