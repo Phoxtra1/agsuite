@@ -2,7 +2,6 @@ import type { ProductData } from "@/types/product";
 
 /**
  * Default products for Amineva Suite (seed only)
- * NOTE: Defaults should NOT force-restore deleted products.
  */
 
 const DEFAULT_PRODUCTS: ProductData[] = [
@@ -14,8 +13,8 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     status: "live",
     url: "https://stock.amineva.com",
     adminUrl: "https://stock.amineva.com/admin",
-    category: "Inventory & Sales Management",
-    order: 4,
+    category: "Data Intelligence",
+    order: 1,
     isPublic: false,
     isExternal: true,
     allowedRoles: ["super_admin", "staff", "customer"],
@@ -38,26 +37,26 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     id: "amniva",
     name: "Amniva",
     shortName: "Amniva",
-    description: "Identity verification and authentication services",
+    description: "Market forecast, verification, predictions & social community",
     status: "offline",
     url: "https://amniva.io",
     adminUrl: "https://amniva.io/admin",
-    category: "Decision System",
-    order: 5,
+    category: "Trend & Forecasting",
+    order: 3,
     isPublic: false,
     isExternal: true,
     allowedRoles: ["super_admin"],
   },
   {
-    id: "ops",
-    name: "AminevaOps",
-    shortName: "Ops",
-    description: "Service operations management and workflow automation",
+    id: "agroclimate",
+    name: "AgroClimate",
+    shortName: "Agro",
+    description: "Smart farming with weather, AI assistant & agro alerts",
     status: "coming_soon",
-    url: "https://ops.amineva.com",
-    adminUrl: "https://ops.amineva.com/admin",
-    category: "Service Operation",
-    order: 3,
+    url: "https://agro.amineva.com",
+    adminUrl: "https://agro.amineva.com/admin",
+    category: "Smart Agriculture",
+    order: 4,
     isPublic: false,
     isExternal: true,
     allowedRoles: ["super_admin", "staff"],
@@ -66,16 +65,9 @@ const DEFAULT_PRODUCTS: ProductData[] = [
 
 const STORAGE_KEY = "amineva_products";
 
-/**
- * Load products from localStorage.
- * - First run: seed defaults
- * - If corrupted / legacy schema: reset to defaults
- * - IMPORTANT: Do NOT force-restore "required" products (supports real deletes)
- */
 export function loadProducts(): ProductData[] {
   const stored = localStorage.getItem(STORAGE_KEY);
 
-  // First run → store defaults
   if (!stored) {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PRODUCTS));
     window.dispatchEvent(new Event("productsUpdated"));
@@ -85,7 +77,6 @@ export function loadProducts(): ProductData[] {
   try {
     const parsed = JSON.parse(stored);
 
-    // Must be an array
     if (!Array.isArray(parsed)) {
       localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PRODUCTS));
       window.dispatchEvent(new Event("productsUpdated"));
@@ -94,8 +85,8 @@ export function loadProducts(): ProductData[] {
 
     const products = parsed as ProductData[];
 
-    // Detect old/legacy IDs (if present, reset to clean defaults)
-    const legacyIds = new Set(["ag-main", "ag-hub", "ag-app", "ag-ops", "ag-stock", "hub"]);
+    // Detect old/legacy IDs or removed products — reset
+    const legacyIds = new Set(["ag-main", "ag-hub", "ag-app", "ag-ops", "ag-stock", "hub", "ops"]);
     const hasLegacy = products.some((p) => legacyIds.has(String(p?.id || "")));
 
     if (hasLegacy) {
@@ -104,8 +95,6 @@ export function loadProducts(): ProductData[] {
       return DEFAULT_PRODUCTS;
     }
 
-    // If user intentionally deleted everything, respect it
-    // (return [] instead of restoring defaults)
     return products;
   } catch {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PRODUCTS));
@@ -114,17 +103,11 @@ export function loadProducts(): ProductData[] {
   }
 }
 
-/**
- * Persist products to storage
- */
 export function saveProducts(products: ProductData[]) {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
   window.dispatchEvent(new Event("productsUpdated"));
 }
 
-/**
- * Get default products (for reset)
- */
 export function getDefaultProducts(): ProductData[] {
   return [...DEFAULT_PRODUCTS];
 }

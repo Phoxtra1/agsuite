@@ -34,7 +34,7 @@ export function getProductIcon(productId: ProductData["id"] | string) {
     return IconAGIS;
   }
 
-  if (id.includes("ops")) {
+  if (id.includes("agroclimate") || id.includes("agro")) {
     return IconAminevaOps;
   }
 

@@ -415,49 +415,35 @@ export default function HomePage() {
         <div className="w-full max-w-xl">
           {/* TOP RIGHT CTAs */}
           <div className="w-full flex justify-end gap-8 text-base font-semibold text-muted-foreground">
-            <button type="button" className="hover:text-foreground transition cursor-pointer">
-              About Us
-            </button>
-
             <div className="relative">
               <button
                 type="button"
                 className="hover:text-foreground transition cursor-pointer"
                 onClick={() => setProductsMenuOpen((v) => !v)}
               >
-                Products
+                Apps
               </button>
-
               {productsMenuOpen && (
                 <div className="absolute right-0 mt-2 w-56 rounded-xl border border-border bg-card shadow-lg overflow-hidden z-20">
-                  {["AGStock", "AGIS", "Amniva", "AminevaOps"].map((label) => (
-                    <button
-                      key={label}
-                      type="button"
-                      className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent/10 transition"
-                      onClick={() => setProductsMenuOpen(false)}
-                    >
-                      {label}
-                    </button>
-                  ))}
+                  <a href="https://stock.amineva.com" target="_blank" rel="noreferrer" className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent/10 transition flex items-center justify-between">
+                    AGStock <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                  </a>
+                  <a href="https://agro.amineva.com" target="_blank" rel="noreferrer" className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-accent/10 transition flex items-center justify-between">
+                    AgroClimate <ExternalLink className="w-3 h-3 text-muted-foreground" />
+                  </a>
                 </div>
               )}
             </div>
 
-            <a
-              href="https://hub.amineva.com"
-              target="_blank"
-              rel="noreferrer"
-              className="hover:text-foreground transition"
-            >
-              Insights &amp; Reports
-            </a>
+            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>
+              About Us
+            </button>
 
-            <button type="button" className="hover:text-foreground transition cursor-pointer">
+            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>
               FAQs
             </button>
 
-            <button type="button" className="hover:text-foreground transition cursor-pointer">
+            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>
               Support
             </button>
           </div>
@@ -623,10 +609,10 @@ export default function HomePage() {
           <span>© {new Date().getFullYear()} Amineva Global. All Rights Reserved.</span>
 
           <div className="flex gap-6">
-            <button type="button" className="hover:text-foreground transition cursor-pointer">
+            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/terms")}>
               Terms of Service
             </button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer">
+            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/privacy")}>
               Privacy Policy
             </button>
           </div>
