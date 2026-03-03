@@ -42,9 +42,7 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     id: "phoxtra",
     name: "Phoxtra",
     shortName: "Phoxtra",
-    description: "Business identity and document verification",
     status: "live",
-    url: "https://phoxtra.com/admin",
     adminUrl: "https://phoxtra.com/admin",
     order: 3,
     isPublic: false,
@@ -56,9 +54,7 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     id: "agroclimate",
     name: "AgroClimate",
     shortName: "AgroClimate",
-    description: "Smart Farming and Agro-Production",
     status: "live",
-    url: "https://agro.amineva.com",
     adminUrl: "https://agro.amineva.com/admin",
     order: 4,
     isPublic: false,
@@ -83,7 +79,7 @@ const DEFAULT_PRODUCTS: ProductData[] = [
   },
 
   // ---- Category / Homepage Products ----
-  // Only your existing category products; nothing extra
+  // Only existing category products; nothing extra
 ];
 
 // ===== LOCAL STORAGE KEY =====
