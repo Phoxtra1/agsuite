@@ -305,31 +305,39 @@ export default function HomePage() {
           {/* TOP RIGHT CTAs */}
           <div className="w-full flex justify-end gap-6 text-base font-semibold text-muted-foreground flex-wrap">
             {/* Apps dropdown - same behavior as Explainer */}
-            <HomeDropdown label="Apps">
-              <div className="p-2">
-                <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Our Platforms</p>
-                <button type="button" onClick={() => navigate("/explainer/agstock")} className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition">AGStock</button>
-                <button type="button" onClick={() => navigate("/explainer/agroclimate")} className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition">AgroClimate</button>
-              </div>
-            </HomeDropdown>
+           <HomeDropdown label="Apps">
+             <div className="p-2">
+              <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                Our Platforms
+              </p>
 
-            {/* Explainer dropdown */}
-            <HomeDropdown label="Explainer">
-              <div className="p-2">
-                <button type="button" onClick={() => navigate("/explainer/agstock")} className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition">AGStock</button>
-                <button type="button" onClick={() => navigate("/explainer/agis")} className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition">AGIS</button>
-                <button type="button" onClick={() => navigate("/explainer/amniva")} className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition">Amniva</button>
-                <button type="button" onClick={() => navigate("/explainer/agroclimate")} className="w-full text-left px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition">AgroClimate</button>
-              </div>
-            </HomeDropdown>
+               <a
+                href="https://agstock.amineva.com"
+                 target="_blank"
+                 rel="noreferrer"
+                  className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
+                 >
+                    AGStock
+                   </a>
+
+                    <a
+                      href="https://agroclimate.amineva.com"
+                      target="_blank"
+                     rel="noreferrer"
+                     className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
+                   >
+                     AgroClimate
+                  </a>
+                </div>
+             </HomeDropdown>
 
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
+            {/* Insight & Report */}
+            <a href="https://hub.amineva.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition cursor-pointer">Insight &amp; Report</a>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>
 
-            {/* Insight & Report */}
-            <a href="https://hub.amineva.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition cursor-pointer">Insight &amp; Report</a>
-
+            
             {/* Settings with theme toggle */}
             <div className="relative" ref={settingsRef}>
               <button type="button" className="hover:text-foreground transition cursor-pointer flex items-center gap-1" onClick={() => setSettingsOpen(!settingsOpen)}>
