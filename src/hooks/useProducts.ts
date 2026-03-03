@@ -1,32 +1,44 @@
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { loadProducts, saveProducts } from "@/data/products";
+import {
+  loadAdminProducts,
+  loadCategoryProducts,
+  saveCategoryProducts,
+} from "@/data/products";
 import type { ProductData } from "@/types/product";
 import { useCallback, useEffect } from "react";
 
-const QUERY_KEY = ["products"] as const;
+//
+// ============================================
+// QUERY KEYS (SEPARATED)
+// ============================================
+//
 
-/**
- * Shared React Query hook for products.
- * Both Homepage and Console use the same query key.
- */
-export function useProducts() {
+const ADMIN_QUERY_KEY = ["admin_products"] as const;
+const CATEGORY_QUERY_KEY = ["category_products"] as const;
+
+//
+// ============================================
+// ADMIN PRODUCTS HOOK (READ-ONLY)
+// ============================================
+//
+
+export function useAdminProducts() {
   const queryClient = useQueryClient();
 
   const { data: products = [], ...rest } = useQuery<ProductData[]>({
-    queryKey: QUERY_KEY,
-    queryFn: () => loadProducts(),
+    queryKey: ADMIN_QUERY_KEY,
+    queryFn: () => loadAdminProducts(),
     staleTime: 0,
   });
 
-  // Also listen for localStorage events (cross-tab sync)
   useEffect(() => {
     const refresh = () => {
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+      queryClient.invalidateQueries({ queryKey: ADMIN_QUERY_KEY });
     };
-    window.addEventListener("productsUpdated", refresh);
+
     window.addEventListener("storage", refresh);
+
     return () => {
-      window.removeEventListener("productsUpdated", refresh);
       window.removeEventListener("storage", refresh);
     };
   }, [queryClient]);
@@ -34,24 +46,61 @@ export function useProducts() {
   return { products, ...rest };
 }
 
-/**
- * Mutation helper: save products and invalidate the shared query.
- */
-export function useProductMutations() {
+//
+// ============================================
+// CATEGORY PRODUCTS HOOK (EDITABLE)
+// ============================================
+//
+
+export function useCategoryProducts() {
+  const queryClient = useQueryClient();
+
+  const { data: products = [], ...rest } = useQuery<ProductData[]>({
+    queryKey: CATEGORY_QUERY_KEY,
+    queryFn: () => loadCategoryProducts(),
+    staleTime: 0,
+  });
+
+  useEffect(() => {
+    const refresh = () => {
+      queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEY });
+    };
+
+    window.addEventListener("categoryProductsUpdated", refresh);
+    window.addEventListener("storage", refresh);
+
+    return () => {
+      window.removeEventListener("categoryProductsUpdated", refresh);
+      window.removeEventListener("storage", refresh);
+    };
+  }, [queryClient]);
+
+  return { products, ...rest };
+}
+
+//
+// ============================================
+// CATEGORY MUTATIONS (DELETE / EDIT / TOGGLE)
+// ============================================
+//
+
+export function useCategoryProductMutations() {
   const queryClient = useQueryClient();
 
   const updateProducts = useCallback(
     (updater: (prev: ProductData[]) => ProductData[]) => {
-      const current = loadProducts();
+      const current = loadCategoryProducts();
       const next = updater(current);
-      saveProducts(next);
-      queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+
+      saveCategoryProducts(next);
+
+      queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEY });
     },
     [queryClient]
   );
 
   const invalidate = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: QUERY_KEY });
+    queryClient.invalidateQueries({ queryKey: CATEGORY_QUERY_KEY });
   }, [queryClient]);
 
   return { updateProducts, invalidate };
