@@ -312,7 +312,7 @@ export default function HomePage() {
               </p>
 
                <a
-                href="https://agstock.amineva.com"
+                href="https://stock.amineva.com"
                  target="_blank"
                  rel="noreferrer"
                   className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
@@ -321,7 +321,7 @@ export default function HomePage() {
                    </a>
 
                     <a
-                      href="https://agroclimate.amineva.com"
+                      href="https://agro.amineva.com"
                       target="_blank"
                      rel="noreferrer"
                      className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
