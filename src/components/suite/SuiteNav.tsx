@@ -14,9 +14,9 @@ import {
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
 import { Sun, Moon, LogOut, User, Settings, LayoutDashboard, Package, HelpCircle, Workflow, Terminal, Megaphone, Database } from 'lucide-react';
-import amvLogo from '@/assets/amv_global_logo.png';
+import amvLogo from '@/assets/amv_logo.png';
 
-type TabView = 'overview' | 'products' | 'why' | 'how' | 'console' | 'coms' | 'acs' | 'profile' | 'settings';
+type TabView = 'overview' | 'console' | 'coms' | 'acs' | 'profile' | 'settings';
 
 interface SuiteNavProps {
   currentTab: TabView;
@@ -54,9 +54,6 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
 
   const tabs = [
     { id: 'overview' as TabView, label: 'Overview', icon: LayoutDashboard },
-    { id: 'products' as TabView, label: 'Products', icon: Package },
-    { id: 'why' as TabView, label: 'Why Amineva?', icon: HelpCircle },
-    { id: 'how' as TabView, label: 'How It Works', icon: Workflow },
   ];
 
   return (
