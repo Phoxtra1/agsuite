@@ -1,42 +1,39 @@
 import type { ProductData } from "@/types/product";
 
-// Helper to generate unique icons for admin products
+// ===== STORAGE KEYS =====
+const ADMIN_STORAGE_KEY = "amineva_admin_products";
+const CATEGORY_STORAGE_KEY = "amineva_category_products";
+
+// ===== ICON GENERATOR =====
 function generateIcon(name: string) {
   return name.toLowerCase().replace(/\s+/g, "-") + "-icon";
 }
 
-// ===== DEFAULT PRODUCTS =====
-const DEFAULT_PRODUCTS: ProductData[] = [
-  // ---- Top / Admin Products ----
+//
+// ============================
+// ADMIN PRODUCTS (LOCKED)
+// ============================
+//
+
+const DEFAULT_ADMIN_PRODUCTS: ProductData[] = [
   {
     id: "agis",
     name: "AGIS",
     shortName: "AGIS",
     description: "Amineva Global Intelligence Service",
     status: "live",
-    url: "https://app.amineva.com",
     adminUrl: "https://app.amineva.com/admin",
-    category: "Data Intelligence",
-    order: 1,
-    isPublic: false,
-    isExternal: true,
-    allowedRoles: ["super_admin", "staff", "customer"],
     icon: generateIcon("AGIS"),
+    order: 1,
   },
   {
     id: "amniva",
     name: "Amniva",
     shortName: "Amniva",
-    description: "Market trends, verification, and predictions",
     status: "live",
-    url: "https://amniva.io",
     adminUrl: "https://amniva.io/admin",
-    category: "Trend & Forecasting",
-    order: 2,
-    isPublic: false,
-    isExternal: true,
-    allowedRoles: ["super_admin"],
     icon: generateIcon("Amniva"),
+    order: 2,
   },
   {
     id: "phoxtra",
@@ -44,11 +41,8 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     shortName: "Phoxtra",
     status: "live",
     adminUrl: "https://phoxtra.com/admin",
-    order: 3,
-    isPublic: false,
-    isExternal: true,
-    allowedRoles: ["super_admin", "staff"],
     icon: generateIcon("Phoxtra"),
+    order: 3,
   },
   {
     id: "agroclimate",
@@ -56,86 +50,121 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     shortName: "AgroClimate",
     status: "live",
     adminUrl: "https://agro.amineva.com/admin",
-    order: 4,
-    isPublic: false,
-    isExternal: true,
-    allowedRoles: ["super_admin", "staff"],
     icon: generateIcon("AgroClimate"),
+    order: 4,
+  },
+];
+
+//
+// ============================
+// HOMEPAGE CATEGORY PRODUCTS
+// ============================
+//
+
+const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
+  {
+    id: "agis",
+    name: "AGIS",
+    shortName: "AGIS",
+    description: "Amineva Global Intelligence Service",
+    status: "live",
+    url: "https://app.amineva.com",
+    icon: generateIcon("AGIS"),
+    order: 1,
+  },
+  {
+    id: "amniva",
+    name: "Amniva",
+    shortName: "Amniva",
+    description: "Market trends, verification & prediction",
+    status: "live",
+    url: "https://amniva.io",
+    icon: generateIcon("Amniva"),
+    order: 2,
   },
   {
     id: "aminevaops",
     name: "AminevaOps",
     shortName: "Ops",
-    description: "Internal operations, workflow automation & team management",
+    description: "Internal operations (Coming Soon)",
     status: "coming_soon",
     url: "",
-    adminUrl: "",
-    category: "Service Workspace",
-    order: 5,
-    isPublic: false,
-    isExternal: false,
-    allowedRoles: ["super_admin", "staff"],
     icon: generateIcon("AminevaOps"),
+    order: 3,
   },
-
-  // ---- Category / Homepage Products ----
-  // Only existing category products; nothing extra
 ];
 
-// ===== LOCAL STORAGE KEY =====
-const STORAGE_KEY = "amineva_products";
+//
+// ============================
+// LOAD ADMIN PRODUCTS
+// ============================
+//
 
-// ===== LOAD PRODUCTS =====
-export function loadProducts(): ProductData[] {
-  const stored = localStorage.getItem(STORAGE_KEY);
-
-  let products: ProductData[];
+export function loadAdminProducts(): ProductData[] {
+  const stored = localStorage.getItem(ADMIN_STORAGE_KEY);
 
   if (!stored) {
-    products = [...DEFAULT_PRODUCTS];
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-    window.dispatchEvent(new Event("productsUpdated"));
-  } else {
-    try {
-      const parsed = JSON.parse(stored);
-      products = Array.isArray(parsed) ? parsed : [...DEFAULT_PRODUCTS];
-    } catch {
-      products = [...DEFAULT_PRODUCTS];
-    }
+    localStorage.setItem(
+      ADMIN_STORAGE_KEY,
+      JSON.stringify(DEFAULT_ADMIN_PRODUCTS)
+    );
+    return DEFAULT_ADMIN_PRODUCTS;
   }
 
-  // Ensure top/admin products exist in storage
-  const adminIds = ["agis", "amniva", "phoxtra", "agroclimate", "aminevaops"];
-  for (const adminId of adminIds) {
-    if (!products.find((p) => p.id === adminId)) {
-      const newProduct = DEFAULT_PRODUCTS.find((p) => p.id === adminId);
-      if (newProduct) products.push(newProduct);
-    }
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return DEFAULT_ADMIN_PRODUCTS;
   }
-
-  // Ensure top/admin products always live (except coming_soon)
-  for (const p of products) {
-    if (["agis", "amniva", "phoxtra", "agroclimate"].includes(p.id)) p.status = "live";
-    if (p.id === "aminevaops") {
-      p.status = "coming_soon";
-      p.url = "";
-      p.adminUrl = "";
-    }
-  }
-
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-  window.dispatchEvent(new Event("productsUpdated"));
-
-  return products;
 }
 
-// ===== SAVE PRODUCTS =====
-export function saveProducts(products: ProductData[]) {
-  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
-  window.dispatchEvent(new Event("productsUpdated"));
+//
+// ============================
+// LOAD CATEGORY PRODUCTS
+// ============================
+//
+
+export function loadCategoryProducts(): ProductData[] {
+  const stored = localStorage.getItem(CATEGORY_STORAGE_KEY);
+
+  if (!stored) {
+    localStorage.setItem(
+      CATEGORY_STORAGE_KEY,
+      JSON.stringify(DEFAULT_CATEGORY_PRODUCTS)
+    );
+    return DEFAULT_CATEGORY_PRODUCTS;
+  }
+
+  try {
+    return JSON.parse(stored);
+  } catch {
+    return DEFAULT_CATEGORY_PRODUCTS;
+  }
 }
 
-// ===== GET DEFAULT PRODUCTS =====
-export function getDefaultProducts(): ProductData[] {
-  return [...DEFAULT_PRODUCTS];
+//
+// ============================
+// SAVE CATEGORY PRODUCTS
+// (Only category is editable)
+// ============================
+//
+
+export function saveCategoryProducts(products: ProductData[]) {
+  localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(products));
+  window.dispatchEvent(new Event("categoryProductsUpdated"));
+}
+
+//
+// ============================
+// DELETE CATEGORY PRODUCT
+// (Only affects homepage list)
+// ============================
+//
+
+export function deleteCategoryProduct(id: string) {
+  const products = loadCategoryProducts();
+  const updated = products.filter((p) => p.id !== id);
+
+  localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(updated));
+  window.dispatchEvent(new Event("categoryProductsUpdated"));
 }
