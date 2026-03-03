@@ -1,22 +1,17 @@
 // adapters/lovable/teams.ts
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from "@/integrations/supabase/client";
 import type { TeamsAdapter } from "@/core/backend/teams";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_ANON_KEY!
-);
 
 export const teams: TeamsAdapter = {
   async inviteMember(email: string, role: string) {
-    const { error } = await supabase.from('team_members').insert([
+    const { error } = await (supabase as any).from('team_members').insert([
       { email, role, invited_at: new Date().toISOString() },
     ]);
     if (error) throw error;
   },
 
   async removeMember(userId: string) {
-    const { error } = await supabase
+    const { error } = await (supabase as any)
       .from('team_members')
       .delete()
       .eq('user_id', userId);
@@ -24,7 +19,7 @@ export const teams: TeamsAdapter = {
   },
 
   async listMembers() {
-    const { data, error } = await supabase
+    const { data, error } = await (supabase as any)
       .from('team_members')
       .select('*');
     if (error) throw error;
