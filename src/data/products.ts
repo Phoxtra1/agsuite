@@ -19,7 +19,7 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     id: "amniva",
     name: "Amniva",
     shortName: "Amniva",
-    description: "Market forecast, verification, predictions & social community",
+    description: "Market trends, verification, and predictions",
     status: "offline",
     url: "https://amniva.io",
     adminUrl: "https://amniva.io/admin",
