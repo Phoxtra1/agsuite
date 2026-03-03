@@ -1,12 +1,12 @@
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { ChevronDown, Menu, X, ExternalLink } from "lucide-react";
+import { ChevronDown, Menu, X } from "lucide-react";
 import amvLogo from "@/assets/amv_global_logo.png";
 
 const apps = [
-  { label: "AGStock", href: "https://stock.amineva.com", external: true },
-  { label: "AgroClimate", href: "https://agro.amineva.com", external: true },
+  { label: "AGStock", to: "/explainer/agstock" },
+  { label: "AgroClimate", to: "/explainer/agroclimate" },
 ];
 
 const explainerItems = [
@@ -24,8 +24,20 @@ const navLinks = [
 
 function DropdownMenu({ label, children }: { label: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    }
+    if (open) document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, [open]);
+
   return (
-    <div className="relative" onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
+    <div className="relative" ref={ref} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
       <button className="flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition">
         {label} <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
       </button>
@@ -53,7 +65,6 @@ export default function Landing() {
 
   return (
     <div className="min-h-screen bg-background">
-      {/* Shared Nav — hidden on homepage (it has its own) */}
       {!isHome && (
         <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <div className="max-w-7xl mx-auto flex items-center justify-between h-16 px-6">
@@ -62,28 +73,22 @@ export default function Landing() {
               <span className="font-semibold text-foreground text-lg tracking-tight">Amineva Global</span>
             </Link>
 
-            {/* Desktop Nav */}
             <nav className="hidden md:flex items-center gap-8">
-              {/* Apps Mega Menu */}
               <DropdownMenu label="Apps">
                 <div className="p-2">
                   <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Our Platforms</p>
                   {apps.map((app) => (
-                    <a
+                    <Link
                       key={app.label}
-                      href={app.href}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="flex items-center justify-between px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
+                      to={app.to}
+                      className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
                     >
                       {app.label}
-                      <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                    </a>
+                    </Link>
                   ))}
                 </div>
               </DropdownMenu>
 
-              {/* Explainer Dropdown */}
               <DropdownMenu label="Explainer">
                 <div className="p-2">
                   {explainerItems.map((item) => (
@@ -111,13 +116,11 @@ export default function Landing() {
               ))}
             </nav>
 
-            {/* Mobile Toggle */}
             <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
               {mobileOpen ? <X className="h-6 w-6" /> : <Menu className="h-6 w-6" />}
             </button>
           </div>
 
-          {/* Mobile Nav */}
           <AnimatePresence>
             {mobileOpen && (
               <motion.div
@@ -129,9 +132,9 @@ export default function Landing() {
                 <div className="p-4 space-y-1">
                   <p className="text-xs font-semibold text-muted-foreground uppercase px-3 py-1">Apps</p>
                   {apps.map((app) => (
-                    <a key={app.label} href={app.href} target="_blank" rel="noreferrer" className="flex items-center justify-between px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg">
-                      {app.label} <ExternalLink className="h-3.5 w-3.5 text-muted-foreground" />
-                    </a>
+                    <Link key={app.label} to={app.to} onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg">
+                      {app.label}
+                    </Link>
                   ))}
                   <p className="text-xs font-semibold text-muted-foreground uppercase px-3 py-1 mt-2">Explainer</p>
                   {explainerItems.map((item) => (
@@ -154,7 +157,6 @@ export default function Landing() {
 
       <Outlet />
 
-      {/* Shared Footer — hidden on homepage */}
       {!isHome && (
         <footer className="border-t border-border bg-card">
           <div className="max-w-7xl mx-auto px-6 py-10">

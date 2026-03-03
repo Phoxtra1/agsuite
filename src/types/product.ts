@@ -46,15 +46,12 @@ export interface ProductCategory {
   products: string[];
 }
 
-/**
- * Updated categories — no "Inventory & Sales Management", AminevaOps replaced with AgroClimate
- */
 export const DEFAULT_CATEGORIES: ProductCategory[] = [
   {
     id: "data-intelligence",
     name: "Data Intelligence",
     order: 1,
-    products: ["agstock", "agis"],
+    products: ["agis"],
   },
   {
     id: "trend-forecasting",
@@ -63,9 +60,9 @@ export const DEFAULT_CATEGORIES: ProductCategory[] = [
     products: ["amniva"],
   },
   {
-    id: "smart-agriculture",
-    name: "Smart Agriculture",
+    id: "service-workspace",
+    name: "Service Workspace",
     order: 3,
-    products: ["agroclimate"],
+    products: ["aminevaops"],
   },
 ];
