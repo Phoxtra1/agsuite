@@ -1,15 +1,11 @@
 // adapters/lovable/acs.ts
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from "@/integrations/supabase/client";
 import type { ACSAdapter } from "@/core/backend/acs";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_ANON_KEY!
-);
 
 export const acs: ACSAdapter = {
   async sendEvent(event) {
-    const { error } = await supabase.from('acs_events').insert([
+    // Use type assertion since acs_events table will be created via migration
+    const { error } = await (supabase as any).from('acs_events').insert([
       {
         source: event.source,
         type: event.type,

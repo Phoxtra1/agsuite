@@ -1,11 +1,6 @@
 // adapters/lovable/auth.ts
-import { createClient } from '@supabase/supabase-js';
+import { supabase } from "@/integrations/supabase/client";
 import type { AuthAdapter } from "@/core/backend/auth";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL!,
-  import.meta.env.VITE_SUPABASE_ANON_KEY!
-);
 
 export const auth: AuthAdapter = {
   async login(email: string, password: string) {
