@@ -11,14 +11,14 @@ export function OverviewPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-2xl">
               <Globe className="h-6 w-6 text-accent" />
-              What is Amineva Global?
+              What is Amineva?
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Amineva Global is an independent information provider serving investors, project owners, and institutions. 
-              We bridge the gap between information and execution, helping clients make informed decisions, avoid losses, 
-              and gain clear visibility into projects, opportunities, and business environments.
+              Amineva is a tech-driven information provider that creates and manages digital systems enabling 
+              businesses and individuals to manage operations, receive insight, predict outcomes, verify decisions, 
+              and deliver services efficiently.
             </p>
           </CardContent>
         </Card>
@@ -98,9 +98,9 @@ export function OverviewPage() {
                   <Eye className="h-6 w-6 text-accent" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">AG Hub</h4>
+                  <h4 className="font-semibold text-foreground mb-1">AgroClimate</h4>
                   <p className="text-sm text-muted-foreground">
-                    Publishes verified findings and intelligence. The central repository for insights, reports, and actionable information.
+                    AgroClimate provides real-time weather forecasts, agro production alerts, environmental predictions, Farming assistance, and learning resources built for community farming production.
                   </p>
                 </div>
               </div>
@@ -110,7 +110,7 @@ export function OverviewPage() {
                   <CheckCircle className="h-6 w-6 text-accent" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">AG App</h4>
+                  <h4 className="font-semibold text-foreground mb-1">AGIS</h4>
                   <p className="text-sm text-muted-foreground">
                     Executes field work and assessments to generate verified data. The operational arm for data collection and validation.
                   </p>
@@ -122,7 +122,7 @@ export function OverviewPage() {
                   <TrendingUp className="h-6 w-6 text-accent" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">AG Ops</h4>
+                  <h4 className="font-semibold text-foreground mb-1">AminevaOps</h4>
                   <p className="text-sm text-muted-foreground">
                     Manages service delivery and operational accountability for organizations and service providers.
                   </p>
@@ -134,9 +134,9 @@ export function OverviewPage() {
                   <Shield className="h-6 w-6 text-accent" />
                 </div>
                 <div>
-                  <h4 className="font-semibold text-foreground mb-1">AG Stock</h4>
+                  <h4 className="font-semibold text-foreground mb-1">AGStock</h4>
                   <p className="text-sm text-muted-foreground">
-                    Protects daily retail/warehouse operations by tracking inventory, sales, and losses.
+                    Protect daily business operations by tracking inventory, sales, and losses.
                   </p>
                 </div>
               </div>
