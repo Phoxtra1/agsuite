@@ -46,7 +46,6 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     status: "live",
     url: "https://phoxtra.com/admin",
     adminUrl: "https://phoxtra.com/admin",
-    category: "Service Workspace",
     order: 3,
     isPublic: false,
     isExternal: true,
@@ -59,9 +58,8 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     shortName: "AgroClimate",
     description: "Smart Farming and Agro-Production",
     status: "live",
-    url: "https://agro.amineva.com/admin",
+    url: "https://agro.amineva.com",
     adminUrl: "https://agro.amineva.com/admin",
-    category: "Service Workspace",
     order: 4,
     isPublic: false,
     isExternal: true,
@@ -85,7 +83,7 @@ const DEFAULT_PRODUCTS: ProductData[] = [
   },
 
   // ---- Category / Homepage Products ----
-  // Keep only existing category products already in your system
+  // Only your existing category products; nothing extra
 ];
 
 // ===== LOCAL STORAGE KEY =====
@@ -95,42 +93,44 @@ const STORAGE_KEY = "amineva_products";
 export function loadProducts(): ProductData[] {
   const stored = localStorage.getItem(STORAGE_KEY);
 
+  let products: ProductData[];
+
   if (!stored) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PRODUCTS));
+    products = [...DEFAULT_PRODUCTS];
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
     window.dispatchEvent(new Event("productsUpdated"));
-    return DEFAULT_PRODUCTS;
+  } else {
+    try {
+      const parsed = JSON.parse(stored);
+      products = Array.isArray(parsed) ? parsed : [...DEFAULT_PRODUCTS];
+    } catch {
+      products = [...DEFAULT_PRODUCTS];
+    }
   }
 
-  try {
-    const parsed = JSON.parse(stored);
-    if (!Array.isArray(parsed)) {
-      localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PRODUCTS));
-      window.dispatchEvent(new Event("productsUpdated"));
-      return DEFAULT_PRODUCTS;
+  // Ensure top/admin products exist in storage
+  const adminIds = ["agis", "amniva", "phoxtra", "agroclimate", "aminevaops"];
+  for (const adminId of adminIds) {
+    if (!products.find((p) => p.id === adminId)) {
+      const newProduct = DEFAULT_PRODUCTS.find((p) => p.id === adminId);
+      if (newProduct) products.push(newProduct);
     }
-
-    const products = parsed as ProductData[];
-
-    // Ensure top/admin products remain live unless coming_soon
-    const adminIds = ["agis", "amniva", "phoxtra", "agroclimate"];
-    for (const p of products) {
-      if (adminIds.includes(p.id)) p.status = "live";
-    }
-
-    // Ensure AminevaOps stays coming_soon without links
-    const ops = products.find((p) => p.id === "aminevaops");
-    if (ops) {
-      ops.status = "coming_soon";
-      ops.url = "";
-      ops.adminUrl = "";
-    }
-
-    return products;
-  } catch {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(DEFAULT_PRODUCTS));
-    window.dispatchEvent(new Event("productsUpdated"));
-    return DEFAULT_PRODUCTS;
   }
+
+  // Ensure top/admin products always live (except coming_soon)
+  for (const p of products) {
+    if (["agis", "amniva", "phoxtra", "agroclimate"].includes(p.id)) p.status = "live";
+    if (p.id === "aminevaops") {
+      p.status = "coming_soon";
+      p.url = "";
+      p.adminUrl = "";
+    }
+  }
+
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(products));
+  window.dispatchEvent(new Event("productsUpdated"));
+
+  return products;
 }
 
 // ===== SAVE PRODUCTS =====
