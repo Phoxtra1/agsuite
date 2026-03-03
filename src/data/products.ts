@@ -1,24 +1,6 @@
 import type { ProductData } from "@/types/product";
 
-/**
- * Default products for Amineva Suite (seed only)
- */
-
 const DEFAULT_PRODUCTS: ProductData[] = [
-  {
-    id: "agstock",
-    name: "AGStock",
-    shortName: "Stock",
-    description: "Inventory management and point-of-sale for businesses",
-    status: "live",
-    url: "https://stock.amineva.com",
-    adminUrl: "https://stock.amineva.com/admin",
-    category: "Data Intelligence",
-    order: 1,
-    isPublic: false,
-    isExternal: true,
-    allowedRoles: ["super_admin", "staff", "customer"],
-  },
   {
     id: "agis",
     name: "AGIS",
@@ -28,7 +10,7 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     url: "https://app.amineva.com",
     adminUrl: "https://app.amineva.com/admin",
     category: "Data Intelligence",
-    order: 2,
+    order: 1,
     isPublic: false,
     isExternal: true,
     allowedRoles: ["super_admin", "staff", "customer"],
@@ -42,23 +24,23 @@ const DEFAULT_PRODUCTS: ProductData[] = [
     url: "https://amniva.io",
     adminUrl: "https://amniva.io/admin",
     category: "Trend & Forecasting",
-    order: 3,
+    order: 2,
     isPublic: false,
     isExternal: true,
     allowedRoles: ["super_admin"],
   },
   {
-    id: "agroclimate",
-    name: "AgroClimate",
-    shortName: "Agro",
-    description: "Smart farming with weather, AI assistant & agro alerts",
+    id: "aminevaops",
+    name: "AminevaOps",
+    shortName: "Ops",
+    description: "Internal operations, workflow automation & team management",
     status: "coming_soon",
-    url: "https://agro.amineva.com",
-    adminUrl: "https://agro.amineva.com/admin",
-    category: "Smart Agriculture",
-    order: 4,
+    url: "https://ops.amineva.com",
+    adminUrl: "https://ops.amineva.com/admin",
+    category: "Service Workspace",
+    order: 3,
     isPublic: false,
-    isExternal: true,
+    isExternal: false,
     allowedRoles: ["super_admin", "staff"],
   },
 ];
@@ -85,8 +67,7 @@ export function loadProducts(): ProductData[] {
 
     const products = parsed as ProductData[];
 
-    // Detect old/legacy IDs or removed products — reset
-    const legacyIds = new Set(["ag-main", "ag-hub", "ag-app", "ag-ops", "ag-stock", "hub", "ops"]);
+    const legacyIds = new Set(["ag-main", "ag-hub", "ag-app", "ag-ops", "ag-stock", "hub", "ops", "agstock", "agroclimate"]);
     const hasLegacy = products.some((p) => legacyIds.has(String(p?.id || "")));
 
     if (hasLegacy) {
