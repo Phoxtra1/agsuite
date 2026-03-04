@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from "react";
-import { useProducts, useProductMutations } from "@/hooks/useProducts";
+import { useAdminProducts, useCategoryProductMutations } from "@/hooks/useProducts";
 import {
   ProductData,
   STATUS_COLORS,
@@ -69,8 +69,8 @@ function normalizeUrl(url: string) {
 }
 
 export function AdminPanel() {
-  const { products: currentProducts } = useProducts();
-  const { updateProducts } = useProductMutations();
+  const { products: currentProducts } = useAdminProducts();
+  const { updateProducts } = useCategoryProductMutations();
   const [products, setProducts] = useState<ProductData[]>(currentProducts);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);

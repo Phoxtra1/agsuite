@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { loadProducts } from "@/data/products";
+import { loadCategoryProducts } from "@/data/products";
 import { DEFAULT_CATEGORIES, ProductData } from "@/types/product";
 import {
   Accordion,
@@ -26,7 +26,7 @@ export function ProductSelectionStep({
 
   const refreshProducts = useCallback(() => {
     try {
-      setProducts(loadProducts());
+      setProducts(loadCategoryProducts());
     } catch {
       setProducts([]);
     }
@@ -37,11 +37,11 @@ export function ProductSelectionStep({
     refreshProducts();
 
     const handleUpdate = () => refreshProducts();
-    window.addEventListener("productsUpdated", handleUpdate as EventListener);
+    window.addEventListener("categoryProductsUpdated", handleUpdate as EventListener);
     window.addEventListener("storage", handleUpdate);
 
     return () => {
-      window.removeEventListener("productsUpdated", handleUpdate as EventListener);
+      window.removeEventListener("categoryProductsUpdated", handleUpdate as EventListener);
       window.removeEventListener("storage", handleUpdate);
     };
   }, [refreshProducts]);

@@ -12,7 +12,7 @@ export type ProductData = {
   shortName?: string;
   description?: string;
   status: ProductStatus;
-  url: string;
+  url?: string;
   adminUrl?: string;
   category?: string;
   order: number;

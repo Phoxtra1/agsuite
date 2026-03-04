@@ -1,7 +1,7 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { DEFAULT_CATEGORIES, ProductData } from "@/types/product";
-import { useProducts } from "@/hooks/useProducts";
+import { useCategoryProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
 import { Clock, XCircle, ArrowRight, Grid3X3, ChevronDown, Settings, Sun, Moon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
@@ -109,7 +109,7 @@ function HomeDropdown({ label, children }: { label: string; children: React.Reac
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { products } = useProducts();
+  const { products } = useCategoryProducts();
   const { theme, setTheme } = useTheme();
 
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
