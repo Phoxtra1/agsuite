@@ -4,7 +4,6 @@ import type { ProductData } from "@/types/product";
 const ADMIN_STORAGE_KEY = "amineva_admin_products";
 const CATEGORY_STORAGE_KEY = "amineva_category_products";
 
-
 //
 // ============================
 // ADMIN PRODUCTS (LOCKED)
@@ -85,7 +84,7 @@ const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
 
 //
 // ============================
-// LOAD ADMIN PRODUCTS
+// LOAD ADMIN PRODUCTS (LOCKED)
 // ============================
 //
 
@@ -109,13 +108,14 @@ export function loadAdminProducts(): ProductData[] {
 
 //
 // ============================
-// LOAD CATEGORY PRODUCTS
+// LOAD CATEGORY PRODUCTS (HARDENED)
 // ============================
 //
 
 export function loadCategoryProducts(): ProductData[] {
   const stored = localStorage.getItem(CATEGORY_STORAGE_KEY);
 
+  // First-time initialization
   if (!stored) {
     localStorage.setItem(
       CATEGORY_STORAGE_KEY,
@@ -125,7 +125,25 @@ export function loadCategoryProducts(): ProductData[] {
   }
 
   try {
-    return JSON.parse(stored);
+    const parsed: ProductData[] = JSON.parse(stored);
+
+    // 🔒 STRICT ISOLATION:
+    // Only allow products that exist in DEFAULT_CATEGORY_PRODUCTS
+    const allowedIds = DEFAULT_CATEGORY_PRODUCTS.map(p => p.id);
+
+    const sanitized = parsed.filter(p =>
+      allowedIds.includes(p.id)
+    );
+
+    // Auto-heal if corruption detected
+    if (sanitized.length !== parsed.length) {
+      localStorage.setItem(
+        CATEGORY_STORAGE_KEY,
+        JSON.stringify(sanitized)
+      );
+    }
+
+    return sanitized;
   } catch {
     return DEFAULT_CATEGORY_PRODUCTS;
   }
@@ -133,27 +151,47 @@ export function loadCategoryProducts(): ProductData[] {
 
 //
 // ============================
-// SAVE CATEGORY PRODUCTS
-// (Only category is editable)
+// SAVE CATEGORY PRODUCTS (SAFE)
 // ============================
 //
 
 export function saveCategoryProducts(products: ProductData[]) {
-  localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(products));
+  // Ensure only valid category products are saved
+  const allowedIds = DEFAULT_CATEGORY_PRODUCTS.map(p => p.id);
+
+  const sanitized = products.filter(p =>
+    allowedIds.includes(p.id)
+  );
+
+  localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(sanitized));
   window.dispatchEvent(new Event("categoryProductsUpdated"));
 }
 
 //
 // ============================
 // DELETE CATEGORY PRODUCT
-// (Only affects homepage list)
 // ============================
 //
 
 export function deleteCategoryProduct(id: string) {
   const products = loadCategoryProducts();
+
   const updated = products.filter((p) => p.id !== id);
 
   localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(updated));
+  window.dispatchEvent(new Event("categoryProductsUpdated"));
+}
+
+//
+// ============================
+// OPTIONAL: MANUAL RESET (DEV TOOL)
+// ============================
+//
+
+export function resetCategoryProductsToDefault() {
+  localStorage.setItem(
+    CATEGORY_STORAGE_KEY,
+    JSON.stringify(DEFAULT_CATEGORY_PRODUCTS)
+  );
   window.dispatchEvent(new Event("categoryProductsUpdated"));
 }
