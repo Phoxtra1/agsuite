@@ -1,13 +1,13 @@
 import React from 'react';
 import { DEFAULT_CATEGORIES, ProductData } from '@/types/product';
 import { getProductIcon } from '@/lib/products';
-import { useProducts } from '@/hooks/useProducts';
+import { useAdminProducts } from '@/hooks/useProducts';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ExternalLink, Settings } from 'lucide-react';
 
 export function AdminProductLinks() {
-  const { products } = useProducts();
+  const { products } = useAdminProducts();
   
   // Group products by category for admin links
   const adminProducts = DEFAULT_CATEGORIES.map(category => ({

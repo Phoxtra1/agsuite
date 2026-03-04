@@ -1,6 +1,6 @@
 // src/lib/products.ts
 import type { ProductData, Product } from "@/types/product";
-import { loadProducts } from "@/data/products";
+import { loadCategoryProducts } from "@/data/products";
 import {
   IconAGIS,
   IconAminevaOps,
@@ -49,7 +49,7 @@ export function getProductIcon(productId: ProductData["id"] | string) {
  * Loads products and returns them in a UI-friendly shape.
  */
 export function getProductsWithIcons(): Product[] {
-  const products = loadProducts();
+  const products = loadCategoryProducts();
 
   return products.map((product) => ({
     ...product,

@@ -4,10 +4,6 @@ import type { ProductData } from "@/types/product";
 const ADMIN_STORAGE_KEY = "amineva_admin_products";
 const CATEGORY_STORAGE_KEY = "amineva_category_products";
 
-// ===== ICON GENERATOR =====
-function generateIcon(name: string) {
-  return name.toLowerCase().replace(/\s+/g, "-") + "-icon";
-}
 
 //
 // ============================
@@ -23,7 +19,6 @@ const DEFAULT_ADMIN_PRODUCTS: ProductData[] = [
     description: "Amineva Global Intelligence Service",
     status: "live",
     adminUrl: "https://app.amineva.com/admin",
-    icon: generateIcon("AGIS"),
     order: 1,
   },
   {
@@ -32,7 +27,6 @@ const DEFAULT_ADMIN_PRODUCTS: ProductData[] = [
     shortName: "Amniva",
     status: "live",
     adminUrl: "https://amniva.io/admin",
-    icon: generateIcon("Amniva"),
     order: 2,
   },
   {
@@ -41,7 +35,6 @@ const DEFAULT_ADMIN_PRODUCTS: ProductData[] = [
     shortName: "Phoxtra",
     status: "live",
     adminUrl: "https://phoxtra.com/admin",
-    icon: generateIcon("Phoxtra"),
     order: 3,
   },
   {
@@ -50,7 +43,6 @@ const DEFAULT_ADMIN_PRODUCTS: ProductData[] = [
     shortName: "AgroClimate",
     status: "live",
     adminUrl: "https://agro.amineva.com/admin",
-    icon: generateIcon("AgroClimate"),
     order: 4,
   },
 ];
@@ -69,7 +61,6 @@ const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     description: "Amineva Global Intelligence Service",
     status: "live",
     url: "https://app.amineva.com",
-    icon: generateIcon("AGIS"),
     order: 1,
   },
   {
@@ -79,17 +70,15 @@ const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     description: "Market trends, verification & prediction",
     status: "live",
     url: "https://amniva.io",
-    icon: generateIcon("Amniva"),
     order: 2,
   },
   {
     id: "aminevaops",
     name: "AminevaOps",
     shortName: "Ops",
-    description: "Internal operations (Coming Soon)",
+    description: "Scalable operational tools for teams",
     status: "coming_soon",
     url: "",
-    icon: generateIcon("AminevaOps"),
     order: 3,
   },
 ];
