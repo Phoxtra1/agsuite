@@ -3,7 +3,7 @@
 export type BackendType = "lovable" | "appwrite";
 
 class BackendManager {
-  private static backend: BackendType = (process.env.ACTIVE_BACKEND as BackendType) || "lovable";
+  private static backend: BackendType = (import.meta.env.VITE_BACKEND_PROVIDER as BackendType) || "lovable";
 
   // Switch backend dynamically
   static setBackend(backend: BackendType) {
