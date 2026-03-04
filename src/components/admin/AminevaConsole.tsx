@@ -1,8 +1,9 @@
 import React from 'react';
 import { AdminProductLinks } from './AdminProductLinks';
 import { AdminPanel } from './AdminPanel';
+import { CategoryManager } from './CategoryManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, FolderTree, ExternalLink } from 'lucide-react';
+import { Settings, FolderTree } from 'lucide-react';
 
 export function AminevaConsole() {
   return (
@@ -14,10 +15,8 @@ export function AminevaConsole() {
         </p>
       </div>
 
-      {/* Quick access to product admin dashboards */}
       <AdminProductLinks />
 
-      {/* Product & Category Management */}
       <Tabs defaultValue="products" className="space-y-4">
         <TabsList>
           <TabsTrigger value="products" className="gap-2">
@@ -35,13 +34,7 @@ export function AminevaConsole() {
         </TabsContent>
 
         <TabsContent value="categories">
-          <div className="text-center py-12 text-muted-foreground">
-            <FolderTree className="w-12 h-12 mx-auto mb-4 opacity-50" />
-            <p>Category management coming soon.</p>
-            <p className="text-sm mt-2">
-              For now, categories are defined in the codebase.
-            </p>
-          </div>
+          <CategoryManager />
         </TabsContent>
       </Tabs>
     </div>
