@@ -7,84 +7,76 @@ import React, {
   useEffect,
   useRef,
 } from "react";
-import { account } from "@/lib/appwrite";
-import {
-  getSession,
-  login as appwriteLogin,
-  register as appwriteRegister,
-  logout as appwriteLogout,
-} from "@/lib/auth";
+import { supabase } from "@/integrations/supabase/client";
 import { clearLast2FAVerified } from "@/lib/stepUpAuth";
 
-type AuthUser = any;
+type AuthUser = {
+  id: string;
+  email: string;
+  name?: string;
+  role?: string;
+  [key: string]: any;
+};
 
 type AuthContextValue = {
-  user: AuthUser;
+  user: AuthUser | null;
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string) => Promise<void>;
-  socialLogin: (
-    provider: "google" | "microsoft" | "facebook" | "github"
-  ) => Promise<void>;
+  register: (email: string, password: string, name?: string) => Promise<void>;
+  socialLogin: (provider: "google" | "apple") => Promise<void>;
   logout: () => Promise<void>;
 };
 
 const AuthContext = createContext<AuthContextValue | null>(null);
 
+function mapUser(supaUser: any): AuthUser | null {
+  if (!supaUser) return null;
+  return {
+    id: supaUser.id,
+    email: supaUser.email ?? "",
+    name: supaUser.user_metadata?.name ?? supaUser.email,
+    role: supaUser.user_metadata?.role ?? "user",
+  };
+}
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [user, setUser] = useState<AuthUser>(null);
+  const [user, setUser] = useState<AuthUser | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
-
-  // Prevent loadSession from resetting state after login/register
   const authActionInProgress = useRef(false);
 
-  // Load session ONCE on mount
   useEffect(() => {
-    let cancelled = false;
-
-    const loadSession = async () => {
-      if (authActionInProgress.current) return;
-
-      try {
-        const session = await getSession();
-        if (cancelled || authActionInProgress.current) return;
-
-        if (!session) {
-          setUser(null);
-          setIsAuthenticated(false);
-          setIsLoading(false);
-          return;
-        }
-
-        const currentUser = await account.get();
-        if (cancelled || authActionInProgress.current) return;
-
-        setUser(currentUser);
-        setIsAuthenticated(true);
-      } catch {
-        if (cancelled || authActionInProgress.current) return;
-        setUser(null);
-        setIsAuthenticated(false);
-      } finally {
-        if (!cancelled && !authActionInProgress.current) setIsLoading(false);
+    // Listen for auth state changes FIRST
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (_event, session) => {
+        if (authActionInProgress.current) return;
+        const mapped = mapUser(session?.user ?? null);
+        setUser(mapped);
+        setIsAuthenticated(!!mapped);
+        setIsLoading(false);
       }
-    };
+    );
 
-    loadSession();
-    return () => {
-      cancelled = true;
-    };
+    // Then get initial session
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (authActionInProgress.current) return;
+      const mapped = mapUser(session?.user ?? null);
+      setUser(mapped);
+      setIsAuthenticated(!!mapped);
+      setIsLoading(false);
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
   const login = useCallback(async (email: string, password: string) => {
     authActionInProgress.current = true;
     setIsLoading(true);
     try {
-      await appwriteLogin(email, password);
-      const currentUser = await account.get();
-      setUser(currentUser);
+      const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+      if (error) throw error;
+      setUser(mapUser(data.user));
       setIsAuthenticated(true);
     } finally {
       setIsLoading(false);
@@ -92,13 +84,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, []);
 
-  const register = useCallback(async (email: string, password: string) => {
+  const register = useCallback(async (email: string, password: string, name?: string) => {
     authActionInProgress.current = true;
     setIsLoading(true);
     try {
-      await appwriteRegister(email, password);
-      const currentUser = await account.get();
-      setUser(currentUser);
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: { data: { name } },
+      });
+      if (error) throw error;
+      setUser(mapUser(data.user));
       setIsAuthenticated(true);
     } finally {
       setIsLoading(false);
@@ -107,10 +103,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const socialLogin = useCallback(
-    async (provider: "google" | "microsoft" | "facebook" | "github") => {
-      const successUrl = `${window.location.origin}/auth/callback?returnTo=/suite`;
-      const failureUrl = `${window.location.origin}/?auth=failed`;
-      await (account as any).createOAuth2Session(provider, successUrl, failureUrl);
+    async (provider: "google" | "apple") => {
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider,
+        options: { redirectTo: `${window.location.origin}/auth/callback?returnTo=/suite` },
+      });
+      if (error) throw error;
     },
     []
   );
@@ -118,7 +116,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
-      await appwriteLogout();
+      await supabase.auth.signOut();
       clearLast2FAVerified();
       setUser(null);
       setIsAuthenticated(false);
@@ -128,15 +126,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({
-      user,
-      isAuthenticated,
-      isLoading,
-      login,
-      register,
-      socialLogin,
-      logout,
-    }),
+    () => ({ user, isAuthenticated, isLoading, login, register, socialLogin, logout }),
     [user, isAuthenticated, isLoading, login, register, socialLogin, logout]
   );
 

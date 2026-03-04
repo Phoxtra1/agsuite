@@ -127,7 +127,7 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     }
   };
 
-  const handleSocialLogin = async (provider: "google" | "microsoft" | "facebook" | "github") => {
+  const handleSocialLogin = async (provider: "google" | "apple") => {
     try {
       await socialLogin(provider);
       toast.message("Redirecting to continue sign-in…");
@@ -281,7 +281,7 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
             </span>
           </div>
 
-          <div className="grid grid-cols-4 gap-2">
+          <div className="grid grid-cols-2 gap-2">
             <SocialButton
               icon={<span className="text-sm font-bold">G</span>}
               label="Google"
@@ -289,21 +289,9 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
               disabled={isLoading}
             />
             <SocialButton
-              icon={<span className="text-sm font-bold">M</span>}
-              label="Microsoft"
-              onClick={() => handleSocialLogin("microsoft")}
-              disabled={isLoading}
-            />
-            <SocialButton
-              icon={<span className="text-sm font-bold">F</span>}
-              label="Facebook"
-              onClick={() => handleSocialLogin("facebook")}
-              disabled={isLoading}
-            />
-            <SocialButton
-              icon={<span className="text-sm font-bold">GH</span>}
-              label="GitHub"
-              onClick={() => handleSocialLogin("github")}
+              icon={<span className="text-sm font-bold">🍎</span>}
+              label="Apple"
+              onClick={() => handleSocialLogin("apple")}
               disabled={isLoading}
             />
           </div>

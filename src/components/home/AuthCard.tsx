@@ -63,29 +63,17 @@ export default function AuthCard({
         await login(email.trim(), password);
       }
 
-      // Auth succeeded — route to 2FA, then to product's actual URL
       const productDestination = product.url
         ? `${product.url}${product.id === 'agstock' ? '/shop' : product.id === 'agis' ? '/dashboard' : ''}`
         : getProductRedirectUrl(product.id);
-      console.log("[AuthCard] Auth success, navigating to verify-2fa, destination:", productDestination);
       navigate(`/auth/verify-2fa?product=${product.id}&returnTo=${encodeURIComponent(productDestination)}`, {
         replace: true,
       });
     } catch (err: unknown) {
-      console.error("[AuthCard] Auth failed:", err);
       setError(formatAuthError(err));
     } finally {
       setBusy(false);
     }
-  };
-
-  const handleSocial = (provider: "google" | "microsoft" | "facebook" | "github") => {
-    // Social login triggers Appwrite OAuth redirect flow
-    import("@/lib/appwrite").then(({ account }) => {
-      const successUrl = `${window.location.origin}/auth/callback?returnTo=/suite&product=${product.id}`;
-      const failureUrl = `${window.location.origin}/?auth=failed`;
-      (account as any).createOAuth2Session(provider, successUrl, failureUrl);
-    });
   };
 
   return (
@@ -196,22 +184,6 @@ export default function AuthCard({
           >
             {loading ? "Please wait…" : isRegister ? "Register" : "Sign In"}
           </button>
-
-          <div className="text-center text-xs text-muted-foreground">or continue with</div>
-
-          <div className="grid grid-cols-2 gap-3">
-            {(["google", "microsoft", "facebook", "github"] as const).map((p) => (
-              <button
-                key={p}
-                type="button"
-                onClick={() => handleSocial(p)}
-                disabled={loading}
-                className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer disabled:opacity-50"
-              >
-                {p === "microsoft" ? "Microsoft" : p.charAt(0).toUpperCase() + p.slice(1)}
-              </button>
-            ))}
-          </div>
         </div>
       </div>
     </>

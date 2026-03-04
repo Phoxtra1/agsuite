@@ -77,6 +77,102 @@ export type Database = {
         }
         Relationships: []
       }
+      campaigns: {
+        Row: {
+          audience: number
+          audience_group: string | null
+          clicked: number
+          content: string | null
+          created_at: string
+          delivered: number
+          id: string
+          name: string
+          opened: number
+          scheduled_at: string | null
+          sent: number
+          status: string
+          subject: string | null
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          audience?: number
+          audience_group?: string | null
+          clicked?: number
+          content?: string | null
+          created_at?: string
+          delivered?: number
+          id?: string
+          name: string
+          opened?: number
+          scheduled_at?: string | null
+          sent?: number
+          status?: string
+          subject?: string | null
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          audience?: number
+          audience_group?: string | null
+          clicked?: number
+          content?: string | null
+          created_at?: string
+          delivered?: number
+          id?: string
+          name?: string
+          opened?: number
+          scheduled_at?: string | null
+          sent?: number
+          status?: string
+          subject?: string | null
+          type?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      coms_logs: {
+        Row: {
+          channel: string
+          created_at: string
+          details: string | null
+          event: string
+          id: string
+          message_type: string | null
+          recipient: string
+          source_app: string | null
+          subject: string | null
+          user_id: string
+        }
+        Insert: {
+          channel: string
+          created_at?: string
+          details?: string | null
+          event: string
+          id?: string
+          message_type?: string | null
+          recipient: string
+          source_app?: string | null
+          subject?: string | null
+          user_id: string
+        }
+        Update: {
+          channel?: string
+          created_at?: string
+          details?: string | null
+          event?: string
+          id?: string
+          message_type?: string | null
+          recipient?: string
+          source_app?: string | null
+          subject?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
@@ -108,6 +204,42 @@ export type Database = {
           display_name?: string | null
           id?: string
           phone?: string | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      support_tickets: {
+        Row: {
+          created_at: string
+          id: string
+          message: string
+          priority: string
+          source_app: string | null
+          status: string
+          subject: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          message: string
+          priority?: string
+          source_app?: string | null
+          status?: string
+          subject: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          message?: string
+          priority?: string
+          source_app?: string | null
+          status?: string
+          subject?: string
           updated_at?: string
           user_id?: string
         }
