@@ -125,25 +125,7 @@ export function loadCategoryProducts(): ProductData[] {
   }
 
   try {
-    const parsed: ProductData[] = JSON.parse(stored);
-
-    // 🔒 STRICT ISOLATION:
-    // Only allow products that exist in DEFAULT_CATEGORY_PRODUCTS
-    const allowedIds = DEFAULT_CATEGORY_PRODUCTS.map(p => p.id);
-
-    const sanitized = parsed.filter(p =>
-      allowedIds.includes(p.id)
-    );
-
-    // Auto-heal if corruption detected
-    if (sanitized.length !== parsed.length) {
-      localStorage.setItem(
-        CATEGORY_STORAGE_KEY,
-        JSON.stringify(sanitized)
-      );
-    }
-
-    return sanitized;
+    return JSON.parse(stored) as ProductData[];
   } catch {
     return DEFAULT_CATEGORY_PRODUCTS;
   }
@@ -156,14 +138,7 @@ export function loadCategoryProducts(): ProductData[] {
 //
 
 export function saveCategoryProducts(products: ProductData[]) {
-  // Ensure only valid category products are saved
-  const allowedIds = DEFAULT_CATEGORY_PRODUCTS.map(p => p.id);
-
-  const sanitized = products.filter(p =>
-    allowedIds.includes(p.id)
-  );
-
-  localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(sanitized));
+  localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(products));
   window.dispatchEvent(new Event("categoryProductsUpdated"));
 }
 
