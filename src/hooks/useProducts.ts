@@ -1,8 +1,9 @@
 import { useState, useEffect, useCallback } from "react";
 import {
-  loadAdminProducts,
-  loadCategoryProducts,
-  saveCategoryProducts,
+  fetchAdminProducts,
+  fetchCategoryProducts,
+  upsertProduct,
+  deleteProduct,
 } from "@/data/products";
 import type { ProductData } from "@/types/product";
 
@@ -11,15 +12,21 @@ import type { ProductData } from "@/types/product";
 // ============================================
 
 export function useAdminProducts() {
-  const [products, setProducts] = useState(loadAdminProducts());
+  const [products, setProducts] = useState<ProductData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const refresh = () => setProducts(loadAdminProducts());
-    window.addEventListener("storage", refresh);
-    return () => window.removeEventListener("storage", refresh);
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    const data = await fetchAdminProducts();
+    setProducts(data);
+    setLoading(false);
   }, []);
 
-  return { products };
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { products, loading, refresh };
 }
 
 // ============================================
@@ -27,36 +34,53 @@ export function useAdminProducts() {
 // ============================================
 
 export function useCategoryProducts() {
-  const [products, setProducts] = useState(loadCategoryProducts());
+  const [products, setProducts] = useState<ProductData[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const refresh = () => setProducts(loadCategoryProducts());
-    window.addEventListener("categoryProductsUpdated", refresh);
-    window.addEventListener("storage", refresh);
-    return () => {
-      window.removeEventListener("categoryProductsUpdated", refresh);
-      window.removeEventListener("storage", refresh);
-    };
+  const refresh = useCallback(async () => {
+    setLoading(true);
+    const data = await fetchCategoryProducts();
+    setProducts(data);
+    setLoading(false);
   }, []);
 
-  return { products };
+  useEffect(() => {
+    refresh();
+  }, [refresh]);
+
+  return { products, loading, refresh };
 }
 
 // ============================================
-// CATEGORY MUTATIONS
+// CATEGORY MUTATIONS (DB-backed)
 // ============================================
 
 export function useCategoryProductMutations() {
-  const updateProducts = useCallback(
-    (updater: (prev: ProductData[]) => ProductData[]) => {
-      const current = loadCategoryProducts();
-      const next = updater(current);
-      saveCategoryProducts(next);
-    },
-    []
-  );
+  const save = useCallback(async (product: ProductData) => {
+    return upsertProduct(product, "category");
+  }, []);
 
-  return { updateProducts };
+  const remove = useCallback(async (id: string) => {
+    return deleteProduct(id);
+  }, []);
+
+  return { save, remove };
+}
+
+// ============================================
+// ADMIN MUTATIONS (DB-backed)
+// ============================================
+
+export function useAdminProductMutations() {
+  const save = useCallback(async (product: ProductData) => {
+    return upsertProduct(product, "admin");
+  }, []);
+
+  const remove = useCallback(async (id: string) => {
+    return deleteProduct(id);
+  }, []);
+
+  return { save, remove };
 }
 
 // Legacy alias

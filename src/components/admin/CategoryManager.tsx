@@ -32,12 +32,13 @@ const initialFormData: FormData = {
 };
 
 export function CategoryManager() {
-  const { products } = useCategoryProducts();
-  const { updateProducts } = useCategoryProductMutations();
+  const { products, refresh } = useCategoryProducts();
+  const { save, remove } = useCategoryProductMutations();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [formData, setFormData] = useState<FormData>(initialFormData);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
+  const [saving, setSaving] = useState(false);
 
   const handleAdd = () => { setFormData(initialFormData); setEditingId(null); setIsDialogOpen(true); };
 
@@ -49,31 +50,46 @@ export function CategoryManager() {
     setIsDialogOpen(true);
   };
 
-  const handleSave = () => {
+  const handleSave = async () => {
     const name = formData.name.trim();
     if (!name) { toast.error("Name is required"); return; }
 
-    if (editingId) {
-      updateProducts(prev => prev.map(p =>
-        p.id === editingId ? { ...p, name, shortName: formData.shortName, description: formData.description, url: formData.url, status: formData.status } : p
-      ));
-      toast.success("Product updated — homepage will reflect changes");
+    setSaving(true);
+
+    const product: ProductData = editingId
+      ? { ...products.find(p => p.id === editingId)!, name, shortName: formData.shortName, description: formData.description, url: formData.url, status: formData.status }
+      : {
+          id: `cat-${Date.now()}`,
+          name,
+          shortName: formData.shortName,
+          description: formData.description,
+          url: formData.url,
+          status: formData.status,
+          order: products.length + 1,
+        };
+
+    const ok = await save(product);
+    setSaving(false);
+
+    if (ok) {
+      toast.success(editingId ? "Product updated — saved permanently" : "Product added to homepage permanently");
+      await refresh();
+      setIsDialogOpen(false);
+      setEditingId(null);
     } else {
-      const newProduct: ProductData = {
-        id: `cat-${Date.now()}`, name, shortName: formData.shortName, description: formData.description,
-        url: formData.url, status: formData.status, order: products.length + 1,
-      };
-      updateProducts(prev => [...prev, newProduct]);
-      toast.success("Product added to homepage");
+      toast.error("Failed to save — please try again");
     }
-    setIsDialogOpen(false);
-    setEditingId(null);
   };
 
-  const handleDelete = (id: string) => {
-    updateProducts(prev => prev.filter(p => p.id !== id));
+  const handleDelete = async (id: string) => {
+    const ok = await remove(id);
+    if (ok) {
+      toast.success("Product removed permanently");
+      await refresh();
+    } else {
+      toast.error("Failed to delete");
+    }
     setDeleteConfirm(null);
-    toast.success("Product removed from homepage");
   };
 
   return (
@@ -81,7 +97,7 @@ export function CategoryManager() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-foreground">Category Products</h2>
-          <p className="text-muted-foreground">Manage products displayed on the homepage. Changes reflect immediately.</p>
+          <p className="text-muted-foreground">Manage products displayed on the homepage. Changes are saved permanently.</p>
         </div>
         <Button onClick={handleAdd} className="bg-accent text-accent-foreground hover:bg-accent/90">
           <Plus className="mr-2 h-4 w-4" /> Add Product
@@ -131,7 +147,6 @@ export function CategoryManager() {
         </CardContent>
       </Card>
 
-      {/* Add/Edit Dialog */}
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
@@ -171,14 +186,13 @@ export function CategoryManager() {
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" size="sm" onClick={() => setIsDialogOpen(false)}>Cancel</Button>
-            <Button size="sm" onClick={handleSave} className="bg-accent text-accent-foreground hover:bg-accent/90">
-              <Save className="mr-1.5 h-4 w-4" /> Save
+            <Button size="sm" onClick={handleSave} disabled={saving} className="bg-accent text-accent-foreground hover:bg-accent/90">
+              <Save className="mr-1.5 h-4 w-4" /> {saving ? "Saving..." : "Save"}
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
 
-      {/* Delete Confirmation */}
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <DialogContent className="sm:max-w-sm">
           <DialogHeader>
