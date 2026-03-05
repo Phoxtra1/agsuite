@@ -173,6 +173,57 @@ export type Database = {
         }
         Relationships: []
       }
+      products: {
+        Row: {
+          admin_url: string | null
+          category: string | null
+          created_at: string
+          description: string | null
+          id: string
+          is_external: boolean | null
+          is_public: boolean | null
+          name: string
+          product_type: string
+          short_name: string | null
+          sort_order: number
+          status: string
+          updated_at: string
+          url: string | null
+        }
+        Insert: {
+          admin_url?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id: string
+          is_external?: boolean | null
+          is_public?: boolean | null
+          name: string
+          product_type?: string
+          short_name?: string | null
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Update: {
+          admin_url?: string | null
+          category?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          is_external?: boolean | null
+          is_public?: boolean | null
+          name?: string
+          product_type?: string
+          short_name?: string | null
+          sort_order?: number
+          status?: string
+          updated_at?: string
+          url?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null

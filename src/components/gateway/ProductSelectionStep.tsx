@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useState, useCallback } from "react";
-import { loadCategoryProducts } from "@/data/products";
+import { fetchCategoryProducts } from "@/data/products";
 import { DEFAULT_CATEGORIES, ProductData } from "@/types/product";
 import {
   Accordion,
@@ -24,9 +24,9 @@ export function ProductSelectionStep({
 }: ProductSelectionStepProps) {
   const [products, setProducts] = useState<ProductData[]>([]);
 
-  const refreshProducts = useCallback(() => {
+  const refreshProducts = useCallback(async () => {
     try {
-      setProducts(loadCategoryProducts());
+      setProducts(await fetchCategoryProducts());
     } catch {
       setProducts([]);
     }

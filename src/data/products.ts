@@ -1,172 +1,113 @@
+import { supabase } from "@/integrations/supabase/client";
 import type { ProductData } from "@/types/product";
 
-// ===== STORAGE KEYS =====
-const ADMIN_STORAGE_KEY = "amineva_admin_products";
-const CATEGORY_STORAGE_KEY = "amineva_category_products";
+// ===== DB → ProductData mapper =====
+function rowToProduct(row: any): ProductData {
+  return {
+    id: row.id,
+    name: row.name,
+    shortName: row.short_name || undefined,
+    description: row.description || undefined,
+    status: row.status as ProductData["status"],
+    url: row.url || undefined,
+    adminUrl: row.admin_url || undefined,
+    category: row.category || undefined,
+    order: row.sort_order ?? 0,
+    isPublic: row.is_public ?? false,
+    isExternal: row.is_external ?? false,
+  };
+}
 
-//
-// ============================
-// ADMIN PRODUCTS (LOCKED)
-// ============================
-//
+// ===== ProductData → DB row mapper =====
+function productToRow(p: ProductData, productType: "admin" | "category") {
+  return {
+    id: p.id,
+    name: p.name,
+    short_name: p.shortName || null,
+    description: p.description || null,
+    status: p.status,
+    url: p.url || null,
+    admin_url: p.adminUrl || null,
+    category: p.category || null,
+    sort_order: p.order,
+    is_public: p.isPublic ?? false,
+    is_external: p.isExternal ?? false,
+    product_type: productType,
+  };
+}
 
-const DEFAULT_ADMIN_PRODUCTS: ProductData[] = [
-  {
-    id: "agis",
-    name: "AGIS",
-    shortName: "AGIS",
-    description: "Amineva Global Intelligence Service",
-    status: "live",
-    adminUrl: "https://app.amineva.com/admin",
-    order: 1,
-  },
-  {
-    id: "amniva",
-    name: "Amniva",
-    shortName: "Amniva",
-    status: "live",
-    adminUrl: "https://amniva.io/admin",
-    order: 2,
-  },
-  {
-    id: "phoxtra",
-    name: "Phoxtra",
-    shortName: "Phoxtra",
-    status: "live",
-    adminUrl: "https://phoxtra.com/admin",
-    order: 3,
-  },
-  {
-    id: "agroclimate",
-    name: "AgroClimate",
-    shortName: "AgroClimate",
-    status: "live",
-    adminUrl: "https://agro.amineva.com/admin",
-    order: 4,
-  },
-];
+// ===========================
+// FETCH ADMIN PRODUCTS
+// ===========================
+export async function fetchAdminProducts(): Promise<ProductData[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("product_type", "admin")
+    .order("sort_order");
 
-//
-// ============================
-// HOMEPAGE CATEGORY PRODUCTS
-// ============================
-//
-
-const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
-  {
-    id: "agis",
-    name: "AGIS",
-    shortName: "AGIS",
-    description: "Amineva Global Intelligence Service",
-    status: "live",
-    url: "https://app.amineva.com",
-    order: 1,
-  },
-  {
-    id: "amniva",
-    name: "Amniva",
-    shortName: "Amniva",
-    description: "Market trends, verification & prediction",
-    status: "live",
-    url: "https://amniva.io",
-    order: 2,
-  },
-  {
-    id: "aminevaops",
-    name: "AminevaOps",
-    shortName: "Ops",
-    description: "Scalable operational tools for teams",
-    status: "coming_soon",
-    url: "",
-    order: 3,
-  },
-];
-
-//
-// ============================
-// LOAD ADMIN PRODUCTS (LOCKED)
-// ============================
-//
-
-export function loadAdminProducts(): ProductData[] {
-  const stored = localStorage.getItem(ADMIN_STORAGE_KEY);
-
-  if (!stored) {
-    localStorage.setItem(
-      ADMIN_STORAGE_KEY,
-      JSON.stringify(DEFAULT_ADMIN_PRODUCTS)
-    );
-    return DEFAULT_ADMIN_PRODUCTS;
+  if (error) {
+    console.error("Failed to load admin products:", error);
+    return [];
   }
+  return (data || []).map(rowToProduct);
+}
 
-  try {
-    return JSON.parse(stored);
-  } catch {
-    return DEFAULT_ADMIN_PRODUCTS;
+// ===========================
+// FETCH CATEGORY PRODUCTS
+// ===========================
+export async function fetchCategoryProducts(): Promise<ProductData[]> {
+  const { data, error } = await supabase
+    .from("products")
+    .select("*")
+    .eq("product_type", "category")
+    .order("sort_order");
+
+  if (error) {
+    console.error("Failed to load category products:", error);
+    return [];
   }
+  return (data || []).map(rowToProduct);
 }
 
-//
-// ============================
-// LOAD CATEGORY PRODUCTS (HARDENED)
-// ============================
-//
+// ===========================
+// UPSERT PRODUCT
+// ===========================
+export async function upsertProduct(
+  product: ProductData,
+  productType: "admin" | "category"
+): Promise<boolean> {
+  const row = productToRow(product, productType);
+  const { error } = await supabase
+    .from("products")
+    .upsert(row as any, { onConflict: "id" });
 
-export function loadCategoryProducts(): ProductData[] {
-  const stored = localStorage.getItem(CATEGORY_STORAGE_KEY);
-
-  // First-time initialization
-  if (!stored) {
-    localStorage.setItem(
-      CATEGORY_STORAGE_KEY,
-      JSON.stringify(DEFAULT_CATEGORY_PRODUCTS)
-    );
-    return DEFAULT_CATEGORY_PRODUCTS;
+  if (error) {
+    console.error("Failed to save product:", error);
+    return false;
   }
+  return true;
+}
 
-  try {
-    return JSON.parse(stored) as ProductData[];
-  } catch {
-    return DEFAULT_CATEGORY_PRODUCTS;
+// ===========================
+// DELETE PRODUCT
+// ===========================
+export async function deleteProduct(id: string): Promise<boolean> {
+  const { error } = await supabase
+    .from("products")
+    .delete()
+    .eq("id", id);
+
+  if (error) {
+    console.error("Failed to delete product:", error);
+    return false;
   }
+  return true;
 }
 
-//
-// ============================
-// SAVE CATEGORY PRODUCTS (SAFE)
-// ============================
-//
-
-export function saveCategoryProducts(products: ProductData[]) {
-  localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(products));
-  window.dispatchEvent(new Event("categoryProductsUpdated"));
-}
-
-//
-// ============================
-// DELETE CATEGORY PRODUCT
-// ============================
-//
-
-export function deleteCategoryProduct(id: string) {
-  const products = loadCategoryProducts();
-
-  const updated = products.filter((p) => p.id !== id);
-
-  localStorage.setItem(CATEGORY_STORAGE_KEY, JSON.stringify(updated));
-  window.dispatchEvent(new Event("categoryProductsUpdated"));
-}
-
-//
-// ============================
-// OPTIONAL: MANUAL RESET (DEV TOOL)
-// ============================
-//
-
-export function resetCategoryProductsToDefault() {
-  localStorage.setItem(
-    CATEGORY_STORAGE_KEY,
-    JSON.stringify(DEFAULT_CATEGORY_PRODUCTS)
-  );
-  window.dispatchEvent(new Event("categoryProductsUpdated"));
-}
+// Legacy sync helpers (no-ops now)
+export function loadAdminProducts(): ProductData[] { return []; }
+export function loadCategoryProducts(): ProductData[] { return []; }
+export function saveCategoryProducts(_products: ProductData[]) {}
+export function deleteCategoryProduct(_id: string) {}
+export function resetCategoryProductsToDefault() {}
