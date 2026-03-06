@@ -11,7 +11,7 @@ export function AminevaConsole() {
       <div>
         <h2 className="text-2xl font-bold text-foreground">Amineva Console</h2>
         <p className="text-muted-foreground">
-          Manage products, categories, and access administrative dashboards
+          Manage products category
         </p>
       </div>
 
