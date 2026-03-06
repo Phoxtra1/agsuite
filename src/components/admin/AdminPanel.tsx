@@ -49,7 +49,7 @@ interface ProductFormData {
   name: string;
   shortName: string;
   description: string;
-  url: string;
+  adminUrl: string;
   status: ProductStatus;
 }
 
@@ -57,7 +57,7 @@ const initialFormData: ProductFormData = {
   name: "",
   shortName: "",
   description: "",
-  url: "",
+  adminUrl: "",
   status: "coming_soon",
 };
 
@@ -103,7 +103,7 @@ export function AdminPanel() {
       name: product.name || "",
       shortName: product.shortName || "",
       description: product.description || "",
-      url: product.url || "",
+      adminUrl: product.adminUrl || "",
       status: product.status,
     });
 
@@ -115,7 +115,7 @@ export function AdminPanel() {
     const name = formData.name.trim();
     const shortName = formData.shortName.trim();
     const description = formData.description.trim();
-    const url = normalizeUrl(formData.url);
+    const adminUrl = normalizeUrl(formData.adminUrl);
 
     if (!name) {
       toast.error("Product name is required");
@@ -130,13 +130,13 @@ export function AdminPanel() {
     setSaving(true);
 
     const product: ProductData = isEditing
-      ? { ...products.find((p) => p.id === editingId)!, name, shortName, description, url, status: formData.status }
+      ? { ...products.find((p) => p.id === editingId)!, name, shortName, description, adminUrl, status: formData.status }
       : {
           id: `admin-${shortName.toLowerCase().replace(/\s/g, "")}-${Date.now()}`,
           name,
           shortName,
           description,
-          url,
+          adminUrl,
           status: formData.status,
           order: products.length + 1,
         };
@@ -165,7 +165,7 @@ export function AdminPanel() {
     setDeleteConfirm(null);
   };
 
-  const openHomepageUrl = (url?: string) => {
+  const openAdminUrl = (url?: string) => {
     const u = normalizeUrl(url || "");
     if (!u) return;
     window.open(u, "_blank", "noopener,noreferrer");
@@ -191,7 +191,7 @@ export function AdminPanel() {
                 <TableHead className="w-12">Icon</TableHead>
                 <TableHead>Name</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead>Homepage</TableHead>
+                <TableHead>Admin Portal</TableHead>
                 <TableHead className="w-24">Actions</TableHead>
               </TableRow>
             </TableHeader>
@@ -211,8 +211,8 @@ export function AdminPanel() {
                       <Badge className={cn("text-xs", STATUS_COLORS[product.status])}>{STATUS_LABELS[product.status]}</Badge>
                     </TableCell>
                     <TableCell>
-                      {product.url ? (
-                        <Button variant="ghost" size="sm" className="text-accent hover:text-accent/80 h-8 px-2" onClick={() => openHomepageUrl(product.url)}>
+                      {product.adminUrl ? (
+                        <Button variant="ghost" size="sm" className="text-accent hover:text-accent/80 h-8 px-2" onClick={() => openAdminUrl(product.adminUrl)}>
                           <ExternalLink className="h-4 w-4 mr-1" /> Open
                         </Button>
                       ) : (
@@ -259,8 +259,8 @@ export function AdminPanel() {
               <Input value={formData.description} onChange={(e) => setFormData((p) => ({ ...p, description: e.target.value }))} placeholder="Brief product description" className="h-9" />
             </div>
             <div className="space-y-1.5">
-              <Label className="text-foreground">Homepage URL</Label>
-              <Input value={formData.url} onChange={(e) => setFormData((p) => ({ ...p, url: e.target.value }))} placeholder="https://app.amineva.com" className="h-9" />
+              <Label className="text-foreground">Admin URL</Label>
+              <Input value={formData.adminUrl} onChange={(e) => setFormData((p) => ({ ...p, adminUrl: e.target.value }))} placeholder="https://product.amineva.com/admin" className="h-9" />
             </div>
             <div className="space-y-1.5">
               <Label className="text-foreground">Status</Label>
