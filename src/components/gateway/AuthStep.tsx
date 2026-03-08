@@ -59,8 +59,8 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
   // Clear errors when switching tabs
   useEffect(() => {
     setError("");
+    setShowSwitchHint(false);
     if (!isRegister) setConfirmPassword("");
-    // Allow success effect to fire again if user re-attempts
     setAuthTriggered(false);
   }, [isRegister]);
 
