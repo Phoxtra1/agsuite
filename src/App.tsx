@@ -91,13 +91,9 @@ function SuiteGuard() {
 }
 
 function PublicHome() {
-  const { isAuthenticated, isLoading, user } = useAuth();
-
-  if (isLoading) return <AminevaLoader />;
-
-  if (!isPreview() && isAuthenticated) {
-    const isManager = user?.role === "super_admin" || user?.role === "manager";
-    if (isManager) return <Navigate to="/suite" replace />;
+  // If seal-authenticated, redirect to Suite
+  if (!isPreview() && isSealAuthenticated()) {
+    return <Navigate to="/suite" replace />;
   }
 
   return (
