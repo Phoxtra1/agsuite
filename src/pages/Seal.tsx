@@ -52,6 +52,7 @@ export default function Seal() {
     setLoading(false);
     if (result.success) {
       setStep("otp");
+      setCooldown(30);
     } else {
       setError(result.error || "Email not valid");
     }
