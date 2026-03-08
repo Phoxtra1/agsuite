@@ -32,7 +32,7 @@ export function TwoFactorSetup({ onSetupComplete, onSkip }: TwoFactorSetupProps)
     try {
       // Check if user already has a verified TOTP factor
       const { data: factors } = await supabase.auth.mfa.listFactors();
-      const verified = (factors?.totp ?? []).find((f) => f.status === "verified");
+      const verified = (factors?.totp ?? []).find((f) => (f.status as string) === "verified");
       if (verified) {
         // Already enrolled → skip setup
         onSetupComplete();
