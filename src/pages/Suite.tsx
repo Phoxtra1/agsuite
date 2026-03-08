@@ -47,6 +47,7 @@ export default function Suite() {
       <SuiteNav currentTab={currentTab} onTabChange={handleTabChange} isAdmin={true} />
 
       <main className="ml-64 p-8">
+        <EmailVerificationBanner />
         <BackendToggle />
 
         <Routes>
