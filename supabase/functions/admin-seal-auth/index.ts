@@ -25,6 +25,19 @@ function generateOTP(): string {
   return otp;
 }
 
+function buildOtpHtml(otp: string): string {
+  return `
+    <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;text-align:center;">
+      <h2 style="color:#1a1f36;margin-bottom:8px;">Verification Code</h2>
+      <p style="color:#6b7280;font-size:14px;margin-bottom:24px;">Use this code to continue. It expires in 10 minutes.</p>
+      <div style="background:#f3f4f6;border-radius:12px;padding:20px;margin-bottom:24px;">
+        <span style="font-size:32px;font-weight:700;letter-spacing:8px;color:#1a1f36;">${otp}</span>
+      </div>
+      <p style="color:#9ca3af;font-size:12px;">If you did not request this, ignore this email.</p>
+    </div>
+  `;
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -32,7 +45,6 @@ serve(async (req) => {
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const brevoKey = Deno.env.get("BREVO_API_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
   try {
@@ -50,7 +62,6 @@ serve(async (req) => {
       const normalised = email.trim().toLowerCase();
 
       if (!ADMIN_EMAILS.includes(normalised)) {
-        // Generic error — don't reveal allowlist
         return new Response(
           JSON.stringify({ error: "Email not valid" }),
           { status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" } }
@@ -66,7 +77,7 @@ serve(async (req) => {
 
       // Generate new code
       const otp = generateOTP();
-      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
 
       await supabase.from("admin_otp_codes").insert({
         email: normalised,
@@ -74,40 +85,43 @@ serve(async (req) => {
         expires_at: expiresAt,
       });
 
-      // Send via Brevo
-      const brevoRes = await fetch("https://api.brevo.com/v3/smtp/email", {
+      // Send via ComsSystem (send-email edge function)
+      const sendEmailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
         method: "POST",
         headers: {
-          accept: "application/json",
-          "api-key": brevoKey,
-          "content-type": "application/json",
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${serviceRoleKey}`,
         },
         body: JSON.stringify({
-          sender: { name: "Amineva Suite", email: "noreply@amineva.com" },
           to: [{ email: normalised }],
           subject: "Your verification code",
-          htmlContent: `
-            <div style="font-family:Arial,sans-serif;max-width:480px;margin:0 auto;padding:40px 24px;text-align:center;">
-              <h2 style="color:#1a1f36;margin-bottom:8px;">Verification Code</h2>
-              <p style="color:#6b7280;font-size:14px;margin-bottom:24px;">Use this code to continue. It expires in 10 minutes.</p>
-              <div style="background:#f3f4f6;border-radius:12px;padding:20px;margin-bottom:24px;">
-                <span style="font-size:32px;font-weight:700;letter-spacing:8px;color:#1a1f36;">${otp}</span>
-              </div>
-              <p style="color:#9ca3af;font-size:12px;">If you did not request this, ignore this email.</p>
-            </div>
-          `,
+          htmlContent: buildOtpHtml(otp),
+          sender: { name: "Amineva Suite", email: "noreply@amineva.com" },
           tags: ["admin-seal-otp"],
         }),
       });
 
-      if (!brevoRes.ok) {
-        const err = await brevoRes.text();
-        console.error("Brevo error:", err);
+      const sendResult = await sendEmailRes.json();
+
+      if (!sendEmailRes.ok || !sendResult.success) {
+        console.error("send-email error:", JSON.stringify(sendResult));
         return new Response(
           JSON.stringify({ error: "Failed to send verification email" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
         );
       }
+
+      // Log to coms_logs (best-effort, no user_id for admin seal)
+      await supabase.from("coms_logs").insert({
+        recipient: normalised,
+        channel: "email",
+        event: "delivered",
+        subject: "Admin Seal OTP",
+        source_app: "ComsSystem",
+        message_type: "transactional",
+        details: "Seal authentication OTP sent",
+        user_id: "00000000-0000-0000-0000-000000000000",
+      }).then(() => {}).catch(() => {});
 
       return new Response(
         JSON.stringify({ success: true }),
@@ -149,7 +163,7 @@ serve(async (req) => {
         .update({ used_at: new Date().toISOString() })
         .eq("id", otpRows[0].id);
 
-      // Generate a simple session token (random hex)
+      // Generate session token
       const tokenBytes = new Uint8Array(32);
       crypto.getRandomValues(tokenBytes);
       const sessionToken = Array.from(tokenBytes)

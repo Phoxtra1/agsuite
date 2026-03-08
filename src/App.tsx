@@ -41,35 +41,81 @@ const isPreview = (): boolean => {
   return ["lovable.app", "lovableproject.com", "localhost", "127.0.0.1"].some(h => host.includes(h));
 };
 
-const AminevaLoader = () => (
-  <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="flex flex-col items-center gap-6">
-      {/* Logo with pulse-glow animation */}
-      <div className="relative flex items-center justify-center">
-        {/* Orbiting ring */}
-        <div className="absolute w-24 h-24 rounded-full border-2 border-accent/20 animate-[spin_3s_linear_infinite]" />
-        <div className="absolute w-24 h-24 rounded-full border-2 border-transparent border-t-accent border-r-accent/50 animate-[spin_2s_linear_infinite_reverse]" />
-        {/* Logo */}
-        <img
-          src="/favicon.png"
-          alt="Amineva Global"
-          className="w-14 h-14 rounded-xl animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] drop-shadow-[0_0_12px_hsl(38_92%_50%/0.4)]"
-        />
-      </div>
-      {/* Animated text */}
-      <div className="flex flex-col items-center gap-1.5">
-        <p className="text-sm font-medium text-foreground tracking-wide animate-fade-in">
-          Amineva Global
-        </p>
-        <div className="flex items-center gap-1.5">
-          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-[bounce_1s_ease-in-out_infinite]" />
-          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-[bounce_1s_ease-in-out_0.15s_infinite]" />
-          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-[bounce_1s_ease-in-out_0.3s_infinite]" />
+const AminevaLoader = ({ onFinish }: { onFinish?: () => void }) => {
+  const [progress, setProgress] = useState(0);
+  const [phase, setPhase] = useState(0);
+
+  useEffect(() => {
+    // Animate progress over ~7 seconds
+    const duration = 7000;
+    const interval = 50;
+    let elapsed = 0;
+    const timer = setInterval(() => {
+      elapsed += interval;
+      // Ease-out curve for natural feel
+      const t = Math.min(elapsed / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setProgress(Math.round(eased * 100));
+      if (t >= 1) {
+        clearInterval(timer);
+        setTimeout(() => onFinish?.(), 400);
+      }
+    }, interval);
+
+    // Phase cycling for text
+    const phaseTimer = setInterval(() => setPhase((p) => (p + 1) % 3), 2200);
+
+    return () => { clearInterval(timer); clearInterval(phaseTimer); };
+  }, [onFinish]);
+
+  const phases = ["Initializing systems…", "Loading modules…", "Almost ready…"];
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-background">
+      <div className="flex flex-col items-center gap-8">
+        {/* Logo with orbiting rings */}
+        <div className="relative flex items-center justify-center">
+          {/* Outer orbit */}
+          <div className="absolute w-28 h-28 rounded-full border border-accent/10 animate-[spin_6s_linear_infinite]">
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 rounded-full bg-accent/40" />
+          </div>
+          {/* Inner orbit */}
+          <div className="absolute w-20 h-20 rounded-full border border-accent/20 animate-[spin_3s_linear_infinite_reverse]">
+            <div className="absolute bottom-0 left-1/2 -translate-x-1/2 translate-y-1/2 w-1.5 h-1.5 rounded-full bg-accent/60" />
+          </div>
+          {/* Glow pulse */}
+          <div className="absolute w-16 h-16 rounded-xl bg-accent/10 animate-[ping_2s_cubic-bezier(0,0,0.2,1)_infinite]" />
+          {/* Logo */}
+          <img
+            src="/favicon.png"
+            alt="Amineva Global"
+            className="w-14 h-14 rounded-xl relative z-10 drop-shadow-[0_0_20px_hsl(var(--accent)/0.5)]"
+          />
+        </div>
+
+        {/* Brand */}
+        <div className="flex flex-col items-center gap-3">
+          <p className="text-base font-semibold text-foreground tracking-widest uppercase animate-fade-in">
+            Amineva Global
+          </p>
+
+          {/* Progress bar */}
+          <div className="w-48 h-1 rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-accent transition-all duration-200 ease-out"
+              style={{ width: `${progress}%` }}
+            />
+          </div>
+
+          {/* Phase text */}
+          <p className="text-xs text-muted-foreground h-4 transition-opacity duration-300">
+            {phases[phase]}
+          </p>
         </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 function HashNormalizer() {
   useEffect(() => {
