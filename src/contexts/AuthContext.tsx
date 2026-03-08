@@ -25,6 +25,7 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   socialLogin: (provider: "google" | "apple") => Promise<void>;
+  sendMagicLink: (email: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
