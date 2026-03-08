@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { clearSealSession, getSealSession } from '@/lib/sealAuth';
 import { ROLE_LABELS } from '@/types/auth';
 import { Button } from '@/components/ui/button';
 import {
