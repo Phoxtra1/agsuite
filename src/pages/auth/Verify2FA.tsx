@@ -1,81 +1,109 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { account } from "@/lib/appwrite";
+import { supabase } from "@/integrations/supabase/client";
 import { setLast2FAVerifiedAt } from "@/lib/stepUpAuth";
-import { TwoFactorSetup } from "@/components/auth/TwoFactorSetup";
-import { TwoFactorVerify } from "@/components/auth/TwoFactorVerify";
-import { Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck, AlertCircle, RefreshCw } from "lucide-react";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import amvLogo from "@/assets/amv_logo.png";
 
-/**
- * Self-contained 2FA page.
- * 
- * Flow:
- * 1. Verify session exists (redirect to / if not)
- * 2. Detect MFA mode: setup (no TOTP) or verify (has TOTP)
- * 3. Show appropriate screen
- * 4. On success: mark session as 2FA-verified and redirect to returnTo
- * 
- * This page does NOT interact with AuthContext's state.
- * It operates independently using the Appwrite SDK directly.
- */
+type ViewState = "checking" | "verify" | "error";
+
 export default function Verify2FA() {
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
 
   const returnTo = searchParams.get("returnTo") || "/suite";
-  const [mode, setMode] = useState<"loading" | "setup" | "verify">("loading");
+  const [state, setState] = useState<ViewState>("checking");
+  const [factorId, setFactorId] = useState<string | null>(null);
+  const [challengeId, setChallengeId] = useState<string | null>(null);
+  const [code, setCode] = useState("");
+  const [error, setError] = useState("");
+  const [isVerifying, setIsVerifying] = useState(false);
 
-  useEffect(() => {
-    detectMode();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  const completeAndRedirect = useCallback(() => {
+    setLast2FAVerifiedAt();
+    if (returnTo.startsWith("http")) {
+      window.location.assign(returnTo);
+      return;
+    }
+    navigate(returnTo, { replace: true });
+  }, [navigate, returnTo]);
 
-  async function detectMode() {
-    // 1. Verify we have a valid session
-    try {
-      await account.getSession("current");
-    } catch {
-      console.log("[Verify2FA] No session found, redirecting to homepage");
+  const startChallenge = useCallback(async () => {
+    setState("checking");
+    setError("");
+    setCode("");
+
+    const { data: sessionData } = await supabase.auth.getSession();
+    if (!sessionData.session) {
       navigate("/", { replace: true });
       return;
     }
 
-    // 2. Check if TOTP is already set up
-    try {
-      const factors = await (account as any).listMfaFactors();
-      const hasTotp = !!factors?.totp;
-      console.log("[Verify2FA] MFA factors detected, TOTP:", hasTotp);
-      setMode(hasTotp ? "verify" : "setup");
-    } catch (err) {
-      // If listMfaFactors fails (MFA not enabled in Appwrite, SDK issue, etc.)
-      // Default to setup — createMFAAuthenticator will give a better error if MFA isn't enabled
-      console.warn("[Verify2FA] listMfaFactors failed, defaulting to setup:", err);
-      setMode("setup");
+    const { data: factorData, error: factorsError } = await supabase.auth.mfa.listFactors();
+
+    if (factorsError) {
+      console.warn("[Verify2FA] Failed to list factors. Continuing without 2FA.", factorsError.message);
+      completeAndRedirect();
+      return;
     }
-  }
 
-  function handleComplete() {
-    setLast2FAVerifiedAt();
-    console.log("[Verify2FA] 2FA complete, navigating to:", returnTo);
+    const verifiedTotp = (factorData?.totp ?? []).find((f) => f.status === "verified");
 
-    // Use window.location.assign for external URLs (subdomains)
-    // Use React Router navigate for internal paths
-    if (returnTo.startsWith("http")) {
-      window.location.assign(returnTo);
-    } else {
-      navigate(returnTo, { replace: true });
+    if (!verifiedTotp) {
+      // No enrolled/verified factor yet: treat this login as complete.
+      completeAndRedirect();
+      return;
     }
-  }
 
-  function handleRecovery() {
-    alert(
-      "Please contact your administrator to reset your 2FA.\n\n" +
-      "Once reset, you'll be prompted to set up a new authenticator on your next login."
-    );
-  }
+    const { data: challengeData, error: challengeError } = await supabase.auth.mfa.challenge({
+      factorId: verifiedTotp.id,
+    });
 
-  if (mode === "loading") {
+    if (challengeError || !challengeData?.id) {
+      setError(challengeError?.message || "Could not start two-factor verification.");
+      setState("error");
+      return;
+    }
+
+    setFactorId(verifiedTotp.id);
+    setChallengeId(challengeData.id);
+    setState("verify");
+  }, [completeAndRedirect, navigate]);
+
+  useEffect(() => {
+    startChallenge();
+  }, [startChallenge]);
+
+  const handleVerify = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!factorId || !challengeId || code.length !== 6 || isVerifying) return;
+
+    setIsVerifying(true);
+    setError("");
+
+    const { error: verifyError } = await supabase.auth.mfa.verify({
+      factorId,
+      challengeId,
+      code,
+    });
+
+    setIsVerifying(false);
+
+    if (verifyError) {
+      setError("Invalid or expired code. Please try again.");
+      setCode("");
+      return;
+    }
+
+    completeAndRedirect();
+  };
+
+  if (state === "checking") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
@@ -92,18 +120,76 @@ export default function Verify2FA() {
         <img src={amvLogo} alt="Amineva" className="h-10" />
       </div>
 
-      {mode === "setup" ? (
-        <TwoFactorSetup onSetupComplete={handleComplete} />
-      ) : (
-        <TwoFactorVerify
-          onVerifyComplete={handleComplete}
-          onRecovery={handleRecovery}
-        />
-      )}
+      <Card className="w-full max-w-md">
+        <CardHeader className="text-center">
+          <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-primary/10">
+            <ShieldCheck className="h-6 w-6 text-primary" />
+          </div>
+          <CardTitle className="text-xl">Two-Factor Authentication</CardTitle>
+          <CardDescription>
+            Enter the 6-digit code from your authenticator app to continue.
+          </CardDescription>
+        </CardHeader>
 
-      <p className="mt-6 text-xs text-muted-foreground text-center max-w-sm">
-        Two-factor authentication protects your account across all Amineva products.
-      </p>
+        <CardContent>
+          {state === "error" ? (
+            <div className="space-y-4">
+              <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                <AlertCircle className="h-4 w-4 shrink-0" />
+                <span>{error || "Verification setup failed."}</span>
+              </div>
+              <Button type="button" className="w-full" onClick={startChallenge}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                Try Again
+              </Button>
+            </div>
+          ) : (
+            <form onSubmit={handleVerify} className="space-y-4">
+              {error ? (
+                <div className="flex items-center gap-2 rounded-md border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
+                  <AlertCircle className="h-4 w-4 shrink-0" />
+                  <span>{error}</span>
+                </div>
+              ) : null}
+
+              <div className="space-y-2">
+                <Label htmlFor="two-factor-code">Verification Code</Label>
+                <Input
+                  id="two-factor-code"
+                  type="text"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
+                  value={code}
+                  onChange={(e) => setCode(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                  placeholder="000000"
+                  className="text-center text-2xl tracking-widest font-mono"
+                  autoComplete="one-time-code"
+                  autoFocus
+                  disabled={isVerifying}
+                />
+              </div>
+
+              <Button type="submit" className="w-full" disabled={isVerifying || code.length !== 6}>
+                {isVerifying ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Verifying...
+                  </>
+                ) : (
+                  "Verify & Continue"
+                )}
+              </Button>
+
+              <Button type="button" variant="secondary" className="w-full" onClick={startChallenge}>
+                <RefreshCw className="mr-2 h-4 w-4" />
+                New Code
+              </Button>
+            </form>
+          )}
+        </CardContent>
+      </Card>
     </div>
   );
 }
+

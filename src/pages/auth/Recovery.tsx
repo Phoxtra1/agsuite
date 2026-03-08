@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { account } from "@/lib/appwrite";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -27,8 +27,9 @@ export default function Recovery() {
 
     setLoading(true);
     try {
-      const recoveryUrl = `${window.location.origin}/auth/reset-password`;
-      await account.createRecovery(trimmed, recoveryUrl);
+      const redirectTo = `${window.location.origin}/auth/reset-password`;
+      const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmed, { redirectTo });
+      if (resetError) throw resetError;
       setSent(true);
     } catch (err: any) {
       setError(err?.message || "Failed to send recovery email. Please try again.");
@@ -116,3 +117,4 @@ export default function Recovery() {
     </div>
   );
 }
+

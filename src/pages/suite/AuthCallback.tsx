@@ -1,32 +1,53 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { account } from "@/lib/appwrite"; // use your existing Appwrite client import
+import { supabase } from "@/integrations/supabase/client";
 
 export default function AuthCallback() {
   const [params] = useSearchParams();
   const navigate = useNavigate();
 
   useEffect(() => {
-    (async () => {
-      const userId = params.get("userId");
-      const secret = params.get("secret");
+    let cancelled = false;
+    const returnTo = params.get("returnTo") || "/suite";
 
-      if (!userId || !secret) {
-        navigate("/suite", { replace: true });
+    const finish = () => {
+      if (cancelled) return;
+      if (returnTo.startsWith("http")) {
+        window.location.assign(returnTo);
+        return;
+      }
+      navigate(returnTo, { replace: true });
+    };
+
+    (async () => {
+      const code = params.get("code");
+      if (code) {
+        const { error } = await supabase.auth.exchangeCodeForSession(code);
+        if (error) {
+          navigate("/?auth=failed", { replace: true });
+          return;
+        }
+      }
+
+      const { data } = await supabase.auth.getSession();
+      if (data.session) {
+        finish();
         return;
       }
 
-      try {
-        // ✅ This creates a session using the token you generated server-side
-        await account.createSession(userId, secret);
+      const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
+        if (session) finish();
+      });
 
-        // go to suite dashboard (change route if yours differs)
-        navigate("/suite", { replace: true });
-      } catch {
-        // token expired or already used
-        navigate("/suite?auth=failed", { replace: true });
-      }
+      window.setTimeout(() => {
+        listener.subscription.unsubscribe();
+        if (!cancelled) navigate("/?auth=failed", { replace: true });
+      }, 5000);
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [params, navigate]);
 
   return (
@@ -36,3 +57,4 @@ export default function AuthCallback() {
     </div>
   );
 }
+
