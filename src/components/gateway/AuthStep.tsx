@@ -1,6 +1,6 @@
 // Path: src/suite/gateway/AuthStep.tsx
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
 import { isAlreadyRegisteredError } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
@@ -10,8 +10,14 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "@/components/ui/sonner";
-import { Loader2, AlertCircle, Eye, EyeOff, ArrowLeft } from "lucide-react";
+import { Loader2, AlertCircle, Eye, EyeOff, ArrowLeft, Mail, Lock } from "lucide-react";
 import { hardResetAuthState } from "@/lib/authReset";
+import {
+  recordFailedAttempt,
+  checkLockout,
+  clearAttempts,
+  formatLockoutTime,
+} from "@/lib/auth/rateLimiter";
 
 // Social login button component
 const SocialButton = React.forwardRef<
@@ -41,7 +47,7 @@ interface AuthStepProps {
 }
 
 export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStepProps) {
-  const { login, register, socialLogin, isLoading, isAuthenticated } = useAuth();
+  const { login, register, socialLogin, sendMagicLink, isLoading, isAuthenticated } = useAuth();
 
   const [isRegister, setIsRegister] = useState(false);
 
@@ -52,14 +58,48 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [showSwitchHint, setShowSwitchHint] = useState(false);
+  const [magicLinkSent, setMagicLinkSent] = useState(false);
+  const [sendingMagicLink, setSendingMagicLink] = useState(false);
+
+  // Rate limiting state
+  const [isLockedOut, setIsLockedOut] = useState(false);
+  const [lockoutRemaining, setLockoutRemaining] = useState(0);
+  const [attemptsLeft, setAttemptsLeft] = useState(5);
 
   // Prevent loops: only proceed once auth is truly set
   const [authTriggered, setAuthTriggered] = useState(false);
+
+  // Check lockout on mount
+  useEffect(() => {
+    const status = checkLockout();
+    setIsLockedOut(status.locked);
+    setLockoutRemaining(status.remainingMs);
+    setAttemptsLeft(status.attemptsLeft);
+  }, []);
+
+  // Lockout countdown timer
+  useEffect(() => {
+    if (!isLockedOut || lockoutRemaining <= 0) return;
+    const interval = setInterval(() => {
+      const status = checkLockout();
+      if (!status.locked) {
+        setIsLockedOut(false);
+        setLockoutRemaining(0);
+        setAttemptsLeft(status.attemptsLeft);
+        setError("");
+        clearInterval(interval);
+      } else {
+        setLockoutRemaining(status.remainingMs);
+      }
+    }, 1000);
+    return () => clearInterval(interval);
+  }, [isLockedOut, lockoutRemaining]);
 
   // Clear errors when switching tabs
   useEffect(() => {
     setError("");
     setShowSwitchHint(false);
+    setMagicLinkSent(false);
     if (!isRegister) setConfirmPassword("");
     setAuthTriggered(false);
   }, [isRegister]);
@@ -70,12 +110,22 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     if (authTriggered) return;
 
     setAuthTriggered(true);
+    clearAttempts();
     onAuthSuccess();
   }, [isAuthenticated, authTriggered, onAuthSuccess]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
+    // Check lockout first
+    const lockStatus = checkLockout();
+    if (lockStatus.locked) {
+      setIsLockedOut(true);
+      setLockoutRemaining(lockStatus.remainingMs);
+      setError(`Too many failed attempts. Try again in ${formatLockoutTime(lockStatus.remainingMs)}.`);
+      return;
+    }
 
     // Reset the trigger so the post-auth effect can fire cleanly
     setAuthTriggered(false);
@@ -105,23 +155,36 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     }
 
     try {
-      // ✅ Critical: clears stale state/session artifacts before any auth attempt
       hardResetAuthState();
 
-      // Do NOT call onAuthSuccess here; wait for AuthContext state update
       if (isRegister) {
         await register(cleanEmail, password);
       } else {
         await login(cleanEmail, password);
       }
+      // Success — clear attempts
+      clearAttempts();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Authentication failed";
+
+      // Record failed attempt for rate limiting (only for sign-in)
+      if (!isRegister) {
+        const result = recordFailedAttempt();
+        if (result.locked) {
+          setIsLockedOut(true);
+          setLockoutRemaining(result.remainingMs);
+          setError(`Account temporarily locked. Try again in ${formatLockoutTime(result.remainingMs)}.`);
+          return;
+        }
+        const status = checkLockout();
+        setAttemptsLeft(status.attemptsLeft);
+      }
 
       if (isRegister && isAlreadyRegisteredError(err)) {
         setError("This email is already registered.");
         setShowSwitchHint(true);
       } else if (msg.includes("Invalid credentials") || msg.includes("Invalid email or password")) {
-        setError("Invalid email or password. Please check your credentials and try again.");
+        setError(`Invalid email or password.${attemptsLeft > 1 ? ` ${attemptsLeft - 1} attempts remaining.` : ""}`);
       } else if (msg.includes("User not found") || msg.includes("user_not_found")) {
         setError("No account found with this email. Please register first.");
       } else if (msg.includes("too many requests") || msg.includes("Rate limit")) {
@@ -131,6 +194,27 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
       }
     }
   };
+
+  const handleMagicLink = useCallback(async () => {
+    const cleanEmail = email.trim();
+    if (!cleanEmail) {
+      setError("Please enter your email address first");
+      return;
+    }
+
+    setSendingMagicLink(true);
+    setError("");
+
+    try {
+      await sendMagicLink(cleanEmail);
+      setMagicLinkSent(true);
+      toast.success("Magic link sent! Check your email.");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Failed to send magic link");
+    } finally {
+      setSendingMagicLink(false);
+    }
+  }, [email, sendMagicLink]);
 
   const handleSocialLogin = async (provider: "google" | "apple") => {
     try {
@@ -144,6 +228,8 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
   const productLabel = selectedProductKey
     ? selectedProductKey.charAt(0).toUpperCase() + selectedProductKey.slice(1)
     : "Amineva Suite";
+
+  const formDisabled = isLoading || isLockedOut;
 
   return (
     <div className="space-y-4">
@@ -191,8 +277,37 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
             </button>
           </div>
 
+          {/* Magic link success message */}
+          {magicLinkSent && (
+            <Alert className="mb-4 border-accent/50 bg-accent/10">
+              <Mail className="h-4 w-4 text-accent" />
+              <AlertDescription className="text-foreground">
+                We sent a sign-in link to <strong>{email.trim()}</strong>. Check your inbox and click the link to continue.
+              </AlertDescription>
+            </Alert>
+          )}
+
+          {/* Lockout warning */}
+          {isLockedOut && (
+            <Alert variant="destructive" className="mb-4">
+              <Lock className="h-4 w-4" />
+              <AlertDescription>
+                Account temporarily locked due to too many failed attempts. Try again in{" "}
+                <strong>{formatLockoutTime(lockoutRemaining)}</strong>.
+                <button
+                  type="button"
+                  onClick={handleMagicLink}
+                  disabled={sendingMagicLink || !email.trim()}
+                  className="mt-2 block w-full text-center rounded-md bg-accent/10 text-accent-foreground py-2 text-sm font-medium hover:bg-accent/20 transition cursor-pointer disabled:opacity-50"
+                >
+                  {sendingMagicLink ? "Sending…" : "Send magic link instead"}
+                </button>
+              </AlertDescription>
+            </Alert>
+          )}
+
           <form onSubmit={handleSubmit} className="space-y-4">
-            {error && (
+            {error && !isLockedOut && (
               <Alert variant="destructive" className="animate-scale-in">
                 <AlertCircle className="h-4 w-4" />
                 <AlertDescription>
@@ -224,7 +339,7 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
                 placeholder="name@organization.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                disabled={isLoading}
+                disabled={formDisabled}
                 className="h-11 bg-background/50"
                 autoComplete="email"
               />
@@ -241,7 +356,7 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
                   placeholder="Enter your password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  disabled={isLoading}
+                  disabled={formDisabled}
                   className="h-11 pr-10 bg-background/50"
                   autoComplete={isRegister ? "new-password" : "current-password"}
                 />
@@ -257,7 +372,7 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
               </div>
             </div>
 
-            {/* ✅ Confirm Password (Register only) */}
+            {/* Confirm Password (Register only) */}
             {isRegister && (
               <div className="space-y-2 animate-fade-in">
                 <Label htmlFor="confirmPassword" className="text-sm">
@@ -269,7 +384,7 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
                   placeholder="Confirm your password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
-                  disabled={isLoading}
+                  disabled={formDisabled}
                   className="h-11 bg-background/50"
                   autoComplete="new-password"
                 />
@@ -279,12 +394,17 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
             <Button
               type="submit"
               className="w-full h-11 btn-premium bg-accent text-accent-foreground hover:bg-accent/90 font-medium"
-              disabled={isLoading}
+              disabled={formDisabled}
             >
               {isLoading ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   {isRegister ? "Creating Account..." : "Signing In..."}
+                </>
+              ) : isLockedOut ? (
+                <>
+                  <Lock className="mr-2 h-4 w-4" />
+                  Locked ({formatLockoutTime(lockoutRemaining)})
                 </>
               ) : isRegister ? (
                 "Register"
@@ -294,27 +414,73 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
             </Button>
           </form>
 
-          <div className="relative my-5">
-            <Separator />
-            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground">
-              or continue with
-            </span>
-          </div>
+          {/* Magic link option (sign-in only) */}
+          {!isRegister && (
+            <>
+              <div className="relative my-5">
+                <Separator />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground">
+                  or sign in with
+                </span>
+              </div>
 
-          <div className="grid grid-cols-2 gap-2">
-            <SocialButton
-              icon={<span className="text-sm font-bold">G</span>}
-              label="Google"
-              onClick={() => handleSocialLogin("google")}
-              disabled={isLoading}
-            />
-            <SocialButton
-              icon={<span className="text-sm font-bold">🍎</span>}
-              label="Apple"
-              onClick={() => handleSocialLogin("apple")}
-              disabled={isLoading}
-            />
-          </div>
+              <Button
+                type="button"
+                variant="outline"
+                className="w-full h-11 gap-2 bg-background/50 hover:bg-muted/50 border-border/50 mb-3"
+                onClick={handleMagicLink}
+                disabled={formDisabled || sendingMagicLink || !email.trim()}
+              >
+                {sendingMagicLink ? (
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                ) : (
+                  <Mail className="h-4 w-4" />
+                )}
+                {sendingMagicLink ? "Sending..." : "Email Magic Link"}
+              </Button>
+
+              <div className="grid grid-cols-2 gap-2">
+                <SocialButton
+                  icon={<span className="text-sm font-bold">G</span>}
+                  label="Google"
+                  onClick={() => handleSocialLogin("google")}
+                  disabled={formDisabled}
+                />
+                <SocialButton
+                  icon={<span className="text-sm font-bold">🍎</span>}
+                  label="Apple"
+                  onClick={() => handleSocialLogin("apple")}
+                  disabled={formDisabled}
+                />
+              </div>
+            </>
+          )}
+
+          {isRegister && (
+            <>
+              <div className="relative my-5">
+                <Separator />
+                <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 bg-card px-3 text-xs text-muted-foreground">
+                  or continue with
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <SocialButton
+                  icon={<span className="text-sm font-bold">G</span>}
+                  label="Google"
+                  onClick={() => handleSocialLogin("google")}
+                  disabled={formDisabled}
+                />
+                <SocialButton
+                  icon={<span className="text-sm font-bold">🍎</span>}
+                  label="Apple"
+                  onClick={() => handleSocialLogin("apple")}
+                  disabled={formDisabled}
+                />
+              </div>
+            </>
+          )}
         </CardContent>
       </Card>
     </div>
