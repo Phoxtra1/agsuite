@@ -60,6 +60,7 @@ function DropdownMenu({ label, children }: { label: string; children: React.Reac
 
 export default function Landing() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isHome = location.pathname === "/";
   const [mobileOpen, setMobileOpen] = useState(false);
 
