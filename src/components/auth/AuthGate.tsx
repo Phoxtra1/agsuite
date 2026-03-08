@@ -87,6 +87,9 @@ export default function AuthCard({
       navigate(`/auth/verify-2fa?product=${encodeURIComponent(product.id)}`);
     } catch (e) {
       setErrMsg(formatAuthError(e));
+      if (isRegister && isAlreadyRegisteredError(e)) {
+        setShowSwitchHint(true);
+      }
     } finally {
       setLoading(false);
     }
