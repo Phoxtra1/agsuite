@@ -194,7 +194,7 @@ export default function Landing() {
               </div>
             </div>
             <div className="border-t border-border mt-8 pt-6 text-center text-xs text-muted-foreground">
-              © {new Date().getFullYear()} Amineva Global. All Rights Reserved.
+              © {new Date().getFullYear()} Amineva <span onClick={(e) => { if (e.detail === 3) navigate("/seal"); }} className="cursor-default select-none">Global</span>. All Rights Reserved.
             </div>
           </div>
         </footer>
