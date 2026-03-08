@@ -78,7 +78,8 @@ function PublicHome() {
 
   if (isLoading) return <AminevaLoader />;
 
-  if (!isPreview() && isAuthenticated && is2FAVerifiedThisSession()) {
+  // 2FA check removed - redirect authenticated managers directly
+  if (!isPreview() && isAuthenticated) {
     const isManager = user?.role === "super_admin" || user?.role === "manager";
     if (isManager) return <Navigate to="/suite" replace />;
   }

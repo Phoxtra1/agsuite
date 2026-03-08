@@ -55,9 +55,8 @@ export default function AuthCard({
         await login(email.trim(), password);
       }
 
-      navigate(`/auth/verify-2fa?product=${product.id}&returnTo=/suite`, {
-        replace: true,
-      });
+      // 2FA removed - navigate directly to suite
+      navigate(`/suite`, { replace: true });
     } catch (e: any) {
       setErrMsg(e?.message || "Authentication failed.");
     }

@@ -64,12 +64,16 @@ export default function AuthCard({
         await login(email.trim(), password);
       }
 
+      // 2FA removed - navigate directly to product
       const productDestination = product.url
         ? `${product.url}${product.id === 'agstock' ? '/shop' : product.id === 'agis' ? '/dashboard' : ''}`
         : getProductRedirectUrl(product.id);
-      navigate(`/auth/verify-2fa?product=${product.id}&returnTo=${encodeURIComponent(productDestination)}`, {
-        replace: true,
-      });
+      
+      if (productDestination.startsWith('http')) {
+        window.location.href = productDestination;
+      } else {
+        navigate(productDestination, { replace: true });
+      }
     } catch (err: unknown) {
       setError(formatAuthError(err));
       if (isRegister && isAlreadyRegisteredError(err)) {
