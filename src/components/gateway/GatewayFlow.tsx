@@ -142,7 +142,6 @@ export function GatewayFlow() {
     });
 
     if (isAuthenticated) {
-      // 2FA check removed - go straight to routing
       setStep("routing");
     } else {
       setStep("auth");
