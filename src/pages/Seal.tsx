@@ -120,6 +120,11 @@ export default function Seal() {
                 onChange={(e) => setEmail(e.target.value)}
                 required
                 autoFocus
+                autoComplete="off"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                name="seal-id"
                 className="h-11"
               />
 
