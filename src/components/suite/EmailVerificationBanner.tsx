@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { MailWarning, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -40,26 +39,33 @@ export function EmailVerificationBanner() {
   };
 
   return (
-    <Alert className="mb-6 border-amber-500/40 bg-amber-500/10 text-foreground flex items-center justify-between gap-4">
+    <div className="mb-6 flex items-center justify-between gap-4 rounded-lg border border-warning/30 bg-warning/5 px-4 py-3">
       <div className="flex items-center gap-3">
-        <MailWarning className="h-5 w-5 text-amber-500 shrink-0" />
-        <AlertDescription className="text-sm">
-          Your email is not verified.{" "}
+        <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-warning/15">
+          <MailWarning className="h-4 w-4 text-warning" />
+        </div>
+        <p className="text-sm text-foreground">
+          Your email is not yet verified.{" "}
           <Button
             variant="link"
             size="sm"
-            className="h-auto p-0 text-amber-600 dark:text-amber-400 underline"
+            className="h-auto p-0 text-accent hover:text-accent/80 font-medium"
             onClick={handleResend}
             disabled={resending}
           >
-            {resending ? <Loader2 className="h-3 w-3 animate-spin mr-1" /> : null}
+            {resending && <Loader2 className="h-3 w-3 animate-spin mr-1" />}
             Resend verification email
           </Button>
-        </AlertDescription>
+        </p>
       </div>
-      <Button variant="ghost" size="icon" className="h-7 w-7 shrink-0" onClick={() => setDismissed(true)}>
+      <Button
+        variant="ghost"
+        size="icon"
+        className="h-7 w-7 shrink-0 text-muted-foreground hover:text-foreground"
+        onClick={() => setDismissed(true)}
+      >
         <X className="h-4 w-4" />
       </Button>
-    </Alert>
+    </div>
   );
 }
