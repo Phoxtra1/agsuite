@@ -25,6 +25,7 @@ type AuthContextValue = {
   login: (email: string, password: string) => Promise<void>;
   register: (email: string, password: string, name?: string) => Promise<void>;
   socialLogin: (provider: "google" | "apple") => Promise<void>;
+  sendMagicLink: (email: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -123,6 +124,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
+  const sendMagicLink = useCallback(async (email: string) => {
+    const { error } = await supabase.auth.signInWithOtp({
+      email,
+      options: {
+        emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=/suite`,
+      },
+    });
+    if (error) throw error;
+  }, []);
+
   const logout = useCallback(async () => {
     setIsLoading(true);
     try {
@@ -136,8 +147,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const value = useMemo(
-    () => ({ user, isAuthenticated, isLoading, login, register, socialLogin, logout }),
-    [user, isAuthenticated, isLoading, login, register, socialLogin, logout]
+    () => ({ user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, logout }),
+    [user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
