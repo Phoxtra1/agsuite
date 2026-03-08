@@ -126,10 +126,9 @@ export function GatewayFlow() {
     setSelectedCurrencyCode(null);
     clearGatewayState();
 
-    if (isAuthenticated && is2FAVerifiedThisSession()) {
+    if (isAuthenticated) {
+      // 2FA check removed - go straight to routing
       setStep("routing");
-    } else if (isAuthenticated) {
-      navigateToVerify2FA(null);
     } else {
       setStep("auth");
     }
