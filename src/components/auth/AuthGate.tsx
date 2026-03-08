@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useAuth } from "@/contexts/AuthContext";
-import { formatAuthError } from "@/lib/auth";
+import { formatAuthError, isAlreadyRegisteredError } from "@/lib/auth";
 
 interface AuthCardProps {
   product: ProductData;
