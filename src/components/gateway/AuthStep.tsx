@@ -51,6 +51,7 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [showSwitchHint, setShowSwitchHint] = useState(false);
 
   // Prevent loops: only proceed once auth is truly set
   const [authTriggered, setAuthTriggered] = useState(false);
