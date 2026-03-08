@@ -27,10 +27,15 @@ export default function Recovery() {
 
     setLoading(true);
     try {
-      const redirectTo = `${window.location.origin}/auth/reset-password`;
-      const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmed, { redirectTo });
-      if (resetError) throw resetError;
-      setSent(true);
+      const { data, error: fnError } = await supabase.functions.invoke("send-reset-email", {
+        body: { email: trimmed, origin: window.location.origin },
+      });
+      if (fnError) throw fnError;
+      if (data?.sent === false && data?.message?.includes("wait")) {
+        setError(data.message);
+      } else {
+        setSent(true);
+      }
     } catch (err: any) {
       setError(err?.message || "Failed to send recovery email. Please try again.");
     } finally {
@@ -117,5 +122,3 @@ export default function Recovery() {
     </div>
   );
 }
-
-

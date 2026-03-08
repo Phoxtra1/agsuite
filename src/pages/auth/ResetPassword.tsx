@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -10,62 +10,23 @@ import amvLogo from "@/assets/amv_logo.png";
 
 export default function ResetPassword() {
   const navigate = useNavigate();
+  const [params] = useSearchParams();
+  const token = params.get("token");
 
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
   const [loading, setLoading] = useState(false);
-  const [checking, setChecking] = useState(true);
-  const [canReset, setCanReset] = useState(false);
   const [error, setError] = useState("");
   const [done, setDone] = useState(false);
 
-  const resolvedRef = useRef(false);
-
-  useEffect(() => {
-    let mounted = true;
-
-    const initialize = async () => {
-      const { data } = await supabase.auth.getSession();
-      if (!mounted) return;
-
-      if (data.session) {
-        resolvedRef.current = true;
-        setCanReset(true);
-        setChecking(false);
-      }
-    };
-
-    initialize();
-
-    const { data: listener } = supabase.auth.onAuthStateChange((event, session) => {
-      if (!mounted) return;
-      if ((event === "PASSWORD_RECOVERY" || event === "SIGNED_IN") && session) {
-        resolvedRef.current = true;
-        setCanReset(true);
-        setError("");
-        setChecking(false);
-      }
-    });
-
-    const timeout = window.setTimeout(() => {
-      if (!mounted || resolvedRef.current) return;
-      setChecking(false);
-      setError("Invalid or expired recovery link.");
-    }, 2500);
-
-    return () => {
-      mounted = false;
-      listener.subscription.unsubscribe();
-      window.clearTimeout(timeout);
-    };
-  }, []);
+  const noToken = !token;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
-    if (!canReset) {
-      setError("Invalid or expired recovery link.");
+    if (!token) {
+      setError("Invalid or missing reset link.");
       return;
     }
     if (password.length < 8) {
@@ -79,8 +40,15 @@ export default function ResetPassword() {
 
     setLoading(true);
     try {
-      const { error: updateError } = await supabase.auth.updateUser({ password });
-      if (updateError) throw updateError;
+      const { data, error: fnError } = await supabase.functions.invoke("verify-reset-token", {
+        body: { token, newPassword: password },
+      });
+
+      if (fnError) throw fnError;
+      if (!data?.success) {
+        setError(data?.error || "Failed to reset password.");
+        return;
+      }
       setDone(true);
     } catch (err: any) {
       setError(err?.message || "Failed to reset password. The link may have expired.");
@@ -107,12 +75,7 @@ export default function ResetPassword() {
         </CardHeader>
 
         <CardContent>
-          {checking ? (
-            <div className="flex items-center justify-center py-8 text-muted-foreground">
-              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-              Verifying recovery link...
-            </div>
-          ) : done ? (
+          {done ? (
             <div className="space-y-4 text-center">
               <CheckCircle2 className="h-10 w-10 text-primary mx-auto" />
               <p className="text-sm text-muted-foreground">
@@ -120,6 +83,16 @@ export default function ResetPassword() {
               </p>
               <Button className="w-full" onClick={() => navigate("/", { replace: true })}>
                 Go to Sign In
+              </Button>
+            </div>
+          ) : noToken ? (
+            <div className="space-y-4 text-center">
+              <AlertCircle className="h-10 w-10 text-destructive mx-auto" />
+              <p className="text-sm text-muted-foreground">
+                Invalid or expired recovery link. Please request a new one.
+              </p>
+              <Button className="w-full" onClick={() => navigate("/auth/recovery", { replace: true })}>
+                Request New Link
               </Button>
             </div>
           ) : (
@@ -156,7 +129,7 @@ export default function ResetPassword() {
                 />
               </div>
 
-              <Button type="submit" className="w-full" disabled={loading || !canReset}>
+              <Button type="submit" className="w-full" disabled={loading}>
                 {loading ? (
                   <>
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -173,5 +146,3 @@ export default function ResetPassword() {
     </div>
   );
 }
-
-
