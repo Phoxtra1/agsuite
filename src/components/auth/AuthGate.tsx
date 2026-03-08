@@ -57,7 +57,10 @@ export default function AuthCard({
     return !loading;
   }, [isEmailValid, isPasswordValid, isRegister, confirmOk, loading]);
 
-  const resetErrors = () => setErrMsg("");
+  const resetErrors = () => {
+    setErrMsg("");
+    setShowSwitchHint(false);
+  };
 
   const submit = async () => {
     resetErrors();
