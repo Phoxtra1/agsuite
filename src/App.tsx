@@ -27,6 +27,7 @@ const InviteBridge = lazy(() => import("./pages/InviteBridge"));
 
 const Recovery = lazy(() => import("./pages/auth/Recovery"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
+const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/suite/AuthCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
