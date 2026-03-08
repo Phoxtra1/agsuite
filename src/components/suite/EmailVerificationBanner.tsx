@@ -13,12 +13,35 @@ export function EmailVerificationBanner() {
 
   useEffect(() => {
     if (!user) return;
+
+    // Initial fetch
     supabase
       .from("profiles")
       .select("email_verified")
       .eq("user_id", user.id)
       .single()
       .then(({ data }) => setVerified(data?.email_verified ?? false));
+
+    // Realtime subscription — auto-hide when verified
+    const channel = supabase
+      .channel("profile-verify")
+      .on(
+        "postgres_changes",
+        {
+          event: "UPDATE",
+          schema: "public",
+          table: "profiles",
+          filter: `user_id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (payload.new?.email_verified) setVerified(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
 
   if (!user || verified === null || verified || dismissed) return null;
