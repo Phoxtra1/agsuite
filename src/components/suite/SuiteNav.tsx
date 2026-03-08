@@ -156,9 +156,9 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start text-left">
-                <span className="text-sm font-medium truncate max-w-[140px]">{user?.name || 'Manager'}</span>
+                <span className="text-sm font-medium truncate max-w-[140px]">{sealSession?.email || user?.name || 'Manager'}</span>
                 <span className="text-xs text-sidebar-foreground/70 truncate max-w-[140px]">
-                  {roleLabel}
+                  Administrator
                 </span>
               </div>
             </Button>
