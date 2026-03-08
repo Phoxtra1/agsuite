@@ -1,8 +1,9 @@
 /**
- * Product Gate Hook (Simplified - 2FA Disabled)
+ * Product Gate Hook
  * 
  * ALL products in Amineva Global Suite MUST use this hook to enforce:
  * 1. Suite account authentication
+ * 2. Email verification (via ComsSystem)
  */
 
 import { useEffect, useState } from 'react';
@@ -45,7 +46,6 @@ export function useProductGate({
       return;
     }
 
-    // 2FA check removed - if authenticated, pass through
     setStatus('passed');
   }, [isAuthenticated, isLoading, enabled]);
 

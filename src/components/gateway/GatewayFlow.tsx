@@ -68,7 +68,6 @@ export function GatewayFlow() {
 
   if (state.selectedProductKey) {
     if (isAuthenticated) {
-      // 2FA check removed - go straight to routing
       setStep("routing");
     } else {
       setStep("auth");
@@ -97,7 +96,6 @@ export function GatewayFlow() {
     saveGatewayState({ selectedProductKey: productKey });
 
     if (isAuthenticated) {
-      // 2FA check removed - go straight to routing
       setStep("routing");
     } else {
       setStep("auth");
@@ -127,7 +125,6 @@ export function GatewayFlow() {
     clearGatewayState();
 
     if (isAuthenticated) {
-      // 2FA check removed - go straight to routing
       setStep("routing");
     } else {
       setStep("auth");
@@ -145,19 +142,17 @@ export function GatewayFlow() {
     });
 
     if (isAuthenticated) {
-      // 2FA check removed - go straight to routing
       setStep("routing");
     } else {
       setStep("auth");
     }
   };
 
-  // After auth success → go straight to routing (2FA removed)
   const handleAuthSuccess = () => {
     setStep("routing");
   };
 
-  // Route user to product (only called when authed + 2FA verified this session)
+  // Route user to product after authentication
   const routeToProduct = useCallback(async () => {
     const products = await fetchCategoryProducts();
 
