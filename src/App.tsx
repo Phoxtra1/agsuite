@@ -124,6 +124,7 @@ function AppRoutes() {
         {/* Legacy Redirects */}
         <Route path="/admin/*" element={<Navigate to="/suite" replace />} />
         <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
+        <Route path="/auth/verify-2fa" element={<Navigate to="/" replace />} />
 
         {/* 404 */}
         <Route path="*" element={<NotFound />} />
