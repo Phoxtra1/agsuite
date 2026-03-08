@@ -41,12 +41,30 @@ const isPreview = (): boolean => {
 
 const AminevaLoader = () => (
   <div className="min-h-screen flex items-center justify-center bg-background">
-    <div className="flex flex-col items-center gap-4">
-      <div className="relative">
-        <div className="w-12 h-12 rounded-full border-4 border-accent/20 animate-pulse" />
-        <div className="absolute inset-0 w-12 h-12 rounded-full border-4 border-transparent border-t-accent animate-spin" />
+    <div className="flex flex-col items-center gap-6">
+      {/* Logo with pulse-glow animation */}
+      <div className="relative flex items-center justify-center">
+        {/* Orbiting ring */}
+        <div className="absolute w-24 h-24 rounded-full border-2 border-accent/20 animate-[spin_3s_linear_infinite]" />
+        <div className="absolute w-24 h-24 rounded-full border-2 border-transparent border-t-accent border-r-accent/50 animate-[spin_2s_linear_infinite_reverse]" />
+        {/* Logo */}
+        <img
+          src="/favicon.png"
+          alt="Amineva Global"
+          className="w-14 h-14 rounded-xl animate-[pulse_2s_cubic-bezier(0.4,0,0.6,1)_infinite] drop-shadow-[0_0_12px_hsl(38_92%_50%/0.4)]"
+        />
       </div>
-      <p className="text-sm text-muted-foreground animate-pulse">Loading Amineva Global…</p>
+      {/* Animated text */}
+      <div className="flex flex-col items-center gap-1.5">
+        <p className="text-sm font-medium text-foreground tracking-wide animate-fade-in">
+          Amineva Global
+        </p>
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-[bounce_1s_ease-in-out_infinite]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-[bounce_1s_ease-in-out_0.15s_infinite]" />
+          <span className="w-1.5 h-1.5 rounded-full bg-accent animate-[bounce_1s_ease-in-out_0.3s_infinite]" />
+        </div>
+      </div>
     </div>
   </div>
 );
