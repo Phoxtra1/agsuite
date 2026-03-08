@@ -38,6 +38,52 @@ function buildOtpHtml(otp: string): string {
   `;
 }
 
+async function sendViaComsSystem(
+  supabaseUrl: string,
+  serviceRoleKey: string,
+  recipient: string,
+  otp: string,
+): Promise<{ success: true; messageId?: string } | { success: false; error: string }> {
+  let lastError = "Unknown email delivery error";
+
+  for (let attempt = 1; attempt <= 3; attempt++) {
+    try {
+      const response = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          apikey: serviceRoleKey,
+          Authorization: `Bearer ${serviceRoleKey}`,
+        },
+        body: JSON.stringify({
+          to: [{ email: recipient }],
+          subject: "Your verification code",
+          htmlContent: buildOtpHtml(otp),
+          sender: { name: "Amineva Suite", email: "noreply@amineva.com" },
+          tags: ["admin-seal-otp"],
+        }),
+      });
+
+      const raw = await response.text();
+      const parsed = raw ? JSON.parse(raw) : {};
+
+      if (response.ok && parsed?.success) {
+        return { success: true, messageId: parsed?.messageId };
+      }
+
+      lastError = parsed?.error || parsed?.message || `send-email HTTP ${response.status}`;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : "send-email request failed";
+    }
+
+    if (attempt < 3) {
+      await new Promise((resolve) => setTimeout(resolve, 400 * attempt));
+    }
+  }
+
+  return { success: false, error: lastError };
+}
+
 serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
