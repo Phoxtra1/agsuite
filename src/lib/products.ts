@@ -5,6 +5,8 @@ import {
   IconAminevaOps,
   IconAGStock,
   IconAmniva,
+  IconPhoxtra,
+  IconAgroClimate,
   IconPlaceholder,
 } from "@/components/icons/ProductIcons";
 /**
