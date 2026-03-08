@@ -141,7 +141,7 @@ export function ACSModule() {
         </div>
         <div className="flex items-center gap-2">
           {realtimeConnected ? (
-            <Badge variant="outline" className="gap-1 text-xs border-green-500 text-green-600">
+            <Badge variant="outline" className="gap-1 text-xs border-primary text-primary">
               <Wifi className="h-3 w-3" /> Live
             </Badge>
           ) : (
