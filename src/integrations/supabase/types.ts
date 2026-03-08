@@ -173,6 +173,36 @@ export type Database = {
         }
         Relationships: []
       }
+      email_verification_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          token: string
+          used_at?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       login_devices: {
         Row: {
           browser: string | null
@@ -270,6 +300,7 @@ export type Database = {
           country: string | null
           created_at: string
           display_name: string | null
+          email_verified: boolean
           id: string
           phone: string | null
           updated_at: string
@@ -281,6 +312,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           display_name?: string | null
+          email_verified?: boolean
           id?: string
           phone?: string | null
           updated_at?: string
@@ -292,6 +324,7 @@ export type Database = {
           country?: string | null
           created_at?: string
           display_name?: string | null
+          email_verified?: boolean
           id?: string
           phone?: string | null
           updated_at?: string
