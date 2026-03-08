@@ -55,7 +55,6 @@ export default function AuthCard({
         await login(email.trim(), password);
       }
 
-      // 2FA removed - navigate directly to suite
       navigate(`/suite`, { replace: true });
     } catch (e: any) {
       setErrMsg(e?.message || "Authentication failed.");

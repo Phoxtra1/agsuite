@@ -88,7 +88,6 @@ export default function AuthCard({
       }
 
       // Only now do we move forward (session exists)
-      // 2FA removed - navigate directly to suite
       navigate(`/suite`, { replace: true });
     } catch (e) {
       setErrMsg(formatAuthError(e));

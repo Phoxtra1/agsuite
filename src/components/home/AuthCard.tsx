@@ -64,7 +64,6 @@ export default function AuthCard({
         await login(email.trim(), password);
       }
 
-      // 2FA removed - navigate directly to product
       const productDestination = product.url
         ? `${product.url}${product.id === 'agstock' ? '/shop' : product.id === 'agis' ? '/dashboard' : ''}`
         : getProductRedirectUrl(product.id);

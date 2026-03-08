@@ -46,7 +46,6 @@ export function useProductGate({
       return;
     }
 
-    // 2FA check removed - if authenticated, pass through
     setStatus('passed');
   }, [isAuthenticated, isLoading, enabled]);
 

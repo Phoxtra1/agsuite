@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { InviteAuthForm } from '@/components/invite/InviteAuthForm';
-import { setLast2FAVerifiedAt } from '@/lib/stepUpAuth';
+
 import { 
   validateInviteToken, 
   acceptInvite,
