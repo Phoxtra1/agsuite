@@ -101,7 +101,7 @@ export default function AuthCard({
         <div className="mt-6 flex justify-between text-sm font-medium">
           <button
             type="button"
-            onClick={() => { setAuthTab("signin"); setError(""); setConfirmPassword(""); }}
+            onClick={() => { setAuthTab("signin"); setError(""); setConfirmPassword(""); setShowSwitchHint(false); }}
             className={`pb-3 w-1/2 text-center border-b-2 cursor-pointer ${
               authTab === "signin"
                 ? "border-accent text-foreground"
