@@ -117,7 +117,10 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Authentication failed";
 
-      if (msg.includes("Invalid credentials") || msg.includes("Invalid email or password")) {
+      if (isRegister && isAlreadyRegisteredError(err)) {
+        setError("This email is already registered.");
+        setShowSwitchHint(true);
+      } else if (msg.includes("Invalid credentials") || msg.includes("Invalid email or password")) {
         setError("Invalid email or password. Please check your credentials and try again.");
       } else if (msg.includes("User not found") || msg.includes("user_not_found")) {
         setError("No account found with this email. Please register first.");
