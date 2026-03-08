@@ -163,8 +163,10 @@ export type Database = {
       }
       coms_logs: {
         Row: {
+          brevo_message_id: string | null
           channel: string
           created_at: string
+          delivery_status: string
           details: string | null
           event: string
           id: string
@@ -175,8 +177,10 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          brevo_message_id?: string | null
           channel: string
           created_at?: string
+          delivery_status?: string
           details?: string | null
           event: string
           id?: string
@@ -187,8 +191,10 @@ export type Database = {
           user_id: string
         }
         Update: {
+          brevo_message_id?: string | null
           channel?: string
           created_at?: string
+          delivery_status?: string
           details?: string | null
           event?: string
           id?: string
