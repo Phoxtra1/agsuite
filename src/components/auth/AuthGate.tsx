@@ -154,6 +154,18 @@ export default function AuthCard({
           {errMsg ? (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {errMsg}
+              {showSwitchHint && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthTab("signin");
+                    resetErrors();
+                  }}
+                  className="mt-2 block w-full text-center rounded-md bg-accent/10 text-accent py-2 text-sm font-medium hover:bg-accent/20 transition cursor-pointer"
+                >
+                  Switch to Sign In →
+                </button>
+              )}
             </div>
           ) : null}
 
