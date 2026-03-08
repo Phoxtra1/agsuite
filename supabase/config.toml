@@ -8,3 +8,6 @@ verify_jwt = false
 
 [functions.verify-reset-token]
 verify_jwt = false
+
+[functions.admin-seal-auth]
+verify_jwt = false
