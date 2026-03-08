@@ -10,6 +10,7 @@ import { ComsSystem } from "@/components/coms/ComsSystem";
 import { ACSModule } from "@/components/acs/ACSModule";
 
 import { BackendToggle } from "@/components/suite/pages/BackendToggle";
+import { EmailVerificationBanner } from "@/components/suite/EmailVerificationBanner";
 
 type TabView = "overview" | "console" | "coms" | "acs" | "profile" | "settings";
 
@@ -46,6 +47,7 @@ export default function Suite() {
       <SuiteNav currentTab={currentTab} onTabChange={handleTabChange} isAdmin={true} />
 
       <main className="ml-64 p-8">
+        <EmailVerificationBanner />
         <BackendToggle />
 
         <Routes>
