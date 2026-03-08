@@ -173,6 +173,45 @@ export type Database = {
         }
         Relationships: []
       }
+      login_devices: {
+        Row: {
+          browser: string | null
+          device_fingerprint: string
+          first_seen_at: string
+          id: string
+          ip_address: string | null
+          last_seen_at: string
+          location_hint: string | null
+          os: string | null
+          user_agent: string | null
+          user_id: string
+        }
+        Insert: {
+          browser?: string | null
+          device_fingerprint: string
+          first_seen_at?: string
+          id?: string
+          ip_address?: string | null
+          last_seen_at?: string
+          location_hint?: string | null
+          os?: string | null
+          user_agent?: string | null
+          user_id: string
+        }
+        Update: {
+          browser?: string | null
+          device_fingerprint?: string
+          first_seen_at?: string
+          id?: string
+          ip_address?: string | null
+          last_seen_at?: string
+          location_hint?: string | null
+          os?: string | null
+          user_agent?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       products: {
         Row: {
           admin_url: string | null

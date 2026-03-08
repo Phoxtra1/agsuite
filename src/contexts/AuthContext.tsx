@@ -9,6 +9,7 @@ import React, {
 } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { clearLast2FAVerified } from "@/lib/stepUpAuth";
+import { checkLoginDevice } from "@/lib/auth/loginAlert";
 
 type AuthUser = {
   id: string;
@@ -50,12 +51,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Listen for auth state changes FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         if (authActionInProgress.current) return;
         const mapped = mapUser(session?.user ?? null);
         setUser(mapped);
         setIsAuthenticated(!!mapped);
         setIsLoading(false);
+
+        // Trigger device check on sign-in events (non-blocking)
+        if (event === "SIGNED_IN" && session?.user) {
+          checkLoginDevice();
+        }
       }
     );
 
@@ -79,6 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       setUser(mapUser(data.user));
       setIsAuthenticated(true);
+      // Non-blocking device check
+      checkLoginDevice();
     } finally {
       setIsLoading(false);
       authActionInProgress.current = false;
