@@ -85,6 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (error) throw error;
       setUser(mapUser(data.user));
       setIsAuthenticated(true);
+      // Non-blocking device check
+      checkLoginDevice();
     } finally {
       setIsLoading(false);
       authActionInProgress.current = false;
