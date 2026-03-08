@@ -148,7 +148,6 @@ export function GatewayFlow() {
     }
   };
 
-  // After auth success → go straight to routing (2FA removed)
   const handleAuthSuccess = () => {
     setStep("routing");
   };
