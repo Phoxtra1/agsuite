@@ -148,6 +148,65 @@ export function IconAmniva({ className }: ProductIconProps) {
   );
 }
 
+// Phoxtra - Camera/Lens symbol for photo/media processing
+export function IconPhoxtra({ className }: ProductIconProps) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={cn('w-12 h-12', className)}
+    >
+      <rect width="64" height="64" rx="12" className="fill-primary" />
+      {/* Camera body */}
+      <rect x="14" y="22" width="36" height="24" rx="4" stroke="hsl(38 92% 50%)" strokeWidth="2" fill="none" />
+      {/* Viewfinder bump */}
+      <rect x="24" y="16" width="12" height="8" rx="2" stroke="hsl(38 92% 50%)" strokeWidth="1.5" fill="none" />
+      {/* Lens outer ring */}
+      <circle cx="32" cy="34" r="9" stroke="hsl(38 92% 50%)" strokeWidth="2" fill="none" />
+      {/* Lens inner ring */}
+      <circle cx="32" cy="34" r="5" stroke="hsl(38 92% 50%)" strokeWidth="1.5" fill="none" opacity="0.7" />
+      {/* Lens center */}
+      <circle cx="32" cy="34" r="2" fill="hsl(38 92% 50%)" />
+      {/* Flash */}
+      <circle cx="44" cy="26" r="2" fill="hsl(38 92% 50%)" opacity="0.6" />
+    </svg>
+  );
+}
+
+// AgroClimate - Leaf + Sun symbol for agricultural climate
+export function IconAgroClimate({ className }: ProductIconProps) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={cn('w-12 h-12', className)}
+    >
+      <rect width="64" height="64" rx="12" className="fill-primary" />
+      {/* Sun */}
+      <circle cx="40" cy="20" r="6" stroke="hsl(38 92% 50%)" strokeWidth="1.5" fill="none" />
+      <circle cx="40" cy="20" r="3" fill="hsl(38 92% 50%)" opacity="0.5" />
+      {/* Sun rays */}
+      {[0, 45, 90, 135, 180, 225, 270, 315].map((angle) => {
+        const rad = (angle * Math.PI) / 180;
+        const x1 = 40 + Math.cos(rad) * 8;
+        const y1 = 20 + Math.sin(rad) * 8;
+        const x2 = 40 + Math.cos(rad) * 10;
+        const y2 = 20 + Math.sin(rad) * 10;
+        return (
+          <line key={angle} x1={x1} y1={y1} x2={x2} y2={y2} stroke="hsl(38 92% 50%)" strokeWidth="1.5" strokeLinecap="round" opacity="0.6" />
+        );
+      })}
+      {/* Leaf */}
+      <path d="M18 48C18 48 20 28 36 24C36 24 34 44 18 48Z" stroke="hsl(38 92% 50%)" strokeWidth="2" fill="none" />
+      {/* Leaf vein */}
+      <path d="M27 36C23 40 20 45 18 48" stroke="hsl(38 92% 50%)" strokeWidth="1.5" strokeLinecap="round" fill="none" opacity="0.7" />
+      <path d="M27 36C31 32 34 28 36 24" stroke="hsl(38 92% 50%)" strokeWidth="1" strokeLinecap="round" fill="none" opacity="0.4" />
+    </svg>
+  );
+}
+
 // Generic placeholder icon
 export function IconPlaceholder({ className }: ProductIconProps) {
   return (
