@@ -72,6 +72,9 @@ export default function AuthCard({
       });
     } catch (err: unknown) {
       setError(formatAuthError(err));
+      if (isRegister && isAlreadyRegisteredError(err)) {
+        setShowSwitchHint(true);
+      }
     } finally {
       setBusy(false);
     }
