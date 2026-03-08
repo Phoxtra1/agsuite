@@ -1,6 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { account } from "@/lib/appwrite";
-import { AuthenticatorType } from "appwrite";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -13,13 +12,10 @@ interface TwoFactorSetupProps {
   onSkip?: () => void;
 }
 
-interface MfaSetupData {
-  secret: string;
-  uri: string;
-}
-
 export function TwoFactorSetup({ onSetupComplete, onSkip }: TwoFactorSetupProps) {
-  const [setupData, setSetupData] = useState<MfaSetupData | null>(null);
+  const [factorId, setFactorId] = useState<string | null>(null);
+  const [qrUri, setQrUri] = useState<string | null>(null);
+  const [secret, setSecret] = useState<string | null>(null);
   const [verificationCode, setVerificationCode] = useState("");
   const [isLoading, setIsLoading] = useState(true);
   const [isVerifying, setIsVerifying] = useState(false);
@@ -34,30 +30,38 @@ export function TwoFactorSetup({ onSetupComplete, onSkip }: TwoFactorSetupProps)
     setIsLoading(true);
     setError(null);
     try {
-      // Create TOTP authenticator - returns secret and QR URI
-      const result = await account.createMFAAuthenticator({ type: AuthenticatorType.Totp });
-      setSetupData({
-        secret: result.secret,
-        uri: result.uri,
-      });
-    } catch (err: unknown) {
-      const appwriteErr = err as { type?: string; message?: string; code?: number };
-      
-      // Check if 2FA is already set up
-      if (
-        appwriteErr.type === 'user_authenticator_already_verified' ||
-        appwriteErr.message?.includes('already verified') ||
-        appwriteErr.message?.includes('already exists')
-      ) {
-        // 2FA is already enabled - proceed directly (no setup needed)
-        console.info('[TwoFactorSetup] 2FA already enabled, proceeding...');
+      // Check if user already has a verified TOTP factor
+      const { data: factors } = await supabase.auth.mfa.listFactors();
+      const verified = (factors?.totp ?? []).find((f) => f.status === "verified");
+      if (verified) {
+        // Already enrolled → skip setup
         onSetupComplete();
         return;
       }
-      
-      const message = err instanceof Error ? err.message : "Failed to initialize 2FA setup";
-      setError(message);
-      console.error("MFA setup error:", err);
+
+      // Unenroll any unverified factors first
+      for (const f of factors?.totp ?? []) {
+        if (f.status === "unverified") {
+          await supabase.auth.mfa.unenroll({ factorId: f.id });
+        }
+      }
+
+      // Enroll a new TOTP factor
+      const { data, error: enrollErr } = await supabase.auth.mfa.enroll({
+        factorType: "totp",
+        friendlyName: "Amineva Authenticator",
+      });
+
+      if (enrollErr || !data) {
+        throw new Error(enrollErr?.message || "Failed to start 2FA enrollment");
+      }
+
+      setFactorId(data.id);
+      setQrUri(data.totp.uri);
+      setSecret(data.totp.secret);
+    } catch (err: any) {
+      setError(err?.message || "Failed to initialize 2FA setup");
+      console.error("[TwoFactorSetup]", err);
     } finally {
       setIsLoading(false);
     }
@@ -65,7 +69,7 @@ export function TwoFactorSetup({ onSetupComplete, onSkip }: TwoFactorSetupProps)
 
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
-    if (verificationCode.length !== 6) {
+    if (!factorId || verificationCode.length !== 6) {
       setError("Please enter a 6-digit code");
       return;
     }
@@ -74,16 +78,30 @@ export function TwoFactorSetup({ onSetupComplete, onSkip }: TwoFactorSetupProps)
     setError(null);
 
     try {
-      // Verify the authenticator with the OTP code
-      await account.updateMFAAuthenticator({
-        type: AuthenticatorType.Totp,
-        otp: verificationCode,
+      // Create a challenge for the factor
+      const { data: challengeData, error: challengeErr } = await supabase.auth.mfa.challenge({
+        factorId,
       });
+
+      if (challengeErr || !challengeData) {
+        throw new Error(challengeErr?.message || "Failed to create verification challenge");
+      }
+
+      // Verify the challenge with the user's code
+      const { error: verifyErr } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId: challengeData.id,
+        code: verificationCode,
+      });
+
+      if (verifyErr) {
+        throw new Error(verifyErr.message || "Invalid verification code");
+      }
+
       toast.success("Two-factor authentication enabled successfully!");
       onSetupComplete();
-    } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Invalid verification code";
-      setError(message);
+    } catch (err: any) {
+      setError(err?.message || "Invalid verification code");
       setVerificationCode("");
     } finally {
       setIsVerifying(false);
@@ -91,8 +109,8 @@ export function TwoFactorSetup({ onSetupComplete, onSkip }: TwoFactorSetupProps)
   }
 
   function handleCopySecret() {
-    if (setupData?.secret) {
-      navigator.clipboard.writeText(setupData.secret);
+    if (secret) {
+      navigator.clipboard.writeText(secret);
       setCopied(true);
       toast.success("Secret key copied to clipboard");
       setTimeout(() => setCopied(false), 2000);
@@ -130,13 +148,13 @@ export function TwoFactorSetup({ onSetupComplete, onSkip }: TwoFactorSetupProps)
       <CardContent>
         <form onSubmit={handleVerify} className="space-y-6">
           {/* QR Code */}
-          {setupData?.uri && (
+          {qrUri && (
             <div className="flex flex-col items-center space-y-4">
               <div className="rounded-lg border bg-background p-4">
                 <img
-                  src={`https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=${encodeURIComponent(setupData.uri)}`}
+                  src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(qrUri)}`}
                   alt="QR Code for authenticator app"
-                  className="h-44 w-44"
+                  className="h-48 w-48"
                 />
               </div>
               <p className="text-sm text-muted-foreground text-center">
@@ -146,12 +164,12 @@ export function TwoFactorSetup({ onSetupComplete, onSkip }: TwoFactorSetupProps)
           )}
 
           {/* Manual Secret Key */}
-          {setupData?.secret && (
+          {secret && (
             <div className="space-y-2">
               <Label className="text-muted-foreground text-xs">Or enter this key manually:</Label>
               <div className="flex items-center gap-2">
                 <code className="flex-1 rounded-md border bg-muted px-3 py-2 font-mono text-sm break-all">
-                  {setupData.secret}
+                  {secret}
                 </code>
                 <Button
                   type="button"
@@ -207,7 +225,7 @@ export function TwoFactorSetup({ onSetupComplete, onSkip }: TwoFactorSetupProps)
             )}
           </Button>
 
-          {/* Skip Option (for development/testing only) */}
+          {/* Skip Option */}
           {onSkip && (
             <Button
               type="button"
