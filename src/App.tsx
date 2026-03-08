@@ -115,6 +115,7 @@ function AppRoutes() {
         
         <Route path="/auth/recovery" element={<Recovery />} />
         <Route path="/auth/reset-password" element={<ResetPassword />} />
+        <Route path="/auth/verify-email" element={<VerifyEmail />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
 
         {/* Suite */}

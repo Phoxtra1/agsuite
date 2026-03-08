@@ -53,7 +53,7 @@ export default function VerifyEmail() {
           {status === "success" && (
             <>
               <div className="flex justify-center mb-4">
-                <CheckCircle className="h-12 w-12 text-green-500" />
+                <CheckCircle className="h-12 w-12 text-success" />
               </div>
               <CardTitle>Email Verified!</CardTitle>
               <CardDescription>{message}</CardDescription>
