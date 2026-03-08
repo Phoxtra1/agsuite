@@ -16,6 +16,28 @@ export default function Seal() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((c) => c - 1), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
+
+  const handleResend = async () => {
+    if (cooldown > 0 || loading) return;
+    setError(null);
+    setLoading(true);
+    const result = await requestSealOTP(email.trim());
+    setLoading(false);
+    if (result.success) {
+      setCooldown(30);
+      setOtp(["", "", "", "", "", ""]);
+      otpRefs.current[0]?.focus();
+    } else {
+      setError(result.error || "Failed to resend");
+    }
+  };
 
   // If already authenticated, redirect
   useEffect(() => {
@@ -30,6 +52,7 @@ export default function Seal() {
     setLoading(false);
     if (result.success) {
       setStep("otp");
+      setCooldown(30);
     } else {
       setError(result.error || "Email not valid");
     }
@@ -178,13 +201,23 @@ export default function Seal() {
                 </div>
               )}
 
-              <button
-                type="button"
-                onClick={() => { setStep("email"); setOtp(["", "", "", "", "", ""]); setError(null); }}
-                className="block mx-auto text-xs text-muted-foreground hover:text-foreground transition"
-              >
-                Use a different email
-              </button>
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={cooldown > 0 || loading}
+                  className="text-xs text-muted-foreground hover:text-foreground transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setStep("email"); setOtp(["", "", "", "", "", ""]); setError(null); setCooldown(0); }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition"
+                >
+                  Use a different email
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
