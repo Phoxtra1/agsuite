@@ -157,6 +157,8 @@ serve(async (req) => {
         message_type: "transactional",
         details: "Seal authentication OTP sent",
         user_id: "00000000-0000-0000-0000-000000000000",
+        brevo_message_id: sendResult.messageId || null,
+        delivery_status: "sent",
       }).then(() => {}).catch(() => {});
 
       return new Response(
