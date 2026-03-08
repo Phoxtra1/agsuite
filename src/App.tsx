@@ -30,6 +30,7 @@ const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/suite/AuthCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Seal = lazy(() => import("./pages/Seal"));
 
 const queryClient = new QueryClient();
 
