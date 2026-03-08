@@ -14,7 +14,6 @@ interface AuthCardProps {
   setPassword: (v: string) => void;
   onChangeSelection: () => void;
 
-  // Keep these props but we will NOT use them to navigate blindly anymore.
   onSignIn: () => void;
   onRegister: () => void;
 }
@@ -65,7 +64,6 @@ export default function AuthCard({
   const submit = async () => {
     resetErrors();
 
-    // Basic UI validation (keeps it clean)
     if (!isEmailValid) {
       setErrMsg("Please enter a valid email address.");
       return;
@@ -149,7 +147,6 @@ export default function AuthCard({
         </div>
 
         <div className="mt-6 space-y-4">
-          {/* Error */}
           {errMsg ? (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {errMsg}
@@ -210,7 +207,6 @@ export default function AuthCard({
             </div>
           </div>
 
-          {/* Confirm password (Register only) */}
           {isRegister ? (
             <div>
               <label className="text-sm font-medium text-foreground">Confirm Password</label>
@@ -244,35 +240,34 @@ export default function AuthCard({
             {loading ? (isRegister ? "Creating account..." : "Signing in...") : isRegister ? "Register" : "Sign In"}
           </button>
 
-          {/* Social login (kept, but visually calmer + optional later) */}
           <div className="text-center text-xs text-muted-foreground pt-2">or continue with</div>
 
           <div className="grid grid-cols-2 gap-3">
             <button
               type="button"
               className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer"
-              onClick={() => setErrMsg("Google sign-in is not wired yet. We’ll connect it after core auth + 2FA is stable.")}
+              onClick={() => setErrMsg("Google sign-in is not yet available.")}
             >
               Google
             </button>
             <button
               type="button"
               className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer"
-              onClick={() => setErrMsg("Microsoft sign-in is not wired yet. We’ll connect it after core auth + 2FA is stable.")}
+              onClick={() => setErrMsg("Microsoft sign-in is not yet available.")}
             >
               Microsoft
             </button>
             <button
               type="button"
               className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer"
-              onClick={() => setErrMsg("Facebook sign-in is not wired yet. We’ll connect it after core auth + 2FA is stable.")}
+              onClick={() => setErrMsg("Facebook sign-in is not yet available.")}
             >
               Facebook
             </button>
             <button
               type="button"
               className="rounded-lg border border-input bg-background py-2 text-sm text-foreground hover:bg-muted transition cursor-pointer"
-              onClick={() => setErrMsg("GitHub sign-in is not wired yet. We’ll connect it after core auth + 2FA is stable.")}
+              onClick={() => setErrMsg("GitHub sign-in is not yet available.")}
             >
               GitHub
             </button>
