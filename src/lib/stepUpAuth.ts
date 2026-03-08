@@ -1,31 +1,23 @@
 /**
- * Simple 2FA session tracking
+ * 2FA Session Tracking (DISABLED)
  * 
- * Tracks whether 2FA was completed in the current browser session.
- * sessionStorage clears on browser/tab close, enforcing "every new login/device" rule.
+ * 2FA has been disabled. These functions are stubs that always pass.
+ * This file is kept to prevent import errors in existing code.
  */
 
 const STORAGE_KEY = 'suite_2fa_verified_at';
 
-/** Mark 2FA as completed for this session */
+/** Mark 2FA as completed for this session (no-op) */
 export function setLast2FAVerifiedAt(): void {
-  try {
-    sessionStorage.setItem(STORAGE_KEY, Date.now().toString());
-  } catch {
-    // Ignore storage errors
-  }
+  // No-op: 2FA disabled
 }
 
-/** Check if 2FA was completed in this browser session */
+/** Check if 2FA was completed - always returns true (2FA disabled) */
 export function is2FAVerifiedThisSession(): boolean {
-  try {
-    return !!sessionStorage.getItem(STORAGE_KEY);
-  } catch {
-    return false;
-  }
+  return true;
 }
 
-/** Clear 2FA status (called on logout) */
+/** Clear 2FA status (no-op) */
 export function clearLast2FAVerified(): void {
   try {
     sessionStorage.removeItem(STORAGE_KEY);

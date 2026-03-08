@@ -1,16 +1,14 @@
 /**
- * Product Gate Hook (Simplified)
+ * Product Gate Hook (Simplified - 2FA Disabled)
  * 
  * ALL products in Amineva Global Suite MUST use this hook to enforce:
  * 1. Suite account authentication
- * 2. 2FA verification before access
  */
 
 import { useEffect, useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { is2FAVerifiedThisSession } from '@/lib/stepUpAuth';
 
-export type GateStatus = 'checking' | 'passed' | 'needs_login' | 'needs_2fa';
+export type GateStatus = 'checking' | 'passed' | 'needs_login';
 
 interface UseProductGateOptions {
   productKey: string;
@@ -20,7 +18,6 @@ interface UseProductGateOptions {
 
 interface UseProductGateResult {
   status: GateStatus;
-  redirectTo2FA: () => void;
   redirectToLogin: () => void;
 }
 
@@ -48,18 +45,9 @@ export function useProductGate({
       return;
     }
 
-    if (is2FAVerifiedThisSession()) {
-      setStatus('passed');
-    } else {
-      setStatus('needs_2fa');
-    }
+    // 2FA check removed - if authenticated, pass through
+    setStatus('passed');
   }, [isAuthenticated, isLoading, enabled]);
-
-  const redirectTo2FA = () => {
-    const returnTo = currentPath || window.location.pathname + window.location.search;
-    const suiteOrigin = getSuiteOrigin();
-    window.location.href = `${suiteOrigin}/auth/verify-2fa?returnTo=${encodeURIComponent(returnTo)}&product=${productKey}`;
-  };
 
   const redirectToLogin = () => {
     const returnTo = currentPath || window.location.pathname + window.location.search;
@@ -67,7 +55,7 @@ export function useProductGate({
     window.location.href = `${suiteOrigin}/?returnTo=${encodeURIComponent(returnTo)}`;
   };
 
-  return { status, redirectTo2FA, redirectToLogin };
+  return { status, redirectToLogin };
 }
 
 function getSuiteOrigin(): string {
