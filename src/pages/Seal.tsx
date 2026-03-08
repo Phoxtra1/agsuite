@@ -16,6 +16,28 @@ export default function Seal() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
   const otpRefs = useRef<(HTMLInputElement | null)[]>([]);
+  const [cooldown, setCooldown] = useState(0);
+
+  useEffect(() => {
+    if (cooldown <= 0) return;
+    const id = setInterval(() => setCooldown((c) => c - 1), 1000);
+    return () => clearInterval(id);
+  }, [cooldown]);
+
+  const handleResend = async () => {
+    if (cooldown > 0 || loading) return;
+    setError(null);
+    setLoading(true);
+    const result = await requestSealOTP(email.trim());
+    setLoading(false);
+    if (result.success) {
+      setCooldown(30);
+      setOtp(["", "", "", "", "", ""]);
+      otpRefs.current[0]?.focus();
+    } else {
+      setError(result.error || "Failed to resend");
+    }
+  };
 
   // If already authenticated, redirect
   useEffect(() => {
