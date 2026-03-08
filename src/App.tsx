@@ -129,6 +129,9 @@ function AppRoutes() {
         <Route path="/auth/verify-email" element={<VerifyEmail />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
 
+        {/* Seal (hidden admin entry) */}
+        <Route path="/seal" element={<Seal />} />
+
         {/* Suite */}
         <Route path="/suite/*" element={<SuiteGuard />} />
 
