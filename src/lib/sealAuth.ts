@@ -31,12 +31,21 @@ export function isSealAuthenticated(): boolean {
   return !!getSealSession();
 }
 
+async function callSealFunction(body: Record<string, string>): Promise<any> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-seal-auth`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
+
 export async function requestSealOTP(email: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const { data, error } = await supabase.functions.invoke("admin-seal-auth", {
-      body: { action: "request", email },
-    });
-    if (error) return { success: false, error: "Email not valid" };
+    const data = await callSealFunction({ action: "request", email });
     if (data?.error) return { success: false, error: data.error };
     return { success: true };
   } catch {
@@ -49,10 +58,7 @@ export async function verifySealOTP(
   code: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const { data, error } = await supabase.functions.invoke("admin-seal-auth", {
-      body: { action: "verify", email, code },
-    });
-    if (error) return { success: false, error: "Verification failed" };
+    const data = await callSealFunction({ action: "verify", email, code });
     if (data?.error) return { success: false, error: data.error };
     if (data?.token) {
       setSealSession(data.token, data.email);
