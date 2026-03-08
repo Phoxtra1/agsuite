@@ -32,6 +32,7 @@ export default function AuthCard({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showSwitchHint, setShowSwitchHint] = useState(false);
 
   const isRegister = authTab === "register";
   const loading = isLoading || busy;
