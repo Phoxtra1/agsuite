@@ -2,6 +2,7 @@
 
 import React, { useEffect, useState } from "react";
 import { useAuth } from "@/contexts/AuthContext";
+import { isAlreadyRegisteredError } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +51,7 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
 
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [showSwitchHint, setShowSwitchHint] = useState(false);
 
   // Prevent loops: only proceed once auth is truly set
   const [authTriggered, setAuthTriggered] = useState(false);
@@ -57,8 +59,8 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
   // Clear errors when switching tabs
   useEffect(() => {
     setError("");
+    setShowSwitchHint(false);
     if (!isRegister) setConfirmPassword("");
-    // Allow success effect to fire again if user re-attempts
     setAuthTriggered(false);
   }, [isRegister]);
 
@@ -115,7 +117,10 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Authentication failed";
 
-      if (msg.includes("Invalid credentials") || msg.includes("Invalid email or password")) {
+      if (isRegister && isAlreadyRegisteredError(err)) {
+        setError("This email is already registered.");
+        setShowSwitchHint(true);
+      } else if (msg.includes("Invalid credentials") || msg.includes("Invalid email or password")) {
         setError("Invalid email or password. Please check your credentials and try again.");
       } else if (msg.includes("User not found") || msg.includes("user_not_found")) {
         setError("No account found with this email. Please register first.");
@@ -190,7 +195,22 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
             {error && (
               <Alert variant="destructive" className="animate-scale-in">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  {error}
+                  {showSwitchHint && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsRegister(false);
+                        setError("");
+                        setShowSwitchHint(false);
+                      }}
+                      className="mt-2 block w-full text-center rounded-md bg-accent/10 text-accent-foreground py-2 text-sm font-medium hover:bg-accent/20 transition cursor-pointer"
+                    >
+                      Switch to Sign In →
+                    </button>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
 

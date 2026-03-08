@@ -2,7 +2,7 @@ import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useAuth } from "@/contexts/AuthContext";
-import { formatAuthError } from "@/lib/auth";
+import { formatAuthError, isAlreadyRegisteredError } from "@/lib/auth";
 
 interface AuthCardProps {
   product: ProductData;
@@ -35,6 +35,7 @@ export default function AuthCard({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const [errMsg, setErrMsg] = useState<string>("");
+  const [showSwitchHint, setShowSwitchHint] = useState(false);
 
   const isRegister = authTab === "register";
 
@@ -56,7 +57,10 @@ export default function AuthCard({
     return !loading;
   }, [isEmailValid, isPasswordValid, isRegister, confirmOk, loading]);
 
-  const resetErrors = () => setErrMsg("");
+  const resetErrors = () => {
+    setErrMsg("");
+    setShowSwitchHint(false);
+  };
 
   const submit = async () => {
     resetErrors();
@@ -87,6 +91,9 @@ export default function AuthCard({
       navigate(`/auth/verify-2fa?product=${encodeURIComponent(product.id)}`);
     } catch (e) {
       setErrMsg(formatAuthError(e));
+      if (isRegister && isAlreadyRegisteredError(e)) {
+        setShowSwitchHint(true);
+      }
     } finally {
       setLoading(false);
     }
@@ -147,6 +154,18 @@ export default function AuthCard({
           {errMsg ? (
             <div className="rounded-lg border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {errMsg}
+              {showSwitchHint && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setAuthTab("signin");
+                    resetErrors();
+                  }}
+                  className="mt-2 block w-full text-center rounded-md bg-accent/10 text-accent py-2 text-sm font-medium hover:bg-accent/20 transition cursor-pointer"
+                >
+                  Switch to Sign In →
+                </button>
+              )}
             </div>
           ) : null}
 

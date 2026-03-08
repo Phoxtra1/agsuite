@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useAuth } from "@/contexts/AuthContext";
-import { formatAuthError } from "@/lib/auth";
+import { formatAuthError, isAlreadyRegisteredError } from "@/lib/auth";
 import { getProductRedirectUrl } from "@/lib/productRouting";
 
 interface AuthCardProps {
@@ -32,6 +32,7 @@ export default function AuthCard({
   const [confirmPassword, setConfirmPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  const [showSwitchHint, setShowSwitchHint] = useState(false);
 
   const isRegister = authTab === "register";
   const loading = isLoading || busy;
@@ -71,6 +72,9 @@ export default function AuthCard({
       });
     } catch (err: unknown) {
       setError(formatAuthError(err));
+      if (isRegister && isAlreadyRegisteredError(err)) {
+        setShowSwitchHint(true);
+      }
     } finally {
       setBusy(false);
     }
@@ -97,7 +101,7 @@ export default function AuthCard({
         <div className="mt-6 flex justify-between text-sm font-medium">
           <button
             type="button"
-            onClick={() => { setAuthTab("signin"); setError(""); setConfirmPassword(""); }}
+            onClick={() => { setAuthTab("signin"); setError(""); setConfirmPassword(""); setShowSwitchHint(false); }}
             className={`pb-3 w-1/2 text-center border-b-2 cursor-pointer ${
               authTab === "signin"
                 ? "border-accent text-foreground"
@@ -108,7 +112,7 @@ export default function AuthCard({
           </button>
           <button
             type="button"
-            onClick={() => { setAuthTab("register"); setError(""); }}
+            onClick={() => { setAuthTab("register"); setError(""); setShowSwitchHint(false); }}
             className={`pb-3 w-1/2 text-center border-b-2 cursor-pointer ${
               authTab === "register"
                 ? "border-accent text-foreground"
@@ -122,6 +126,15 @@ export default function AuthCard({
         {error && (
           <div className="mt-4 rounded-lg border border-destructive/50 bg-destructive/10 p-3 text-sm text-destructive">
             {error}
+            {showSwitchHint && (
+              <button
+                type="button"
+                onClick={() => { setAuthTab("signin"); setError(""); setConfirmPassword(""); setShowSwitchHint(false); }}
+                className="mt-2 block w-full text-center rounded-md bg-accent/10 text-accent py-2 text-sm font-medium hover:bg-accent/20 transition cursor-pointer"
+              >
+                Switch to Sign In →
+              </button>
+            )}
           </div>
         )}
 

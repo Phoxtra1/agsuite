@@ -33,12 +33,20 @@ export async function logout() {
   if (error) throw error;
 }
 
+export function isAlreadyRegisteredError(err: unknown): boolean {
+  if (err && typeof err === "object" && "message" in err) {
+    const msg = ((err as any).message as string).toLowerCase();
+    return msg.includes("already registered") || msg.includes("user already registered") || msg.includes("already exists");
+  }
+  return false;
+}
+
 export function formatAuthError(err: unknown): string {
   if (err && typeof err === "object" && "message" in err) {
     const msg = (err as any).message as string;
     if (msg.includes("Invalid login")) return "Invalid email or password.";
     if (msg.includes("Email not confirmed")) return "Please verify your email before signing in.";
-    if (msg.includes("already registered")) return "This email is already registered.";
+    if (isAlreadyRegisteredError(err)) return "This email is already registered.";
     return msg;
   }
   return "An unexpected error occurred.";
