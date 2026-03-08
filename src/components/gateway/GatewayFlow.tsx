@@ -1,7 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { is2FAVerifiedThisSession } from "@/lib/stepUpAuth";
 import { ProductSelectionStep } from "./ProductSelectionStep";
 import { CountrySelectionStep } from "./CountrySelectionStep";
 import { AuthStep } from "./AuthStep";
@@ -51,15 +50,6 @@ export function GatewayFlow() {
     }
   }, [authRedirectParam, searchParams]);
 
-  /** Navigate to the central 2FA verification page */
-  function navigateToVerify2FA(productKey: string | null) {
-    const productUrl = productKey ? getProductRedirectUrl(productKey) : "/suite";
-    navigate(
-      `/auth/verify-2fa?product=${productKey || "default"}&returnTo=${encodeURIComponent(productUrl)}`,
-      { replace: true }
-    );
-  }
-
   // Load persisted state on mount — only run once
   useEffect(() => {
   if (initialized) return;
@@ -77,10 +67,9 @@ export function GatewayFlow() {
   }
 
   if (state.selectedProductKey) {
-    if (isAuthenticated && is2FAVerifiedThisSession()) {
+    if (isAuthenticated) {
+      // 2FA check removed - go straight to routing
       setStep("routing");
-    } else if (isAuthenticated) {
-      navigateToVerify2FA(state.selectedProductKey);
     } else {
       setStep("auth");
     }
@@ -107,10 +96,9 @@ export function GatewayFlow() {
 
     saveGatewayState({ selectedProductKey: productKey });
 
-    if (isAuthenticated && is2FAVerifiedThisSession()) {
+    if (isAuthenticated) {
+      // 2FA check removed - go straight to routing
       setStep("routing");
-    } else if (isAuthenticated) {
-      navigateToVerify2FA(productKey);
     } else {
       setStep("auth");
     }
@@ -138,10 +126,9 @@ export function GatewayFlow() {
     setSelectedCurrencyCode(null);
     clearGatewayState();
 
-    if (isAuthenticated && is2FAVerifiedThisSession()) {
+    if (isAuthenticated) {
+      // 2FA check removed - go straight to routing
       setStep("routing");
-    } else if (isAuthenticated) {
-      navigateToVerify2FA(null);
     } else {
       setStep("auth");
     }
@@ -157,18 +144,17 @@ export function GatewayFlow() {
       selectedCurrencyCode: currencyCode ?? null,
     });
 
-    if (isAuthenticated && is2FAVerifiedThisSession()) {
+    if (isAuthenticated) {
+      // 2FA check removed - go straight to routing
       setStep("routing");
-    } else if (isAuthenticated) {
-      navigateToVerify2FA(selectedProductKey);
     } else {
       setStep("auth");
     }
   };
 
-  // After auth success → navigate to 2FA verification
+  // After auth success → go straight to routing (2FA removed)
   const handleAuthSuccess = () => {
-    navigateToVerify2FA(selectedProductKey);
+    setStep("routing");
   };
 
   // Route user to product (only called when authed + 2FA verified this session)

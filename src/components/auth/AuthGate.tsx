@@ -88,7 +88,8 @@ export default function AuthCard({
       }
 
       // Only now do we move forward (session exists)
-      navigate(`/auth/verify-2fa?product=${encodeURIComponent(product.id)}`);
+      // 2FA removed - navigate directly to suite
+      navigate(`/suite`, { replace: true });
     } catch (e) {
       setErrMsg(formatAuthError(e));
       if (isRegister && isAlreadyRegisteredError(e)) {
