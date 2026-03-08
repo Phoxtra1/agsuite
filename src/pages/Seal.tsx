@@ -200,13 +200,23 @@ export default function Seal() {
                 </div>
               )}
 
-              <button
-                type="button"
-                onClick={() => { setStep("email"); setOtp(["", "", "", "", "", ""]); setError(null); }}
-                className="block mx-auto text-xs text-muted-foreground hover:text-foreground transition"
-              >
-                Use a different email
-              </button>
+              <div className="flex flex-col items-center gap-2">
+                <button
+                  type="button"
+                  onClick={handleResend}
+                  disabled={cooldown > 0 || loading}
+                  className="text-xs text-muted-foreground hover:text-foreground transition disabled:opacity-40 disabled:cursor-not-allowed"
+                >
+                  {cooldown > 0 ? `Resend code in ${cooldown}s` : "Resend code"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => { setStep("email"); setOtp(["", "", "", "", "", ""]); setError(null); setCooldown(0); }}
+                  className="text-xs text-muted-foreground hover:text-foreground transition"
+                >
+                  Use a different email
+                </button>
+              </div>
             </motion.div>
           )}
         </AnimatePresence>
