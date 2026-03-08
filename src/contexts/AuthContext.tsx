@@ -51,12 +51,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     // Listen for auth state changes FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
         if (authActionInProgress.current) return;
         const mapped = mapUser(session?.user ?? null);
         setUser(mapped);
         setIsAuthenticated(!!mapped);
         setIsLoading(false);
+
+        // Trigger device check on sign-in events (non-blocking)
+        if (event === "SIGNED_IN" && session?.user) {
+          checkLoginDevice();
+        }
       }
     );
 
