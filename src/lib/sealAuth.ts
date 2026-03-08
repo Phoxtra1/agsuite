@@ -1,10 +1,11 @@
 /**
  * Seal Auth — covert admin session manager.
- * Backend-agnostic: only talks to edge functions via supabase client.
+ * Backend-agnostic: talks to edge functions via fetch with anon key.
  * Session token is stored in sessionStorage (destroyed on tab close).
  */
 
-import { supabase } from "@/integrations/supabase/client";
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
 
 const SEAL_KEY = "__s_tk";
 const SEAL_EMAIL_KEY = "__s_em";
