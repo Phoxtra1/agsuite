@@ -87,7 +87,6 @@ export default function AuthCard({
         await login(email, password);
       }
 
-      // Only now do we move forward (session exists)
       navigate(`/suite`, { replace: true });
     } catch (e) {
       setErrMsg(formatAuthError(e));
