@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useCallback } from "react";
-import { account } from "@/lib/appwrite";
-import { AuthenticationFactor } from "appwrite";
+import { supabase } from "@/integrations/supabase/client";
 import {
   Card,
   CardContent,
@@ -15,7 +14,6 @@ import {
   ShieldCheck,
   AlertCircle,
   Loader2,
-  KeyRound,
   RefreshCw,
 } from "lucide-react";
 
@@ -25,21 +23,12 @@ interface TwoFactorVerifyProps {
   onRecovery?: () => void;
 }
 
-/**
- * Self-managing TOTP verification component.
- * Creates its own MFA challenge on mount and verifies the user's code.
- */
-
-function getTotpFactor(): any {
-  const af: any = AuthenticationFactor;
-  return af?.Totp ?? af?.TOTP ?? "totp";
-}
-
 export function TwoFactorVerify({
   onVerifyComplete,
   onCancel,
   onRecovery,
 }: TwoFactorVerifyProps) {
+  const [factorId, setFactorId] = useState<string | null>(null);
   const [challengeId, setChallengeId] = useState<string | null>(null);
   const [code, setCode] = useState("");
   const [error, setError] = useState<string | null>(null);
@@ -52,21 +41,34 @@ export function TwoFactorVerify({
     setChallengeId(null);
 
     try {
-      const factor = getTotpFactor();
-      const challenge = await (account as any).createMfaChallenge(factor);
-      const id =
-        challenge?.$id || challenge?.id || challenge?.challengeId || null;
-      if (!id) throw new Error("No challenge ID returned from server");
-      setChallengeId(id);
+      const { data: factors, error: factorsErr } = await supabase.auth.mfa.listFactors();
+      if (factorsErr) throw new Error(factorsErr.message);
+
+      const verified = (factors?.totp ?? []).find((f) => f.status === "verified");
+      if (!verified) {
+        // No 2FA enrolled — skip verification
+        onVerifyComplete();
+        return;
+      }
+
+      setFactorId(verified.id);
+
+      const { data: challenge, error: challengeErr } = await supabase.auth.mfa.challenge({
+        factorId: verified.id,
+      });
+
+      if (challengeErr || !challenge?.id) {
+        throw new Error(challengeErr?.message || "Failed to create challenge");
+      }
+
+      setChallengeId(challenge.id);
     } catch (err: any) {
       console.error("[TwoFactorVerify] Challenge creation failed:", err);
-      setError(
-        "Failed to start verification. Tap 'New Code' or refresh the page."
-      );
+      setError("Failed to start verification. Tap 'New Code' or refresh the page.");
     } finally {
       setIsCreating(false);
     }
-  }, []);
+  }, [onVerifyComplete]);
 
   useEffect(() => {
     createChallenge();
@@ -74,62 +76,31 @@ export function TwoFactorVerify({
 
   async function handleVerify(e: React.FormEvent) {
     e.preventDefault();
-    if (!challengeId || code.length !== 6 || isVerifying) return;
+    if (!factorId || !challengeId || code.length !== 6 || isVerifying) return;
 
     setIsVerifying(true);
     setError(null);
 
     try {
-      // Try positional args first, then object arg (SDK version compat)
-      const acc: any = account;
-      let verified = false;
+      const { error: verifyErr } = await supabase.auth.mfa.verify({
+        factorId,
+        challengeId,
+        code,
+      });
 
-      // Method 1: updateMfaChallenge(id, otp)
-      if (typeof acc.updateMfaChallenge === "function" && !verified) {
-        try {
-          await acc.updateMfaChallenge(challengeId, code);
-          verified = true;
-        } catch (e1: any) {
-          // If it's an invalid OTP error, don't try other methods
-          if (/invalid|otp|token/i.test(e1?.message || "")) throw e1;
-          // Try object format
-          try {
-            await acc.updateMfaChallenge({ challengeId, otp: code });
-            verified = true;
-          } catch (e2: any) {
-            if (/invalid|otp|token/i.test(e2?.message || "")) throw e2;
-          }
+      if (verifyErr) {
+        if (/expired/i.test(verifyErr.message)) {
+          setError("Verification expired. Tap 'New Code' to try again.");
+        } else {
+          setError("Invalid code. Check your authenticator app and try again.");
         }
+        setCode("");
+        return;
       }
 
-      // Method 2: updateMFAChallenge (capital MFA)
-      if (!verified && typeof acc.updateMFAChallenge === "function") {
-        try {
-          await acc.updateMFAChallenge(challengeId, code);
-          verified = true;
-        } catch (e3: any) {
-          if (/invalid|otp|token/i.test(e3?.message || "")) throw e3;
-          await acc.updateMFAChallenge({ challengeId, otp: code });
-          verified = true;
-        }
-      }
-
-      if (!verified) {
-        throw new Error("No compatible MFA verification method found in SDK");
-      }
-
-      // Confirm session is still valid
-      await account.get();
       onVerifyComplete();
     } catch (err: any) {
-      const msg = err?.message || "";
-      if (/expired|challenge/i.test(msg)) {
-        setError("Verification expired. Tap 'New Code' to try again.");
-      } else if (/invalid|otp|token/i.test(msg)) {
-        setError("Invalid code. Check your authenticator app and try again.");
-      } else {
-        setError("Verification failed. Please try again.");
-      }
+      setError("Verification failed. Please try again.");
       setCode("");
     } finally {
       setIsVerifying(false);
@@ -214,19 +185,6 @@ export function TwoFactorVerify({
             <RefreshCw className="mr-2 h-4 w-4" />
             New Code
           </Button>
-
-          {onRecovery && (
-            <Button
-              type="button"
-              variant="link"
-              className="w-full text-muted-foreground"
-              onClick={onRecovery}
-              disabled={isVerifying}
-            >
-              <KeyRound className="mr-2 h-4 w-4" />
-              Lost your authenticator?
-            </Button>
-          )}
 
           {onCancel && (
             <Button

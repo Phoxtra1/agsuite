@@ -2,8 +2,9 @@ import React from 'react';
 import { AdminProductLinks } from './AdminProductLinks';
 import { AdminPanel } from './AdminPanel';
 import { CategoryManager } from './CategoryManager';
+import { AuthDiagnosticsPanel } from './AuthDiagnosticsPanel';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, FolderTree } from 'lucide-react';
+import { Settings, FolderTree, ShieldCheck } from 'lucide-react';
 
 export function AminevaConsole() {
   return (
@@ -27,6 +28,10 @@ export function AminevaConsole() {
             <FolderTree className="h-4 w-4" />
             Category Management
           </TabsTrigger>
+          <TabsTrigger value="auth-diagnostics" className="gap-2">
+            <ShieldCheck className="h-4 w-4" />
+            Auth Diagnostics
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="products">
@@ -35,6 +40,10 @@ export function AminevaConsole() {
 
         <TabsContent value="categories">
           <CategoryManager />
+        </TabsContent>
+
+        <TabsContent value="auth-diagnostics">
+          <AuthDiagnosticsPanel />
         </TabsContent>
       </Tabs>
     </div>
