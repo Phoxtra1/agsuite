@@ -35,11 +35,15 @@ export function getProductIcon(productId: ProductData["id"] | string) {
   }
 
   if (id.includes("agroclimate") || id.includes("agro")) {
-    return IconAminevaOps;
+    return IconAgroClimate;
   }
 
   if (id.includes("amniva")) {
     return IconAmniva;
+  }
+
+  if (id.includes("phoxtra") || id.includes("photo")) {
+    return IconPhoxtra;
   }
 
   return IconPlaceholder;
