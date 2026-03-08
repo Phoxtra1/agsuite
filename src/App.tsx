@@ -194,6 +194,17 @@ function AppRoutes() {
 }
 
 export default function App() {
+  const [ready, setReady] = useState(false);
+  const handleFinish = useCallback(() => setReady(true), []);
+
+  if (!ready) {
+    return (
+      <ThemeProvider>
+        <AminevaLoader onFinish={handleFinish} />
+      </ThemeProvider>
+    );
+  }
+
   return (
     <QueryClientProvider client={queryClient}>
       <ThemeProvider>
