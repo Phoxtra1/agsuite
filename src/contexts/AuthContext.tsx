@@ -91,10 +91,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
-        options: { data: { name } },
+        options: {
+          data: { name },
+          emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=/`,
+        },
       });
       if (error) throw error;
-      setUser(mapUser(data.user));
+
+      if (!data.session) {
+        setUser(null);
+        setIsAuthenticated(false);
+        throw new Error("Please verify your email before signing in.");
+      }
+
+      setUser(mapUser(data.session.user));
       setIsAuthenticated(true);
     } finally {
       setIsLoading(false);
