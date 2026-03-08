@@ -40,7 +40,10 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
   // Get role label - default to "Manager" for admin users in preview
   const roleLabel = user?.role ? ROLE_LABELS[user.role] : (isAdmin ? 'Manager' : 'User');
 
+  const sealSession = getSealSession();
+
   const handleLogout = () => {
+    clearSealSession();
     logout();
     navigate('/');
   };
