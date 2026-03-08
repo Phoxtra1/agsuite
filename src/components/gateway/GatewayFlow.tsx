@@ -152,7 +152,7 @@ export function GatewayFlow() {
     setStep("routing");
   };
 
-  // Route user to product (only called when authed + 2FA verified this session)
+  // Route user to product after authentication
   const routeToProduct = useCallback(async () => {
     const products = await fetchCategoryProducts();
 
