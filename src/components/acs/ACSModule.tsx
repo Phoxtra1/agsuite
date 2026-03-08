@@ -1,16 +1,17 @@
 // src/components/acs/ACSModule.tsx
 // PURPOSE: Amineva Central Server — real-time unified data view across all products
+// Reacts to backend toggle changes in real time
 
 import React, { useState, useEffect, useCallback } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Database, Search, RefreshCw, Radio, Wifi, WifiOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { acs } from '@/core/backend';
+import BackendManager from '@/core/backend/BackendManager';
 import type { ACSEvent, ACSSyncLog } from '@/core/backend/acs';
 import { ACSEventTable } from './ACSEventTable';
 import { ACSSyncPanel } from './ACSSyncPanel';
@@ -37,6 +38,17 @@ export function ACSModule() {
   const [syncing, setSyncing] = useState(false);
   const [realtimeConnected, setRealtimeConnected] = useState(false);
   const [liveCount, setLiveCount] = useState(0);
+  // Track backend to force re-render on toggle
+  const [currentBackend, setCurrentBackend] = useState(BackendManager.getBackend());
+
+  // Listen for backend toggle changes
+  useEffect(() => {
+    const unsub = BackendManager.onChange((newBackend) => {
+      setCurrentBackend(newBackend);
+      toast.info(`Backend switched to ${newBackend}. Reloading ACS data…`);
+    });
+    return unsub;
+  }, []);
 
   // Fetch events from backend
   const loadEvents = useCallback(async () => {
@@ -56,7 +68,7 @@ export function ACSModule() {
     } finally {
       setLoading(false);
     }
-  }, [activeSource, search, page]);
+  }, [activeSource, search, page, currentBackend]);
 
   // Fetch sync logs
   const loadSyncLogs = useCallback(async () => {
@@ -66,25 +78,24 @@ export function ACSModule() {
     } catch (err) {
       console.error('Sync logs error:', err);
     }
-  }, [activeSource]);
+  }, [activeSource, currentBackend]);
 
-  // Load data on filter changes
+  // Load data on filter or backend changes
   useEffect(() => {
     loadEvents();
     loadSyncLogs();
   }, [loadEvents, loadSyncLogs]);
 
-  // Real-time subscription
+  // Real-time subscription — re-subscribes on backend change
   useEffect(() => {
     setRealtimeConnected(true);
     const unsubscribe = acs.subscribeEvents((newEvent) => {
-      // Only add if matches current filter
       if (activeSource !== 'all' && newEvent.source !== activeSource) return;
-      
-      setLiveCount(c => c + 1);
-      setEvents(prev => [newEvent, ...prev].slice(0, PAGE_SIZE));
-      setTotalCount(c => c + 1);
-      
+
+      setLiveCount((c) => c + 1);
+      setEvents((prev) => [newEvent, ...prev].slice(0, PAGE_SIZE));
+      setTotalCount((c) => c + 1);
+
       toast.info(`New event: ${newEvent.source} → ${newEvent.type}`, {
         duration: 3000,
       });
@@ -94,7 +105,7 @@ export function ACSModule() {
       setRealtimeConnected(false);
       unsubscribe();
     };
-  }, [activeSource]);
+  }, [activeSource, currentBackend]);
 
   // Trigger sync
   const handleSync = async () => {
@@ -103,7 +114,6 @@ export function ACSModule() {
     try {
       await acs.triggerSync(source);
       toast.success(`Sync triggered for ${SOURCE_LABELS[source] ?? source}`);
-      // Reload after delay to get updated sync log
       setTimeout(() => {
         loadSyncLogs();
         loadEvents();
@@ -115,7 +125,6 @@ export function ACSModule() {
     }
   };
 
-  // Reset page on filter change
   const handleSourceChange = (source: string) => {
     setActiveSource(source);
     setPage(0);
@@ -140,6 +149,9 @@ export function ACSModule() {
           </p>
         </div>
         <div className="flex items-center gap-2">
+          <Badge variant="outline" className="gap-1 text-xs border-muted-foreground/50 text-muted-foreground">
+            {currentBackend === 'lovable' ? 'Cloud' : 'Appwrite'}
+          </Badge>
           {realtimeConnected ? (
             <Badge variant="outline" className="gap-1 text-xs border-primary text-primary">
               <Wifi className="h-3 w-3" /> Live
@@ -166,7 +178,7 @@ export function ACSModule() {
           <TabsTrigger value="all" className="gap-2">
             <Database className="h-4 w-4" /> All Sources
           </TabsTrigger>
-          {SOURCES.map(src => (
+          {SOURCES.map((src) => (
             <TabsTrigger key={src} value={src} className="gap-2">
               <Database className="h-4 w-4" />
               <span>{SOURCE_LABELS[src]}</span>
@@ -174,7 +186,7 @@ export function ACSModule() {
           ))}
         </TabsList>
 
-        {/* Toolbar — shared across all tabs */}
+        {/* Toolbar */}
         <div className="flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-[200px]">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -182,7 +194,7 @@ export function ACSModule() {
               placeholder="Search events..."
               className="pl-9"
               value={search}
-              onChange={e => handleSearchChange(e.target.value)}
+              onChange={(e) => handleSearchChange(e.target.value)}
             />
           </div>
 
@@ -202,7 +214,7 @@ export function ACSModule() {
           </CardContent>
         </Card>
 
-        {/* Event table (same for all tabs, data filtered by source) */}
+        {/* Event table */}
         <ACSEventTable
           events={events}
           totalCount={totalCount}
