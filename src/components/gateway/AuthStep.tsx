@@ -195,7 +195,22 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
             {error && (
               <Alert variant="destructive" className="animate-scale-in">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription>
+                  {error}
+                  {showSwitchHint && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setIsRegister(false);
+                        setError("");
+                        setShowSwitchHint(false);
+                      }}
+                      className="mt-2 block w-full text-center rounded-md bg-accent/10 text-accent-foreground py-2 text-sm font-medium hover:bg-accent/20 transition cursor-pointer"
+                    >
+                      Switch to Sign In →
+                    </button>
+                  )}
+                </AlertDescription>
               </Alert>
             )}
 
