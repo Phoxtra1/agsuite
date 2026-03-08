@@ -153,7 +153,7 @@ export default function InviteBridge() {
     }, 500);
   }, [user?.id, token, productKey]);
 
-  // Handle auth success → navigate to 2FA verification page, then product
+  // Handle auth success → navigate directly to product
   const handleAuthSuccess = useCallback(() => {
     const employeeDashboard = productKey === 'agstock' 
       ? 'https://stock.amineva.com/employees'
@@ -162,11 +162,8 @@ export default function InviteBridge() {
     const returnUrl = new URL(employeeDashboard);
     returnUrl.searchParams.set('token', token || '');
     
-    navigate(
-      `/auth/verify-2fa?product=${productKey}&returnTo=${encodeURIComponent(returnUrl.toString())}`,
-      { replace: true }
-    );
-  }, [productKey, token, navigate]);
+    window.location.href = returnUrl.toString();
+  }, [productKey, token]);
 
   const handleBackToSignIn = () => {
     navigate('/', { replace: true });

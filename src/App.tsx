@@ -111,7 +111,7 @@ function AppRoutes() {
 
         {/* Auth */}
         <Route path="/invite/:product" element={<InviteBridge />} />
-        <Route path="/auth/verify-2fa" element={<Verify2FA />} />
+        
         <Route path="/auth/recovery" element={<Recovery />} />
         <Route path="/auth/reset-password" element={<ResetPassword />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
