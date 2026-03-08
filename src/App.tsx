@@ -1,4 +1,4 @@
-import React, { Suspense, lazy, useEffect } from "react";
+import React, { Suspense, lazy, useEffect, useState, useCallback } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { isSealAuthenticated } from "@/lib/sealAuth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
