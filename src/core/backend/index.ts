@@ -4,7 +4,7 @@
 import type { AuthAdapter } from "./auth"
 import type { UsersAdapter } from "./users"
 import type { TeamsAdapter } from "./teams"
-import type { ACSAdapter } from "./acs"
+import type { ACSAdapter, ACSEvent, ACSSyncLog } from "./acs"
 
 // Appwrite adapters
 import { auth as appwriteAuth } from "@/adapters/appwrite/auth"

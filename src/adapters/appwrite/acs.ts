@@ -1,22 +1,34 @@
 // src/adapters/appwrite/acs.ts
-import { databases, ID } from "@/lib/appwrite";
-import type { ACSAdapter } from "@/core/backend/acs";
+// DEACTIVATED: Appwrite adapter kept for future reconnection.
+// All methods throw a descriptive error when called while Appwrite is inactive.
 
-const DATABASE_ID = import.meta.env.VITE_ACS_DATABASE_ID ?? "agsuite-db2";
-const COLLECTION_ID = import.meta.env.VITE_ACS_COLLECTION_ID ?? "acs_events";
+import type { ACSAdapter, ACSEvent, ACSSyncLog } from "@/core/backend/acs";
+
+const INACTIVE_MSG = "Appwrite ACS adapter is deactivated. Switch backend to 'lovable' or reactivate Appwrite.";
 
 export const acs: ACSAdapter = {
-  async sendEvent(event) {
-    await databases.createDocument(
-      DATABASE_ID,
-      COLLECTION_ID,
-      ID.unique(),
-      {
-        source: event.source,
-        type: event.type,
-        payload: event.payload ?? {},
-        created_at: event.timestamp ?? Date.now(),
-      }
-    );
+  async sendEvent() {
+    console.warn(INACTIVE_MSG);
+    throw new Error(INACTIVE_MSG);
+  },
+
+  async fetchEvents() {
+    console.warn(INACTIVE_MSG);
+    return { data: [], count: 0 };
+  },
+
+  async fetchSyncLogs() {
+    console.warn(INACTIVE_MSG);
+    return [];
+  },
+
+  async triggerSync(source: string): Promise<ACSSyncLog> {
+    console.warn(INACTIVE_MSG);
+    throw new Error(INACTIVE_MSG);
+  },
+
+  subscribeEvents() {
+    console.warn(INACTIVE_MSG);
+    return () => {};
   },
 };
