@@ -10,6 +10,7 @@ import { ComsSystem } from "@/components/coms/ComsSystem";
 import { ACSModule } from "@/components/acs/ACSModule";
 
 import { BackendToggle } from "@/components/suite/pages/BackendToggle";
+import { EmailVerificationBanner } from "@/components/suite/EmailVerificationBanner";
 
 type TabView = "overview" | "console" | "coms" | "acs" | "profile" | "settings";
 
