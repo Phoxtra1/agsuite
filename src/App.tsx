@@ -81,15 +81,13 @@ function HashNormalizer() {
 }
 
 function SuiteGuard() {
-  const location = useLocation();
-
   // In preview mode, allow direct access for development
   if (isPreview()) return <Suite />;
 
-  // Production: require seal authentication
-  const { isSealAuthenticated } = await import("@/lib/sealAuth");
-  // We can't use top-level await in a component, use a sync check instead
-  return null;
+  // Production: require seal (admin OTP) authentication
+  if (!isSealAuthenticated()) return <Navigate to="/" replace />;
+
+  return <Suite />;
 }
 
 function PublicHome() {
