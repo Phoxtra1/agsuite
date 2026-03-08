@@ -8,7 +8,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { is2FAVerifiedThisSession } from "@/lib/stepUpAuth";
 
 /* Lazy Pages */
 const Landing = lazy(() => import("./pages/landing/Landing"));
