@@ -24,7 +24,7 @@ const PrivacyPage = lazy(() => import("./pages/landing/PrivacyPage"));
 
 const Suite = lazy(() => import("./pages/Suite"));
 const InviteBridge = lazy(() => import("./pages/InviteBridge"));
-const Verify2FA = lazy(() => import("./pages/auth/Verify2FA"));
+
 const Recovery = lazy(() => import("./pages/auth/Recovery"));
 const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const AuthCallback = lazy(() => import("./pages/suite/AuthCallback"));
