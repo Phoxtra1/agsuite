@@ -131,26 +131,16 @@ serve(async (req) => {
         expires_at: expiresAt,
       });
 
-      // Send via ComsSystem (send-email edge function)
-      const sendEmailRes = await fetch(`${supabaseUrl}/functions/v1/send-email`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${serviceRoleKey}`,
-        },
-        body: JSON.stringify({
-          to: [{ email: normalised }],
-          subject: "Your verification code",
-          htmlContent: buildOtpHtml(otp),
-          sender: { name: "Amineva Suite", email: "noreply@amineva.com" },
-          tags: ["admin-seal-otp"],
-        }),
-      });
+      // Send via ComsSystem (send-email edge function) with retries
+      const sendResult = await sendViaComsSystem(
+        supabaseUrl,
+        serviceRoleKey,
+        normalised,
+        otp,
+      );
 
-      const sendResult = await sendEmailRes.json();
-
-      if (!sendEmailRes.ok || !sendResult.success) {
-        console.error("send-email error:", JSON.stringify(sendResult));
+      if (!sendResult.success) {
+        console.error("send-email error:", sendResult.error);
         return new Response(
           JSON.stringify({ error: "Failed to send verification email" }),
           { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
