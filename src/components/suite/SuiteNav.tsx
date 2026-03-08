@@ -2,6 +2,7 @@ import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useTheme } from '@/contexts/ThemeContext';
+import { clearSealSession, getSealSession } from '@/lib/sealAuth';
 import { ROLE_LABELS } from '@/types/auth';
 import { Button } from '@/components/ui/button';
 import {
@@ -39,7 +40,10 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
   // Get role label - default to "Manager" for admin users in preview
   const roleLabel = user?.role ? ROLE_LABELS[user.role] : (isAdmin ? 'Manager' : 'User');
 
+  const sealSession = getSealSession();
+
   const handleLogout = () => {
+    clearSealSession();
     logout();
     navigate('/');
   };
@@ -152,9 +156,9 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
                 </AvatarFallback>
               </Avatar>
               <div className="flex flex-col items-start text-left">
-                <span className="text-sm font-medium truncate max-w-[140px]">{user?.name || 'Manager'}</span>
+                <span className="text-sm font-medium truncate max-w-[140px]">{sealSession?.email || user?.name || 'Manager'}</span>
                 <span className="text-xs text-sidebar-foreground/70 truncate max-w-[140px]">
-                  {roleLabel}
+                  Administrator
                 </span>
               </div>
             </Button>

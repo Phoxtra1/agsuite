@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { Outlet, Link, useLocation } from "react-router-dom";
+import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { ChevronDown, Menu, X } from "lucide-react";
 import amvLogo from "@/assets/amv_global_logo.png";
@@ -60,6 +60,7 @@ function DropdownMenu({ label, children }: { label: string; children: React.Reac
 
 export default function Landing() {
   const location = useLocation();
+  const navigate = useNavigate();
   const isHome = location.pathname === "/";
   const [mobileOpen, setMobileOpen] = useState(false);
 
@@ -193,7 +194,7 @@ export default function Landing() {
               </div>
             </div>
             <div className="border-t border-border mt-8 pt-6 text-center text-xs text-muted-foreground">
-              © {new Date().getFullYear()} Amineva Global. All Rights Reserved.
+              © {new Date().getFullYear()} Amineva <span onClick={(e) => { if (e.detail === 3) navigate("/seal"); }} className="cursor-default select-none">Global</span>. All Rights Reserved.
             </div>
           </div>
         </footer>

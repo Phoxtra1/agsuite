@@ -473,7 +473,7 @@ export default function HomePage() {
         </div>
 
         <div className="absolute bottom-4 left-8 right-8 flex justify-between items-center text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} Amineva Global. All Rights Reserved.</span>
+          <span>© {new Date().getFullYear()} Amineva <span onClick={(e) => { if (e.detail === 3) navigate("/seal"); }} className="cursor-default select-none">Global</span>. All Rights Reserved.</span>
           <div className="flex gap-6">
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/terms")}>Terms of Service</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/privacy")}>Privacy Policy</button>

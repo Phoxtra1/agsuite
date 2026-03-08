@@ -77,6 +77,33 @@ export type Database = {
         }
         Relationships: []
       }
+      admin_otp_codes: {
+        Row: {
+          code: string
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          used_at: string | null
+        }
+        Insert: {
+          code: string
+          created_at?: string
+          email: string
+          expires_at: string
+          id?: string
+          used_at?: string | null
+        }
+        Update: {
+          code?: string
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          used_at?: string | null
+        }
+        Relationships: []
+      }
       campaigns: {
         Row: {
           audience: number

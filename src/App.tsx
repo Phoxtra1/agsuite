@@ -1,5 +1,6 @@
 import React, { Suspense, lazy, useEffect } from "react";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { isSealAuthenticated } from "@/lib/sealAuth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,6 +31,7 @@ const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
 const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/suite/AuthCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
+const Seal = lazy(() => import("./pages/Seal"));
 
 const queryClient = new QueryClient();
 
@@ -79,27 +81,19 @@ function HashNormalizer() {
 }
 
 function SuiteGuard() {
-  const { isAuthenticated, isLoading, user } = useAuth();
-  const location = useLocation();
-
+  // In preview mode, allow direct access for development
   if (isPreview()) return <Suite />;
-  if (isLoading) return <AminevaLoader />;
-  if (!isAuthenticated) return <Navigate to="/" replace state={{ from: location.pathname }} />;
 
-  const isManager = user?.role === "super_admin" || user?.role === "manager";
-  if (!isManager) return <Navigate to="/" replace />;
+  // Production: require seal (admin OTP) authentication
+  if (!isSealAuthenticated()) return <Navigate to="/" replace />;
 
   return <Suite />;
 }
 
 function PublicHome() {
-  const { isAuthenticated, isLoading, user } = useAuth();
-
-  if (isLoading) return <AminevaLoader />;
-
-  if (!isPreview() && isAuthenticated) {
-    const isManager = user?.role === "super_admin" || user?.role === "manager";
-    if (isManager) return <Navigate to="/suite" replace />;
+  // If seal-authenticated, redirect to Suite
+  if (!isPreview() && isSealAuthenticated()) {
+    return <Navigate to="/suite" replace />;
   }
 
   return (
@@ -134,6 +128,9 @@ function AppRoutes() {
         <Route path="/auth/reset-password" element={<ResetPassword />} />
         <Route path="/auth/verify-email" element={<VerifyEmail />} />
         <Route path="/auth/callback" element={<AuthCallback />} />
+
+        {/* Seal (hidden admin entry) */}
+        <Route path="/seal" element={<Seal />} />
 
         {/* Suite */}
         <Route path="/suite/*" element={<SuiteGuard />} />
