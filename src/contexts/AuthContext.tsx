@@ -107,14 +107,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       if (error) throw error;
 
-      if (!data.session) {
+      // Auto-confirm is enabled, so session is available immediately
+      if (data.session) {
+        setUser(mapUser(data.session.user));
+        setIsAuthenticated(true);
+
+        // Send branded verification email via ComsSystem (non-blocking)
+        supabase.functions
+          .invoke("send-verification-email", {
+            body: { origin: window.location.origin },
+          })
+          .catch((err) =>
+            console.warn("[register] Verification email failed (non-blocking):", err)
+          );
+      } else {
         setUser(null);
         setIsAuthenticated(false);
-        throw new Error("Please verify your email before signing in.");
       }
-
-      setUser(mapUser(data.session.user));
-      setIsAuthenticated(true);
     } finally {
       setIsLoading(false);
       authActionInProgress.current = false;
