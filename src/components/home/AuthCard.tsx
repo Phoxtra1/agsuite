@@ -112,7 +112,7 @@ export default function AuthCard({
           </button>
           <button
             type="button"
-            onClick={() => { setAuthTab("register"); setError(""); }}
+            onClick={() => { setAuthTab("register"); setError(""); setShowSwitchHint(false); }}
             className={`pb-3 w-1/2 text-center border-b-2 cursor-pointer ${
               authTab === "register"
                 ? "border-accent text-foreground"
