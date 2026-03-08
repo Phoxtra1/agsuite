@@ -114,7 +114,7 @@ export default function ResetPassword() {
             </div>
           ) : done ? (
             <div className="space-y-4 text-center">
-              <CheckCircle2 className="h-10 w-10 text-green-500 mx-auto" />
+              <CheckCircle2 className="h-10 w-10 text-primary mx-auto" />
               <p className="text-sm text-muted-foreground">
                 Password updated successfully. Please sign in with your new password.
               </p>
@@ -173,4 +173,5 @@ export default function ResetPassword() {
     </div>
   );
 }
+
 

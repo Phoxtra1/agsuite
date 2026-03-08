@@ -60,7 +60,7 @@ export default function Recovery() {
         <CardContent>
           {sent ? (
             <div className="space-y-4 text-center">
-              <CheckCircle2 className="h-10 w-10 text-green-500 mx-auto" />
+              <CheckCircle2 className="h-10 w-10 text-primary mx-auto" />
               <p className="text-sm text-muted-foreground">
                 If an account exists for <strong>{email}</strong>, a recovery email has been sent.
               </p>
@@ -117,4 +117,5 @@ export default function Recovery() {
     </div>
   );
 }
+
 
