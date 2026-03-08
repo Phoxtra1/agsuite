@@ -8,6 +8,9 @@ export default function AuthCallback() {
 
   useEffect(() => {
     let cancelled = false;
+    let timeoutId: number | null = null;
+    let unsubscribe: (() => void) | null = null;
+
     const returnTo = params.get("returnTo") || "/suite";
 
     const finish = () => {
@@ -38,15 +41,18 @@ export default function AuthCallback() {
       const { data: listener } = supabase.auth.onAuthStateChange((_event, session) => {
         if (session) finish();
       });
+      unsubscribe = () => listener.subscription.unsubscribe();
 
-      window.setTimeout(() => {
-        listener.subscription.unsubscribe();
+      timeoutId = window.setTimeout(() => {
+        unsubscribe?.();
         if (!cancelled) navigate("/?auth=failed", { replace: true });
       }, 5000);
     })();
 
     return () => {
       cancelled = true;
+      if (timeoutId) window.clearTimeout(timeoutId);
+      unsubscribe?.();
     };
   }, [params, navigate]);
 
