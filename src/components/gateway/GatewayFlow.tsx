@@ -96,7 +96,6 @@ export function GatewayFlow() {
     saveGatewayState({ selectedProductKey: productKey });
 
     if (isAuthenticated) {
-      // 2FA check removed - go straight to routing
       setStep("routing");
     } else {
       setStep("auth");
