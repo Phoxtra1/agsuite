@@ -22,13 +22,22 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // ── API Key Auth ───────────────────────────────────────────────────────────
-  const apiKey = req.headers.get("x-acs-api-key");
-  const expectedKey = Deno.env.get("ACS_INGEST_API_KEY");
-
-  if (!expectedKey || apiKey !== expectedKey) {
-    return json({ error: "Unauthorized: invalid or missing ACS API key" }, 401);
+  // Allow only GET/POST
+  if (req.method !== "GET" && req.method !== "POST") {
+    return json({ error: "Method not allowed" }, 405);
   }
+
+  // ── Parse JSON body for POST requests (needed for health + actions) ─────────
+  let body: Record<string, unknown> | null = null;
+  if (req.method === "POST") {
+    try {
+      body = await req.json();
+    } catch {
+      return json({ error: "Invalid JSON body" }, 400);
+    }
+  }
+
+  const action = (body?.action as string | undefined) ?? undefined;
 
   // ── Supabase client (service role — bypasses RLS for ingest) ──────────────
   const supabase = createClient(
@@ -36,20 +45,12 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  let body: Record<string, unknown>;
-  try {
-    body = await req.json();
-  } catch {
-    return json({ error: "Invalid JSON body" }, 400);
-  }
-
-  const action = body.action as string | undefined;
-
-  // ── Health check ──────────────────────────────────────────────────────────
+  // ── Health check (public) ────────────────────────────────────────────────
   if (req.method === "GET" || action === "health") {
     const { count } = await supabase
       .from("acs_events")
       .select("*", { count: "exact", head: true });
+
     return json({
       status: "online",
       service: "acs-ingest",
@@ -58,9 +59,14 @@ Deno.serve(async (req) => {
     });
   }
 
-  if (req.method !== "POST") {
-    return json({ error: "Method not allowed" }, 405);
+  // ── API Key Auth (required for all non-health actions) ───────────────────
+  const apiKey = req.headers.get("x-acs-api-key");
+  const expectedKey = Deno.env.get("ACS_INGEST_API_KEY");
+
+  if (!expectedKey || apiKey !== expectedKey) {
+    return json({ error: "Unauthorized: invalid or missing ACS API key" }, 401);
   }
+
 
   // ── Single event ingest ───────────────────────────────────────────────────
   if (action === "event") {

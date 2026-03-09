@@ -27,25 +27,20 @@ export function ACSConnectionPanel() {
     setChecking(true);
     setHealth({ status: 'checking' });
     try {
-      const res = await fetch(INGEST_URL, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'x-acs-api-key': 'health-check-ping',
-        },
-        body: JSON.stringify({ action: 'health' }),
-      });
-      // 401 means the endpoint IS up (just wrong key from frontend — expected)
-      if (res.status === 401 || res.ok) {
-        const data = res.ok ? await res.json() : null;
-        setHealth({
-          status: 'online',
-          total_events: data?.total_events,
-          timestamp: data?.timestamp ?? new Date().toISOString(),
-        });
-      } else {
+      // Public health check (no API key required)
+      const res = await fetch(INGEST_URL, { method: 'GET' });
+
+      if (!res.ok) {
         setHealth({ status: 'offline', error: `HTTP ${res.status}` });
+        return;
       }
+
+      const data = (await res.json()) as any;
+      setHealth({
+        status: 'online',
+        total_events: data?.total_events,
+        timestamp: data?.timestamp ?? new Date().toISOString(),
+      });
     } catch (err: any) {
       setHealth({ status: 'offline', error: err.message });
     } finally {
