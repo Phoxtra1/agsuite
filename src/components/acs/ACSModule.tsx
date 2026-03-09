@@ -137,6 +137,9 @@ export function ACSModule() {
     setPage(0);
   };
 
+  // Top-level view: "monitor" or "connection"
+  const [topTab, setTopTab] = useState<'monitor' | 'connection'>('monitor');
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -170,60 +173,80 @@ export function ACSModule() {
         </div>
       </div>
 
-      {/* Sync status cards */}
-      <ACSSyncPanel logs={syncLogs} isSyncing={syncing} />
-
-      {/* Source tabs */}
-      <Tabs value={activeSource} onValueChange={handleSourceChange} className="space-y-4">
-        <TabsList className="flex flex-wrap">
-          <TabsTrigger value="all" className="gap-2">
-            <Database className="h-4 w-4" /> All Sources
+      {/* Top-level tabs: Monitor | Connection */}
+      <Tabs value={topTab} onValueChange={(v) => setTopTab(v as 'monitor' | 'connection')}>
+        <TabsList>
+          <TabsTrigger value="monitor" className="gap-2">
+            <Database className="h-4 w-4" /> Monitor
           </TabsTrigger>
-          {SOURCES.map((src) => (
-            <TabsTrigger key={src} value={src} className="gap-2">
-              <Database className="h-4 w-4" />
-              <span>{SOURCE_LABELS[src]}</span>
-            </TabsTrigger>
-          ))}
+          <TabsTrigger value="connection" className="gap-2">
+            <Plug className="h-4 w-4" /> Connection
+          </TabsTrigger>
         </TabsList>
 
-        {/* Toolbar */}
-        <div className="flex flex-wrap items-center gap-3">
-          <div className="relative flex-1 min-w-[200px]">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search events..."
-              className="pl-9"
-              value={search}
-              onChange={(e) => handleSearchChange(e.target.value)}
+        {/* ── Monitor Tab ───────────────────────────────────────────────── */}
+        <TabsContent value="monitor" className="space-y-4 mt-4">
+          {/* Sync status cards */}
+          <ACSSyncPanel logs={syncLogs} isSyncing={syncing} />
+
+          {/* Source filter tabs */}
+          <Tabs value={activeSource} onValueChange={handleSourceChange} className="space-y-4">
+            <TabsList className="flex flex-wrap">
+              <TabsTrigger value="all" className="gap-2">
+                <Database className="h-4 w-4" /> All Sources
+              </TabsTrigger>
+              {SOURCES.map((src) => (
+                <TabsTrigger key={src} value={src} className="gap-2">
+                  <Database className="h-4 w-4" />
+                  <span>{SOURCE_LABELS[src]}</span>
+                </TabsTrigger>
+              ))}
+            </TabsList>
+
+            {/* Toolbar */}
+            <div className="flex flex-wrap items-center gap-3">
+              <div className="relative flex-1 min-w-[200px]">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search events..."
+                  className="pl-9"
+                  value={search}
+                  onChange={(e) => handleSearchChange(e.target.value)}
+                />
+              </div>
+
+              <Button variant="outline" size="sm" onClick={handleSync} disabled={syncing}>
+                <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
+                {syncing ? 'Syncing…' : 'Sync Now'}
+              </Button>
+
+              <ACSExport data={events} source={activeSource} />
+            </div>
+
+            {/* Event count */}
+            <Card>
+              <CardContent className="py-3 px-4 flex items-center justify-between">
+                <span className="text-sm text-muted-foreground">Total Events</span>
+                <span className="text-lg font-bold text-foreground">{totalCount}</span>
+              </CardContent>
+            </Card>
+
+            {/* Event table */}
+            <ACSEventTable
+              events={events}
+              totalCount={totalCount}
+              page={page}
+              pageSize={PAGE_SIZE}
+              onPageChange={setPage}
+              loading={loading}
             />
-          </div>
+          </Tabs>
+        </TabsContent>
 
-          <Button variant="outline" size="sm" onClick={handleSync} disabled={syncing}>
-            <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-            {syncing ? 'Syncing…' : 'Sync Now'}
-          </Button>
-
-          <ACSExport data={events} source={activeSource} />
-        </div>
-
-        {/* Event count */}
-        <Card>
-          <CardContent className="py-3 px-4 flex items-center justify-between">
-            <span className="text-sm text-muted-foreground">Total Events</span>
-            <span className="text-lg font-bold text-foreground">{totalCount}</span>
-          </CardContent>
-        </Card>
-
-        {/* Event table */}
-        <ACSEventTable
-          events={events}
-          totalCount={totalCount}
-          page={page}
-          pageSize={PAGE_SIZE}
-          onPageChange={setPage}
-          loading={loading}
-        />
+        {/* ── Connection Tab ────────────────────────────────────────────── */}
+        <TabsContent value="connection" className="mt-4">
+          <ACSConnectionPanel />
+        </TabsContent>
       </Tabs>
     </div>
   );
