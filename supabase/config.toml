@@ -1,5 +1,8 @@
 project_id = "qtvkjytszsbjulhgmnan"
 
+[functions.acs-ingest]
+verify_jwt = false
+
 [functions.send-email]
 verify_jwt = false
 
