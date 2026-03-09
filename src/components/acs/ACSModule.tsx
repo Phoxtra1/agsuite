@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Database, Search, RefreshCw, Radio, Wifi, WifiOff } from 'lucide-react';
+import { Database, Search, RefreshCw, Radio, Wifi, WifiOff, Plug } from 'lucide-react';
 import { toast } from 'sonner';
 import { acs } from '@/core/backend';
 import BackendManager from '@/core/backend/BackendManager';
@@ -16,6 +16,7 @@ import type { ACSEvent, ACSSyncLog } from '@/core/backend/acs';
 import { ACSEventTable } from './ACSEventTable';
 import { ACSSyncPanel } from './ACSSyncPanel';
 import { ACSExport } from './ACSExport';
+import { ACSConnectionPanel } from './ACSConnectionPanel';
 
 const SOURCES = ['agstock', 'agis', 'amniva', 'phoxtra', 'agro-climate'] as const;
 const SOURCE_LABELS: Record<string, string> = {
