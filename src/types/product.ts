@@ -60,8 +60,8 @@ export const DEFAULT_CATEGORIES: ProductCategory[] = [
     products: ["amniva"],
   },
   {
-    id: "service-workspace",
-    name: "Service Workspace",
+    id: "financial-operations",
+    name: "Financial Operations",
     order: 3,
     products: ["aminevaops"],
   },
