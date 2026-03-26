@@ -55,7 +55,7 @@ export default function AuthCard({
         await login(email.trim(), password);
       }
 
-      navigate(`/suite`, { replace: true });
+      navigate(`/client`, { replace: true });
     } catch (e: any) {
       setErrMsg(e?.message || "Authentication failed.");
     }
