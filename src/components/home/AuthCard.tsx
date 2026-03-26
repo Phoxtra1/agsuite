@@ -65,7 +65,7 @@ export default function AuthCard({
       }
 
       const productDestination = product.url
-        ? `${product.url}${product.id === 'agstock' ? '/shop' : product.id === 'agis' ? '/dashboard' : ''}`
+        ? `${product.url}${product.id === 'agstock' ? '/shop' : product.id === 'agis' ? '/client' : ''}`
         : getProductRedirectUrl(product.id);
       
       if (productDestination.startsWith('http')) {
