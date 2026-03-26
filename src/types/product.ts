@@ -54,15 +54,15 @@ export const DEFAULT_CATEGORIES: ProductCategory[] = [
     products: ["agis"],
   },
   {
-    id: "trend-forecasting",
-    name: "Trend & Forecasting",
-    order: 2,
-    products: ["amniva"],
-  },
-  {
     id: "financial-operations",
     name: "Financial Operations",
     order: 3,
     products: ["aminevaops"],
+  },
+  {
+    id: "trend-forecasting",
+    name: "Trend & Forecasting",
+    order: 2,
+    products: ["amniva"],
   },
 ];
