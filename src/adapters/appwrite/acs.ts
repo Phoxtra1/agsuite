@@ -135,7 +135,6 @@ export const acs: ACSAdapter = {
   },
 
   subscribeEvents(callback) {
-    // Appwrite realtime subscription
     try {
       const client = require("@/lib/appwrite").default;
       const unsub = client.subscribe(
@@ -160,4 +159,11 @@ export const acs: ACSAdapter = {
       return () => {};
     }
   },
+
+  // Phase 1 & 2 stubs — Appwrite adapter not yet implemented for data lake
+  async fetchRawData() { return { data: [], count: 0 }; },
+  async fetchProcessingLogs() { return []; },
+  async fetchIntelligence() { return { data: [], count: 0 }; },
+  async fetchTransformationAudit() { return []; },
+  subscribeIntelligence() { return () => {}; },
 };
