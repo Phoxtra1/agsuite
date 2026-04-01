@@ -148,18 +148,20 @@ serve(async (req) => {
       }
 
       // Log to coms_logs (best-effort, no user_id for admin seal)
-      await supabase.from("coms_logs").insert({
-        recipient: normalised,
-        channel: "email",
-        event: "delivered",
-        subject: "Admin Seal OTP",
-        source_app: "ComsSystem",
-        message_type: "transactional",
-        details: "Seal authentication OTP sent",
-        user_id: "00000000-0000-0000-0000-000000000000",
-        brevo_message_id: sendResult.messageId || null,
-        delivery_status: "sent",
-      }).then(() => {}).catch(() => {});
+      try {
+        await supabase.from("coms_logs").insert({
+          recipient: normalised,
+          channel: "email",
+          event: "delivered",
+          subject: "Admin Seal OTP",
+          source_app: "ComsSystem",
+          message_type: "transactional",
+          details: "Seal authentication OTP sent",
+          user_id: "00000000-0000-0000-0000-000000000000",
+          brevo_message_id: sendResult.messageId || null,
+          delivery_status: "sent",
+        });
+      } catch { /* best-effort */ }
 
       return new Response(
         JSON.stringify({ success: true }),

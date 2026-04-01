@@ -14,6 +14,7 @@ const explainerItems = [
   { label: "AGIS", to: "/explainer/agis" },
   { label: "Amniva", to: "/explainer/amniva" },
   { label: "AgroClimate", to: "/explainer/agroclimate" },
+  { label: "AminevaOps", to: "/explainer/aminevaops" },
 ];
 
 const navLinks = [

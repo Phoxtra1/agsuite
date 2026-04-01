@@ -162,6 +162,7 @@ function AppRoutes() {
           <Route path="explainer/agis" element={<AGISPage />} />
           <Route path="explainer/amniva" element={<AmnivaPage />} />
           <Route path="explainer/agroclimate" element={<AgroClimatePage />} />
+          <Route path="explainer/aminevaops" element={<AminevaOpsPage />} />
           <Route path="support" element={<SupportPage />} />
           <Route path="faqs" element={<FAQsPage />} />
           <Route path="terms" element={<TermsPage />} />

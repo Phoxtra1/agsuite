@@ -101,12 +101,13 @@ const About: FC = () => {
           <span className="text-sm font-semibold text-accent uppercase tracking-wider">What We Build</span>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Our Ecosystem</h2>
         </div>
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="grid md:grid-cols-2 lg:grid-cols-5 gap-6">
           {[
             { title: "AGStock", desc: "Inventory & sales management for retailers, wholesalers, and restaurants.", link: "/explainer/agstock" },
             { title: "AGIS", desc: "Data collection, field inspections, surveys, and strategic assessments.", link: "/explainer/agis" },
             { title: "Amniva", desc: "Market forecasting, trend analysis, verification, and social community.", link: "/explainer/amniva" },
             { title: "AgroClimate", desc: "Real-time weather, agro alerts, drone advisory, and AI farming tools.", link: "/explainer/agroclimate" },
+            { title: "AminevaOps", desc: "Digital infrastructure for financial networks — mobile money, microcredit, credit unions, microfinance, forex, and insurance.", link: "/explainer/aminevaops" },
           ].map((product, i) => (
             <motion.div key={product.title} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i}>
               <Link to={product.link} className="block p-6 rounded-xl border border-border bg-card hover:border-accent/50 hover:shadow-lg transition-all h-full group">
