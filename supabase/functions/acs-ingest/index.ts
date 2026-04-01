@@ -121,7 +121,7 @@ Deno.serve(async (req) => {
 
   // ── Start sync session ────────────────────────────────────────────────────
   if (action === "sync") {
-    const source = body.source as string | undefined;
+    const source = body!.source as string | undefined;
     if (!source) return json({ error: "Missing required field: source" }, 400);
 
     const { data, error } = await supabase
