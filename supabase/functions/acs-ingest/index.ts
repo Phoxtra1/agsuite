@@ -92,7 +92,7 @@ Deno.serve(async (req) => {
 
   // ── Batch event ingest ────────────────────────────────────────────────────
   if (action === "batch") {
-    const events = body.events as Array<{
+    const events = body!.events as Array<{
       source: string;
       type: string;
       payload?: Record<string, unknown>;
