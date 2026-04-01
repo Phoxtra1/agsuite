@@ -18,6 +18,7 @@ const AGStockPage = lazy(() => import("./pages/landing/AGStockPage"));
 const AGISPage = lazy(() => import("./pages/landing/AGISPage"));
 const AmnivaPage = lazy(() => import("./pages/landing/AmnivaPage"));
 const AgroClimatePage = lazy(() => import("./pages/landing/AgroClimatePage"));
+const AminevaOpsPage = lazy(() => import("./pages/landing/AminevaOpsPage"));
 const SupportPage = lazy(() => import("./pages/landing/SupportPage"));
 const FAQsPage = lazy(() => import("./pages/landing/FAQsPage"));
 const TermsPage = lazy(() => import("./pages/landing/TermsPage"));
