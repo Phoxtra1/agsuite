@@ -41,6 +41,123 @@ export type Database = {
         }
         Relationships: []
       }
+      acs_intelligence_outputs: {
+        Row: {
+          category: string
+          confidence: number | null
+          created_at: string
+          id: string
+          intelligence: Json
+          source_pipeline: string | null
+          source_platforms: string[] | null
+          summary: string | null
+          title: string
+          valid_from: string | null
+          valid_until: string | null
+        }
+        Insert: {
+          category: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          intelligence?: Json
+          source_pipeline?: string | null
+          source_platforms?: string[] | null
+          summary?: string | null
+          title: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Update: {
+          category?: string
+          confidence?: number | null
+          created_at?: string
+          id?: string
+          intelligence?: Json
+          source_pipeline?: string | null
+          source_platforms?: string[] | null
+          summary?: string | null
+          title?: string
+          valid_from?: string | null
+          valid_until?: string | null
+        }
+        Relationships: []
+      }
+      acs_processing_logs: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          error_message: string | null
+          id: string
+          input_count: number | null
+          metadata: Json | null
+          output_count: number | null
+          pipeline: string
+          started_at: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          input_count?: number | null
+          metadata?: Json | null
+          output_count?: number | null
+          pipeline: string
+          started_at?: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          error_message?: string | null
+          id?: string
+          input_count?: number | null
+          metadata?: Json | null
+          output_count?: number | null
+          pipeline?: string
+          started_at?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      acs_raw_data: {
+        Row: {
+          batch_id: string | null
+          created_at: string
+          dataset_type: string
+          id: string
+          ingested_at: string
+          metadata: Json | null
+          platform: string
+          raw_payload: Json
+          source_ref: string | null
+        }
+        Insert: {
+          batch_id?: string | null
+          created_at?: string
+          dataset_type: string
+          id?: string
+          ingested_at?: string
+          metadata?: Json | null
+          platform: string
+          raw_payload?: Json
+          source_ref?: string | null
+        }
+        Update: {
+          batch_id?: string | null
+          created_at?: string
+          dataset_type?: string
+          id?: string
+          ingested_at?: string
+          metadata?: Json | null
+          platform?: string
+          raw_payload?: Json
+          source_ref?: string | null
+        }
+        Relationships: []
+      }
       acs_sync_logs: {
         Row: {
           completed_at: string | null
@@ -76,6 +193,54 @@ export type Database = {
           user_id?: string | null
         }
         Relationships: []
+      }
+      acs_transformation_audit: {
+        Row: {
+          changes_summary: string | null
+          created_at: string
+          id: string
+          input_snapshot: Json | null
+          output_snapshot: Json | null
+          processing_log_id: string | null
+          raw_data_id: string | null
+          transform_type: string
+        }
+        Insert: {
+          changes_summary?: string | null
+          created_at?: string
+          id?: string
+          input_snapshot?: Json | null
+          output_snapshot?: Json | null
+          processing_log_id?: string | null
+          raw_data_id?: string | null
+          transform_type: string
+        }
+        Update: {
+          changes_summary?: string | null
+          created_at?: string
+          id?: string
+          input_snapshot?: Json | null
+          output_snapshot?: Json | null
+          processing_log_id?: string | null
+          raw_data_id?: string | null
+          transform_type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "acs_transformation_audit_processing_log_id_fkey"
+            columns: ["processing_log_id"]
+            isOneToOne: false
+            referencedRelation: "acs_processing_logs"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "acs_transformation_audit_raw_data_id_fkey"
+            columns: ["raw_data_id"]
+            isOneToOne: false
+            referencedRelation: "acs_raw_data"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       admin_otp_codes: {
         Row: {
