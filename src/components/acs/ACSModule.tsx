@@ -1,144 +1,46 @@
 // src/components/acs/ACSModule.tsx
-// PURPOSE: Amineva Central Server — real-time unified data view across all products
-// Reacts to backend toggle changes in real time
+// PURPOSE: Amineva Central Server — real-time intelligence infrastructure
+// Tabs: Monitor | Data Lake | Intelligence | Alerts | Connection
 
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Card, CardContent } from '@/components/ui/card';
+import { Database, Brain, Bell, Plug, Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { Database, Search, RefreshCw, Radio, Wifi, WifiOff, Plug } from 'lucide-react';
-import { toast } from 'sonner';
-import { acs } from '@/core/backend';
+import { Wifi, WifiOff, Radio } from 'lucide-react';
 import BackendManager from '@/core/backend/BackendManager';
-import type { ACSEvent, ACSSyncLog } from '@/core/backend/acs';
-import { ACSEventTable } from './ACSEventTable';
-import { ACSSyncPanel } from './ACSSyncPanel';
-import { ACSExport } from './ACSExport';
+import { toast } from 'sonner';
+import { ACSMonitorTab } from './tabs/ACSMonitorTab';
+import { ACSDataLakeTab } from './tabs/ACSDataLakeTab';
+import { ACSIntelligenceTab } from './tabs/ACSIntelligenceTab';
+import { ACSAlertsTab } from './tabs/ACSAlertsTab';
 import { ACSConnectionPanel } from './ACSConnectionPanel';
-
-const SOURCES = ['agstock', 'agis', 'amniva', 'phoxtra', 'agro-climate'] as const;
-const SOURCE_LABELS: Record<string, string> = {
-  agstock: 'AGStock',
-  agis: 'AGIS',
-  amniva: 'Amniva',
-  phoxtra: 'Phoxtra',
-  'agro-climate': 'AgroClimate',
-};
-const PAGE_SIZE = 10;
+import { acs } from '@/core/backend';
 
 export function ACSModule() {
-  const [activeSource, setActiveSource] = useState<string>('all');
-  const [search, setSearch] = useState('');
-  const [page, setPage] = useState(0);
-  const [events, setEvents] = useState<ACSEvent[]>([]);
-  const [totalCount, setTotalCount] = useState(0);
-  const [syncLogs, setSyncLogs] = useState<ACSSyncLog[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [syncing, setSyncing] = useState(false);
+  const [topTab, setTopTab] = useState<string>('monitor');
+  const [currentBackend, setCurrentBackend] = useState(BackendManager.getBackend());
   const [realtimeConnected, setRealtimeConnected] = useState(false);
   const [liveCount, setLiveCount] = useState(0);
-  // Track backend to force re-render on toggle
-  const [currentBackend, setCurrentBackend] = useState(BackendManager.getBackend());
 
-  // Listen for backend toggle changes
   useEffect(() => {
-    const unsub = BackendManager.onChange((newBackend) => {
-      setCurrentBackend(newBackend);
-      toast.info(`Backend switched to ${newBackend}. Reloading ACS data…`);
+    const unsub = BackendManager.onChange((b) => {
+      setCurrentBackend(b);
+      toast.info(`Backend switched to ${b}. Reloading ACS data…`);
     });
     return unsub;
   }, []);
 
-  // Fetch events from backend
-  const loadEvents = useCallback(async () => {
-    setLoading(true);
-    try {
-      const { data, count } = await acs.fetchEvents({
-        source: activeSource !== 'all' ? activeSource : undefined,
-        search: search || undefined,
-        limit: PAGE_SIZE,
-        offset: page * PAGE_SIZE,
-      });
-      setEvents(data);
-      setTotalCount(count);
-    } catch (err: any) {
-      console.error('ACS fetch error:', err);
-      toast.error('Failed to load ACS events');
-    } finally {
-      setLoading(false);
-    }
-  }, [activeSource, search, page, currentBackend]);
-
-  // Fetch sync logs
-  const loadSyncLogs = useCallback(async () => {
-    try {
-      const logs = await acs.fetchSyncLogs(activeSource !== 'all' ? activeSource : undefined);
-      setSyncLogs(logs);
-    } catch (err) {
-      console.error('Sync logs error:', err);
-    }
-  }, [activeSource, currentBackend]);
-
-  // Load data on filter or backend changes
-  useEffect(() => {
-    loadEvents();
-    loadSyncLogs();
-  }, [loadEvents, loadSyncLogs]);
-
-  // Real-time subscription — re-subscribes on backend change
+  // Realtime subscription
   useEffect(() => {
     setRealtimeConnected(true);
-    const unsubscribe = acs.subscribeEvents((newEvent) => {
-      if (activeSource !== 'all' && newEvent.source !== activeSource) return;
-
+    const unsub = acs.subscribeEvents(() => {
       setLiveCount((c) => c + 1);
-      setEvents((prev) => [newEvent, ...prev].slice(0, PAGE_SIZE));
-      setTotalCount((c) => c + 1);
-
-      toast.info(`New event: ${newEvent.source} → ${newEvent.type}`, {
-        duration: 3000,
-      });
     });
-
     return () => {
       setRealtimeConnected(false);
-      unsubscribe();
+      unsub();
     };
-  }, [activeSource, currentBackend]);
-
-  // Trigger sync
-  const handleSync = async () => {
-    const source = activeSource !== 'all' ? activeSource : 'agstock';
-    setSyncing(true);
-    try {
-      await acs.triggerSync(source);
-      toast.success(`Sync triggered for ${SOURCE_LABELS[source] ?? source}`);
-      setTimeout(() => {
-        loadSyncLogs();
-        loadEvents();
-        setSyncing(false);
-      }, 2500);
-    } catch (err: any) {
-      toast.error('Sync failed: ' + (err.message ?? 'Unknown error'));
-      setSyncing(false);
-    }
-  };
-
-  const handleSourceChange = (source: string) => {
-    setActiveSource(source);
-    setPage(0);
-    setLiveCount(0);
-  };
-
-  const handleSearchChange = (val: string) => {
-    setSearch(val);
-    setPage(0);
-  };
-
-  // Top-level view: "monitor" or "connection"
-  const [topTab, setTopTab] = useState<'monitor' | 'connection'>('monitor');
+  }, [currentBackend]);
 
   return (
     <div className="space-y-6">
@@ -149,7 +51,7 @@ export function ACSModule() {
             <Database className="h-6 w-6 text-primary" /> Amineva Central Server
           </h2>
           <p className="text-muted-foreground">
-            Real-time data synchronization and monitoring across all Amineva products
+            Real-time intelligence infrastructure across all Amineva platforms
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -173,77 +75,42 @@ export function ACSModule() {
         </div>
       </div>
 
-      {/* Top-level tabs: Monitor | Connection */}
-      <Tabs value={topTab} onValueChange={(v) => setTopTab(v as 'monitor' | 'connection')}>
+      {/* Main Tabs */}
+      <Tabs value={topTab} onValueChange={setTopTab}>
         <TabsList>
           <TabsTrigger value="monitor" className="gap-2">
-            <Database className="h-4 w-4" /> Monitor
+            <Activity className="h-4 w-4" /> Monitor
+          </TabsTrigger>
+          <TabsTrigger value="datalake" className="gap-2">
+            <Database className="h-4 w-4" /> Data Lake
+          </TabsTrigger>
+          <TabsTrigger value="intelligence" className="gap-2">
+            <Brain className="h-4 w-4" /> Intelligence
+          </TabsTrigger>
+          <TabsTrigger value="alerts" className="gap-2">
+            <Bell className="h-4 w-4" /> Alerts
           </TabsTrigger>
           <TabsTrigger value="connection" className="gap-2">
             <Plug className="h-4 w-4" /> Connection
           </TabsTrigger>
         </TabsList>
 
-        {/* ── Monitor Tab ───────────────────────────────────────────────── */}
-        <TabsContent value="monitor" className="space-y-4 mt-4">
-          {/* Sync status cards */}
-          <ACSSyncPanel logs={syncLogs} isSyncing={syncing} />
-
-          {/* Source filter tabs */}
-          <Tabs value={activeSource} onValueChange={handleSourceChange} className="space-y-4">
-            <TabsList className="flex flex-wrap">
-              <TabsTrigger value="all" className="gap-2">
-                <Database className="h-4 w-4" /> All Sources
-              </TabsTrigger>
-              {SOURCES.map((src) => (
-                <TabsTrigger key={src} value={src} className="gap-2">
-                  <Database className="h-4 w-4" />
-                  <span>{SOURCE_LABELS[src]}</span>
-                </TabsTrigger>
-              ))}
-            </TabsList>
-
-            {/* Toolbar */}
-            <div className="flex flex-wrap items-center gap-3">
-              <div className="relative flex-1 min-w-[200px]">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder="Search events..."
-                  className="pl-9"
-                  value={search}
-                  onChange={(e) => handleSearchChange(e.target.value)}
-                />
-              </div>
-
-              <Button variant="outline" size="sm" onClick={handleSync} disabled={syncing}>
-                <RefreshCw className={`h-4 w-4 mr-2 ${syncing ? 'animate-spin' : ''}`} />
-                {syncing ? 'Syncing…' : 'Sync Now'}
-              </Button>
-
-              <ACSExport data={events} source={activeSource} />
-            </div>
-
-            {/* Event count */}
-            <Card>
-              <CardContent className="py-3 px-4 flex items-center justify-between">
-                <span className="text-sm text-muted-foreground">Total Events</span>
-                <span className="text-lg font-bold text-foreground">{totalCount}</span>
-              </CardContent>
-            </Card>
-
-            {/* Event table */}
-            <ACSEventTable
-              events={events}
-              totalCount={totalCount}
-              page={page}
-              pageSize={PAGE_SIZE}
-              onPageChange={setPage}
-              loading={loading}
-            />
-          </Tabs>
+        <TabsContent value="monitor" className="mt-4">
+          <ACSMonitorTab currentBackend={currentBackend} />
         </TabsContent>
 
-        {/* ── Connection Tab ────────────────────────────────────────────── */}
+        <TabsContent value="datalake" className="mt-4">
+          <ACSDataLakeTab currentBackend={currentBackend} />
+        </TabsContent>
+
+        <TabsContent value="intelligence" className="mt-4">
+          <ACSIntelligenceTab currentBackend={currentBackend} />
+        </TabsContent>
+
+        <TabsContent value="alerts" className="mt-4">
+          <ACSAlertsTab currentBackend={currentBackend} />
+        </TabsContent>
+
         <TabsContent value="connection" className="mt-4">
           <ACSConnectionPanel />
         </TabsContent>
