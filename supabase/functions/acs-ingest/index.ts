@@ -4,7 +4,7 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VALID_PLATFORMS = ["agroclimate", "agstock", "agis", "aminevaops"] as const;
+const VALID_PLATFORMS = ["agroclimate", "agstock", "agis", "aminevaops", "odeneho"] as const;
 const VALID_DATASET_TYPES = ["weather", "inventory", "operations", "environmental", "financial", "crop_advisory", "livestock", "drone", "sensor", "insurance", "forex", "microcredit", "mobile_money"] as const;
 const VALID_TRANSFORM_TYPES = ["clean", "normalize", "enrich", "merge", "deduplicate"] as const;
 
