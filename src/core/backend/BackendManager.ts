@@ -5,31 +5,32 @@ export type BackendType = "lovable" | "appwrite";
 type BackendChangeListener = (backend: BackendType) => void;
 
 class BackendManager {
-  private static backend: BackendType =
-    (import.meta.env.VITE_BACKEND_PROVIDER as BackendType) || "lovable";
+  private static backend: BackendType = BackendManager.loadStored();
 
   private static listeners: Set<BackendChangeListener> = new Set();
+
+  /** Load from localStorage (persistent across refreshes) */
+  private static loadStored(): BackendType {
+    try {
+      const stored = localStorage.getItem("amineva_backend") as BackendType | null;
+      if (stored === "lovable" || stored === "appwrite") return stored;
+    } catch {}
+    // Default to lovable
+    return (import.meta.env.VITE_BACKEND_PROVIDER as BackendType) || "lovable";
+  }
 
   /** Switch backend dynamically and notify all listeners */
   static setBackend(backend: BackendType) {
     if (this.backend === backend) return;
     this.backend = backend;
-    // Persist preference so it survives page-level navigations within session
     try {
-      sessionStorage.setItem("amineva_backend", backend);
+      localStorage.setItem("amineva_backend", backend);
     } catch {}
     this.listeners.forEach((fn) => fn(backend));
   }
 
   /** Get current backend */
   static getBackend(): BackendType {
-    // Check session override first
-    try {
-      const stored = sessionStorage.getItem("amineva_backend") as BackendType | null;
-      if (stored === "lovable" || stored === "appwrite") {
-        this.backend = stored;
-      }
-    } catch {}
     return this.backend;
   }
 
