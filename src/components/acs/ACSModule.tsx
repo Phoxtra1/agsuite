@@ -15,6 +15,7 @@ import { ACSIntelligenceTab } from './tabs/ACSIntelligenceTab';
 import { ACSAlertsTab } from './tabs/ACSAlertsTab';
 import { ACSConnectionPanel } from './ACSConnectionPanel';
 import { acs } from '@/core/backend';
+import { startACSEmitter, stopACSEmitter } from '@/core/acs/emitter';
 
 export function ACSModule() {
   const [topTab, setTopTab] = useState<string>('monitor');
