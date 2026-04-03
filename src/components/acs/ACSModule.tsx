@@ -31,6 +31,12 @@ export function ACSModule() {
     return unsub;
   }, []);
 
+  // ACS Emitter — auto-ingest data from all platforms
+  useEffect(() => {
+    startACSEmitter();
+    return () => stopACSEmitter();
+  }, []);
+
   // Realtime subscription
   useEffect(() => {
     setRealtimeConnected(true);
