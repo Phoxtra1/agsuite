@@ -35,6 +35,11 @@ let seeded = false;
 
 async function ingestBatch(platform: string, records: { dataset_type: string; raw_payload: Record<string, any> }[]) {
   const batch_id = `batch_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  
+  // Get current user for RLS compliance
+  const { data: { user } } = await supabase.auth.getUser();
+  const user_id = user?.id ?? null;
+
   const rows = records.map(r => ({
     platform,
     dataset_type: r.dataset_type,
@@ -51,6 +56,7 @@ async function ingestBatch(platform: string, records: { dataset_type: string; ra
     source: platform,
     type: `auto:${r.dataset_type}`,
     payload: { batch_id, dataset_type: r.dataset_type, record_count: 1 },
+    user_id,
   }));
   await supabase.from("acs_events").insert(events);
 }
