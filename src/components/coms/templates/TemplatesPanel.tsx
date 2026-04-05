@@ -145,7 +145,7 @@ const initialFormData: TemplateFormData = {
 };
 
 export function TemplatesPanel() {
-  const [templates, setTemplates] = useState<Template[]>(initialTemplates);
+  const [templates, setTemplates] = useState<Template[]>([]);
   const [selectedTemplate, setSelectedTemplate] = useState<Template | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isPreviewDialogOpen, setIsPreviewDialogOpen] = useState(false);
@@ -154,6 +154,35 @@ export function TemplatesPanel() {
   const [formData, setFormData] = useState<TemplateFormData>(initialFormData);
   const [activeTab, setActiveTab] = useState<'preview' | 'edit'>('preview');
   const [filterCategory, setFilterCategory] = useState<string>('all');
+
+  // Load templates from DB
+  useEffect(() => {
+    const loadTemplates = async () => {
+      const { data } = await supabase
+        .from('coms_templates')
+        .select('*')
+        .order('updated_at', { ascending: false });
+
+      if (data && data.length > 0) {
+        setTemplates(data.map(t => ({
+          id: t.id,
+          name: t.name,
+          type: t.type as Template['type'],
+          category: t.category,
+          description: '',
+          subject: t.subject || '',
+          body: t.body,
+          variables: t.variables || [],
+          lastUpdated: t.updated_at.split('T')[0],
+          usageCount: t.usage_count,
+        })));
+      } else {
+        // Seed with initial templates if DB is empty
+        setTemplates(initialTemplates);
+      }
+    };
+    loadTemplates();
+  }, []);
 
   const handleNewTemplate = () => {
     setEditingTemplate(null);
