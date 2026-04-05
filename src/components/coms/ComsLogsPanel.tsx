@@ -16,6 +16,7 @@ const eventConfig: Record<LogEntry['event'], { icon: React.ElementType; color: s
   opened: { icon: Activity, color: 'text-primary', label: 'Opened' },
   clicked: { icon: Activity, color: 'text-primary', label: 'Clicked' },
   received: { icon: CheckCircle, color: 'text-primary', label: 'Received' },
+};
 
 export function ComsLogsPanel({ logs }: ComsLogsPanelProps) {
   if (logs.length === 0) {
