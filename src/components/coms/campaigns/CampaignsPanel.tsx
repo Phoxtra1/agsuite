@@ -349,21 +349,20 @@ export function CampaignsPanel() {
     setIsDialogOpen(false);
   };
 
-  const handlePauseCampaign = (campaignId: string) => {
-    setCampaigns(prev => prev.map(c => 
-      c.id === campaignId ? { ...c, status: 'paused' as const } : c
-    ));
+  const handlePauseCampaign = async (campaignId: string) => {
+    await supabase.from('campaigns').update({ status: 'paused' }).eq('id', campaignId);
+    setCampaigns(prev => prev.map(c => c.id === campaignId ? { ...c, status: 'paused' as const } : c));
     toast.success('Campaign paused');
   };
 
-  const handleResumeCampaign = (campaignId: string) => {
-    setCampaigns(prev => prev.map(c => 
-      c.id === campaignId ? { ...c, status: 'active' as const } : c
-    ));
+  const handleResumeCampaign = async (campaignId: string) => {
+    await supabase.from('campaigns').update({ status: 'active' }).eq('id', campaignId);
+    setCampaigns(prev => prev.map(c => c.id === campaignId ? { ...c, status: 'active' as const } : c));
     toast.success('Campaign resumed');
   };
 
-  const handleDeleteCampaign = (campaignId: string) => {
+  const handleDeleteCampaign = async (campaignId: string) => {
+    await supabase.from('campaigns').delete().eq('id', campaignId);
     setCampaigns(prev => prev.filter(c => c.id !== campaignId));
     toast.success('Campaign deleted');
   };
