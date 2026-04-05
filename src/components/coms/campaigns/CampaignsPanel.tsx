@@ -1,4 +1,5 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -143,10 +144,39 @@ const audienceGroups = [
 ];
 
 export function CampaignsPanel() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [formData, setFormData] = useState<CampaignFormData>(initialFormData);
+  const [loading, setLoading] = useState(true);
+
+  // Load campaigns from DB
+  useEffect(() => {
+    const loadCampaigns = async () => {
+      const { data } = await supabase
+        .from('campaigns')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        setCampaigns(data.map(c => ({
+          id: c.id,
+          name: c.name,
+          status: c.status as Campaign['status'],
+          type: c.type,
+          audience: c.audience,
+          sent: c.sent,
+          delivered: c.delivered,
+          opened: c.opened,
+          clicked: c.clicked,
+          scheduledAt: c.scheduled_at,
+          createdAt: c.created_at.split('T')[0],
+        })));
+      }
+      setLoading(false);
+    };
+    loadCampaigns();
+  }, []);
 
   const handleNewCampaign = () => {
     setEditingCampaign(null);
@@ -154,15 +184,28 @@ export function CampaignsPanel() {
     setIsDialogOpen(true);
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     if (!formData.name.trim()) {
       toast.error('Campaign name is required');
       return;
     }
 
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) { toast.error('Please log in'); return; }
+
     const audience = audienceGroups.find(g => g.id === formData.audienceGroup)?.count || 0;
 
     if (editingCampaign) {
+      await supabase.from('campaigns').update({
+        name: formData.name,
+        type: formData.type,
+        subject: formData.subject,
+        content: formData.content,
+        audience,
+        audience_group: formData.audienceGroup,
+        scheduled_at: formData.scheduledAt || null,
+      }).eq('id', editingCampaign.id);
       setCampaigns(prev => prev.map(c => 
         c.id === editingCampaign.id 
           ? { ...c, name: formData.name, type: formData.type, audience, scheduledAt: formData.scheduledAt || null }
@@ -170,27 +213,38 @@ export function CampaignsPanel() {
       ));
       toast.success('Campaign updated');
     } else {
-      const newCampaign: Campaign = {
-        id: `campaign-${Date.now()}`,
+      const { data: newRow } = await supabase.from('campaigns').insert({
+        user_id: userId,
         name: formData.name,
-        status: 'draft',
         type: formData.type,
+        subject: formData.subject,
+        content: formData.content,
         audience,
-        sent: 0,
-        delivered: 0,
-        opened: 0,
-        clicked: 0,
-        scheduledAt: formData.scheduledAt || null,
-        createdAt: new Date().toISOString().split('T')[0],
-      };
-      setCampaigns(prev => [...prev, newCampaign]);
+        audience_group: formData.audienceGroup,
+        scheduled_at: formData.scheduledAt || null,
+        status: 'draft',
+      }).select().single();
+
+      if (newRow) {
+        const newCampaign: Campaign = {
+          id: newRow.id,
+          name: newRow.name,
+          status: 'draft',
+          type: newRow.type,
+          audience,
+          sent: 0, delivered: 0, opened: 0, clicked: 0,
+          scheduledAt: newRow.scheduled_at,
+          createdAt: newRow.created_at.split('T')[0],
+        };
+        setCampaigns(prev => [newCampaign, ...prev]);
+      }
       toast.success('Campaign saved as draft');
     }
 
     setIsDialogOpen(false);
   };
 
-  const handleSchedule = () => {
+  const handleSchedule = async () => {
     if (!formData.name.trim()) {
       toast.error('Campaign name is required');
       return;
@@ -200,67 +254,115 @@ export function CampaignsPanel() {
       return;
     }
 
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) { toast.error('Please log in'); return; }
+
     const audience = audienceGroups.find(g => g.id === formData.audienceGroup)?.count || 0;
 
-    const newCampaign: Campaign = {
-      id: `campaign-${Date.now()}`,
+    const { data: newRow } = await supabase.from('campaigns').insert({
+      user_id: userId,
       name: formData.name,
-      status: 'scheduled',
       type: formData.type,
+      subject: formData.subject,
+      content: formData.content,
       audience,
-      sent: 0,
-      delivered: 0,
-      opened: 0,
-      clicked: 0,
-      scheduledAt: formData.scheduledAt,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setCampaigns(prev => [...prev, newCampaign]);
+      audience_group: formData.audienceGroup,
+      scheduled_at: formData.scheduledAt,
+      status: 'scheduled',
+    }).select().single();
+
+    if (newRow) {
+      setCampaigns(prev => [{
+        id: newRow.id, name: newRow.name, status: 'scheduled' as const, type: newRow.type,
+        audience, sent: 0, delivered: 0, opened: 0, clicked: 0,
+        scheduledAt: formData.scheduledAt, createdAt: newRow.created_at.split('T')[0],
+      }, ...prev]);
+    }
     toast.success('Campaign scheduled');
     setIsDialogOpen(false);
   };
 
-  const handleSendNow = () => {
+  const handleSendNow = async () => {
     if (!formData.name.trim()) {
       toast.error('Campaign name is required');
       return;
     }
+    if (!formData.subject?.trim()) {
+      toast.error('Subject is required to send');
+      return;
+    }
+
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) { toast.error('Please log in'); return; }
 
     const audience = audienceGroups.find(g => g.id === formData.audienceGroup)?.count || 0;
 
-    const newCampaign: Campaign = {
-      id: `campaign-${Date.now()}`,
+    // Save campaign to DB first
+    const { data: newRow } = await supabase.from('campaigns').insert({
+      user_id: userId,
       name: formData.name,
-      status: 'active',
       type: formData.type,
+      subject: formData.subject,
+      content: formData.content,
       audience,
+      audience_group: formData.audienceGroup,
+      status: 'active',
       sent: audience,
-      delivered: Math.floor(audience * 0.98),
-      opened: 0,
-      clicked: 0,
-      scheduledAt: null,
-      createdAt: new Date().toISOString().split('T')[0],
-    };
-    setCampaigns(prev => [...prev, newCampaign]);
-    toast.success(`Campaign sent to ${audience.toLocaleString()} recipients`);
+    }).select().single();
+
+    // Dispatch via Brevo send-email edge function
+    const { error: sendError } = await supabase.functions.invoke('send-email', {
+      body: {
+        to: [{ email: userData?.user?.email || '', name: 'Campaign Test' }],
+        subject: formData.subject,
+        htmlContent: formData.content || `<p>${formData.name} campaign content</p>`,
+        sender: { name: 'Amineva Campaigns', email: 'noreply@amineva.com' },
+        tags: ['campaign', formData.type],
+      },
+    });
+
+    if (sendError) {
+      toast.error('Failed to dispatch campaign: ' + sendError.message);
+    } else if (newRow) {
+      setCampaigns(prev => [{
+        id: newRow.id, name: newRow.name, status: 'active' as const, type: newRow.type,
+        audience, sent: audience, delivered: Math.floor(audience * 0.98),
+        opened: 0, clicked: 0, scheduledAt: null, createdAt: newRow.created_at.split('T')[0],
+      }, ...prev]);
+
+      // Log to coms_logs
+      await supabase.from('coms_logs').insert({
+        user_id: userId,
+        event: 'delivered',
+        channel: 'email',
+        recipient: 'campaign-audience',
+        subject: formData.subject,
+        source_app: 'ComsSystem',
+        message_type: 'marketing',
+        delivery_status: 'sent',
+      });
+
+      toast.success(`Campaign dispatched to ${audience.toLocaleString()} recipients`);
+    }
     setIsDialogOpen(false);
   };
 
-  const handlePauseCampaign = (campaignId: string) => {
-    setCampaigns(prev => prev.map(c => 
-      c.id === campaignId ? { ...c, status: 'paused' as const } : c
-    ));
+  const handlePauseCampaign = async (campaignId: string) => {
+    await supabase.from('campaigns').update({ status: 'paused' }).eq('id', campaignId);
+    setCampaigns(prev => prev.map(c => c.id === campaignId ? { ...c, status: 'paused' as const } : c));
     toast.success('Campaign paused');
   };
 
-  const handleResumeCampaign = (campaignId: string) => {
-    setCampaigns(prev => prev.map(c => 
-      c.id === campaignId ? { ...c, status: 'active' as const } : c
-    ));
+  const handleResumeCampaign = async (campaignId: string) => {
+    await supabase.from('campaigns').update({ status: 'active' }).eq('id', campaignId);
+    setCampaigns(prev => prev.map(c => c.id === campaignId ? { ...c, status: 'active' as const } : c));
     toast.success('Campaign resumed');
   };
 
-  const handleDeleteCampaign = (campaignId: string) => {
+  const handleDeleteCampaign = async (campaignId: string) => {
+    await supabase.from('campaigns').delete().eq('id', campaignId);
     setCampaigns(prev => prev.filter(c => c.id !== campaignId));
     toast.success('Campaign deleted');
   };

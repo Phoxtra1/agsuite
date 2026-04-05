@@ -371,6 +371,48 @@ export type Database = {
         }
         Relationships: []
       }
+      coms_templates: {
+        Row: {
+          body: string
+          category: string
+          created_at: string
+          id: string
+          name: string
+          subject: string | null
+          type: string
+          updated_at: string
+          usage_count: number
+          user_id: string
+          variables: string[] | null
+        }
+        Insert: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          name: string
+          subject?: string | null
+          type?: string
+          updated_at?: string
+          usage_count?: number
+          user_id: string
+          variables?: string[] | null
+        }
+        Update: {
+          body?: string
+          category?: string
+          created_at?: string
+          id?: string
+          name?: string
+          subject?: string | null
+          type?: string
+          updated_at?: string
+          usage_count?: number
+          user_id?: string
+          variables?: string[] | null
+        }
+        Relationships: []
+      }
       email_verification_tokens: {
         Row: {
           created_at: string
@@ -397,6 +439,60 @@ export type Database = {
           id?: string
           token?: string
           used_at?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
+      inbound_messages: {
+        Row: {
+          body: string
+          channel: string
+          created_at: string
+          id: string
+          is_archived: boolean
+          is_read: boolean
+          is_starred: boolean
+          priority: string
+          sender: string
+          sender_name: string | null
+          source_app: string | null
+          subject: string
+          type: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_read?: boolean
+          is_starred?: boolean
+          priority?: string
+          sender: string
+          sender_name?: string | null
+          source_app?: string | null
+          subject?: string
+          type?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          body?: string
+          channel?: string
+          created_at?: string
+          id?: string
+          is_archived?: boolean
+          is_read?: boolean
+          is_starred?: boolean
+          priority?: string
+          sender?: string
+          sender_name?: string | null
+          source_app?: string | null
+          subject?: string
+          type?: string
+          updated_at?: string
           user_id?: string
         }
         Relationships: []

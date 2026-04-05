@@ -15,6 +15,7 @@ const eventConfig: Record<LogEntry['event'], { icon: React.ElementType; color: s
   queued: { icon: Clock, color: 'text-accent', label: 'Queued' },
   opened: { icon: Activity, color: 'text-primary', label: 'Opened' },
   clicked: { icon: Activity, color: 'text-primary', label: 'Clicked' },
+  received: { icon: CheckCircle, color: 'text-primary', label: 'Received' },
 };
 
 export function ComsLogsPanel({ logs }: ComsLogsPanelProps) {
