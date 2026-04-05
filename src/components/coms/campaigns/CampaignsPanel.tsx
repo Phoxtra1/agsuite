@@ -143,10 +143,39 @@ const audienceGroups = [
 ];
 
 export function CampaignsPanel() {
-  const [campaigns, setCampaigns] = useState<Campaign[]>(initialCampaigns);
+  const [campaigns, setCampaigns] = useState<Campaign[]>([]);
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingCampaign, setEditingCampaign] = useState<Campaign | null>(null);
   const [formData, setFormData] = useState<CampaignFormData>(initialFormData);
+  const [loading, setLoading] = useState(true);
+
+  // Load campaigns from DB
+  useEffect(() => {
+    const loadCampaigns = async () => {
+      const { data } = await supabase
+        .from('campaigns')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+      if (data) {
+        setCampaigns(data.map(c => ({
+          id: c.id,
+          name: c.name,
+          status: c.status as Campaign['status'],
+          type: c.type,
+          audience: c.audience,
+          sent: c.sent,
+          delivered: c.delivered,
+          opened: c.opened,
+          clicked: c.clicked,
+          scheduledAt: c.scheduled_at,
+          createdAt: c.created_at.split('T')[0],
+        })));
+      }
+      setLoading(false);
+    };
+    loadCampaigns();
+  }, []);
 
   const handleNewCampaign = () => {
     setEditingCampaign(null);
