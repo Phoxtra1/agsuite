@@ -183,15 +183,28 @@ export function CampaignsPanel() {
     setIsDialogOpen(true);
   };
 
-  const handleSaveDraft = () => {
+  const handleSaveDraft = async () => {
     if (!formData.name.trim()) {
       toast.error('Campaign name is required');
       return;
     }
 
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) { toast.error('Please log in'); return; }
+
     const audience = audienceGroups.find(g => g.id === formData.audienceGroup)?.count || 0;
 
     if (editingCampaign) {
+      await supabase.from('campaigns').update({
+        name: formData.name,
+        type: formData.type,
+        subject: formData.subject,
+        content: formData.content,
+        audience,
+        audience_group: formData.audienceGroup,
+        scheduled_at: formData.scheduledAt || null,
+      }).eq('id', editingCampaign.id);
       setCampaigns(prev => prev.map(c => 
         c.id === editingCampaign.id 
           ? { ...c, name: formData.name, type: formData.type, audience, scheduledAt: formData.scheduledAt || null }
@@ -199,20 +212,31 @@ export function CampaignsPanel() {
       ));
       toast.success('Campaign updated');
     } else {
-      const newCampaign: Campaign = {
-        id: `campaign-${Date.now()}`,
+      const { data: newRow } = await supabase.from('campaigns').insert({
+        user_id: userId,
         name: formData.name,
-        status: 'draft',
         type: formData.type,
+        subject: formData.subject,
+        content: formData.content,
         audience,
-        sent: 0,
-        delivered: 0,
-        opened: 0,
-        clicked: 0,
-        scheduledAt: formData.scheduledAt || null,
-        createdAt: new Date().toISOString().split('T')[0],
-      };
-      setCampaigns(prev => [...prev, newCampaign]);
+        audience_group: formData.audienceGroup,
+        scheduled_at: formData.scheduledAt || null,
+        status: 'draft',
+      }).select().single();
+
+      if (newRow) {
+        const newCampaign: Campaign = {
+          id: newRow.id,
+          name: newRow.name,
+          status: 'draft',
+          type: newRow.type,
+          audience,
+          sent: 0, delivered: 0, opened: 0, clicked: 0,
+          scheduledAt: newRow.scheduled_at,
+          createdAt: newRow.created_at.split('T')[0],
+        };
+        setCampaigns(prev => [newCampaign, ...prev]);
+      }
       toast.success('Campaign saved as draft');
     }
 
