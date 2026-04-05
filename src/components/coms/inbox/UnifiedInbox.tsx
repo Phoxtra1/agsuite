@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -13,39 +13,28 @@ import {
   SelectValue,
 } from '@/components/ui/select';
 import { 
-  Search, 
-  Star, 
-  Archive, 
-  Trash2, 
-  Reply, 
-  MoreHorizontal,
-  Mail,
-  Bell,
-  AlertCircle,
-  CheckCircle,
-  MailOpen,
-  Forward
+  Search, Star, Archive, Trash2, Reply, 
+  Mail, Bell, AlertCircle, CheckCircle, MailOpen, Forward
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { supabase } from '@/integrations/supabase/client';
+import { ComsSDK } from '@/core/coms/sdk';
 
 interface Message {
   id: string;
   sender: string;
-  email: string;
+  sender_name: string | null;
   subject: string;
-  preview: string;
   body: string;
-  sourceApp: string;
-  type: 'system' | 'support' | 'notification' | 'campaign';
-  priority: 'high' | 'medium' | 'low';
-  isRead: boolean;
-  isStarred: boolean;
-  isArchived: boolean;
-  timestamp: string;
+  source_app: string | null;
+  type: string;
+  priority: string;
+  is_read: boolean;
+  is_starred: boolean;
+  is_archived: boolean;
+  created_at: string;
+  channel: string;
 }
-
-// Start with empty messages - real data will come from Appwrite database
-const initialMessages: Message[] = [];
 
 const appColors: Record<string, string> = {
   AGStock: 'bg-emerald-500',
@@ -53,83 +42,102 @@ const appColors: Record<string, string> = {
   AGHub: 'bg-purple-500',
   AminevaOps: 'bg-orange-500',
   ComsSystem: 'bg-primary',
+  external: 'bg-muted',
 };
 
 const typeIcons: Record<string, React.ReactNode> = {
   system: <AlertCircle className="h-3 w-3" />,
   support: <Mail className="h-3 w-3" />,
   notification: <Bell className="h-3 w-3" />,
-  campaign: <CheckCircle className="h-3 w-3" />,
+  general: <CheckCircle className="h-3 w-3" />,
 };
 
 export function UnifiedInbox() {
-  const [messages, setMessages] = useState<Message[]>(initialMessages);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [selectedMessageId, setSelectedMessageId] = useState<string | null>(null);
   const [filterApp, setFilterApp] = useState<string>('all');
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
+  const [loading, setLoading] = useState(true);
 
-  const filteredMessages = messages
-    .filter(msg => !msg.isArchived)
-    .filter(msg => {
-      if (filterApp !== 'all' && msg.sourceApp !== filterApp) return false;
-      if (filterType !== 'all' && msg.type !== filterType) return false;
-      if (searchQuery && !msg.subject.toLowerCase().includes(searchQuery.toLowerCase()) && 
-          !msg.sender.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-      return true;
+  // Fetch messages from DB
+  useEffect(() => {
+    const fetchMessages = async () => {
+      const { data, error } = await supabase
+        .from('inbound_messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(100);
+
+      if (!error && data) setMessages(data as Message[]);
+      setLoading(false);
+    };
+    fetchMessages();
+
+    // Realtime subscription
+    const unsub = ComsSDK.subscribeToInbox((payload) => {
+      if (payload.eventType === 'INSERT') {
+        setMessages(prev => [payload.new as Message, ...prev]);
+      } else if (payload.eventType === 'UPDATE') {
+        setMessages(prev => prev.map(m => m.id === payload.new.id ? payload.new as Message : m));
+      } else if (payload.eventType === 'DELETE') {
+        setMessages(prev => prev.filter(m => m.id !== payload.old?.id));
+      }
     });
+
+    return unsub;
+  }, []);
+
+  const filteredMessages = messages.filter(m => {
+    if (m.is_archived) return false;
+    if (filterApp !== 'all' && m.source_app !== filterApp) return false;
+    if (filterType !== 'all' && m.type !== filterType) return false;
+    if (searchQuery) {
+      const q = searchQuery.toLowerCase();
+      return m.subject.toLowerCase().includes(q) || m.sender.toLowerCase().includes(q);
+    }
+    return true;
+  });
 
   const selectedMessage = messages.find(m => m.id === selectedMessageId);
 
-  const handleSelectMessage = (messageId: string) => {
+  const handleSelectMessage = async (messageId: string) => {
     setSelectedMessageId(messageId);
-    // Mark as read
-    setMessages(prev => prev.map(m => 
-      m.id === messageId ? { ...m, isRead: true } : m
-    ));
-  };
-
-  const handleToggleStar = (messageId: string, e?: React.MouseEvent) => {
-    e?.stopPropagation();
-    setMessages(prev => prev.map(m => 
-      m.id === messageId ? { ...m, isStarred: !m.isStarred } : m
-    ));
-  };
-
-  const handleArchive = (messageId: string) => {
-    setMessages(prev => prev.map(m => 
-      m.id === messageId ? { ...m, isArchived: true } : m
-    ));
-    if (selectedMessageId === messageId) {
-      setSelectedMessageId(null);
+    const msg = messages.find(m => m.id === messageId);
+    if (msg && !msg.is_read) {
+      await supabase.from('inbound_messages').update({ is_read: true }).eq('id', messageId);
+      setMessages(prev => prev.map(m => m.id === messageId ? { ...m, is_read: true } : m));
     }
+  };
+
+  const handleToggleStar = async (messageId: string) => {
+    const msg = messages.find(m => m.id === messageId);
+    if (!msg) return;
+    await supabase.from('inbound_messages').update({ is_starred: !msg.is_starred }).eq('id', messageId);
+    setMessages(prev => prev.map(m => m.id === messageId ? { ...m, is_starred: !m.is_starred } : m));
+  };
+
+  const handleArchive = async (messageId: string) => {
+    await supabase.from('inbound_messages').update({ is_archived: true }).eq('id', messageId);
+    setMessages(prev => prev.map(m => m.id === messageId ? { ...m, is_archived: true } : m));
+    if (selectedMessageId === messageId) setSelectedMessageId(null);
     toast.success('Message archived');
   };
 
-  const handleDelete = (messageId: string) => {
+  const handleDelete = async (messageId: string) => {
+    await supabase.from('inbound_messages').delete().eq('id', messageId);
     setMessages(prev => prev.filter(m => m.id !== messageId));
-    if (selectedMessageId === messageId) {
-      setSelectedMessageId(null);
-    }
+    if (selectedMessageId === messageId) setSelectedMessageId(null);
     toast.success('Message deleted');
   };
 
-  const handleMarkAsUnread = (messageId: string) => {
-    setMessages(prev => prev.map(m => 
-      m.id === messageId ? { ...m, isRead: false } : m
-    ));
+  const handleMarkAsUnread = async (messageId: string) => {
+    await supabase.from('inbound_messages').update({ is_read: false }).eq('id', messageId);
+    setMessages(prev => prev.map(m => m.id === messageId ? { ...m, is_read: false } : m));
     toast.success('Marked as unread');
   };
 
-  const handleReply = () => {
-    toast.success('Reply composer opened');
-  };
-
-  const handleForward = () => {
-    toast.success('Forward composer opened');
-  };
-
-  const unreadCount = messages.filter(m => !m.isRead && !m.isArchived).length;
+  const unreadCount = messages.filter(m => !m.is_read && !m.is_archived).length;
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
@@ -144,101 +152,90 @@ export function UnifiedInbox() {
             </div>
             <div className="flex items-center gap-2 mb-3">
               <div className="relative flex-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input 
-                  placeholder="Search messages..." 
-                  className="pl-9"
+                <Search className="absolute left-2 top-2.5 h-3 w-3 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-7 h-8 text-xs"
                 />
               </div>
             </div>
             <div className="flex gap-2">
               <Select value={filterApp} onValueChange={setFilterApp}>
-                <SelectTrigger className="w-[120px] h-8 text-xs">
-                  <SelectValue placeholder="All Apps" />
-                </SelectTrigger>
+                <SelectTrigger className="h-7 text-xs flex-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Apps</SelectItem>
                   <SelectItem value="AGStock">AGStock</SelectItem>
                   <SelectItem value="AGIS">AGIS</SelectItem>
-                  <SelectItem value="AGHub">AGHub</SelectItem>
+                  <SelectItem value="AgroClimate">AgroClimate</SelectItem>
                   <SelectItem value="AminevaOps">AminevaOps</SelectItem>
-                  <SelectItem value="ComsSystem">ComsSystem</SelectItem>
+                  <SelectItem value="external">External</SelectItem>
                 </SelectContent>
               </Select>
               <Select value={filterType} onValueChange={setFilterType}>
-                <SelectTrigger className="w-[120px] h-8 text-xs">
-                  <SelectValue placeholder="All Types" />
-                </SelectTrigger>
+                <SelectTrigger className="h-7 text-xs flex-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Types</SelectItem>
                   <SelectItem value="support">Support</SelectItem>
-                  <SelectItem value="system">System</SelectItem>
                   <SelectItem value="notification">Notification</SelectItem>
-                  <SelectItem value="campaign">Campaign</SelectItem>
+                  <SelectItem value="general">General</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </CardHeader>
-          <CardContent className="flex-1 p-0">
-            <ScrollArea className="h-[480px]">
-              <div className="divide-y">
-                {filteredMessages.map((msg) => (
+          <CardContent className="flex-1 p-0 overflow-hidden">
+            <ScrollArea className="h-full">
+              {loading ? (
+                <div className="p-6 text-center text-muted-foreground text-sm">Loading...</div>
+              ) : filteredMessages.length === 0 ? (
+                <div className="p-6 text-center">
+                  <Mail className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
+                  <p className="text-sm text-muted-foreground">No messages</p>
+                </div>
+              ) : (
+                filteredMessages.map((message) => (
                   <div
-                    key={msg.id}
-                    onClick={() => handleSelectMessage(msg.id)}
-                    className={`p-3 cursor-pointer hover:bg-muted/50 transition-colors ${
-                      selectedMessageId === msg.id ? 'bg-muted' : ''
-                    } ${!msg.isRead ? 'bg-primary/5' : ''}`}
+                    key={message.id}
+                    className={`p-3 border-b border-border cursor-pointer transition hover:bg-muted/50 ${
+                      selectedMessageId === message.id ? 'bg-muted' : ''
+                    } ${!message.is_read ? 'bg-primary/5' : ''}`}
+                    onClick={() => handleSelectMessage(message.id)}
                   >
-                    <div className="flex items-start gap-3">
-                      <Avatar className="h-8 w-8">
-                        <AvatarFallback className="text-xs">
-                          {msg.sender.split(' ').map(n => n[0]).join('').slice(0, 2)}
+                    <div className="flex items-start gap-2">
+                      <Avatar className="h-7 w-7 mt-0.5">
+                        <AvatarFallback className={`text-xs text-white ${appColors[message.source_app || 'external'] || 'bg-muted'}`}>
+                          {(message.sender_name || message.sender).slice(0, 2).toUpperCase()}
                         </AvatarFallback>
                       </Avatar>
                       <div className="flex-1 min-w-0">
-                        <div className="flex items-center justify-between gap-2">
-                          <span className={`text-sm truncate text-foreground ${!msg.isRead ? 'font-semibold' : ''}`}>
-                            {msg.sender}
+                        <div className="flex items-center justify-between">
+                          <span className={`text-xs truncate ${!message.is_read ? 'font-semibold text-foreground' : 'text-muted-foreground'}`}>
+                            {message.sender_name || message.sender}
                           </span>
-                          <span className="text-xs text-muted-foreground whitespace-nowrap">
-                            {msg.timestamp}
-                          </span>
+                          <div className="flex items-center gap-1">
+                            {message.is_starred && <Star className="h-3 w-3 text-yellow-500 fill-yellow-500" />}
+                            <span className="text-[10px] text-muted-foreground">
+                              {new Date(message.created_at).toLocaleDateString()}
+                            </span>
+                          </div>
                         </div>
-                        <p className={`text-sm truncate ${!msg.isRead ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
-                          {msg.subject}
+                        <p className={`text-xs truncate ${!message.is_read ? 'font-medium text-foreground' : 'text-muted-foreground'}`}>
+                          {message.subject}
                         </p>
-                        <div className="flex items-center gap-2 mt-1">
-                          <Badge 
-                            variant="secondary" 
-                            className={`text-xs h-5 text-white ${appColors[msg.sourceApp] || 'bg-gray-500'}`}
-                          >
-                            {msg.sourceApp}
+                        <div className="flex items-center gap-1 mt-1">
+                          <Badge variant="outline" className="text-[9px] h-4 px-1">
+                            {message.source_app || 'external'}
                           </Badge>
-                          <Badge variant="outline" className="text-xs h-5 gap-1 text-foreground border-border">
-                            {typeIcons[msg.type]}
-                            {msg.type}
-                          </Badge>
-                          {msg.isStarred && (
-                            <Star 
-                              className="h-3 w-3 text-amber-500 fill-amber-500 cursor-pointer" 
-                              onClick={(e) => handleToggleStar(msg.id, e)}
-                            />
-                          )}
+                          <span className="flex items-center gap-0.5 text-[9px] text-muted-foreground">
+                            {typeIcons[message.type] || typeIcons.general} {message.type}
+                          </span>
                         </div>
                       </div>
                     </div>
                   </div>
-                ))}
-                {filteredMessages.length === 0 && (
-                  <div className="p-8 text-center text-muted-foreground">
-                    <Mail className="h-8 w-8 mx-auto mb-2 opacity-50" />
-                    <p>No messages found</p>
-                  </div>
-                )}
-              </div>
+                ))
+              )}
             </ScrollArea>
           </CardContent>
         </Card>
@@ -246,88 +243,52 @@ export function UnifiedInbox() {
 
       {/* Message Detail */}
       <div className="lg:col-span-2">
-        <Card className="h-[600px] flex flex-col">
+        <Card className="h-[600px]">
           {selectedMessage ? (
             <>
-              <CardHeader className="border-b">
-                <div className="flex items-start justify-between">
-                  <div>
-                    <CardTitle className="text-lg text-foreground">{selectedMessage.subject}</CardTitle>
-                    <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                      <span>From: {selectedMessage.sender} &lt;{selectedMessage.email}&gt;</span>
-                    </div>
-                  </div>
+              <CardHeader className="pb-3">
+                <div className="flex items-center justify-between">
+                  <CardTitle className="text-lg text-foreground">{selectedMessage.subject}</CardTitle>
                   <div className="flex items-center gap-1">
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => handleToggleStar(selectedMessage.id)}
-                      className="text-foreground"
-                    >
-                      <Star className={`h-4 w-4 ${selectedMessage.isStarred ? 'text-amber-500 fill-amber-500' : ''}`} />
+                    <Button variant="ghost" size="sm" onClick={() => handleToggleStar(selectedMessage.id)}>
+                      <Star className={`h-4 w-4 ${selectedMessage.is_starred ? 'text-yellow-500 fill-yellow-500' : ''}`} />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => handleMarkAsUnread(selectedMessage.id)}
-                      className="text-foreground"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => handleMarkAsUnread(selectedMessage.id)}>
                       <MailOpen className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => handleArchive(selectedMessage.id)}
-                      className="text-foreground"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => handleArchive(selectedMessage.id)}>
                       <Archive className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="ghost" 
-                      size="icon"
-                      onClick={() => handleDelete(selectedMessage.id)}
-                      className="text-destructive hover:text-destructive/80"
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => handleDelete(selectedMessage.id)}>
                       <Trash2 className="h-4 w-4" />
                     </Button>
                   </div>
                 </div>
-                <div className="flex items-center gap-2 mt-2">
-                  <Badge className={`text-white ${appColors[selectedMessage.sourceApp]}`}>
-                    {selectedMessage.sourceApp}
-                  </Badge>
-                  <Badge variant="outline" className="gap-1 text-foreground border-border">
-                    {typeIcons[selectedMessage.type]}
-                    {selectedMessage.type}
-                  </Badge>
-                  <span className="text-xs text-muted-foreground">{selectedMessage.timestamp}</span>
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <span>From: <strong>{selectedMessage.sender_name || selectedMessage.sender}</strong></span>
+                  <span>·</span>
+                  <Badge variant="outline" className="text-xs">{selectedMessage.source_app}</Badge>
+                  <span>·</span>
+                  <span>{new Date(selectedMessage.created_at).toLocaleString()}</span>
                 </div>
               </CardHeader>
-              <CardContent className="flex-1 p-6 overflow-auto">
-                <div className="whitespace-pre-wrap text-foreground">
-                  {selectedMessage.body}
+              <CardContent>
+                <ScrollArea className="h-[400px]">
+                  <div className="prose prose-sm max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: selectedMessage.body }} />
+                </ScrollArea>
+                <div className="flex gap-2 mt-4 pt-4 border-t border-border">
+                  <Button size="sm"><Reply className="h-4 w-4 mr-1" /> Reply</Button>
+                  <Button size="sm" variant="outline"><Forward className="h-4 w-4 mr-1" /> Forward</Button>
                 </div>
               </CardContent>
-              <div className="border-t p-4">
-                <div className="flex gap-2">
-                  <Button className="gap-2" onClick={handleReply}>
-                    <Reply className="h-4 w-4" />
-                    Reply
-                  </Button>
-                  <Button variant="outline" className="gap-2 text-foreground border-border" onClick={handleForward}>
-                    <Forward className="h-4 w-4" />
-                    Forward
-                  </Button>
-                </div>
-              </div>
             </>
           ) : (
-            <div className="flex-1 flex items-center justify-center text-muted-foreground">
+            <CardContent className="h-full flex items-center justify-center">
               <div className="text-center">
-                <Mail className="h-12 w-12 mx-auto mb-4 opacity-50" />
-                <p>Select a message to view</p>
+                <Mail className="h-12 w-12 text-muted-foreground mx-auto mb-3" />
+                <p className="text-muted-foreground">Select a message to read</p>
               </div>
-            </div>
+            </CardContent>
           )}
         </Card>
       </div>

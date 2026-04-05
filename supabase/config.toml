@@ -26,3 +26,6 @@ verify_jwt = false
 
 [functions.acs-intelligence]
 verify_jwt = false
+
+[functions.coms-inbound]
+verify_jwt = false
