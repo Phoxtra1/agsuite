@@ -209,15 +209,28 @@ export function TemplatesPanel() {
     setIsPreviewDialogOpen(true);
   };
 
-  const handleSaveTemplate = () => {
+  const handleSaveTemplate = async () => {
     if (!formData.name.trim()) {
       toast.error('Template name is required');
       return;
     }
 
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+
     const variables = formData.body.match(/\{\{[^}]+\}\}/g) || [];
 
     if (editingTemplate) {
+      if (userId) {
+        await supabase.from('coms_templates').update({
+          name: formData.name,
+          type: formData.type,
+          category: formData.category,
+          subject: formData.subject,
+          body: formData.body,
+          variables,
+        }).eq('id', editingTemplate.id);
+      }
       setTemplates(prev => prev.map(t => 
         t.id === editingTemplate.id 
           ? { ...t, ...formData, variables, lastUpdated: new Date().toISOString().split('T')[0] }
@@ -225,29 +238,60 @@ export function TemplatesPanel() {
       ));
       toast.success('Template updated');
     } else {
+      let newId = `template-${Date.now()}`;
+      if (userId) {
+        const { data: newRow } = await supabase.from('coms_templates').insert({
+          user_id: userId,
+          name: formData.name,
+          type: formData.type,
+          category: formData.category,
+          subject: formData.subject,
+          body: formData.body,
+          variables,
+        }).select().single();
+        if (newRow) newId = newRow.id;
+      }
       const newTemplate: Template = {
-        id: `template-${Date.now()}`,
+        id: newId,
         ...formData,
         variables,
         lastUpdated: new Date().toISOString().split('T')[0],
         usageCount: 0,
       };
-      setTemplates(prev => [...prev, newTemplate]);
+      setTemplates(prev => [newTemplate, ...prev]);
       toast.success('Template created');
     }
 
     setIsEditDialogOpen(false);
   };
 
-  const handleDeleteTemplate = (templateId: string) => {
+  const handleDeleteTemplate = async (templateId: string) => {
+    await supabase.from('coms_templates').delete().eq('id', templateId);
     setTemplates(prev => prev.filter(t => t.id !== templateId));
     toast.success('Template deleted');
   };
 
-  const handleDuplicateTemplate = (template: Template) => {
+  const handleDuplicateTemplate = async (template: Template) => {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    let newId = `template-${Date.now()}`;
+    
+    if (userId) {
+      const { data: newRow } = await supabase.from('coms_templates').insert({
+        user_id: userId,
+        name: `${template.name} (Copy)`,
+        type: template.type,
+        category: template.category,
+        subject: template.subject,
+        body: template.body,
+        variables: template.variables,
+      }).select().single();
+      if (newRow) newId = newRow.id;
+    }
+
     const newTemplate: Template = {
       ...template,
-      id: `template-${Date.now()}`,
+      id: newId,
       name: `${template.name} (Copy)`,
       lastUpdated: new Date().toISOString().split('T')[0],
       usageCount: 0,
