@@ -1,12 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { handleComms } from "@/core/coms";
+import { ComsSDK } from "@/core/coms/sdk";
+import { supabase } from '@/integrations/supabase/client';
 import {
   Inbox, Send, Megaphone, FileText, Activity, Clock, TrendingUp, Plus, Settings,
-  CheckCircle, XCircle, AlertTriangle, Mail, Bell, MessageSquare,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UnifiedInbox } from './inbox/UnifiedInbox';
@@ -21,7 +22,7 @@ import { ComsSettingsModal } from './settings/ComsSettingsModal';
 export interface LogEntry {
   id: string;
   timestamp: string;
-  event: 'delivered' | 'bounced' | 'failed' | 'queued' | 'opened' | 'clicked';
+  event: 'delivered' | 'bounced' | 'failed' | 'queued' | 'opened' | 'clicked' | 'received';
   channel: 'email' | 'in-app' | 'sms';
   recipient: string;
   subject: string;
@@ -47,6 +48,49 @@ export function ComsSystem() {
   const [composeOpen, setComposeOpen] = useState(false);
   const [settingsOpen, setSettingsOpen] = useState(false);
 
+  // Load logs from DB + subscribe to realtime
+  useEffect(() => {
+    const loadLogs = async () => {
+      const { data } = await supabase
+        .from('coms_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (data) {
+        setLogs(data.map(row => ({
+          id: row.id,
+          timestamp: row.created_at,
+          event: row.event as LogEntry['event'],
+          channel: row.channel as LogEntry['channel'],
+          recipient: row.recipient,
+          subject: row.subject || '',
+          sourceApp: row.source_app || 'ComsSystem',
+          messageType: (row.message_type || 'transactional') as LogEntry['messageType'],
+          details: row.details || undefined,
+        })));
+      }
+    };
+    loadLogs();
+
+    // Realtime subscription for live log updates
+    const unsub = ComsSDK.subscribeToLogs((newLog: any) => {
+      setLogs(prev => [{
+        id: newLog.id,
+        timestamp: newLog.created_at,
+        event: newLog.event,
+        channel: newLog.channel,
+        recipient: newLog.recipient,
+        subject: newLog.subject || '',
+        sourceApp: newLog.source_app || 'ComsSystem',
+        messageType: newLog.message_type || 'transactional',
+        details: newLog.details || undefined,
+      }, ...prev]);
+    });
+
+    return unsub;
+  }, []);
+
   const comsStats = {
     totalMessages: logs.length,
     unreadMessages: notifications.filter(n => !n.isRead).length,
@@ -54,58 +98,6 @@ export function ComsSystem() {
     activeCampaigns: 0,
     sentToday: logs.filter(l => new Date(l.timestamp).toDateString() === new Date().toDateString()).length,
     deliveryRate: logs.length ? Math.round((logs.filter(l => l.event === 'delivered').length / logs.length) * 100) : 0,
-  };
-
-  // ======== SEND MESSAGE HANDLER ========
-  const handleSendMessage = (message: {
-    channel: 'email' | 'in-app';
-    recipients: string[];
-    subject: string;
-    content: string;
-  }) => {
-    if (!message.recipients.length) return toast.error('No recipients');
-    const now = new Date().toISOString();
-
-    // Run through Odeneho AI pipeline
-    const result = handleComms({
-      channel: "email",
-      from: message.recipients[0],
-      subject: message.subject,
-      message: message.content,
-    });
-
-    if (result.decision.action === "auto-reply") {
-      toast.info(`AI auto-reply: ${result.response.reply.slice(0, 80)}…`);
-    }
-
-    // Add to logs
-    const newLogs: LogEntry[] = message.recipients.map((r, idx) => ({
-      id: `log-${Date.now()}-${idx}`,
-      timestamp: now,
-      event: 'queued' as const,
-      channel: message.channel,
-      recipient: r,
-      subject: message.subject,
-      sourceApp: 'ComsSystem',
-      messageType: 'transactional' as const,
-    }));
-    setLogs(prev => [...newLogs, ...prev]);
-
-    // Add to notifications if in-app
-    if (message.channel === 'in-app') {
-      const newNotifs: InAppNotification[] = message.recipients.map((r, idx) => ({
-        id: `notif-${Date.now()}-${idx}`,
-        title: message.subject,
-        message: message.content,
-        type: 'info' as const,
-        sourceApp: 'ComsSystem',
-        createdAt: now,
-        isRead: false,
-      }));
-      setNotifications(prev => [...newNotifs, ...prev]);
-    }
-
-    toast.success('Message queued for delivery');
   };
 
   return (
@@ -147,7 +139,7 @@ export function ComsSystem() {
           <CardContent className="pt-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground">Pending Replies</p>
+                <p className="text-sm text-muted-foreground">Pending</p>
                 <p className="text-2xl font-bold text-foreground">{comsStats.pendingReplies}</p>
               </div>
               <div className="h-10 w-10 rounded-full bg-accent/10 flex items-center justify-center">
@@ -192,10 +184,6 @@ export function ComsSystem() {
             <span className="hidden sm:inline">Inbox</span>
             {comsStats.unreadMessages > 0 && <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">{comsStats.unreadMessages}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
-            <Bell className="h-4 w-4" />
-            <span className="hidden sm:inline">In-App</span>
-          </TabsTrigger>
           <TabsTrigger value="campaigns" className="gap-2">
             <Megaphone className="h-4 w-4" />
             <span className="hidden sm:inline">Campaigns</span>
@@ -208,15 +196,19 @@ export function ComsSystem() {
             <Activity className="h-4 w-4" />
             <span className="hidden sm:inline">Logs</span>
           </TabsTrigger>
+          <TabsTrigger value="notifications" className="gap-2">
+            <Send className="h-4 w-4" />
+            <span className="hidden sm:inline">In-App</span>
+          </TabsTrigger>
         </TabsList>
         <TabsContent value="inbox"><UnifiedInbox /></TabsContent>
-        <TabsContent value="notifications">
-          <InAppNotificationsPanel notifications={notifications} setNotifications={setNotifications} />
-        </TabsContent>
         <TabsContent value="campaigns"><CampaignsPanel /></TabsContent>
         <TabsContent value="templates"><TemplatesPanel /></TabsContent>
         <TabsContent value="logs">
           <ComsLogsPanel logs={logs} />
+        </TabsContent>
+        <TabsContent value="notifications">
+          <InAppNotificationsPanel notifications={notifications} setNotifications={setNotifications} />
         </TabsContent>
       </Tabs>
 
