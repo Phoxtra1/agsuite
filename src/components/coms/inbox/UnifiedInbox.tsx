@@ -60,6 +60,9 @@ export function UnifiedInbox() {
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [replyMode, setReplyMode] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [replySending, setReplySending] = useState(false);
 
   // Fetch messages from DB
   useEffect(() => {
