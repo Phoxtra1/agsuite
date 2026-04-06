@@ -1,5 +1,6 @@
 import { FC, useState } from "react";
 import { motion } from "framer-motion";
+import { SupportComs } from "@/core/coms/hooks";
 import { toast } from "sonner";
 import {
   MessageSquare, Mail, Clock, Send, CheckCircle,
@@ -20,7 +21,9 @@ const SupportPage: FC = () => {
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [sending, setSending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) {
       toast.error("Please fill in all required fields.");
@@ -34,8 +37,25 @@ const SupportPage: FC = () => {
       toast.error("Message must be under 2000 characters.");
       return;
     }
-    setSubmitted(true);
-    toast.success("Your inquiry has been submitted. We'll respond within 48 hours.");
+
+    setSending(true);
+    try {
+      // Route through ComsSystem — creates ticket + inbox entry + log
+      await SupportComs.submitTicket({
+        subject: subjects.find(s => s.value === subject)?.label || subject,
+        message: message.trim(),
+        priority: "normal",
+        sourceApp: subject === "general" || subject === "partnership" || subject === "services" ? "ComsSystem" : subject.toUpperCase(),
+        userEmail: email,
+        userName: name,
+      });
+      setSubmitted(true);
+      toast.success("Your inquiry has been submitted. We'll respond within 48 hours.");
+    } catch {
+      toast.error("Failed to submit. Please try again or email support@amineva.com.");
+    } finally {
+      setSending(false);
+    }
   };
 
   const subjects = [
@@ -131,8 +151,8 @@ const SupportPage: FC = () => {
               <p className="text-xs text-muted-foreground mt-1">{message.length}/2000 characters</p>
             </div>
 
-            <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base">
-              <Send className="h-4 w-4 mr-2" /> Send Message
+            <Button type="submit" disabled={sending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base">
+              <Send className="h-4 w-4 mr-2" /> {sending ? "Sending..." : "Send Message"}
             </Button>
           </motion.form>
         )}

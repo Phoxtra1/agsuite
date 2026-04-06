@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
@@ -14,7 +15,7 @@ import {
 } from '@/components/ui/select';
 import { 
   Search, Star, Archive, Trash2, Reply, 
-  Mail, Bell, AlertCircle, CheckCircle, MailOpen, Forward
+  Mail, Bell, AlertCircle, CheckCircle, MailOpen, Forward, Send
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
@@ -59,6 +60,9 @@ export function UnifiedInbox() {
   const [filterType, setFilterType] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [loading, setLoading] = useState(true);
+  const [replyMode, setReplyMode] = useState(false);
+  const [replyText, setReplyText] = useState('');
+  const [replySending, setReplySending] = useState(false);
 
   // Fetch messages from DB
   useEffect(() => {
@@ -277,9 +281,47 @@ export function UnifiedInbox() {
                   <div className="prose prose-sm max-w-none text-foreground" dangerouslySetInnerHTML={{ __html: selectedMessage.body }} />
                 </ScrollArea>
                 <div className="flex gap-2 mt-4 pt-4 border-t border-border">
-                  <Button size="sm"><Reply className="h-4 w-4 mr-1" /> Reply</Button>
+                  <Button size="sm" onClick={() => { setReplyMode(!replyMode); setReplyText(''); }}>
+                    <Reply className="h-4 w-4 mr-1" /> {replyMode ? 'Cancel Reply' : 'Reply'}
+                  </Button>
                   <Button size="sm" variant="outline"><Forward className="h-4 w-4 mr-1" /> Forward</Button>
                 </div>
+                {replyMode && (
+                  <div className="mt-4 space-y-3">
+                    <Textarea
+                      placeholder={`Reply to ${selectedMessage.sender_name || selectedMessage.sender}...`}
+                      value={replyText}
+                      onChange={(e) => setReplyText(e.target.value)}
+                      rows={4}
+                    />
+                    <Button
+                      size="sm"
+                      disabled={!replyText.trim() || replySending}
+                      onClick={async () => {
+                        setReplySending(true);
+                        try {
+                          await ComsSDK.sendEmail({
+                            to: [{ email: selectedMessage.sender, name: selectedMessage.sender_name || undefined }],
+                            subject: `Re: ${selectedMessage.subject}`,
+                            htmlContent: `<div style="font-family:sans-serif"><p>${replyText.replace(/\n/g, '<br>')}</p><hr style="margin:16px 0;border-color:#e2e8f0"><p style="color:#64748b;font-size:12px">In reply to: ${selectedMessage.subject}</p></div>`,
+                            sourceApp: selectedMessage.source_app || 'ComsSystem',
+                            messageType: 'support',
+                            tags: ['inbox-reply'],
+                          });
+                          setReplyMode(false);
+                          setReplyText('');
+                          toast.success('Reply sent');
+                        } catch {
+                          toast.error('Failed to send reply');
+                        } finally {
+                          setReplySending(false);
+                        }
+                      }}
+                    >
+                      <Send className="h-4 w-4 mr-1" /> {replySending ? 'Sending...' : 'Send Reply'}
+                    </Button>
+                  </div>
+                )}
               </CardContent>
             </>
           ) : (
