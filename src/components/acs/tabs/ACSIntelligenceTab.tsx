@@ -69,6 +69,8 @@ export function ACSIntelligenceTab({ currentBackend }: Props) {
       setOutputs((prev) => [output, ...prev].slice(0, 20));
       setTotalCount((c) => c + 1);
       toast.success(`New intelligence: ${output.title}`, { duration: 5000 });
+      // Push real-time notification to users via ComsSDK
+      notifyIntelligenceOutput(output);
     });
     return unsub;
   }, [currentBackend]);
