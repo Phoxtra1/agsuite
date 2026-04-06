@@ -151,8 +151,8 @@ const SupportPage: FC = () => {
               <p className="text-xs text-muted-foreground mt-1">{message.length}/2000 characters</p>
             </div>
 
-            <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base">
-              <Send className="h-4 w-4 mr-2" /> Send Message
+            <Button type="submit" disabled={sending} className="w-full bg-accent text-accent-foreground hover:bg-accent/90 h-12 text-base">
+              <Send className="h-4 w-4 mr-2" /> {sending ? "Sending..." : "Send Message"}
             </Button>
           </motion.form>
         )}
