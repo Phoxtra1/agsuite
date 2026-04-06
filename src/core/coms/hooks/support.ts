@@ -1,5 +1,6 @@
 // src/core/coms/hooks/support.ts
 // Support ticket hooks — route all support interactions through ComsSDK
+// Handles both authenticated and unauthenticated (public form) submissions.
 
 import { ComsSDK } from "@/core/coms/sdk";
 import { supabase } from "@/integrations/supabase/client";
@@ -10,6 +11,7 @@ export const SupportComs = {
   /**
    * Submit a support ticket and push it into ComsSystem inbox + coms_logs.
    * Works from any product — just pass sourceApp.
+   * Handles unauthenticated users (public support form) via edge function.
    */
   async submitTicket(opts: {
     subject: string;
@@ -19,34 +21,53 @@ export const SupportComs = {
     userEmail?: string;
     userName?: string;
   }) {
-    // 1. Create the ticket via SDK
-    const ticket = await ComsSDK.createTicket({
-      subject: opts.subject,
-      message: opts.message,
-      priority: opts.priority || "normal",
-      sourceApp: opts.sourceApp || SOURCE,
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+
+    if (userId) {
+      // Authenticated path — direct DB writes
+      const ticket = await ComsSDK.createTicket({
+        subject: opts.subject,
+        message: opts.message,
+        priority: opts.priority || "normal",
+        sourceApp: opts.sourceApp || SOURCE,
+      });
+
+      await ComsSDK.pushNotification({
+        title: `Support: ${opts.subject}`,
+        message: opts.message.slice(0, 200),
+        type: "info",
+        sourceApp: opts.sourceApp || SOURCE,
+      });
+
+      await ComsSDK.logEvent({
+        event: "ticket-created",
+        channel: "in-app",
+        recipient: opts.userEmail || "self",
+        subject: opts.subject,
+        sourceApp: opts.sourceApp || SOURCE,
+        messageType: "support",
+        deliveryStatus: "sent",
+      });
+
+      return ticket;
+    }
+
+    // Unauthenticated path — route through edge function
+    const { data, error } = await supabase.functions.invoke("coms-inbound", {
+      body: {
+        action: "support_ticket",
+        email: opts.userEmail,
+        name: opts.userName,
+        subject: opts.subject,
+        message: opts.message,
+        priority: opts.priority || "normal",
+        source_app: opts.sourceApp || SOURCE,
+      },
     });
 
-    // 2. Push in-app notification so it appears in ComsSystem inbox
-    await ComsSDK.pushNotification({
-      title: `Support: ${opts.subject}`,
-      message: opts.message.slice(0, 200),
-      type: "info",
-      sourceApp: opts.sourceApp || SOURCE,
-    });
-
-    // 3. Log the event
-    await ComsSDK.logEvent({
-      event: "ticket-created",
-      channel: "in-app",
-      recipient: opts.userEmail || "self",
-      subject: opts.subject,
-      sourceApp: opts.sourceApp || SOURCE,
-      messageType: "support",
-      deliveryStatus: "sent",
-    });
-
-    return ticket;
+    if (error) throw new Error(`Support submission failed: ${error.message}`);
+    return data;
   },
 
   /**
@@ -60,7 +81,6 @@ export const SupportComs = {
     recipientName?: string;
     sourceApp?: string;
   }) {
-    // Get ticket details
     const { data: ticket } = await supabase
       .from("support_tickets")
       .select("*")
@@ -89,7 +109,6 @@ export const SupportComs = {
       tags: ["support-reply", `ticket-${opts.ticketId.slice(0, 8)}`],
     });
 
-    // Update ticket status
     await supabase
       .from("support_tickets")
       .update({ status: "replied" })
@@ -107,30 +126,42 @@ export const SupportComs = {
     message: string;
     sourceApp?: string;
   }) {
-    // Insert into inbound_messages so it appears in admin inbox
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
-    if (!userId) throw new Error("User not authenticated");
 
-    await supabase.from("inbound_messages").insert({
-      user_id: userId,
-      sender: opts.fromEmail,
-      sender_name: opts.fromName || opts.fromEmail,
-      subject: opts.subject,
-      body: opts.message,
-      channel: "email",
-      type: "support",
-      source_app: opts.sourceApp || "external",
-    });
+    if (userId) {
+      await supabase.from("inbound_messages").insert({
+        user_id: userId,
+        sender: opts.fromEmail,
+        sender_name: opts.fromName || opts.fromEmail,
+        subject: opts.subject,
+        body: opts.message,
+        channel: "email",
+        type: "support",
+        source_app: opts.sourceApp || "external",
+      });
 
-    await ComsSDK.logEvent({
-      event: "user-message-received",
-      channel: "email",
-      recipient: opts.fromEmail,
-      subject: opts.subject,
-      sourceApp: opts.sourceApp || "external",
-      messageType: "support",
-      deliveryStatus: "received",
-    });
+      await ComsSDK.logEvent({
+        event: "user-message-received",
+        channel: "email",
+        recipient: opts.fromEmail,
+        subject: opts.subject,
+        sourceApp: opts.sourceApp || "external",
+        messageType: "support",
+        deliveryStatus: "received",
+      });
+    } else {
+      // Unauthenticated — route through edge function
+      await supabase.functions.invoke("coms-inbound", {
+        body: {
+          action: "user_message",
+          email: opts.fromEmail,
+          name: opts.fromName,
+          subject: opts.subject,
+          message: opts.message,
+          source_app: opts.sourceApp || "external",
+        },
+      });
+    }
   },
 };

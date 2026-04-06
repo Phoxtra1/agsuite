@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { acs } from '@/core/backend';
 import type { ACSIntelligenceOutput } from '@/core/backend/acs';
 import { supabase } from '@/integrations/supabase/client';
+import { notifyIntelligenceOutput } from '@/core/acs/notifications';
 
 const CATEGORIES = [
   { value: 'all', label: 'All Categories' },
@@ -68,6 +69,8 @@ export function ACSIntelligenceTab({ currentBackend }: Props) {
       setOutputs((prev) => [output, ...prev].slice(0, 20));
       setTotalCount((c) => c + 1);
       toast.success(`New intelligence: ${output.title}`, { duration: 5000 });
+      // Push real-time notification to users via ComsSDK
+      notifyIntelligenceOutput(output);
     });
     return unsub;
   }, [currentBackend]);
