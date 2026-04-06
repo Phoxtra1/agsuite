@@ -21,7 +21,9 @@ const SupportPage: FC = () => {
   const [message, setMessage] = useState("");
   const [submitted, setSubmitted] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const [sending, setSending] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name.trim() || !email.trim() || !message.trim()) {
       toast.error("Please fill in all required fields.");
@@ -35,8 +37,25 @@ const SupportPage: FC = () => {
       toast.error("Message must be under 2000 characters.");
       return;
     }
-    setSubmitted(true);
-    toast.success("Your inquiry has been submitted. We'll respond within 48 hours.");
+
+    setSending(true);
+    try {
+      // Route through ComsSystem — creates ticket + inbox entry + log
+      await SupportComs.submitTicket({
+        subject: subjects.find(s => s.value === subject)?.label || subject,
+        message: message.trim(),
+        priority: "normal",
+        sourceApp: subject === "general" || subject === "partnership" || subject === "services" ? "ComsSystem" : subject.toUpperCase(),
+        userEmail: email,
+        userName: name,
+      });
+      setSubmitted(true);
+      toast.success("Your inquiry has been submitted. We'll respond within 48 hours.");
+    } catch {
+      toast.error("Failed to submit. Please try again or email support@amineva.com.");
+    } finally {
+      setSending(false);
+    }
   };
 
   const subjects = [
