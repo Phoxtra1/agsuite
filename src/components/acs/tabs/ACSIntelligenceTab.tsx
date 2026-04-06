@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import { acs } from '@/core/backend';
 import type { ACSIntelligenceOutput } from '@/core/backend/acs';
 import { supabase } from '@/integrations/supabase/client';
+import { notifyIntelligenceOutput } from '@/core/acs/notifications';
 
 const CATEGORIES = [
   { value: 'all', label: 'All Categories' },
