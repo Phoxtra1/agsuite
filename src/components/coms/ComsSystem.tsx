@@ -8,6 +8,7 @@ import { ComsSDK } from "@/core/coms/sdk";
 import { supabase } from '@/integrations/supabase/client';
 import {
   Inbox, Send, Megaphone, FileText, Activity, Clock, TrendingUp, Plus, Settings,
+  TicketCheck, BarChart3,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UnifiedInbox } from './inbox/UnifiedInbox';
@@ -17,6 +18,8 @@ import { InAppNotificationsPanel } from './notifications/InAppNotificationsPanel
 import { ComsLogsPanel } from './ComsLogsPanel';
 import { ComposeMessageModal } from './compose/ComposeMessageModal';
 import { ComsSettingsModal } from './settings/ComsSettingsModal';
+import { SupportTicketsPanel } from './tickets/SupportTicketsPanel';
+import { ComsAnalyticsDashboard } from './analytics/ComsAnalyticsDashboard';
 
 // ======== TYPES ========
 export interface LogEntry {
