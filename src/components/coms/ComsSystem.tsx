@@ -8,6 +8,7 @@ import { ComsSDK } from "@/core/coms/sdk";
 import { supabase } from '@/integrations/supabase/client';
 import {
   Inbox, Send, Megaphone, FileText, Activity, Clock, TrendingUp, Plus, Settings,
+  TicketCheck, BarChart3,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { UnifiedInbox } from './inbox/UnifiedInbox';
@@ -17,6 +18,8 @@ import { InAppNotificationsPanel } from './notifications/InAppNotificationsPanel
 import { ComsLogsPanel } from './ComsLogsPanel';
 import { ComposeMessageModal } from './compose/ComposeMessageModal';
 import { ComsSettingsModal } from './settings/ComsSettingsModal';
+import { SupportTicketsPanel } from './tickets/SupportTicketsPanel';
+import { ComsAnalyticsDashboard } from './analytics/ComsAnalyticsDashboard';
 
 // ======== TYPES ========
 export interface LogEntry {
@@ -178,32 +181,42 @@ export function ComsSystem() {
 
       {/* Tabs */}
       <Tabs defaultValue="inbox" className="space-y-4">
-        <TabsList className="grid w-full grid-cols-5">
-          <TabsTrigger value="inbox" className="gap-2">
+        <TabsList className="grid w-full grid-cols-7">
+          <TabsTrigger value="inbox" className="gap-1.5">
             <Inbox className="h-4 w-4" />
             <span className="hidden sm:inline">Inbox</span>
             {comsStats.unreadMessages > 0 && <Badge variant="destructive" className="ml-1 h-5 px-1.5 text-xs">{comsStats.unreadMessages}</Badge>}
           </TabsTrigger>
-          <TabsTrigger value="campaigns" className="gap-2">
+          <TabsTrigger value="tickets" className="gap-1.5">
+            <TicketCheck className="h-4 w-4" />
+            <span className="hidden sm:inline">Tickets</span>
+          </TabsTrigger>
+          <TabsTrigger value="campaigns" className="gap-1.5">
             <Megaphone className="h-4 w-4" />
             <span className="hidden sm:inline">Campaigns</span>
           </TabsTrigger>
-          <TabsTrigger value="templates" className="gap-2">
+          <TabsTrigger value="templates" className="gap-1.5">
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Templates</span>
           </TabsTrigger>
-          <TabsTrigger value="logs" className="gap-2">
+          <TabsTrigger value="analytics" className="gap-1.5">
+            <BarChart3 className="h-4 w-4" />
+            <span className="hidden sm:inline">Analytics</span>
+          </TabsTrigger>
+          <TabsTrigger value="logs" className="gap-1.5">
             <Activity className="h-4 w-4" />
             <span className="hidden sm:inline">Logs</span>
           </TabsTrigger>
-          <TabsTrigger value="notifications" className="gap-2">
+          <TabsTrigger value="notifications" className="gap-1.5">
             <Send className="h-4 w-4" />
             <span className="hidden sm:inline">In-App</span>
           </TabsTrigger>
         </TabsList>
         <TabsContent value="inbox"><UnifiedInbox /></TabsContent>
+        <TabsContent value="tickets"><SupportTicketsPanel /></TabsContent>
         <TabsContent value="campaigns"><CampaignsPanel /></TabsContent>
         <TabsContent value="templates"><TemplatesPanel /></TabsContent>
+        <TabsContent value="analytics"><ComsAnalyticsDashboard /></TabsContent>
         <TabsContent value="logs">
           <ComsLogsPanel logs={logs} />
         </TabsContent>
