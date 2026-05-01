@@ -61,25 +61,36 @@ export const acs: ACSAdapter = {
   },
 
   async triggerSync(source) {
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) throw new Error("Sign in required to create an ACS sync snapshot");
+
     const { data, error } = await supabase
       .from("acs_sync_logs")
-      .insert([{ source, status: "syncing", started_at: new Date().toISOString() }])
+      .insert([{ source, status: "syncing", started_at: new Date().toISOString(), user_id: user.id }])
       .select()
       .single();
     if (error) throw error;
 
-    setTimeout(async () => {
-      await supabase
-        .from("acs_sync_logs")
-        .update({
-          status: "completed",
-          completed_at: new Date().toISOString(),
-          records_synced: Math.floor(Math.random() * 50) + 1,
-        })
-        .eq("id", data.id);
-    }, 2000);
+    const [rawRes, eventRes] = await Promise.all([
+      (supabase.from as any)("acs_raw_data").select("id", { count: "exact", head: true }).eq("platform", source),
+      supabase.from("acs_events").select("id", { count: "exact", head: true }).eq("source", source),
+    ]);
 
-    return data as ACSSyncLog;
+    const recordsSynced = (rawRes.count ?? 0) + (eventRes.count ?? 0);
+    const { data: completed, error: updateError } = await supabase
+      .from("acs_sync_logs")
+      .update({
+        status: "completed",
+        completed_at: new Date().toISOString(),
+        records_synced: recordsSynced,
+        error_message: rawRes.error?.message || eventRes.error?.message || null,
+      })
+      .eq("id", data.id)
+      .select()
+      .single();
+
+    if (updateError) throw updateError;
+    return completed as ACSSyncLog;
   },
 
   subscribeEvents(callback) {
