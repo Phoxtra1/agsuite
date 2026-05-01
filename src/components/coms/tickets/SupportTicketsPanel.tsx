@@ -114,7 +114,7 @@ export function SupportTicketsPanel() {
 
   const handleReply = async () => {
     if (!selectedTicket || !replyText.trim()) return;
-    const sender = extractSenderFromMessage(selectedTicket.message);
+    const sender = getSender(selectedTicket);
     if (!sender.email) {
       toast.error('Could not determine recipient email from ticket');
       return;
