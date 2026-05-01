@@ -35,6 +35,10 @@ interface Message {
   is_archived: boolean;
   created_at: string;
   channel: string;
+  sender_user_id?: string | null;
+  target_user_id?: string | null;
+  related_ticket_id?: string | null;
+  direction?: string | null;
 }
 
 const appColors: Record<string, string> = {
@@ -300,13 +304,15 @@ export function UnifiedInbox() {
                       onClick={async () => {
                         setReplySending(true);
                         try {
-                          await ComsSDK.sendEmail({
-                            to: [{ email: selectedMessage.sender, name: selectedMessage.sender_name || undefined }],
+                          await ComsSDK.sendReply({
+                            recipientEmail: selectedMessage.sender.includes('@') ? selectedMessage.sender : undefined,
+                            recipientName: selectedMessage.sender_name || undefined,
+                            targetUserId: selectedMessage.sender_user_id || undefined,
                             subject: `Re: ${selectedMessage.subject}`,
-                            htmlContent: `<div style="font-family:sans-serif"><p>${replyText.replace(/\n/g, '<br>')}</p><hr style="margin:16px 0;border-color:#e2e8f0"><p style="color:#64748b;font-size:12px">In reply to: ${selectedMessage.subject}</p></div>`,
+                            message: replyText,
                             sourceApp: selectedMessage.source_app || 'ComsSystem',
-                            messageType: 'support',
-                            tags: ['inbox-reply'],
+                            ticketId: selectedMessage.related_ticket_id || undefined,
+                            replyToMessageId: selectedMessage.id,
                           });
                           setReplyMode(false);
                           setReplyText('');

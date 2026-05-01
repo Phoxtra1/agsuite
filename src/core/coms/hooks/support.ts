@@ -52,6 +52,7 @@ export const SupportComs = {
     replyBody: string;
     recipientEmail: string;
     recipientName?: string;
+    targetUserId?: string;
     sourceApp?: string;
   }) {
     const { data: ticket } = await supabase
@@ -62,30 +63,15 @@ export const SupportComs = {
 
     if (!ticket) throw new Error("Ticket not found");
 
-    const html = `
-      <div style="font-family:sans-serif;max-width:560px;margin:auto">
-        <h2 style="color:#6366f1">Support Reply</h2>
-        <p>Hi ${opts.recipientName || "there"},</p>
-        <p>We've responded to your ticket: <strong>${ticket.subject}</strong></p>
-        <div style="background:#f8fafc;padding:16px;border-radius:8px;margin:16px 0;border-left:4px solid #6366f1">
-          ${opts.replyBody}
-        </div>
-        <p style="color:#64748b;font-size:12px">Amineva Support Team</p>
-      </div>`;
-
-    await ComsSDK.sendEmail({
-      to: [{ email: opts.recipientEmail, name: opts.recipientName }],
+    await ComsSDK.sendReply({
+      recipientEmail: opts.recipientEmail,
+      recipientName: opts.recipientName,
+      targetUserId: opts.targetUserId,
       subject: `Re: ${ticket.subject}`,
-      htmlContent: html,
+      message: opts.replyBody,
       sourceApp: opts.sourceApp || SOURCE,
-      messageType: "support",
-      tags: ["support-reply", `ticket-${opts.ticketId.slice(0, 8)}`],
+      ticketId: opts.ticketId,
     });
-
-    await supabase
-      .from("support_tickets")
-      .update({ status: "replied" })
-      .eq("id", opts.ticketId);
   },
 
   /**

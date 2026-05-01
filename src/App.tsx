@@ -9,6 +9,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { ACSEmitter, startACSEmitter, stopACSEmitter } from "@/core/acs/emitter";
 
 /* Lazy Pages */
 const Landing = lazy(() => import("./pages/landing/Landing"));
@@ -127,6 +128,21 @@ function HashNormalizer() {
   return null;
 }
 
+function AppTelemetry() {
+  const location = useLocation();
+
+  useEffect(() => {
+    startACSEmitter();
+    return () => stopACSEmitter();
+  }, []);
+
+  useEffect(() => {
+    ACSEmitter.trackPageView(location.pathname);
+  }, [location.pathname]);
+
+  return null;
+}
+
 function SuiteGuard() {
   // In preview mode, allow direct access for development
   if (isPreview()) return <Suite />;
@@ -215,6 +231,7 @@ export default function App() {
             <Toaster />
             <Sonner />
             <HashNormalizer />
+            <AppTelemetry />
             <AppRoutes />
           </TooltipProvider>
         </AuthProvider>

@@ -33,6 +33,10 @@ interface Ticket {
   status: string;
   source_app: string | null;
   user_id: string;
+  sender_user_id?: string | null;
+  sender_email?: string | null;
+  sender_name?: string | null;
+  last_replied_at?: string | null;
   created_at: string;
   updated_at: string;
 }
@@ -84,7 +88,14 @@ export function SupportTicketsPanel() {
   const openCount = tickets.filter(t => t.status === 'open').length;
   const highPriorityCount = tickets.filter(t => (t.priority === 'high' || t.priority === 'urgent') && t.status === 'open').length;
 
-  // Extract sender email from message body (format: "From: Name <email>\n\n...")
+  const getSender = (ticket: Ticket): { email: string; name: string; userId?: string } => {
+    if (ticket.sender_email) {
+      return { email: ticket.sender_email, name: ticket.sender_name || ticket.sender_email, userId: ticket.sender_user_id || undefined };
+    }
+    return extractSenderFromMessage(ticket.message);
+  };
+
+  // Backward-compatible extraction for older tickets created before sender fields existed.
   const extractSenderFromMessage = (message: string): { email: string; name: string } => {
     const match = message.match(/^From:\s*(.+?)\s*<(.+?)>/);
     if (match) return { name: match[1].trim(), email: match[2].trim() };
@@ -103,7 +114,7 @@ export function SupportTicketsPanel() {
 
   const handleReply = async () => {
     if (!selectedTicket || !replyText.trim()) return;
-    const sender = extractSenderFromMessage(selectedTicket.message);
+    const sender = getSender(selectedTicket);
     if (!sender.email) {
       toast.error('Could not determine recipient email from ticket');
       return;
@@ -116,6 +127,7 @@ export function SupportTicketsPanel() {
         replyBody: replyText.trim(),
         recipientEmail: sender.email,
         recipientName: sender.name,
+        targetUserId: sender.userId,
         sourceApp: selectedTicket.source_app || 'ComsSystem',
       });
       setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, status: 'replied' } : t));
@@ -193,7 +205,7 @@ export function SupportTicketsPanel() {
             ) : (
               <div className="divide-y divide-border">
                 {filtered.map((ticket) => {
-                  const sender = extractSenderFromMessage(ticket.message);
+                  const sender = getSender(ticket);
                   const sc = statusConfig[ticket.status] || statusConfig.open;
                   const pc = priorityConfig[ticket.priority] || priorityConfig.normal;
 
