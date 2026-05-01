@@ -193,19 +193,9 @@ export function ComposeMessageModal({ open, onOpenChange }: ComposeMessageModalP
                 )}
               </TabsContent>
               <TabsContent value="group" className="mt-2">
-                <Select value={selectedGroup} onValueChange={setSelectedGroup}>
-                  <SelectTrigger><SelectValue placeholder="Select recipient group..." /></SelectTrigger>
-                  <SelectContent>
-                    {recipientGroups.map((group) => (
-                      <SelectItem key={group.id} value={group.id}>
-                        <div className="flex items-center justify-between gap-4">
-                          <span>{group.name}</span>
-                          <Badge variant="outline" className="ml-2">{group.count.toLocaleString()}</Badge>
-                        </div>
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="rounded-md border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                  Group sending is disabled until real audience membership is connected. Add recipients individually so every sent message is traceable.
+                </div>
               </TabsContent>
             </Tabs>
           </div>
