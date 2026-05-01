@@ -448,15 +448,20 @@ export type Database = {
           body: string
           channel: string
           created_at: string
+          direction: string
           id: string
           is_archived: boolean
           is_read: boolean
           is_starred: boolean
           priority: string
+          related_ticket_id: string | null
+          reply_to_message_id: string | null
           sender: string
           sender_name: string | null
+          sender_user_id: string | null
           source_app: string | null
           subject: string
+          target_user_id: string | null
           type: string
           updated_at: string
           user_id: string
@@ -465,15 +470,20 @@ export type Database = {
           body?: string
           channel?: string
           created_at?: string
+          direction?: string
           id?: string
           is_archived?: boolean
           is_read?: boolean
           is_starred?: boolean
           priority?: string
+          related_ticket_id?: string | null
+          reply_to_message_id?: string | null
           sender: string
           sender_name?: string | null
+          sender_user_id?: string | null
           source_app?: string | null
           subject?: string
+          target_user_id?: string | null
           type?: string
           updated_at?: string
           user_id: string
@@ -482,15 +492,20 @@ export type Database = {
           body?: string
           channel?: string
           created_at?: string
+          direction?: string
           id?: string
           is_archived?: boolean
           is_read?: boolean
           is_starred?: boolean
           priority?: string
+          related_ticket_id?: string | null
+          reply_to_message_id?: string | null
           sender?: string
           sender_name?: string | null
+          sender_user_id?: string | null
           source_app?: string | null
           subject?: string
+          target_user_id?: string | null
           type?: string
           updated_at?: string
           user_id?: string
@@ -660,8 +675,12 @@ export type Database = {
         Row: {
           created_at: string
           id: string
+          last_replied_at: string | null
           message: string
           priority: string
+          sender_email: string | null
+          sender_name: string | null
+          sender_user_id: string | null
           source_app: string | null
           status: string
           subject: string
@@ -671,8 +690,12 @@ export type Database = {
         Insert: {
           created_at?: string
           id?: string
+          last_replied_at?: string | null
           message: string
           priority?: string
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_user_id?: string | null
           source_app?: string | null
           status?: string
           subject: string
@@ -682,8 +705,12 @@ export type Database = {
         Update: {
           created_at?: string
           id?: string
+          last_replied_at?: string | null
           message?: string
           priority?: string
+          sender_email?: string | null
+          sender_name?: string | null
+          sender_user_id?: string | null
           source_app?: string | null
           status?: string
           subject?: string
