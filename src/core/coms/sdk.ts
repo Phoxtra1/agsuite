@@ -36,6 +36,8 @@ export interface CreateTicketOptions {
   message: string;
   priority?: "low" | "normal" | "high" | "urgent";
   sourceApp: string;
+  userEmail?: string;
+  userName?: string;
 }
 
 export interface PushNotificationOptions {
@@ -43,6 +45,29 @@ export interface PushNotificationOptions {
   message: string;
   type?: "info" | "success" | "warning" | "error";
   sourceApp: string;
+  targetUserId?: string;
+  recipientEmail?: string;
+  recipientName?: string;
+}
+
+export interface ReceiveMessageOptions {
+  fromEmail: string;
+  fromName?: string;
+  subject: string;
+  message: string;
+  sourceApp: string;
+  type?: "general" | "support";
+}
+
+export interface SendReplyOptions {
+  subject: string;
+  message: string;
+  sourceApp?: string;
+  recipientEmail?: string;
+  recipientName?: string;
+  targetUserId?: string;
+  ticketId?: string;
+  replyToMessageId?: string;
 }
 
 /**
@@ -170,17 +195,18 @@ export const ComsSDK = {
    */
   async createTicket(options: CreateTicketOptions) {
     const { data: userData } = await supabase.auth.getUser();
-    const userId = userData?.user?.id;
-    if (!userId) throw new Error("ComsSDK: user not authenticated");
-
-    const { data, error } = await supabase.from("support_tickets").insert({
-      user_id: userId,
-      subject: options.subject,
-      message: options.message,
-      priority: options.priority || "normal",
-      source_app: options.sourceApp,
-    }).select().single();
-
+    const user = userData?.user;
+    const { data, error } = await supabase.functions.invoke("coms-inbound", {
+      body: {
+        action: "support_ticket",
+        email: options.userEmail || user?.email,
+        name: options.userName || user?.user_metadata?.name || user?.email,
+        subject: options.subject,
+        message: options.message,
+        priority: options.priority || "normal",
+        source_app: options.sourceApp,
+      },
+    });
     if (error) throw new Error(`ComsSDK.createTicket failed: ${error.message}`);
     return data;
   },
@@ -191,10 +217,14 @@ export const ComsSDK = {
   async pushNotification(options: PushNotificationOptions) {
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
-    if (!userId) throw new Error("ComsSDK: user not authenticated");
+    const targetUserId = options.targetUserId || userId;
+    if (!targetUserId) throw new Error("ComsSDK: target user not available");
 
-    const { error } = await supabase.from("inbound_messages").insert({
-      user_id: userId,
+    const { error } = await (supabase.from as any)("inbound_messages").insert({
+      user_id: targetUserId,
+      sender_user_id: userId ?? null,
+      target_user_id: targetUserId,
+      direction: "inbound",
       sender: options.sourceApp,
       sender_name: options.sourceApp,
       subject: options.title,
@@ -205,6 +235,46 @@ export const ComsSDK = {
     });
 
     if (error) throw new Error(`ComsSDK.pushNotification failed: ${error.message}`);
+  },
+
+  /**
+   * Route a user/team message into the central ComsSystem inbox.
+   */
+  async receiveMessage(options: ReceiveMessageOptions) {
+    const { data, error } = await supabase.functions.invoke("coms-inbound", {
+      body: {
+        action: options.type === "support" ? "support_ticket" : "user_message",
+        email: options.fromEmail,
+        name: options.fromName,
+        subject: options.subject,
+        message: options.message,
+        source_app: options.sourceApp,
+        priority: "normal",
+      },
+    });
+    if (error) throw new Error(`ComsSDK.receiveMessage failed: ${error.message}`);
+    return data;
+  },
+
+  /**
+   * Send a ComsSystem reply to an external email or a signed-in team member.
+   */
+  async sendReply(options: SendReplyOptions) {
+    const { data, error } = await supabase.functions.invoke("coms-inbound", {
+      body: {
+        action: "reply",
+        recipient_email: options.recipientEmail,
+        recipient_name: options.recipientName,
+        target_user_id: options.targetUserId,
+        subject: options.subject,
+        message: options.message,
+        source_app: options.sourceApp || "ComsSystem",
+        ticket_id: options.ticketId,
+        reply_to_message_id: options.replyToMessageId,
+      },
+    });
+    if (error) throw new Error(`ComsSDK.sendReply failed: ${error.message}`);
+    return data;
   },
 
   /**
