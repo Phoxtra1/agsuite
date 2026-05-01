@@ -15,7 +15,6 @@ import { ACSIntelligenceTab } from './tabs/ACSIntelligenceTab';
 import { ACSAlertsTab } from './tabs/ACSAlertsTab';
 import { ACSConnectionPanel } from './ACSConnectionPanel';
 import { acs } from '@/core/backend';
-import { startACSEmitter, stopACSEmitter, ACSEmitter } from '@/core/acs/emitter';
 
 export function ACSModule() {
   const [topTab, setTopTab] = useState<string>('monitor');
@@ -29,12 +28,6 @@ export function ACSModule() {
       toast.info(`Backend switched to ${b}. Reloading ACS data…`);
     });
     return unsub;
-  }, []);
-
-  // ACS Emitter — auto-ingest data from all platforms
-  useEffect(() => {
-    startACSEmitter();
-    return () => stopACSEmitter();
   }, []);
 
   // Realtime subscription
