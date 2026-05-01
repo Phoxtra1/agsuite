@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle,
 } from '@/components/ui/dialog';
@@ -14,28 +14,14 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
+import { ComsSDK } from '@/core/coms/sdk';
 
 interface ComposeMessageModalProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const templates = [
-  { id: '1', name: 'Welcome Email', category: 'onboarding' },
-  { id: '2', name: 'Password Reset', category: 'transactional' },
-  { id: '3', name: 'Invoice Notification', category: 'transactional' },
-  { id: '4', name: 'Low Stock Alert', category: 'system' },
-  { id: '5', name: 'Newsletter Header', category: 'marketing' },
-  { id: '6', name: 'Support Response', category: 'support' },
-];
-
-const recipientGroups = [
-  { id: 'all', name: 'All Users', count: 1247 },
-  { id: 'agstock', name: 'AGStock Users', count: 342 },
-  { id: 'agis', name: 'AGIS Users', count: 189 },
-  { id: 'subscribers', name: 'Newsletter Subscribers', count: 856 },
-  { id: 'premium', name: 'Premium Members', count: 124 },
-];
+type TemplateOption = { id: string; name: string; category: string; subject: string | null; body: string };
 
 export function ComposeMessageModal({ open, onOpenChange }: ComposeMessageModalProps) {
   const [channel, setChannel] = useState<string>('email');
@@ -47,6 +33,17 @@ export function ComposeMessageModal({ open, onOpenChange }: ComposeMessageModalP
   const [content, setContent] = useState('');
   const [selectedRecipients, setSelectedRecipients] = useState<string[]>([]);
   const [sending, setSending] = useState(false);
+  const [templates, setTemplates] = useState<TemplateOption[]>([]);
+
+  useEffect(() => {
+    if (!open) return;
+    supabase
+      .from('coms_templates')
+      .select('id,name,category,subject,body')
+      .order('updated_at', { ascending: false })
+      .limit(50)
+      .then(({ data }) => setTemplates((data ?? []) as TemplateOption[]));
+  }, [open]);
 
   const handleAddRecipient = () => {
     if (recipient && !selectedRecipients.includes(recipient)) {
@@ -63,15 +60,15 @@ export function ComposeMessageModal({ open, onOpenChange }: ComposeMessageModalP
     setSelectedTemplate(templateId);
     const template = templates.find(t => t.id === templateId);
     if (template) {
-      setSubject(`[Template] ${template.name}`);
-      setContent(`This is the content from the "${template.name}" template.\n\nHello {{name}},\n\nYour message content here...\n\nBest regards,\nAmineva Team`);
+      setSubject(template.subject || template.name);
+      setContent(template.body);
     }
   };
 
   const handleSend = async () => {
     const recipients = recipientType === 'individual'
       ? selectedRecipients
-      : recipientGroups.find(g => g.id === selectedGroup) ? [selectedGroup + '@amineva.com'] : [];
+      : [];
 
     if (recipients.length === 0) {
       toast.error('Please add at least one recipient');
@@ -86,54 +83,35 @@ export function ComposeMessageModal({ open, onOpenChange }: ComposeMessageModalP
       return;
     }
 
-    if (channel === 'email') {
-      setSending(true);
-      try {
-        const { data, error } = await supabase.functions.invoke('send-email', {
-          body: {
-            to: recipients.map(email => ({ email })),
-            subject,
-            htmlContent: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;">
-              <div style="background:#f59e0b;padding:16px;border-radius:8px 8px 0 0;">
-                <h2 style="margin:0;color:#fff;">Amineva Global</h2>
-              </div>
-              <div style="padding:24px;background:#ffffff;border:1px solid #e5e7eb;border-top:none;border-radius:0 0 8px 8px;">
-                ${content.replace(/\n/g, '<br/>')}
-              </div>
-              <p style="text-align:center;color:#9ca3af;font-size:12px;margin-top:16px;">
-                © ${new Date().getFullYear()} Amineva Global. All rights reserved.
-              </p>
-            </div>`,
-            tags: ['coms-compose'],
-          },
+    setSending(true);
+    try {
+      if (channel === 'email') {
+        await ComsSDK.sendEmail({
+          to: recipients.map(email => ({ email })),
+          subject,
+          htmlContent: `<div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;padding:24px;line-height:1.6">${content.replace(/\n/g, '<br/>')}</div>`,
+          sourceApp: 'ComsSystem',
+          messageType: 'support',
+          tags: ['coms-compose'],
         });
-
-        if (error) throw error;
-        toast.success('Email sent successfully via Brevo');
-
-        // Log to coms_logs
-        const { data: { user } } = await supabase.auth.getUser();
-        if (user) {
-          for (const r of recipients) {
-            await supabase.from('coms_logs' as any).insert({
-              user_id: user.id,
-              event: 'delivered',
-              channel: 'email',
-              recipient: r,
-              subject,
-              source_app: 'ComsSystem',
-              message_type: 'transactional',
-            });
-          }
-        }
-      } catch (err: any) {
-        console.error('Send email error:', err);
-        toast.error(err.message || 'Failed to send email');
-      } finally {
-        setSending(false);
+        toast.success('Email sent and logged in ComsSystem');
+      } else {
+        await Promise.all(recipients.map((r) => ComsSDK.sendReply({
+          targetUserId: /^[0-9a-f-]{36}$/i.test(r) ? r : undefined,
+          recipientEmail: r.includes('@') ? r : undefined,
+          subject,
+          message: content,
+          sourceApp: 'ComsSystem',
+        })));
+        toast.success('Message sent and logged in ComsSystem');
       }
-    } else {
-      toast.success('In-app notification queued');
+    } catch (err: any) {
+      console.error('Send message error:', err);
+      toast.error(err.message || 'Failed to send message');
+      setSending(false);
+      return;
+    } finally {
+      setSending(false);
     }
 
     onOpenChange(false);
