@@ -12,28 +12,22 @@ type PlatformEvent = {
 };
 
 let intervalId: ReturnType<typeof setInterval> | null = null;
+let lastTrackedPath: string | null = null;
 
 /** Ingest a single real event into the ACS data lake + events table */
 async function ingestEvent(event: PlatformEvent) {
-  const batch_id = `live_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
   const { data: { user } } = await supabase.auth.getUser();
-  const user_id = user?.id ?? null;
+  if (!user) return;
 
-  // Insert into raw data lake
-  await (supabase.from as any)("acs_raw_data").insert({
-    platform: event.platform,
-    dataset_type: event.dataset_type,
-    raw_payload: event.raw_payload,
-    metadata: { source: "live-emitter", version: "2.0" },
-    batch_id,
-  });
-
-  // Also emit as monitor event
-  await supabase.from("acs_events").insert({
-    source: event.platform,
-    type: `usage:${event.dataset_type}`,
-    payload: { batch_id, dataset_type: event.dataset_type },
-    user_id,
+  await supabase.functions.invoke("acs-ingest", {
+    body: {
+      action: "telemetry",
+      platform: event.platform,
+      dataset_type: event.dataset_type,
+      raw_payload: event.raw_payload,
+      metadata: { source: "app-telemetry", version: "3.0" },
+      source_ref: user.id,
+    },
   });
 }
 
@@ -56,6 +50,26 @@ async function emitSessionHeartbeat() {
       session_type: "active",
       user_agent: navigator.userAgent,
       screen_width: window.innerWidth,
+    },
+  });
+}
+
+/** Track route changes as real page-view telemetry. */
+async function emitPageView(path = window.location.pathname) {
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return;
+
+  const activePlatform = detectPlatformFromRoute(path);
+  if (!activePlatform) return;
+
+  await ingestEvent({
+    platform: activePlatform,
+    dataset_type: "page_view",
+    raw_payload: {
+      route: path,
+      user_id: user.id,
+      timestamp: new Date().toISOString(),
+      referrer: document.referrer || null,
     },
   });
 }
@@ -89,6 +103,13 @@ export const ACSEmitter = {
     } catch (err) {
       console.warn(`[ACS] Failed to track ${platform}:${eventType}`, err);
     }
+  },
+
+  trackPageView(path?: string) {
+    const route = path ?? window.location.pathname;
+    if (route === lastTrackedPath) return;
+    lastTrackedPath = route;
+    emitPageView(route).catch(() => {});
   },
 };
 
