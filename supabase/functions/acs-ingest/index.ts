@@ -4,8 +4,8 @@
 
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const VALID_PLATFORMS = ["agroclimate", "agstock", "agis", "aminevaops", "odeneho"] as const;
-const VALID_DATASET_TYPES = ["weather", "inventory", "operations", "environmental", "financial", "crop_advisory", "livestock", "drone", "sensor", "insurance", "forex", "microcredit", "mobile_money"] as const;
+const VALID_PLATFORMS = ["suite", "acs", "coms", "agroclimate", "agstock", "agis", "amniva", "aminevaops", "odeneho"] as const;
+const VALID_DATASET_TYPES = ["usage", "session", "page_view", "feature", "weather", "inventory", "operations", "environmental", "financial", "crop_advisory", "livestock", "drone", "sensor", "insurance", "forex", "microcredit", "mobile_money"] as const;
 const VALID_TRANSFORM_TYPES = ["clean", "normalize", "enrich", "merge", "deduplicate"] as const;
 
 const corsHeaders = {
@@ -50,6 +50,13 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
+  async function getRequester() {
+    const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
+    if (!token) return null;
+    const { data } = await supabase.auth.getUser(token);
+    return data.user ?? null;
+  }
+
   // ── Health check (public — no API key required) ─────────────────────────
   if (req.method === "GET" || action === "health") {
     const [eventsRes, rawRes, intRes] = await Promise.all([
@@ -67,6 +74,40 @@ Deno.serve(async (req) => {
       total_intelligence: intRes.count ?? 0,
       timestamp: new Date().toISOString(),
     });
+  }
+
+  // ── Live app telemetry (authenticated users, no shared ingest key in browser) ──
+  if (action === "telemetry") {
+    const user = await getRequester();
+    if (!user) return json({ error: "Authentication required for telemetry" }, 401);
+
+    const { platform, dataset_type, raw_payload, metadata, source_ref } = body as {
+      platform?: string;
+      dataset_type?: string;
+      raw_payload?: Record<string, unknown>;
+      metadata?: Record<string, unknown>;
+      source_ref?: string;
+    };
+
+    if (!platform || !dataset_type || !raw_payload) {
+      return json({ error: "Missing required fields: platform, dataset_type, raw_payload" }, 400);
+    }
+    if (!VALID_PLATFORMS.includes(platform as any)) {
+      return json({ error: `Invalid platform. Must be one of: ${VALID_PLATFORMS.join(", ")}` }, 400);
+    }
+
+    const batch_id = `live_${Date.now()}_${crypto.randomUUID().slice(0, 8)}`;
+    const { data, error } = await supabase
+      .from("acs_raw_data")
+      .insert([{ platform, dataset_type, raw_payload, metadata: metadata ?? { source: "app-telemetry" }, source_ref: source_ref ?? user.id, batch_id }])
+      .select("id")
+      .single();
+
+    if (error) return json({ error: error.message }, 500);
+
+    await supabase.from("acs_events").insert([{ source: platform, type: `usage:${dataset_type}`, user_id: user.id, payload: { raw_data_id: data.id, batch_id, route: raw_payload.route ?? null } }]);
+
+    return json({ success: true, batch_id, raw_data_id: data.id });
   }
 
   // ── API Key Auth (required for all write actions) ───────────────────────
