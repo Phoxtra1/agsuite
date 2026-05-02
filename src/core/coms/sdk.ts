@@ -405,4 +405,23 @@ export const ComsSDK = {
       supabase.removeChannel(channel);
     };
   },
+
+  /**
+   * Subscribe to real-time support_tickets updates so any reply, status
+   * change or new ticket reflects everywhere instantly.
+   */
+  subscribeToTickets(callback: (payload: any) => void) {
+    const channel = supabase
+      .channel("tickets-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "support_tickets" },
+        (payload) => callback(payload)
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  },
 };
