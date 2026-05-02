@@ -71,6 +71,79 @@ export interface SendReplyOptions {
 }
 
 /**
+ * Structured error returned by every coms-inbound invocation. The `code`
+ * field is stable and machine-readable so the UI can surface precise
+ * diagnostics ("no_admin_mapped", "email_provider_failed", "auth_required",
+ * "no_recipient_mapping", etc.).
+ */
+export class ComsRoutingError extends Error {
+  code: string;
+  status?: number;
+  action: string;
+  constructor(action: string, code: string, message: string, status?: number) {
+    super(message);
+    this.name = "ComsRoutingError";
+    this.action = action;
+    this.code = code;
+    this.status = status;
+  }
+}
+
+/**
+ * Invoke `coms-inbound` and parse the structured envelope. Any non-success
+ * response is converted into a `ComsRoutingError` with a stable `code` and
+ * is also persisted to `coms_logs` (best-effort) so it is visible in the
+ * Logs and Analytics tabs of ComsSystem.
+ */
+async function invokeInbound(action: string, body: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke("coms-inbound", {
+    body: { action, ...body },
+  });
+
+  // Network / function-level error from the SDK
+  if (error) {
+    const ctxAny = (error as any)?.context;
+    let parsed: any = null;
+    try {
+      if (ctxAny && typeof ctxAny.json === "function") parsed = await ctxAny.json();
+    } catch { /* ignore */ }
+    const code = parsed?.code || "network_error";
+    const message = parsed?.error || error.message || "Routing failed";
+    await safeLogFailure(action, code, message, body);
+    throw new ComsRoutingError(action, code, message);
+  }
+
+  // Application-level error in the envelope
+  if (data && typeof data === "object" && (data as any).error) {
+    const code = (data as any).code || "unknown_error";
+    const message = (data as any).error;
+    await safeLogFailure(action, code, message, body);
+    throw new ComsRoutingError(action, code, message);
+  }
+
+  return data;
+}
+
+async function safeLogFailure(action: string, code: string, message: string, body: Record<string, unknown>) {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) return; // can't log without a user_id (RLS)
+    await supabase.from("coms_logs").insert({
+      user_id: userId,
+      event: "failed",
+      channel: "in-app",
+      recipient: String(body.recipient_email || body.target_user_id || body.email || "unknown"),
+      subject: String(body.subject || `coms-inbound:${action}`),
+      source_app: String(body.source_app || "ComsSystem"),
+      message_type: "system",
+      delivery_status: "failed",
+      details: `[${action}] ${code}: ${message}`,
+    });
+  } catch { /* swallow — logging is best-effort */ }
+}
+
+/**
  * ComsSDK — the single entry point for all cross-product communication.
  * 
  * Usage from any Amineva product:
@@ -192,23 +265,19 @@ export const ComsSDK = {
 
   /**
    * Create a support ticket routed through ComsSystem.
+   * Throws ComsRoutingError on failure with a stable `code` for diagnostics.
    */
   async createTicket(options: CreateTicketOptions) {
     const { data: userData } = await supabase.auth.getUser();
     const user = userData?.user;
-    const { data, error } = await supabase.functions.invoke("coms-inbound", {
-      body: {
-        action: "support_ticket",
-        email: options.userEmail || user?.email,
-        name: options.userName || user?.user_metadata?.name || user?.email,
-        subject: options.subject,
-        message: options.message,
-        priority: options.priority || "normal",
-        source_app: options.sourceApp,
-      },
+    return invokeInbound("support_ticket", {
+      email: options.userEmail || user?.email,
+      name: options.userName || user?.user_metadata?.name || user?.email,
+      subject: options.subject,
+      message: options.message,
+      priority: options.priority || "normal",
+      source_app: options.sourceApp,
     });
-    if (error) throw new Error(`ComsSDK.createTicket failed: ${error.message}`);
-    return data;
   },
 
   /**
@@ -218,7 +287,7 @@ export const ComsSDK = {
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
     const targetUserId = options.targetUserId || userId;
-    if (!targetUserId) throw new Error("ComsSDK: target user not available");
+    if (!targetUserId) throw new ComsRoutingError("pushNotification", "no_recipient_mapping", "ComsSDK: target user not available");
 
     const { error } = await (supabase.from as any)("inbound_messages").insert({
       user_id: targetUserId,
@@ -234,48 +303,52 @@ export const ComsSDK = {
       source_app: options.sourceApp,
     });
 
-    if (error) throw new Error(`ComsSDK.pushNotification failed: ${error.message}`);
+    if (error) {
+      await safeLogFailure("pushNotification", "inbox_insert_failed", error.message, { source_app: options.sourceApp, subject: options.title });
+      throw new ComsRoutingError("pushNotification", "inbox_insert_failed", error.message);
+    }
   },
 
   /**
    * Route a user/team message into the central ComsSystem inbox.
    */
   async receiveMessage(options: ReceiveMessageOptions) {
-    const { data, error } = await supabase.functions.invoke("coms-inbound", {
-      body: {
-        action: options.type === "support" ? "support_ticket" : "user_message",
-        email: options.fromEmail,
-        name: options.fromName,
-        subject: options.subject,
-        message: options.message,
-        source_app: options.sourceApp,
-        priority: "normal",
-      },
+    return invokeInbound(options.type === "support" ? "support_ticket" : "user_message", {
+      email: options.fromEmail,
+      name: options.fromName,
+      subject: options.subject,
+      message: options.message,
+      source_app: options.sourceApp,
+      priority: "normal",
     });
-    if (error) throw new Error(`ComsSDK.receiveMessage failed: ${error.message}`);
-    return data;
   },
 
   /**
    * Send a ComsSystem reply to an external email or a signed-in team member.
+   * On success, the related ticket (if any) is automatically transitioned to
+   * `replied` with `last_replied_at` updated server-side.
    */
   async sendReply(options: SendReplyOptions) {
-    const { data, error } = await supabase.functions.invoke("coms-inbound", {
-      body: {
-        action: "reply",
-        recipient_email: options.recipientEmail,
-        recipient_name: options.recipientName,
-        target_user_id: options.targetUserId,
-        subject: options.subject,
-        message: options.message,
-        source_app: options.sourceApp || "ComsSystem",
-        ticket_id: options.ticketId,
-        reply_to_message_id: options.replyToMessageId,
-      },
+    return invokeInbound("reply", {
+      recipient_email: options.recipientEmail,
+      recipient_name: options.recipientName,
+      target_user_id: options.targetUserId,
+      subject: options.subject,
+      message: options.message,
+      source_app: options.sourceApp || "ComsSystem",
+      ticket_id: options.ticketId,
+      reply_to_message_id: options.replyToMessageId,
     });
-    if (error) throw new Error(`ComsSDK.sendReply failed: ${error.message}`);
-    return data;
   },
+
+  /**
+   * Transition a ticket lifecycle (open → replied → resolved → closed).
+   * Goes through coms-inbound so updates are audited in coms_logs.
+   */
+  async updateTicketStatus(ticketId: string, status: "open" | "replied" | "resolved" | "closed") {
+    return invokeInbound("update_ticket_status", { ticket_id: ticketId, status });
+  },
+
 
   /**
    * Fetch communication logs for the current user, optionally filtered.
@@ -324,6 +397,25 @@ export const ComsSDK = {
       .on(
         "postgres_changes",
         { event: "*", schema: "public", table: "inbound_messages" },
+        (payload) => callback(payload)
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  },
+
+  /**
+   * Subscribe to real-time support_tickets updates so any reply, status
+   * change or new ticket reflects everywhere instantly.
+   */
+  subscribeToTickets(callback: (payload: any) => void) {
+    const channel = supabase
+      .channel("tickets-realtime")
+      .on(
+        "postgres_changes",
+        { event: "*", schema: "public", table: "support_tickets" },
         (payload) => callback(payload)
       )
       .subscribe();

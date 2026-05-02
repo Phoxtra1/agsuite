@@ -13,6 +13,12 @@ function json(data: unknown, status = 200) {
   });
 }
 
+// Structured error helper — every failure has a stable `code` so the client
+// can surface precise diagnostics ("no_admin_mapped", "email_provider_failed", etc.)
+function err(code: string, message: string, status = 400, extra: Record<string, unknown> = {}) {
+  return json({ error: message, code, ...extra }, status);
+}
+
 function cleanText(value: unknown, fallback = "") {
   return typeof value === "string" && value.trim() ? value.trim() : fallback;
 }
@@ -37,8 +43,11 @@ Deno.serve(async (req) => {
       Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
     );
 
-    const payload = await req.json();
-    const action = payload.action as string | undefined;
+    const payload = await req.json().catch(() => null);
+    if (!payload || typeof payload !== "object") {
+      return err("invalid_payload", "Request body must be valid JSON", 400);
+    }
+    const action = (payload as any).action as string | undefined;
 
     async function getRequester() {
       const token = req.headers.get("Authorization")?.replace(/^Bearer\s+/i, "");
@@ -49,7 +58,11 @@ Deno.serve(async (req) => {
 
     async function sendBrevoEmail(opts: { to: { email: string; name?: string }[]; subject: string; htmlContent: string; tags?: string[] }) {
       const apiKey = Deno.env.get("BREVO_API_KEY");
-      if (!apiKey) throw new Error("Email service is not configured");
+      if (!apiKey) {
+        const e: any = new Error("Email provider not configured (BREVO_API_KEY missing)");
+        e.code = "email_provider_unconfigured";
+        throw e;
+      }
       const response = await fetch("https://api.brevo.com/v3/smtp/email", {
         method: "POST",
         headers: { accept: "application/json", "api-key": apiKey, "content-type": "application/json" },
@@ -62,13 +75,17 @@ Deno.serve(async (req) => {
         }),
       });
       const data = await response.json().catch(() => ({}));
-      if (!response.ok) throw new Error(`Email delivery failed: ${JSON.stringify(data)}`);
+      if (!response.ok) {
+        const e: any = new Error(`Email delivery failed: ${JSON.stringify(data)}`);
+        e.code = "email_provider_failed";
+        throw e;
+      }
       return data as { messageId?: string };
     }
 
-    // ── Helper: find first admin user to route messages to ──
+    // Pick a routing inbox owner (first profile in the system) so public messages
+    // always land somewhere visible. Returns null if no profile exists yet.
     async function findAdminUserId(): Promise<string | null> {
-      // Get the first profile (admin/owner) to route public messages to
       const { data } = await supabase
         .from("profiles")
         .select("user_id")
@@ -80,17 +97,22 @@ Deno.serve(async (req) => {
 
     // ── Support Ticket (public form, no auth required) ──────
     if (action === "support_ticket") {
-      const { email, name, subject, message, priority, source_app } = payload;
+      const { email, name, subject, message, priority, source_app } = payload as any;
 
       if (!email || !subject || !message) {
-        return json({ error: "email, subject, and message are required" }, 400);
+        return err("missing_fields", "email, subject, and message are required", 400);
       }
 
       const adminId = await findAdminUserId();
-      if (!adminId) return json({ error: "No admin user found to route ticket" }, 500);
+      if (!adminId) {
+        return err(
+          "no_admin_mapped",
+          "No admin profile is configured to receive tickets. An admin must sign in at least once before tickets can be routed.",
+          500
+        );
+      }
       const requester = await getRequester();
 
-      // 1. Create support ticket (using admin user_id for RLS)
       const { data: ticket, error: ticketError } = await supabase.from("support_tickets").insert({
         user_id: adminId,
         sender_user_id: requester?.id ?? null,
@@ -101,10 +123,9 @@ Deno.serve(async (req) => {
         priority: priority || "normal",
         source_app: source_app || "ComsSystem",
       }).select("id").single();
-      if (ticketError) return json({ error: ticketError.message }, 500);
+      if (ticketError) return err("ticket_insert_failed", ticketError.message, 500);
 
-      // 2. Push to inbox so admin sees it in ComsSystem
-      await supabase.from("inbound_messages").insert({
+      const { error: inboxError } = await supabase.from("inbound_messages").insert({
         user_id: adminId,
         sender_user_id: requester?.id ?? null,
         target_user_id: adminId,
@@ -119,8 +140,8 @@ Deno.serve(async (req) => {
         priority: priority || "normal",
         source_app: source_app || "ComsSystem",
       });
+      if (inboxError) return err("inbox_insert_failed", inboxError.message, 500);
 
-      // 3. Log the event
       await supabase.from("coms_logs").insert({
         user_id: adminId,
         event: "ticket-created",
@@ -130,41 +151,64 @@ Deno.serve(async (req) => {
         source_app: source_app || "ComsSystem",
         message_type: "support",
         delivery_status: "received",
-        details: `Public submission from ${name || email}`,
+        details: `Ticket ${ticket?.id} from ${name || email}`,
       });
 
-      return json({ success: true, message: "Ticket submitted" });
+      return json({ success: true, ticket_id: ticket?.id, message: "Ticket submitted" });
     }
 
-    // ── Central reply from ComsSystem to a customer or team member ──────
+    // ── Central reply ──────
     if (action === "reply") {
       const requester = await getRequester();
-      if (!requester) return json({ error: "Authentication required to send replies" }, 401);
+      if (!requester) return err("auth_required", "Authentication required to send replies", 401);
 
-      const recipientEmail = cleanText(payload.recipient_email);
-      const recipientName = cleanText(payload.recipient_name, recipientEmail || "Recipient");
-      const targetUserId = cleanText(payload.target_user_id);
-      const subject = cleanText(payload.subject);
-      const message = cleanText(payload.message);
-      const sourceApp = cleanText(payload.source_app, "ComsSystem");
-      const relatedTicketId = cleanText(payload.ticket_id);
-      const replyToMessageId = cleanText(payload.reply_to_message_id);
+      const recipientEmail = cleanText((payload as any).recipient_email);
+      const recipientName = cleanText((payload as any).recipient_name, recipientEmail || "Recipient");
+      const targetUserId = cleanText((payload as any).target_user_id);
+      const subject = cleanText((payload as any).subject);
+      const message = cleanText((payload as any).message);
+      const sourceApp = cleanText((payload as any).source_app, "ComsSystem");
+      const relatedTicketId = cleanText((payload as any).ticket_id);
+      const replyToMessageId = cleanText((payload as any).reply_to_message_id);
 
-      if (!subject || !message || (!recipientEmail && !targetUserId)) {
-        return json({ error: "subject, message, and a recipient email or target user are required" }, 400);
+      if (!subject || !message) {
+        return err("missing_fields", "subject and message are required", 400);
+      }
+      if (!recipientEmail && !targetUserId) {
+        return err(
+          "no_recipient_mapping",
+          "No recipient could be resolved. Provide either a recipient email or a target user id.",
+          400
+        );
       }
 
       let emailResult: { messageId?: string } | null = null;
       if (recipientEmail) {
-        emailResult = await sendBrevoEmail({
-          to: [{ email: recipientEmail, name: recipientName }],
-          subject,
-          htmlContent: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;line-height:1.6"><p>${escapeHtml(message).replace(/\n/g, "<br>")}</p><hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0"><p style="color:#64748b;font-size:12px">Amineva Support Team</p></div>`,
-          tags: ["coms-reply", sourceApp.toLowerCase()],
-        });
+        try {
+          emailResult = await sendBrevoEmail({
+            to: [{ email: recipientEmail, name: recipientName }],
+            subject,
+            htmlContent: `<div style="font-family:Arial,sans-serif;max-width:640px;margin:auto;line-height:1.6"><p>${escapeHtml(message).replace(/\n/g, "<br>")}</p><hr style="border:none;border-top:1px solid #e5e7eb;margin:24px 0"><p style="color:#64748b;font-size:12px">Amineva Support Team</p></div>`,
+            tags: ["coms-reply", sourceApp.toLowerCase()],
+          });
+        } catch (e: any) {
+          // Log the failure so it shows up in the analytics + logs panel
+          await supabase.from("coms_logs").insert({
+            user_id: requester.id,
+            event: "failed",
+            channel: "email",
+            recipient: recipientEmail,
+            subject,
+            source_app: sourceApp,
+            message_type: "support",
+            delivery_status: "failed",
+            details: e?.message || "Unknown email failure",
+          });
+          return err(e?.code || "email_provider_failed", e?.message || "Email delivery failed", 502);
+        }
       }
 
-      await supabase.from("inbound_messages").insert({
+      const { error: outboundError } = await supabase.from("inbound_messages").insert({
         user_id: targetUserId || requester.id,
         sender_user_id: requester.id,
         target_user_id: targetUserId || null,
@@ -181,9 +225,24 @@ Deno.serve(async (req) => {
         source_app: sourceApp,
         is_read: false,
       });
+      if (outboundError) return err("outbound_insert_failed", outboundError.message, 500);
 
+      // Bump the related ticket's lifecycle: set status -> replied (unless already
+      // resolved/closed), update last_replied_at + updated_at so every UI shows
+      // accurate "last activity" timestamps.
       if (relatedTicketId) {
-        await supabase.from("support_tickets").update({ status: "replied", last_replied_at: new Date().toISOString() }).eq("id", relatedTicketId);
+        const { data: existing } = await supabase
+          .from("support_tickets")
+          .select("status")
+          .eq("id", relatedTicketId)
+          .maybeSingle();
+        const nowIso = new Date().toISOString();
+        const nextStatus = existing && (existing.status === "resolved" || existing.status === "closed")
+          ? existing.status
+          : "replied";
+        await supabase.from("support_tickets")
+          .update({ status: nextStatus, last_replied_at: nowIso, updated_at: nowIso })
+          .eq("id", relatedTicketId);
       }
 
       await supabase.from("coms_logs").insert({
@@ -199,22 +258,54 @@ Deno.serve(async (req) => {
         details: relatedTicketId ? `Reply to ticket ${relatedTicketId}` : "ComsSystem reply",
       });
 
-      return json({ success: true, messageId: emailResult?.messageId ?? null });
+      return json({ success: true, messageId: emailResult?.messageId ?? null, ticket_id: relatedTicketId || null });
+    }
+
+    // ── Ticket status update (resolve/close/reopen) ──────
+    if (action === "update_ticket_status") {
+      const requester = await getRequester();
+      if (!requester) return err("auth_required", "Authentication required", 401);
+
+      const ticketId = cleanText((payload as any).ticket_id);
+      const status = cleanText((payload as any).status);
+      const allowed = ["open", "replied", "resolved", "closed"];
+      if (!ticketId) return err("missing_fields", "ticket_id is required", 400);
+      if (!allowed.includes(status)) return err("invalid_status", `status must be one of ${allowed.join(", ")}`, 400);
+
+      const nowIso = new Date().toISOString();
+      const { error } = await supabase.from("support_tickets")
+        .update({ status, updated_at: nowIso })
+        .eq("id", ticketId);
+      if (error) return err("ticket_update_failed", error.message, 500);
+
+      await supabase.from("coms_logs").insert({
+        user_id: requester.id,
+        event: `ticket-${status}`,
+        channel: "in-app",
+        recipient: ticketId,
+        subject: `Ticket ${status}`,
+        source_app: "ComsSystem",
+        message_type: "support",
+        delivery_status: "sent",
+        details: `Ticket ${ticketId} marked ${status}`,
+      });
+
+      return json({ success: true, ticket_id: ticketId, status });
     }
 
     // ── User Message (public contact form) ──────────────────
     if (action === "user_message") {
-      const { email, name, subject, message, source_app } = payload;
+      const { email, name, subject, message, source_app } = payload as any;
 
       if (!email || !subject || !message) {
-        return json({ error: "email, subject, and message are required" }, 400);
+        return err("missing_fields", "email, subject, and message are required", 400);
       }
 
       const adminId = await findAdminUserId();
-      if (!adminId) return json({ error: "No admin user found" }, 500);
+      if (!adminId) return err("no_admin_mapped", "No admin profile available to receive messages", 500);
       const requester = await getRequester();
 
-      await supabase.from("inbound_messages").insert({
+      const { error: inboxError } = await supabase.from("inbound_messages").insert({
         user_id: adminId,
         sender_user_id: requester?.id ?? null,
         target_user_id: adminId,
@@ -227,6 +318,7 @@ Deno.serve(async (req) => {
         type: "general",
         source_app: source_app || "external",
       });
+      if (inboxError) return err("inbox_insert_failed", inboxError.message, 500);
 
       await supabase.from("coms_logs").insert({
         user_id: adminId,
@@ -253,10 +345,10 @@ Deno.serve(async (req) => {
       channel = "email",
       type = "support",
       priority = "normal",
-    } = payload;
+    } = payload as any;
 
     if (!sender?.email || !subject) {
-      return json({ error: "sender.email and subject are required" }, 400);
+      return err("missing_fields", "sender.email and subject are required", 400);
     }
 
     let targetUserId = userId;
@@ -272,12 +364,11 @@ Deno.serve(async (req) => {
     }
 
     if (!targetUserId) {
-      // Fallback to admin
       targetUserId = await findAdminUserId();
     }
 
     if (!targetUserId) {
-      return json({ success: true, warning: "No user to route to" });
+      return err("no_admin_mapped", "No user available to route inbound message", 500);
     }
 
     await supabase.from("inbound_messages").insert({
@@ -307,6 +398,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("coms-inbound error:", error);
     const msg = error instanceof Error ? error.message : "Unknown error";
-    return json({ error: msg }, 500);
+    const code = (error as any)?.code || "unhandled_exception";
+    return err(code, msg, 500);
   }
 });
