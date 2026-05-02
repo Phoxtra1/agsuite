@@ -67,17 +67,31 @@ export function SupportTicketsPanel() {
   const [replySending, setReplySending] = useState(false);
 
   useEffect(() => {
-    const fetch = async () => {
+    const load = async () => {
       const { data, error } = await supabase
         .from('support_tickets')
         .select('*')
-        .order('created_at', { ascending: false })
+        .order('updated_at', { ascending: false })
         .limit(200);
 
       if (!error && data) setTickets(data as Ticket[]);
       setLoading(false);
     };
-    fetch();
+    load();
+
+    // Realtime — any reply, status change, or new ticket reflects instantly.
+    const unsub = ComsSDK.subscribeToTickets((payload) => {
+      if (payload.eventType === 'INSERT') {
+        setTickets(prev => [payload.new as Ticket, ...prev.filter(t => t.id !== payload.new.id)]);
+      } else if (payload.eventType === 'UPDATE') {
+        setTickets(prev => prev.map(t => t.id === payload.new.id ? { ...t, ...(payload.new as Ticket) } : t));
+        setSelectedTicket(prev => prev && prev.id === payload.new.id ? { ...prev, ...(payload.new as Ticket) } : prev);
+      } else if (payload.eventType === 'DELETE') {
+        setTickets(prev => prev.filter(t => t.id !== payload.old?.id));
+      }
+    });
+
+    return unsub;
   }, []);
 
   const filtered = tickets.filter(t => {
@@ -105,19 +119,30 @@ export function SupportTicketsPanel() {
     return { name: 'Unknown', email: '' };
   };
 
+  // Last activity = most recent of last_replied_at, updated_at, created_at.
+  const lastActivity = (t: Ticket) => {
+    const candidates = [t.last_replied_at, t.updated_at, t.created_at].filter(Boolean) as string[];
+    return candidates.sort().pop() || t.created_at;
+  };
+
   const handleStatusChange = async (ticketId: string, newStatus: string) => {
-    const { error } = await supabase.from('support_tickets').update({ status: newStatus }).eq('id', ticketId);
-    if (!error) {
-      setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus } : t));
+    try {
+      await ComsSDK.updateTicketStatus(ticketId, newStatus as 'open' | 'replied' | 'resolved' | 'closed');
+      // Optimistic UI; realtime will reconcile.
+      const nowIso = new Date().toISOString();
+      setTickets(prev => prev.map(t => t.id === ticketId ? { ...t, status: newStatus, updated_at: nowIso } : t));
       toast.success(`Ticket marked as ${newStatus}`);
+    } catch (e) {
+      const msg = e instanceof ComsRoutingError ? `${e.code}: ${e.message}` : 'Failed to update ticket status';
+      toast.error(msg);
     }
   };
 
   const handleReply = async () => {
     if (!selectedTicket || !replyText.trim()) return;
     const sender = getSender(selectedTicket);
-    if (!sender.email) {
-      toast.error('Could not determine recipient email from ticket');
+    if (!sender.email && !sender.userId) {
+      toast.error('No recipient mapping for this ticket — cannot route reply');
       return;
     }
 
@@ -131,12 +156,15 @@ export function SupportTicketsPanel() {
         targetUserId: sender.userId,
         sourceApp: selectedTicket.source_app || 'ComsSystem',
       });
-      setTickets(prev => prev.map(t => t.id === selectedTicket.id ? { ...t, status: 'replied' } : t));
+      // Realtime will update the ticket; close dialog optimistically.
       setReplyOpen(false);
       setReplyText('');
       toast.success('Reply sent successfully');
-    } catch {
-      toast.error('Failed to send reply');
+    } catch (e) {
+      const msg = e instanceof ComsRoutingError
+        ? `Reply failed [${e.code}]: ${e.message}`
+        : (e instanceof Error ? e.message : 'Failed to send reply');
+      toast.error(msg);
     } finally {
       setReplySending(false);
     }
