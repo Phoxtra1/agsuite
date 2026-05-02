@@ -24,6 +24,7 @@ import {
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { SupportComs } from '@/core/coms/hooks';
+import { ComsSDK, ComsRoutingError } from '@/core/coms/sdk';
 
 interface Ticket {
   id: string;
