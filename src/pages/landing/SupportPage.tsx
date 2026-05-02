@@ -51,8 +51,10 @@ const SupportPage: FC = () => {
       });
       setSubmitted(true);
       toast.success("Your inquiry has been submitted. We'll respond within 48 hours.");
-    } catch {
-      toast.error("Failed to submit. Please try again or email support@amineva.com.");
+    } catch (e: any) {
+      const code = e?.code ? ` [${e.code}]` : "";
+      const detail = e?.message ? `: ${e.message}` : "";
+      toast.error(`Failed to submit${code}${detail}. You can also email support@amineva.com.`);
     } finally {
       setSending(false);
     }
