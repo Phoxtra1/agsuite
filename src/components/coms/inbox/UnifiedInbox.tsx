@@ -19,7 +19,7 @@ import {
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
-import { ComsSDK } from '@/core/coms/sdk';
+import { ComsSDK, ComsRoutingError } from '@/core/coms/sdk';
 
 interface Message {
   id: string;
@@ -317,8 +317,9 @@ export function UnifiedInbox() {
                           setReplyMode(false);
                           setReplyText('');
                           toast.success('Reply sent');
-                        } catch {
-                          toast.error('Failed to send reply');
+                        } catch (e) {
+                          const msg = e instanceof ComsRoutingError ? `Reply failed [${e.code}]: ${e.message}` : 'Failed to send reply';
+                          toast.error(msg);
                         } finally {
                           setReplySending(false);
                         }
