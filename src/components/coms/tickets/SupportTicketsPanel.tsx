@@ -264,7 +264,9 @@ export function SupportTicketsPanel() {
                               </>
                             )}
                             <span>·</span>
-                            <span>{new Date(ticket.created_at).toLocaleString()}</span>
+                            <span title={`Created ${new Date(ticket.created_at).toLocaleString()}`}>
+                              Last activity: {new Date(lastActivity(ticket)).toLocaleString()}
+                            </span>
                           </div>
                         </div>
                         <div className="flex items-center gap-1 shrink-0">
