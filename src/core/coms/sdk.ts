@@ -71,6 +71,79 @@ export interface SendReplyOptions {
 }
 
 /**
+ * Structured error returned by every coms-inbound invocation. The `code`
+ * field is stable and machine-readable so the UI can surface precise
+ * diagnostics ("no_admin_mapped", "email_provider_failed", "auth_required",
+ * "no_recipient_mapping", etc.).
+ */
+export class ComsRoutingError extends Error {
+  code: string;
+  status?: number;
+  action: string;
+  constructor(action: string, code: string, message: string, status?: number) {
+    super(message);
+    this.name = "ComsRoutingError";
+    this.action = action;
+    this.code = code;
+    this.status = status;
+  }
+}
+
+/**
+ * Invoke `coms-inbound` and parse the structured envelope. Any non-success
+ * response is converted into a `ComsRoutingError` with a stable `code` and
+ * is also persisted to `coms_logs` (best-effort) so it is visible in the
+ * Logs and Analytics tabs of ComsSystem.
+ */
+async function invokeInbound(action: string, body: Record<string, unknown>) {
+  const { data, error } = await supabase.functions.invoke("coms-inbound", {
+    body: { action, ...body },
+  });
+
+  // Network / function-level error from the SDK
+  if (error) {
+    const ctxAny = (error as any)?.context;
+    let parsed: any = null;
+    try {
+      if (ctxAny && typeof ctxAny.json === "function") parsed = await ctxAny.json();
+    } catch { /* ignore */ }
+    const code = parsed?.code || "network_error";
+    const message = parsed?.error || error.message || "Routing failed";
+    await safeLogFailure(action, code, message, body);
+    throw new ComsRoutingError(action, code, message);
+  }
+
+  // Application-level error in the envelope
+  if (data && typeof data === "object" && (data as any).error) {
+    const code = (data as any).code || "unknown_error";
+    const message = (data as any).error;
+    await safeLogFailure(action, code, message, body);
+    throw new ComsRoutingError(action, code, message);
+  }
+
+  return data;
+}
+
+async function safeLogFailure(action: string, code: string, message: string, body: Record<string, unknown>) {
+  try {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) return; // can't log without a user_id (RLS)
+    await supabase.from("coms_logs").insert({
+      user_id: userId,
+      event: "failed",
+      channel: "in-app",
+      recipient: String(body.recipient_email || body.target_user_id || body.email || "unknown"),
+      subject: String(body.subject || `coms-inbound:${action}`),
+      source_app: String(body.source_app || "ComsSystem"),
+      message_type: "system",
+      delivery_status: "failed",
+      details: `[${action}] ${code}: ${message}`,
+    });
+  } catch { /* swallow — logging is best-effort */ }
+}
+
+/**
  * ComsSDK — the single entry point for all cross-product communication.
  * 
  * Usage from any Amineva product:
