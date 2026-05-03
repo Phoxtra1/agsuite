@@ -54,6 +54,7 @@ export const SupportComs = {
     recipientName?: string;
     targetUserId?: string;
     sourceApp?: string;
+    attachments?: import("@/core/coms/sdk").TicketAttachmentInput[];
   }) {
     const { data: ticket } = await supabase
       .from("support_tickets")
@@ -71,6 +72,7 @@ export const SupportComs = {
       message: opts.replyBody,
       sourceApp: opts.sourceApp || SOURCE,
       ticketId: opts.ticketId,
+      attachments: opts.attachments,
     });
   },
 
