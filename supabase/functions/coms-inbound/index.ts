@@ -170,6 +170,7 @@ Deno.serve(async (req) => {
       const sourceApp = cleanText((payload as any).source_app, "ComsSystem");
       const relatedTicketId = cleanText((payload as any).ticket_id);
       const replyToMessageId = cleanText((payload as any).reply_to_message_id);
+      const attachments = Array.isArray((payload as any).attachments) ? (payload as any).attachments : [];
 
       if (!subject || !message) {
         return err("missing_fields", "subject and message are required", 400);
