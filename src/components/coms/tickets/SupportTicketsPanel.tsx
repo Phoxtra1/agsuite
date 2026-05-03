@@ -163,6 +163,19 @@ export function SupportTicketsPanel() {
 
     setReplySending(true);
     try {
+      // Upload attachments first; collect descriptors to send with the reply.
+      const uploaded: TicketAttachmentInput[] = [];
+      for (const file of replyFiles) {
+        try {
+          const desc = await ComsSDK.uploadTicketAttachment(selectedTicket.id, file);
+          uploaded.push(desc);
+        } catch (e) {
+          const msg = e instanceof ComsRoutingError ? `[${e.code}] ${e.message}` : 'Upload failed';
+          toast.error(`${file.name}: ${msg}`);
+          throw e;
+        }
+      }
+
       await SupportComs.replyToTicket({
         ticketId: selectedTicket.id,
         replyBody: replyText.trim(),
@@ -170,11 +183,12 @@ export function SupportTicketsPanel() {
         recipientName: sender.name,
         targetUserId: sender.userId,
         sourceApp: selectedTicket.source_app || 'ComsSystem',
+        attachments: uploaded,
       });
-      // Realtime will update the ticket; close dialog optimistically.
       setReplyOpen(false);
       setReplyText('');
-      toast.success('Reply sent successfully');
+      setReplyFiles([]);
+      toast.success(uploaded.length ? `Reply sent with ${uploaded.length} attachment(s)` : 'Reply sent successfully');
     } catch (e) {
       const msg = e instanceof ComsRoutingError
         ? `Reply failed [${e.code}]: ${e.message}`
