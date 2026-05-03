@@ -59,6 +59,13 @@ export interface ReceiveMessageOptions {
   type?: "general" | "support";
 }
 
+export interface TicketAttachmentInput {
+  storage_path: string;
+  file_name: string;
+  mime_type?: string;
+  size_bytes?: number;
+}
+
 export interface SendReplyOptions {
   subject: string;
   message: string;
@@ -68,6 +75,7 @@ export interface SendReplyOptions {
   targetUserId?: string;
   ticketId?: string;
   replyToMessageId?: string;
+  attachments?: TicketAttachmentInput[];
 }
 
 /**
