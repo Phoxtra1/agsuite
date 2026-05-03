@@ -209,7 +209,7 @@ Deno.serve(async (req) => {
         }
       }
 
-      const { error: outboundError } = await supabase.from("inbound_messages").insert({
+      const { data: outboundRow, error: outboundError } = await supabase.from("inbound_messages").insert({
         user_id: targetUserId || requester.id,
         sender_user_id: requester.id,
         target_user_id: targetUserId || null,
@@ -225,8 +225,26 @@ Deno.serve(async (req) => {
         priority: "normal",
         source_app: sourceApp,
         is_read: false,
-      });
+      }).select("id").single();
       if (outboundError) return err("outbound_insert_failed", outboundError.message, 500);
+
+      // Link any uploaded attachments to this reply + ticket
+      if (attachments.length && relatedTicketId) {
+        const rows = attachments
+          .filter((a: any) => a && a.storage_path && a.file_name)
+          .map((a: any) => ({
+            ticket_id: relatedTicketId,
+            message_id: outboundRow?.id ?? null,
+            storage_path: String(a.storage_path),
+            file_name: String(a.file_name),
+            mime_type: a.mime_type ?? null,
+            size_bytes: typeof a.size_bytes === "number" ? a.size_bytes : null,
+            uploaded_by: requester.id,
+          }));
+        if (rows.length) {
+          await supabase.from("ticket_attachments").insert(rows);
+        }
+      }
 
       // Bump the related ticket's lifecycle: set status -> replied (unless already
       // resolved/closed), update last_replied_at + updated_at so every UI shows
@@ -244,6 +262,18 @@ Deno.serve(async (req) => {
         await supabase.from("support_tickets")
           .update({ status: nextStatus, last_replied_at: nowIso, updated_at: nowIso })
           .eq("id", relatedTicketId);
+
+        // Audit: replied
+        await supabase.from("ticket_audit_log").insert({
+          ticket_id: relatedTicketId,
+          actor_user_id: requester.id,
+          actor_kind: "user",
+          actor_label: requester.user_metadata?.name ?? requester.email ?? "Support agent",
+          action: "replied",
+          message_id: outboundRow?.id ?? null,
+          details: recipientEmail ? `Email reply to ${recipientEmail}` : `In-app reply to user ${targetUserId}`,
+          metadata: { attachments: attachments.length },
+        });
       }
 
       await supabase.from("coms_logs").insert({
