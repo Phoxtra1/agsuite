@@ -59,6 +59,13 @@ export interface ReceiveMessageOptions {
   type?: "general" | "support";
 }
 
+export interface TicketAttachmentInput {
+  storage_path: string;
+  file_name: string;
+  mime_type?: string;
+  size_bytes?: number;
+}
+
 export interface SendReplyOptions {
   subject: string;
   message: string;
@@ -68,6 +75,7 @@ export interface SendReplyOptions {
   targetUserId?: string;
   ticketId?: string;
   replyToMessageId?: string;
+  attachments?: TicketAttachmentInput[];
 }
 
 /**
@@ -338,7 +346,87 @@ export const ComsSDK = {
       source_app: options.sourceApp || "ComsSystem",
       ticket_id: options.ticketId,
       reply_to_message_id: options.replyToMessageId,
+      attachments: options.attachments ?? [],
     });
+  },
+
+  /**
+   * Upload a file into the private `ticket-attachments` bucket and return
+   * a descriptor that can be passed to `sendReply({ attachments: [...] })`.
+   * The DB row in `ticket_attachments` is created server-side by coms-inbound
+   * once the reply is committed, so storage + DB always stay consistent.
+   */
+  async uploadTicketAttachment(ticketId: string, file: File): Promise<TicketAttachmentInput> {
+    const { data: userData } = await supabase.auth.getUser();
+    const userId = userData?.user?.id;
+    if (!userId) throw new ComsRoutingError("uploadTicketAttachment", "auth_required", "Sign in required to upload attachments");
+
+    const safe = file.name.replace(/[^a-zA-Z0-9._-]/g, "_");
+    const path = `${ticketId}/${userId}/${Date.now()}-${safe}`;
+    const { error } = await supabase.storage.from("ticket-attachments").upload(path, file, {
+      contentType: file.type || undefined,
+      upsert: false,
+    });
+    if (error) throw new ComsRoutingError("uploadTicketAttachment", "attachment_upload_failed", error.message);
+
+    return {
+      storage_path: path,
+      file_name: file.name,
+      mime_type: file.type || undefined,
+      size_bytes: file.size,
+    };
+  },
+
+  /**
+   * Get a short-lived signed URL for a stored ticket attachment.
+   */
+  async getAttachmentUrl(storagePath: string, expiresInSeconds = 300): Promise<string> {
+    const { data, error } = await supabase.storage
+      .from("ticket-attachments")
+      .createSignedUrl(storagePath, expiresInSeconds);
+    if (error || !data?.signedUrl) {
+      throw new ComsRoutingError("getAttachmentUrl", "signed_url_failed", error?.message || "Could not sign URL");
+    }
+    return data.signedUrl;
+  },
+
+  /**
+   * Fetch the audit trail for a single ticket (most recent first).
+   */
+  async getTicketAudit(ticketId: string) {
+    const { data, error } = await (supabase.from as any)("ticket_audit_log")
+      .select("*")
+      .eq("ticket_id", ticketId)
+      .order("created_at", { ascending: false });
+    if (error) throw new ComsRoutingError("getTicketAudit", "audit_read_failed", error.message);
+    return data as any[];
+  },
+
+  /**
+   * List attachments for a ticket.
+   */
+  async getTicketAttachments(ticketId: string) {
+    const { data, error } = await (supabase.from as any)("ticket_attachments")
+      .select("*")
+      .eq("ticket_id", ticketId)
+      .order("created_at", { ascending: false });
+    if (error) throw new ComsRoutingError("getTicketAttachments", "attachments_read_failed", error.message);
+    return data as any[];
+  },
+
+  /**
+   * Realtime subscription for a single ticket's audit trail.
+   */
+  subscribeToTicketAudit(ticketId: string, callback: (payload: any) => void) {
+    const channel = supabase
+      .channel(`audit-${ticketId}`)
+      .on(
+        "postgres_changes",
+        { event: "INSERT", schema: "public", table: "ticket_audit_log", filter: `ticket_id=eq.${ticketId}` },
+        (payload) => callback(payload.new)
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
   },
 
   /**

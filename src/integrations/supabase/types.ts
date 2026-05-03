@@ -674,13 +674,17 @@ export type Database = {
       support_tickets: {
         Row: {
           created_at: string
+          first_response_at: string | null
           id: string
           last_replied_at: string | null
           message: string
           priority: string
+          resolved_at: string | null
           sender_email: string | null
           sender_name: string | null
           sender_user_id: string | null
+          sla_first_response_minutes: number | null
+          sla_resolution_minutes: number | null
           source_app: string | null
           status: string
           subject: string
@@ -689,13 +693,17 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          first_response_at?: string | null
           id?: string
           last_replied_at?: string | null
           message: string
           priority?: string
+          resolved_at?: string | null
           sender_email?: string | null
           sender_name?: string | null
           sender_user_id?: string | null
+          sla_first_response_minutes?: number | null
+          sla_resolution_minutes?: number | null
           source_app?: string | null
           status?: string
           subject: string
@@ -704,13 +712,17 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          first_response_at?: string | null
           id?: string
           last_replied_at?: string | null
           message?: string
           priority?: string
+          resolved_at?: string | null
           sender_email?: string | null
           sender_name?: string | null
           sender_user_id?: string | null
+          sla_first_response_minutes?: number | null
+          sla_resolution_minutes?: number | null
           source_app?: string | null
           status?: string
           subject?: string
@@ -749,6 +761,90 @@ export type Database = {
           team_owner_id?: string
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      ticket_attachments: {
+        Row: {
+          created_at: string
+          file_name: string
+          id: string
+          message_id: string | null
+          mime_type: string | null
+          size_bytes: number | null
+          storage_path: string
+          ticket_id: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          created_at?: string
+          file_name: string
+          id?: string
+          message_id?: string | null
+          mime_type?: string | null
+          size_bytes?: number | null
+          storage_path: string
+          ticket_id: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          created_at?: string
+          file_name?: string
+          id?: string
+          message_id?: string | null
+          mime_type?: string | null
+          size_bytes?: number | null
+          storage_path?: string
+          ticket_id?: string
+          uploaded_by?: string | null
+        }
+        Relationships: []
+      }
+      ticket_audit_log: {
+        Row: {
+          action: string
+          actor_kind: string
+          actor_label: string | null
+          actor_user_id: string | null
+          attachment_id: string | null
+          created_at: string
+          details: string | null
+          from_status: string | null
+          id: string
+          message_id: string | null
+          metadata: Json
+          ticket_id: string
+          to_status: string | null
+        }
+        Insert: {
+          action: string
+          actor_kind?: string
+          actor_label?: string | null
+          actor_user_id?: string | null
+          attachment_id?: string | null
+          created_at?: string
+          details?: string | null
+          from_status?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json
+          ticket_id: string
+          to_status?: string | null
+        }
+        Update: {
+          action?: string
+          actor_kind?: string
+          actor_label?: string | null
+          actor_user_id?: string | null
+          attachment_id?: string | null
+          created_at?: string
+          details?: string | null
+          from_status?: string | null
+          id?: string
+          message_id?: string | null
+          metadata?: Json
+          ticket_id?: string
+          to_status?: string | null
         }
         Relationships: []
       }

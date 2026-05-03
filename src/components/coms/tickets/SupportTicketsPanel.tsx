@@ -19,12 +19,14 @@ import {
 } from '@/components/ui/dialog';
 import {
   TicketCheck, Reply, Clock, AlertTriangle, CheckCircle2,
-  CircleDot, Send, Filter,
+  CircleDot, Send, Filter, History, Paperclip, X, TimerReset,
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { supabase } from '@/integrations/supabase/client';
 import { SupportComs } from '@/core/coms/hooks';
-import { ComsSDK, ComsRoutingError } from '@/core/coms/sdk';
+import { ComsSDK, ComsRoutingError, type TicketAttachmentInput } from '@/core/coms/sdk';
+import { firstResponseSLA, resolutionSLA, formatRemaining, slaStateColor } from '@/core/coms/sla';
+import { TicketAuditDrawer } from './TicketAuditDrawer';
 
 interface Ticket {
   id: string;
@@ -38,6 +40,10 @@ interface Ticket {
   sender_email?: string | null;
   sender_name?: string | null;
   last_replied_at?: string | null;
+  first_response_at?: string | null;
+  resolved_at?: string | null;
+  sla_first_response_minutes?: number | null;
+  sla_resolution_minutes?: number | null;
   created_at: string;
   updated_at: string;
 }
@@ -65,6 +71,15 @@ export function SupportTicketsPanel() {
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [replySending, setReplySending] = useState(false);
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
+  const [auditTicketId, setAuditTicketId] = useState<string | null>(null);
+  const [auditOpen, setAuditOpen] = useState(false);
+  // Tick once a minute so SLA countdowns stay fresh.
+  const [, setNowTick] = useState(0);
+  useEffect(() => {
+    const i = setInterval(() => setNowTick((n) => n + 1), 60_000);
+    return () => clearInterval(i);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
@@ -148,6 +163,19 @@ export function SupportTicketsPanel() {
 
     setReplySending(true);
     try {
+      // Upload attachments first; collect descriptors to send with the reply.
+      const uploaded: TicketAttachmentInput[] = [];
+      for (const file of replyFiles) {
+        try {
+          const desc = await ComsSDK.uploadTicketAttachment(selectedTicket.id, file);
+          uploaded.push(desc);
+        } catch (e) {
+          const msg = e instanceof ComsRoutingError ? `[${e.code}] ${e.message}` : 'Upload failed';
+          toast.error(`${file.name}: ${msg}`);
+          throw e;
+        }
+      }
+
       await SupportComs.replyToTicket({
         ticketId: selectedTicket.id,
         replyBody: replyText.trim(),
@@ -155,11 +183,12 @@ export function SupportTicketsPanel() {
         recipientName: sender.name,
         targetUserId: sender.userId,
         sourceApp: selectedTicket.source_app || 'ComsSystem',
+        attachments: uploaded,
       });
-      // Realtime will update the ticket; close dialog optimistically.
       setReplyOpen(false);
       setReplyText('');
-      toast.success('Reply sent successfully');
+      setReplyFiles([]);
+      toast.success(uploaded.length ? `Reply sent with ${uploaded.length} attachment(s)` : 'Reply sent successfully');
     } catch (e) {
       const msg = e instanceof ComsRoutingError
         ? `Reply failed [${e.code}]: ${e.message}`
@@ -237,6 +266,8 @@ export function SupportTicketsPanel() {
                   const sender = getSender(ticket);
                   const sc = statusConfig[ticket.status] || statusConfig.open;
                   const pc = priorityConfig[ticket.priority] || priorityConfig.normal;
+                  const fr = firstResponseSLA(ticket);
+                  const res = resolutionSLA(ticket);
 
                   return (
                     <div
@@ -246,7 +277,7 @@ export function SupportTicketsPanel() {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="text-sm font-medium text-foreground truncate">{ticket.subject}</span>
                             <Badge className={`text-[10px] h-5 gap-1 ${sc.color}`}>
                               {sc.icon} {sc.label}
@@ -254,6 +285,26 @@ export function SupportTicketsPanel() {
                             <Badge className={`text-[10px] h-5 gap-1 ${pc.color}`}>
                               {pc.icon} {ticket.priority}
                             </Badge>
+                            {/* SLA — first response */}
+                            {fr.state !== 'met' && (
+                              <Badge
+                                title={`First response due ${fr.due.toLocaleString()}`}
+                                className={`text-[10px] h-5 gap-1 ${slaStateColor[fr.state]}`}
+                              >
+                                <TimerReset className="h-3 w-3" />
+                                FR: {formatRemaining(fr.remainingMs)}
+                              </Badge>
+                            )}
+                            {/* SLA — resolution */}
+                            {res.state !== 'met' && ticket.status !== 'resolved' && ticket.status !== 'closed' && (
+                              <Badge
+                                title={`Resolution due ${res.due.toLocaleString()}`}
+                                className={`text-[10px] h-5 gap-1 ${slaStateColor[res.state]}`}
+                              >
+                                <Clock className="h-3 w-3" />
+                                Res: {formatRemaining(res.remainingMs)}
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>From: {sender.name}</span>
@@ -276,9 +327,23 @@ export function SupportTicketsPanel() {
                             className="h-7 text-xs"
                             onClick={(e) => {
                               e.stopPropagation();
+                              setAuditTicketId(ticket.id);
+                              setAuditOpen(true);
+                            }}
+                            title="View audit trail"
+                          >
+                            <History className="h-3 w-3 mr-1" /> Audit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setSelectedTicket(ticket);
                               setReplyOpen(true);
                               setReplyText('');
+                              setReplyFiles([]);
                             }}
                           >
                             <Reply className="h-3 w-3 mr-1" /> Reply
@@ -305,7 +370,7 @@ export function SupportTicketsPanel() {
                           <div className="bg-muted/50 rounded-lg p-3 text-sm text-foreground whitespace-pre-wrap">
                             {cleanMessage(ticket.message)}
                           </div>
-                          <div className="flex items-center gap-2 mt-3">
+                          <div className="flex items-center gap-2 mt-3 flex-wrap">
                             <Select
                               value={ticket.status}
                               onValueChange={(val) => handleStatusChange(ticket.id, val)}
@@ -321,9 +386,17 @@ export function SupportTicketsPanel() {
                             <Button
                               size="sm"
                               className="h-7 text-xs"
-                              onClick={() => { setReplyOpen(true); setReplyText(''); }}
+                              onClick={() => { setReplyOpen(true); setReplyText(''); setReplyFiles([]); }}
                             >
                               <Reply className="h-3 w-3 mr-1" /> Reply
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => { setAuditTicketId(ticket.id); setAuditOpen(true); }}
+                            >
+                              <History className="h-3 w-3 mr-1" /> History
                             </Button>
                           </div>
                         </div>
@@ -359,6 +432,43 @@ export function SupportTicketsPanel() {
                 onChange={(e) => setReplyText(e.target.value)}
                 rows={5}
               />
+
+              {/* Attachments */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer hover:text-foreground w-fit">
+                  <Paperclip className="h-3.5 w-3.5" />
+                  <span>Attach files</span>
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      setReplyFiles((prev) => [...prev, ...files]);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+                {replyFiles.length > 0 && (
+                  <div className="space-y-1">
+                    {replyFiles.map((f, i) => (
+                      <div key={`${f.name}-${i}`} className="flex items-center justify-between gap-2 bg-muted/50 rounded px-2 py-1 text-xs">
+                        <span className="truncate text-foreground">{f.name}</span>
+                        <span className="text-muted-foreground">{(f.size / 1024).toFixed(1)} KB</span>
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => setReplyFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                          aria-label={`Remove ${f.name}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-end gap-2">
                 <Button variant="outline" size="sm" onClick={() => setReplyOpen(false)}>Cancel</Button>
                 <Button
@@ -373,6 +483,13 @@ export function SupportTicketsPanel() {
           )}
         </DialogContent>
       </Dialog>
+
+      <TicketAuditDrawer
+        ticketId={auditTicketId}
+        ticketSubject={tickets.find(t => t.id === auditTicketId)?.subject}
+        open={auditOpen}
+        onOpenChange={setAuditOpen}
+      />
     </div>
   );
 }
