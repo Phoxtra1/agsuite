@@ -71,6 +71,15 @@ export function SupportTicketsPanel() {
   const [replyOpen, setReplyOpen] = useState(false);
   const [replyText, setReplyText] = useState('');
   const [replySending, setReplySending] = useState(false);
+  const [replyFiles, setReplyFiles] = useState<File[]>([]);
+  const [auditTicketId, setAuditTicketId] = useState<string | null>(null);
+  const [auditOpen, setAuditOpen] = useState(false);
+  // Tick once a minute so SLA countdowns stay fresh.
+  const [, setNowTick] = useState(0);
+  useEffect(() => {
+    const i = setInterval(() => setNowTick((n) => n + 1), 60_000);
+    return () => clearInterval(i);
+  }, []);
 
   useEffect(() => {
     const load = async () => {
