@@ -266,6 +266,8 @@ export function SupportTicketsPanel() {
                   const sender = getSender(ticket);
                   const sc = statusConfig[ticket.status] || statusConfig.open;
                   const pc = priorityConfig[ticket.priority] || priorityConfig.normal;
+                  const fr = firstResponseSLA(ticket);
+                  const res = resolutionSLA(ticket);
 
                   return (
                     <div
@@ -275,7 +277,7 @@ export function SupportTicketsPanel() {
                     >
                       <div className="flex items-start justify-between gap-3">
                         <div className="flex-1 min-w-0">
-                          <div className="flex items-center gap-2 mb-1">
+                          <div className="flex items-center gap-2 mb-1 flex-wrap">
                             <span className="text-sm font-medium text-foreground truncate">{ticket.subject}</span>
                             <Badge className={`text-[10px] h-5 gap-1 ${sc.color}`}>
                               {sc.icon} {sc.label}
@@ -283,6 +285,26 @@ export function SupportTicketsPanel() {
                             <Badge className={`text-[10px] h-5 gap-1 ${pc.color}`}>
                               {pc.icon} {ticket.priority}
                             </Badge>
+                            {/* SLA — first response */}
+                            {fr.state !== 'met' && (
+                              <Badge
+                                title={`First response due ${fr.due.toLocaleString()}`}
+                                className={`text-[10px] h-5 gap-1 ${slaStateColor[fr.state]}`}
+                              >
+                                <TimerReset className="h-3 w-3" />
+                                FR: {formatRemaining(fr.remainingMs)}
+                              </Badge>
+                            )}
+                            {/* SLA — resolution */}
+                            {res.state !== 'met' && ticket.status !== 'resolved' && ticket.status !== 'closed' && (
+                              <Badge
+                                title={`Resolution due ${res.due.toLocaleString()}`}
+                                className={`text-[10px] h-5 gap-1 ${slaStateColor[res.state]}`}
+                              >
+                                <Clock className="h-3 w-3" />
+                                Res: {formatRemaining(res.remainingMs)}
+                              </Badge>
+                            )}
                           </div>
                           <div className="flex items-center gap-2 text-xs text-muted-foreground">
                             <span>From: {sender.name}</span>
@@ -305,9 +327,23 @@ export function SupportTicketsPanel() {
                             className="h-7 text-xs"
                             onClick={(e) => {
                               e.stopPropagation();
+                              setAuditTicketId(ticket.id);
+                              setAuditOpen(true);
+                            }}
+                            title="View audit trail"
+                          >
+                            <History className="h-3 w-3 mr-1" /> Audit
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-7 text-xs"
+                            onClick={(e) => {
+                              e.stopPropagation();
                               setSelectedTicket(ticket);
                               setReplyOpen(true);
                               setReplyText('');
+                              setReplyFiles([]);
                             }}
                           >
                             <Reply className="h-3 w-3 mr-1" /> Reply
@@ -334,7 +370,7 @@ export function SupportTicketsPanel() {
                           <div className="bg-muted/50 rounded-lg p-3 text-sm text-foreground whitespace-pre-wrap">
                             {cleanMessage(ticket.message)}
                           </div>
-                          <div className="flex items-center gap-2 mt-3">
+                          <div className="flex items-center gap-2 mt-3 flex-wrap">
                             <Select
                               value={ticket.status}
                               onValueChange={(val) => handleStatusChange(ticket.id, val)}
@@ -350,9 +386,17 @@ export function SupportTicketsPanel() {
                             <Button
                               size="sm"
                               className="h-7 text-xs"
-                              onClick={() => { setReplyOpen(true); setReplyText(''); }}
+                              onClick={() => { setReplyOpen(true); setReplyText(''); setReplyFiles([]); }}
                             >
                               <Reply className="h-3 w-3 mr-1" /> Reply
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="h-7 text-xs"
+                              onClick={() => { setAuditTicketId(ticket.id); setAuditOpen(true); }}
+                            >
+                              <History className="h-3 w-3 mr-1" /> History
                             </Button>
                           </div>
                         </div>
