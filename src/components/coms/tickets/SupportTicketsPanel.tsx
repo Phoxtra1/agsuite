@@ -40,6 +40,10 @@ interface Ticket {
   sender_email?: string | null;
   sender_name?: string | null;
   last_replied_at?: string | null;
+  first_response_at?: string | null;
+  resolved_at?: string | null;
+  sla_first_response_minutes?: number | null;
+  sla_resolution_minutes?: number | null;
   created_at: string;
   updated_at: string;
 }
