@@ -432,6 +432,43 @@ export function SupportTicketsPanel() {
                 onChange={(e) => setReplyText(e.target.value)}
                 rows={5}
               />
+
+              {/* Attachments */}
+              <div className="space-y-2">
+                <label className="flex items-center gap-2 text-xs text-muted-foreground cursor-pointer hover:text-foreground w-fit">
+                  <Paperclip className="h-3.5 w-3.5" />
+                  <span>Attach files</span>
+                  <input
+                    type="file"
+                    multiple
+                    className="hidden"
+                    onChange={(e) => {
+                      const files = Array.from(e.target.files || []);
+                      setReplyFiles((prev) => [...prev, ...files]);
+                      e.target.value = '';
+                    }}
+                  />
+                </label>
+                {replyFiles.length > 0 && (
+                  <div className="space-y-1">
+                    {replyFiles.map((f, i) => (
+                      <div key={`${f.name}-${i}`} className="flex items-center justify-between gap-2 bg-muted/50 rounded px-2 py-1 text-xs">
+                        <span className="truncate text-foreground">{f.name}</span>
+                        <span className="text-muted-foreground">{(f.size / 1024).toFixed(1)} KB</span>
+                        <button
+                          type="button"
+                          className="text-muted-foreground hover:text-destructive"
+                          onClick={() => setReplyFiles((prev) => prev.filter((_, idx) => idx !== i))}
+                          aria-label={`Remove ${f.name}`}
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
               <div className="flex justify-end gap-2">
                 <Button variant="outline" size="sm" onClick={() => setReplyOpen(false)}>Cancel</Button>
                 <Button
@@ -446,6 +483,13 @@ export function SupportTicketsPanel() {
           )}
         </DialogContent>
       </Dialog>
+
+      <TicketAuditDrawer
+        ticketId={auditTicketId}
+        ticketSubject={tickets.find(t => t.id === auditTicketId)?.subject}
+        open={auditOpen}
+        onOpenChange={setAuditOpen}
+      />
     </div>
   );
 }
