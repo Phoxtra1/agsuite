@@ -675,10 +675,14 @@ export type Database = {
         Row: {
           created_at: string
           first_response_at: string | null
+          fr_at_risk_alert_at: string | null
+          fr_breach_alert_at: string | null
           id: string
           last_replied_at: string | null
           message: string
           priority: string
+          res_at_risk_alert_at: string | null
+          res_breach_alert_at: string | null
           resolved_at: string | null
           sender_email: string | null
           sender_name: string | null
@@ -694,10 +698,14 @@ export type Database = {
         Insert: {
           created_at?: string
           first_response_at?: string | null
+          fr_at_risk_alert_at?: string | null
+          fr_breach_alert_at?: string | null
           id?: string
           last_replied_at?: string | null
           message: string
           priority?: string
+          res_at_risk_alert_at?: string | null
+          res_breach_alert_at?: string | null
           resolved_at?: string | null
           sender_email?: string | null
           sender_name?: string | null
@@ -713,10 +721,14 @@ export type Database = {
         Update: {
           created_at?: string
           first_response_at?: string | null
+          fr_at_risk_alert_at?: string | null
+          fr_breach_alert_at?: string | null
           id?: string
           last_replied_at?: string | null
           message?: string
           priority?: string
+          res_at_risk_alert_at?: string | null
+          res_breach_alert_at?: string | null
           resolved_at?: string | null
           sender_email?: string | null
           sender_name?: string | null
@@ -853,7 +865,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      process_sla_alerts: { Args: never; Returns: number }
     }
     Enums: {
       [_ in never]: never
