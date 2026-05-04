@@ -1,0 +1,1 @@
+REVOKE EXECUTE ON FUNCTION public.process_sla_alerts() FROM PUBLIC, anon, authenticated;
