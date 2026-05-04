@@ -98,7 +98,29 @@ export function TicketAuditDrawer({
             <p className="text-xs text-muted-foreground truncate">{ticketSubject}</p>
           )}
         </SheetHeader>
-        <ScrollArea className="h-[calc(100vh-120px)] mt-4 pr-3">
+        <div className="flex items-center gap-2 mt-3">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs"
+            disabled={!ticketId || exporting !== null}
+            onClick={() => handleExport("csv")}
+          >
+            <FileDown className="h-3 w-3 mr-1" />
+            {exporting === "csv" ? "Exporting…" : "Export CSV"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs"
+            disabled={!ticketId || exporting !== null}
+            onClick={() => handleExport("pdf")}
+          >
+            <FileText className="h-3 w-3 mr-1" />
+            {exporting === "pdf" ? "Exporting…" : "Export PDF"}
+          </Button>
+        </div>
+        <ScrollArea className="h-[calc(100vh-160px)] mt-4 pr-3">
           {loading ? (
             <div className="text-sm text-muted-foreground p-4">Loading audit trail...</div>
           ) : rows.length === 0 ? (
