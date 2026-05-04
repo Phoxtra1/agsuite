@@ -5,10 +5,14 @@
 import React, { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ComsSDK } from "@/core/coms/sdk";
+import { exportAuditCSV, exportAuditPDF, type AuditExportTicket } from "@/core/coms/auditExport";
+import { toast } from "sonner";
 import {
   History, Reply, CircleDot, ArrowRight, Paperclip, FilePlus2, User, Bot, Server,
+  FileDown, FileText,
 } from "lucide-react";
 
 interface AuditRow {
@@ -40,16 +44,34 @@ const actionIcon = (action: string) =>
 export function TicketAuditDrawer({
   ticketId,
   ticketSubject,
+  ticketMeta,
   open,
   onOpenChange,
 }: {
   ticketId: string | null;
   ticketSubject?: string;
+  ticketMeta?: Partial<AuditExportTicket>;
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
   const [rows, setRows] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
+
+  const handleExport = async (kind: "csv" | "pdf") => {
+    if (!ticketId) return;
+    setExporting(kind);
+    try {
+      const ticket: AuditExportTicket = { id: ticketId, subject: ticketSubject, ...(ticketMeta || {}) };
+      if (kind === "csv") await exportAuditCSV(ticket);
+      else await exportAuditPDF(ticket);
+      toast.success(`Audit trail exported as ${kind.toUpperCase()}`);
+    } catch (e) {
+      toast.error(`Export failed: ${e instanceof Error ? e.message : "unknown error"}`);
+    } finally {
+      setExporting(null);
+    }
+  };
 
   useEffect(() => {
     if (!open || !ticketId) return;
@@ -76,7 +98,29 @@ export function TicketAuditDrawer({
             <p className="text-xs text-muted-foreground truncate">{ticketSubject}</p>
           )}
         </SheetHeader>
-        <ScrollArea className="h-[calc(100vh-120px)] mt-4 pr-3">
+        <div className="flex items-center gap-2 mt-3">
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs"
+            disabled={!ticketId || exporting !== null}
+            onClick={() => handleExport("csv")}
+          >
+            <FileDown className="h-3 w-3 mr-1" />
+            {exporting === "csv" ? "Exporting…" : "Export CSV"}
+          </Button>
+          <Button
+            size="sm"
+            variant="outline"
+            className="h-7 text-xs"
+            disabled={!ticketId || exporting !== null}
+            onClick={() => handleExport("pdf")}
+          >
+            <FileText className="h-3 w-3 mr-1" />
+            {exporting === "pdf" ? "Exporting…" : "Export PDF"}
+          </Button>
+        </div>
+        <ScrollArea className="h-[calc(100vh-160px)] mt-4 pr-3">
           {loading ? (
             <div className="text-sm text-muted-foreground p-4">Loading audit trail...</div>
           ) : rows.length === 0 ? (
