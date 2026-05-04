@@ -44,16 +44,34 @@ const actionIcon = (action: string) =>
 export function TicketAuditDrawer({
   ticketId,
   ticketSubject,
+  ticketMeta,
   open,
   onOpenChange,
 }: {
   ticketId: string | null;
   ticketSubject?: string;
+  ticketMeta?: Partial<AuditExportTicket>;
   open: boolean;
   onOpenChange: (v: boolean) => void;
 }) {
   const [rows, setRows] = useState<AuditRow[]>([]);
   const [loading, setLoading] = useState(false);
+  const [exporting, setExporting] = useState<"csv" | "pdf" | null>(null);
+
+  const handleExport = async (kind: "csv" | "pdf") => {
+    if (!ticketId) return;
+    setExporting(kind);
+    try {
+      const ticket: AuditExportTicket = { id: ticketId, subject: ticketSubject, ...(ticketMeta || {}) };
+      if (kind === "csv") await exportAuditCSV(ticket);
+      else await exportAuditPDF(ticket);
+      toast.success(`Audit trail exported as ${kind.toUpperCase()}`);
+    } catch (e) {
+      toast.error(`Export failed: ${e instanceof Error ? e.message : "unknown error"}`);
+    } finally {
+      setExporting(null);
+    }
+  };
 
   useEffect(() => {
     if (!open || !ticketId) return;
