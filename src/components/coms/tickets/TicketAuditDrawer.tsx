@@ -5,10 +5,14 @@
 import React, { useEffect, useState } from "react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ComsSDK } from "@/core/coms/sdk";
+import { exportAuditCSV, exportAuditPDF, type AuditExportTicket } from "@/core/coms/auditExport";
+import { toast } from "sonner";
 import {
   History, Reply, CircleDot, ArrowRight, Paperclip, FilePlus2, User, Bot, Server,
+  FileDown, FileText,
 } from "lucide-react";
 
 interface AuditRow {
