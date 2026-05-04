@@ -487,6 +487,15 @@ export function SupportTicketsPanel() {
       <TicketAuditDrawer
         ticketId={auditTicketId}
         ticketSubject={tickets.find(t => t.id === auditTicketId)?.subject}
+        ticketMeta={(() => {
+          const t = tickets.find(x => x.id === auditTicketId);
+          return t ? {
+            source_app: t.source_app,
+            priority: t.priority,
+            status: t.status,
+            created_at: t.created_at,
+          } : undefined;
+        })()}
         open={auditOpen}
         onOpenChange={setAuditOpen}
       />
