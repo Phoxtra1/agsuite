@@ -4,8 +4,9 @@ import { AdminPanel } from './AdminPanel';
 import { CategoryManager } from './CategoryManager';
 import { AuthDiagnosticsPanel } from './AuthDiagnosticsPanel';
 import { EmailDeliveryPanel } from './EmailDeliveryPanel';
+import UserAppAccessManager from './UserAppAccessManager';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, FolderTree, ShieldCheck, Mail } from 'lucide-react';
+import { Settings, FolderTree, ShieldCheck, Mail, KeyRound } from 'lucide-react';
 
 export function AminevaConsole() {
   return (
@@ -37,6 +38,10 @@ export function AminevaConsole() {
             <Mail className="h-4 w-4" />
             Email Delivery
           </TabsTrigger>
+          <TabsTrigger value="app-access" className="gap-2">
+            <KeyRound className="h-4 w-4" />
+            App Access
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="products">
@@ -53,6 +58,10 @@ export function AminevaConsole() {
 
         <TabsContent value="email-delivery">
           <EmailDeliveryPanel />
+        </TabsContent>
+
+        <TabsContent value="app-access">
+          <UserAppAccessManager />
         </TabsContent>
       </Tabs>
     </div>
