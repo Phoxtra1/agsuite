@@ -176,6 +176,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearLast2FAVerified();
       setUser(null);
       setIsAuthenticated(false);
+      // Wipe all per-user caches so the next account starts cold.
+      resetClientState(queryClient);
+      lastUserIdRef.current = null;
     } finally {
       setIsLoading(false);
     }
