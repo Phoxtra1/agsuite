@@ -49,6 +49,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const authActionInProgress = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
+  const queryClient = useQueryClient();
+
+  // Reset all per-user caches whenever the active user.id changes
+  // (sign-in, sign-out, account switch in same tab).
+  const handleUserChange = useCallback(
+    (nextUserId: string | null) => {
+      if (lastUserIdRef.current !== nextUserId) {
+        resetClientState(queryClient);
+        lastUserIdRef.current = nextUserId;
+      }
+    },
+    [queryClient]
+  );
 
   useEffect(() => {
     // Listen for auth state changes FIRST
@@ -56,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (event, session) => {
         if (authActionInProgress.current) return;
         const mapped = mapUser(session?.user ?? null);
+        handleUserChange(mapped?.id ?? null);
         setUser(mapped);
         setIsAuthenticated(!!mapped);
         setIsLoading(false);
@@ -71,13 +86,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (authActionInProgress.current) return;
       const mapped = mapUser(session?.user ?? null);
+      handleUserChange(mapped?.id ?? null);
       setUser(mapped);
       setIsAuthenticated(!!mapped);
       setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [handleUserChange]);
 
   const login = useCallback(async (email: string, password: string) => {
     authActionInProgress.current = true;
