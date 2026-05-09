@@ -182,9 +182,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } finally {
       setIsLoading(false);
     }
-  }, []);
-
-  const value = useMemo(
+  }, [queryClient]);
     () => ({ user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, logout }),
     [user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, logout]
   );
