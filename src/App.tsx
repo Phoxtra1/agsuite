@@ -10,6 +10,7 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ACSEmitter, startACSEmitter, stopACSEmitter } from "@/core/acs/emitter";
+import { AppAuthGate } from "@/components/auth/AppAuthGate";
 
 /* Lazy Pages */
 const Landing = lazy(() => import("./pages/landing/Landing"));
@@ -34,6 +35,7 @@ const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
 const AuthCallback = lazy(() => import("./pages/suite/AuthCallback"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 const Seal = lazy(() => import("./pages/Seal"));
+const AccessDenied = lazy(() => import("./pages/AccessDenied"));
 
 const queryClient = new QueryClient();
 
@@ -145,12 +147,22 @@ function AppTelemetry() {
 
 function SuiteGuard() {
   // In preview mode, allow direct access for development
-  if (isPreview()) return <Suite />;
+  if (isPreview()) {
+    return (
+      <AppAuthGate>
+        <Suite />
+      </AppAuthGate>
+    );
+  }
 
   // Production: require seal (admin OTP) authentication
   if (!isSealAuthenticated()) return <Navigate to="/" replace />;
 
-  return <Suite />;
+  return (
+    <AppAuthGate>
+      <Suite />
+    </AppAuthGate>
+  );
 }
 
 function PublicHome() {
@@ -203,6 +215,8 @@ function AppRoutes() {
         <Route path="/admin/*" element={<Navigate to="/suite" replace />} />
         <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
         <Route path="/auth/verify-2fa" element={<Navigate to="/" replace />} />
+
+        <Route path="/access-denied" element={<AccessDenied />} />
 
         {/* 404 */}
         <Route path="*" element={<NotFound />} />

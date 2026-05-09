@@ -269,6 +269,39 @@ export type Database = {
         }
         Relationships: []
       }
+      applications: {
+        Row: {
+          app_key: string
+          app_name: string
+          app_slug: string
+          app_type: string
+          created_at: string
+          id: string
+          status: string
+          updated_at: string
+        }
+        Insert: {
+          app_key: string
+          app_name: string
+          app_slug: string
+          app_type?: string
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Update: {
+          app_key?: string
+          app_name?: string
+          app_slug?: string
+          app_type?: string
+          created_at?: string
+          id?: string
+          status?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       campaigns: {
         Row: {
           audience: number
@@ -634,6 +667,7 @@ export type Database = {
       }
       profiles: {
         Row: {
+          app_id: string
           avatar_url: string | null
           bio: string | null
           country: string | null
@@ -641,11 +675,15 @@ export type Database = {
           display_name: string | null
           email_verified: boolean
           id: string
+          metadata: Json
           phone: string | null
+          role: string
+          status: string
           updated_at: string
           user_id: string
         }
         Insert: {
+          app_id: string
           avatar_url?: string | null
           bio?: string | null
           country?: string | null
@@ -653,11 +691,15 @@ export type Database = {
           display_name?: string | null
           email_verified?: boolean
           id?: string
+          metadata?: Json
           phone?: string | null
+          role?: string
+          status?: string
           updated_at?: string
           user_id: string
         }
         Update: {
+          app_id?: string
           avatar_url?: string | null
           bio?: string | null
           country?: string | null
@@ -665,11 +707,22 @@ export type Database = {
           display_name?: string | null
           email_verified?: boolean
           id?: string
+          metadata?: Json
           phone?: string | null
+          role?: string
+          status?: string
           updated_at?: string
           user_id?: string
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: "profiles_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       support_tickets: {
         Row: {
@@ -860,11 +913,60 @@ export type Database = {
         }
         Relationships: []
       }
+      user_app_access: {
+        Row: {
+          active: boolean
+          app_id: string
+          created_at: string
+          id: string
+          permissions: Json
+          role: string
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          active?: boolean
+          app_id: string
+          created_at?: string
+          id?: string
+          permissions?: Json
+          role?: string
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          active?: boolean
+          app_id?: string
+          created_at?: string
+          id?: string
+          permissions?: Json
+          role?: string
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_app_access_app_id_fkey"
+            columns: ["app_id"]
+            isOneToOne: false
+            referencedRelation: "applications"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      ensure_app_profile: {
+        Args: { _app_id: string; _user_id: string }
+        Returns: string
+      }
+      has_app_access: {
+        Args: { _app_slug: string; _user_id: string }
+        Returns: boolean
+      }
       process_sla_alerts: { Args: never; Returns: number }
     }
     Enums: {

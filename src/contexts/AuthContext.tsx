@@ -10,6 +10,8 @@ import React, {
 import { supabase } from "@/integrations/supabase/client";
 import { clearLast2FAVerified } from "@/lib/stepUpAuth";
 import { checkLoginDevice } from "@/lib/auth/loginAlert";
+import { resetClientState } from "@/lib/auth/resetClientState";
+import { useQueryClient } from "@tanstack/react-query";
 
 type AuthUser = {
   id: string;
@@ -47,6 +49,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const authActionInProgress = useRef(false);
+  const lastUserIdRef = useRef<string | null>(null);
+  const queryClient = useQueryClient();
+
+  // Reset all per-user caches whenever the active user.id changes
+  // (sign-in, sign-out, account switch in same tab).
+  const handleUserChange = useCallback(
+    (nextUserId: string | null) => {
+      if (lastUserIdRef.current !== nextUserId) {
+        resetClientState(queryClient);
+        lastUserIdRef.current = nextUserId;
+      }
+    },
+    [queryClient]
+  );
 
   useEffect(() => {
     // Listen for auth state changes FIRST
@@ -54,6 +70,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       (event, session) => {
         if (authActionInProgress.current) return;
         const mapped = mapUser(session?.user ?? null);
+        handleUserChange(mapped?.id ?? null);
         setUser(mapped);
         setIsAuthenticated(!!mapped);
         setIsLoading(false);
@@ -69,13 +86,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     supabase.auth.getSession().then(({ data: { session } }) => {
       if (authActionInProgress.current) return;
       const mapped = mapUser(session?.user ?? null);
+      handleUserChange(mapped?.id ?? null);
       setUser(mapped);
       setIsAuthenticated(!!mapped);
       setIsLoading(false);
     });
 
     return () => subscription.unsubscribe();
-  }, []);
+  }, [handleUserChange]);
 
   const login = useCallback(async (email: string, password: string) => {
     authActionInProgress.current = true;
@@ -158,10 +176,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       clearLast2FAVerified();
       setUser(null);
       setIsAuthenticated(false);
+      // Wipe all per-user caches so the next account starts cold.
+      resetClientState(queryClient);
+      lastUserIdRef.current = null;
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [queryClient]);
 
   const value = useMemo(
     () => ({ user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, logout }),
