@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { useAppSession } from "@/components/auth/AppAuthGate";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -26,6 +27,7 @@ const initial: DiagnosticState = {
 };
 
 export function AuthDiagnosticsPanel() {
+  const { access } = useAppSession();
   const [state, setState] = useState<DiagnosticState>(initial);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -51,7 +53,8 @@ export function AuthDiagnosticsPanel() {
           .from("profiles")
           .select("email_verified")
           .eq("user_id", session.user.id)
-          .single();
+          .eq("app_id", access?.appId ?? "")
+          .maybeSingle();
         next.emailVerified = profile?.email_verified ?? false;
       }
     } catch (err: any) {
@@ -64,7 +67,7 @@ export function AuthDiagnosticsPanel() {
 
   useEffect(() => {
     loadDiagnostics();
-  }, []);
+  }, [access?.appId]);
 
   const Row = ({ label, children }: { label: string; children: React.ReactNode }) => (
     <div className="flex justify-between items-center py-2 border-b border-border last:border-0">
