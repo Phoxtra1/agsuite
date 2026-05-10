@@ -5,8 +5,9 @@ import { CategoryManager } from './CategoryManager';
 import { AuthDiagnosticsPanel } from './AuthDiagnosticsPanel';
 import { EmailDeliveryPanel } from './EmailDeliveryPanel';
 import UserAppAccessManager from './UserAppAccessManager';
+import SubProductReleaseChecklist from './SubProductReleaseChecklist';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Settings, FolderTree, ShieldCheck, Mail, KeyRound } from 'lucide-react';
+import { Settings, FolderTree, ShieldCheck, Mail, KeyRound, Rocket } from 'lucide-react';
 
 export function AminevaConsole() {
   return (
@@ -42,6 +43,10 @@ export function AminevaConsole() {
             <KeyRound className="h-4 w-4" />
             App Access
           </TabsTrigger>
+          <TabsTrigger value="release-checklist" className="gap-2">
+            <Rocket className="h-4 w-4" />
+            Release Checklist
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="products">
@@ -62,6 +67,10 @@ export function AminevaConsole() {
 
         <TabsContent value="app-access">
           <UserAppAccessManager />
+        </TabsContent>
+
+        <TabsContent value="release-checklist">
+          <SubProductReleaseChecklist />
         </TabsContent>
       </Tabs>
     </div>
