@@ -1,25 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { useAppSession } from "@/components/auth/AppAuthGate";
 import { Button } from "@/components/ui/button";
 import { MailWarning, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export function EmailVerificationBanner() {
   const { user } = useAuth();
+  const { access } = useAppSession();
   const [verified, setVerified] = useState<boolean | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [resending, setResending] = useState(false);
 
   useEffect(() => {
-    if (!user) return;
+    if (!user || !access?.appId) return;
 
     // Initial fetch
     supabase
       .from("profiles")
       .select("email_verified")
       .eq("user_id", user.id)
-      .single()
+      .eq("app_id", access.appId)
+      .maybeSingle()
       .then(({ data }) => setVerified(data?.email_verified ?? false));
 
     // Realtime subscription — auto-hide when verified
@@ -34,7 +37,7 @@ export function EmailVerificationBanner() {
           filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
-          if (payload.new?.email_verified) setVerified(true);
+          if (payload.new?.app_id === access.appId && payload.new?.email_verified) setVerified(true);
         }
       )
       .subscribe();
@@ -42,7 +45,7 @@ export function EmailVerificationBanner() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [user]);
+  }, [user, access?.appId]);
 
   if (!user || verified === null || verified || dismissed) return null;
 
