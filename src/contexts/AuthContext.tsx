@@ -101,7 +101,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
-      setUser(mapUser(data.user));
+      const mapped = mapUser(data.user);
+      handleUserChange(mapped?.id ?? null);
+      setUser(mapped);
       setIsAuthenticated(true);
       // Non-blocking device check
       checkLoginDevice();
@@ -109,7 +111,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       authActionInProgress.current = false;
     }
-  }, []);
+  }, [handleUserChange]);
 
   const register = useCallback(async (email: string, password: string, name?: string) => {
     authActionInProgress.current = true;
@@ -127,7 +129,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       // Auto-confirm is enabled, so session is available immediately
       if (data.session) {
-        setUser(mapUser(data.session.user));
+        const mapped = mapUser(data.session.user);
+        handleUserChange(mapped?.id ?? null);
+        setUser(mapped);
         setIsAuthenticated(true);
 
         // Send branded verification email via ComsSystem (non-blocking)
@@ -139,6 +143,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             console.warn("[register] Verification email failed (non-blocking):", err)
           );
       } else {
+        handleUserChange(null);
         setUser(null);
         setIsAuthenticated(false);
       }
@@ -146,7 +151,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       authActionInProgress.current = false;
     }
-  }, []);
+  }, [handleUserChange]);
 
   const socialLogin = useCallback(
     async (provider: "google" | "apple") => {
