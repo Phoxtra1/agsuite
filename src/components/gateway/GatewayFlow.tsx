@@ -12,8 +12,7 @@ import {
   GatewayStep,
 } from "@/suite/gateway/gatewayState";
 import { fetchCategoryProducts } from "@/data/products";
-import { getOrCreateProfile } from "@/lib/suiteProfile";
-import { shouldRouteToSuite, getProductRedirectUrl } from "@/lib/productRouting";
+import { shouldRouteToSuite } from "@/lib/productRouting";
 import { toast } from "@/components/ui/sonner";
 import {
   setAuthRedirect,
@@ -155,11 +154,6 @@ export function GatewayFlow() {
   // Route user to product after authentication
   const routeToProduct = useCallback(async () => {
     const products = await fetchCategoryProducts();
-
-    // Create/update lightweight Suite profile (non-blocking)
-    if (user?.id) {
-      getOrCreateProfile(user.id).catch(() => {});
-    }
 
     // SECURITY: Check for credential mismatch
     const storedAuth = getAuthRedirect();

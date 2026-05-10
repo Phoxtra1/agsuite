@@ -967,6 +967,10 @@ export type Database = {
         Args: { _app_slug: string; _user_id: string }
         Returns: boolean
       }
+      has_app_access_by_id: {
+        Args: { _app_id: string; _user_id: string }
+        Returns: boolean
+      }
       process_sla_alerts: { Args: never; Returns: number }
     }
     Enums: {

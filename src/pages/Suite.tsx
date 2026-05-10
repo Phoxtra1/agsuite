@@ -11,12 +11,17 @@ import { ACSModule } from "@/components/acs/ACSModule";
 
 import { BackendToggle } from "@/components/suite/pages/BackendToggle";
 import { EmailVerificationBanner } from "@/components/suite/EmailVerificationBanner";
+import { useAppSession } from "@/components/auth/AppAuthGate";
+import { getSealSession } from "@/lib/sealAuth";
 
 type TabView = "overview" | "console" | "coms" | "acs" | "profile" | "settings";
 
 export default function Suite() {
   const navigate = useNavigate();
   const location = useLocation();
+  const { access } = useAppSession();
+  const sealSession = getSealSession();
+  const isAdmin = !!sealSession || ["manager", "super_admin"].includes(access?.role ?? "");
 
   const getCurrentTab = (): TabView => {
     const path = location.pathname.replace("/suite", "");
@@ -31,6 +36,10 @@ export default function Suite() {
   const currentTab = getCurrentTab();
 
   const handleTabChange = (tab: TabView) => {
+    if (["console", "coms", "acs"].includes(tab) && !isAdmin) {
+      navigate("/access-denied", { replace: true });
+      return;
+    }
     const paths: Record<TabView, string> = {
       overview: "/suite",
       console: "/suite/console",
@@ -44,7 +53,7 @@ export default function Suite() {
 
   return (
     <div className="min-h-screen bg-background">
-      <SuiteNav currentTab={currentTab} onTabChange={handleTabChange} isAdmin={true} />
+      <SuiteNav currentTab={currentTab} onTabChange={handleTabChange} isAdmin={isAdmin} />
 
       <main className="ml-64 p-8">
         <EmailVerificationBanner />
@@ -52,9 +61,9 @@ export default function Suite() {
 
         <Routes>
           <Route index element={<OverviewPage />} />
-          <Route path="console" element={<AminevaConsole />} />
-          <Route path="coms" element={<ComsSystem />} />
-          <Route path="acs" element={<ACSModule />} />
+          <Route path="console" element={isAdmin ? <AminevaConsole /> : <Navigate to="/access-denied" replace />} />
+          <Route path="coms" element={isAdmin ? <ComsSystem /> : <Navigate to="/access-denied" replace />} />
+          <Route path="acs" element={isAdmin ? <ACSModule /> : <Navigate to="/access-denied" replace />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/suite" replace />} />
