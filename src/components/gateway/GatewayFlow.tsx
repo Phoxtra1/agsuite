@@ -12,7 +12,7 @@ import {
   GatewayStep,
 } from "@/suite/gateway/gatewayState";
 import { fetchCategoryProducts } from "@/data/products";
-import { shouldRouteToSuite, getProductRedirectUrl } from "@/lib/productRouting";
+import { shouldRouteToSuite } from "@/lib/productRouting";
 import { toast } from "@/components/ui/sonner";
 import {
   setAuthRedirect,
