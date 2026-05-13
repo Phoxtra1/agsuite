@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, Target, Database, Link2, Shield, Eye, CheckCircle, TrendingUp } from 'lucide-react';
+import { Globe, Target, Database, Link2, Shield, Eye, CheckCircle, TrendingUp, Sparkles, CloudSun } from 'lucide-react';
 
 export function OverviewPage() {
   return (
@@ -11,14 +11,14 @@ export function OverviewPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-2xl">
               <Globe className="h-6 w-6 text-accent" />
-              What is Amineva?
+              What is Amineva Global?
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              Amineva is a tech-driven information provider that creates and manages digital systems enabling 
-              businesses and individuals to manage operations, receive insight, predict outcomes, verify decisions, 
-              and deliver services efficiently.
+              Amineva Global is a technology and innovation company developing intelligent digital systems that support
+              operational intelligence, predictive analytics, environmental monitoring, research, verification, and service
+              efficiency across critical African sectors — agriculture, climate resilience, transport, commerce, and digital trade.
             </p>
           </CardContent>
         </Card>
@@ -30,15 +30,14 @@ export function OverviewPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-2xl">
               <Target className="h-6 w-6 text-accent" />
-              What Problem Are We Solving?
+              What Problem We Solve
             </CardTitle>
           </CardHeader>
           <CardContent>
             <p className="text-lg text-muted-foreground leading-relaxed">
-              In today's fast-paced world, many struggle to access actionable information for growth, 
-              evaluate operational risks, or protect and measure the effectiveness of projects. 
-              Decision-makers need reliable, verified intelligence to navigate complex business environments 
-              and protect their investments.
+              Decision-makers across Africa lack connected intelligence systems for operations, climate, finance, and verification.
+              Amineva Global builds the ecosystem-grade infrastructure that unifies these capabilities — so insight, oversight,
+              and action flow as one connected layer.
             </p>
           </CardContent>
         </Card>
@@ -50,96 +49,61 @@ export function OverviewPage() {
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-2xl">
               <Database className="h-6 w-6 text-accent" />
-              Our Data Sources
+              Intelligence Sources
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
             <p className="text-lg text-muted-foreground leading-relaxed">
-              We combine firsthand, secondary, and institutional data to support decision makers. 
-              Actionable information is critical for investment success—ignoring it can lead to significant losses.
+              Firsthand field intelligence, secondary institutional sources, and AI-driven analysis combine into a
+              continuous intelligence pipeline that powers every platform in the ecosystem.
             </p>
             <div className="grid md:grid-cols-3 gap-4 mt-6">
               <div className="p-4 bg-accent/10 rounded-lg">
-                <h4 className="font-semibold text-foreground mb-2">Firsthand Data</h4>
-                <p className="text-sm text-muted-foreground">Direct field observations, inspections, and assessments conducted by our team.</p>
+                <h4 className="font-semibold text-foreground mb-2">Firsthand Field Data</h4>
+                <p className="text-sm text-muted-foreground">Direct observations, inspections, and verified assessments from the ground.</p>
               </div>
               <div className="p-4 bg-accent/10 rounded-lg">
-                <h4 className="font-semibold text-foreground mb-2">Secondary Data</h4>
-                <p className="text-sm text-muted-foreground">Verified reports, market research, and industry analysis from trusted sources.</p>
+                <h4 className="font-semibold text-foreground mb-2">Institutional Sources</h4>
+                <p className="text-sm text-muted-foreground">Verified reports, regulatory data, and trusted institutional records.</p>
               </div>
               <div className="p-4 bg-accent/10 rounded-lg">
-                <h4 className="font-semibold text-foreground mb-2">Institutional Data</h4>
-                <p className="text-sm text-muted-foreground">Official records, regulatory filings, and institutional documentation.</p>
+                <h4 className="font-semibold text-foreground mb-2">AI-Driven Analysis</h4>
+                <p className="text-sm text-muted-foreground">Predictive models, pattern detection, and intelligence synthesis.</p>
               </div>
             </div>
           </CardContent>
         </Card>
       </section>
 
-      {/* How Products Fit Together */}
+      {/* Platform Ecosystem */}
       <section>
         <Card className="border-accent/20">
           <CardHeader>
             <CardTitle className="flex items-center gap-3 text-2xl">
               <Link2 className="h-6 w-6 text-accent" />
-              The Amineva Ecosystem: How Our Products Work Together
+              The Platform Ecosystem
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
             <p className="text-lg text-muted-foreground leading-relaxed">
-              All products are connected as one investment-protection ecosystem, providing 
-              <span className="font-semibold text-foreground"> visibility → verification → execution → protection </span>
-              to reduce waste, fraud, and investment losses across projects and businesses.
+              Each platform is a connected division of one ecosystem — sharing identity, intelligence, and infrastructure
+              to deliver <span className="font-semibold text-foreground">visibility → verification → execution → protection</span>
+              {" "}across sectors.
             </p>
-            
+
             <div className="grid md:grid-cols-2 gap-6 mt-6">
-              <div className="flex gap-4 p-4 rounded-lg border border-border hover:border-accent/50 transition-colors">
-                <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
-                  <Eye className="h-6 w-6 text-accent" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">AgroClimate</h4>
-                  <p className="text-sm text-muted-foreground">
-                    AgroClimate provides real-time weather forecasts, agro production alerts, environmental predictions, Farming assistance, and learning resources built for community farming production.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex gap-4 p-4 rounded-lg border border-border hover:border-accent/50 transition-colors">
-                <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
-                  <CheckCircle className="h-6 w-6 text-accent" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">AGIS</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Executes field work and assessments to generate verified data. The operational arm for data collection and validation.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex gap-4 p-4 rounded-lg border border-border hover:border-accent/50 transition-colors">
-                <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
-                  <TrendingUp className="h-6 w-6 text-accent" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">AminevaOps</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Manages service delivery and operational accountability for organizations and service providers.
-                  </p>
-                </div>
-              </div>
-              
-              <div className="flex gap-4 p-4 rounded-lg border border-border hover:border-accent/50 transition-colors">
-                <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
-                  <Shield className="h-6 w-6 text-accent" />
-                </div>
-                <div>
-                  <h4 className="font-semibold text-foreground mb-1">AGStock</h4>
-                  <p className="text-sm text-muted-foreground">
-                    Protect daily business operations by tracking inventory, sales, and losses.
-                  </p>
-                </div>
-              </div>
+              <EcoCard icon={Sparkles} title="Odeneho AI"
+                desc="Intelligent companion for research, writing, planning, documentation, storytelling, knowledge systems, and data analysis." />
+              <EcoCard icon={CloudSun} title="AgroClimate"
+                desc="Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, transport resilience, and operational risk." />
+              <EcoCard icon={Shield} title="AGStock"
+                desc="AI-backed inventory, commerce, sales, and operational management infrastructure for smart business systems." />
+              <EcoCard icon={CheckCircle} title="AGIS"
+                desc="Strategic assessment, field inspection, verification, operational intelligence, and documentation infrastructure." />
+              <EcoCard icon={TrendingUp} title="AminevaOps"
+                desc="AI-backed financial operations, monitoring systems, workflow intelligence, and operational oversight infrastructure." />
+              <EcoCard icon={Eye} title="Amniva"
+                desc="Predictive intelligence and verification infrastructure for forecasting, trend analysis, and strategic insight systems." />
             </div>
           </CardContent>
         </Card>
@@ -149,23 +113,38 @@ export function OverviewPage() {
       <section className="grid md:grid-cols-3 gap-4">
         <Card className="bg-gradient-to-br from-accent/10 to-transparent border-accent/20">
           <CardContent className="pt-6">
-            <div className="text-3xl font-bold text-accent mb-2">100%</div>
-            <div className="text-sm text-muted-foreground">Verified Field Intelligence</div>
+            <div className="text-3xl font-bold text-accent mb-2">Ecosystem</div>
+            <div className="text-sm text-muted-foreground">Connected Infrastructure</div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-accent/10 to-transparent border-accent/20">
           <CardContent className="pt-6">
-            <div className="text-3xl font-bold text-accent mb-2">24/7</div>
-            <div className="text-sm text-muted-foreground">Operational Monitoring</div>
+            <div className="text-3xl font-bold text-accent mb-2">AI-Backed</div>
+            <div className="text-sm text-muted-foreground">Intelligence Layer</div>
           </CardContent>
         </Card>
         <Card className="bg-gradient-to-br from-accent/10 to-transparent border-accent/20">
           <CardContent className="pt-6">
-            <div className="text-3xl font-bold text-accent mb-2">360°</div>
-            <div className="text-sm text-muted-foreground">Investment Protection</div>
+            <div className="text-3xl font-bold text-accent mb-2">Africa-Focused</div>
+            <div className="text-sm text-muted-foreground">Continental Scale</div>
           </CardContent>
         </Card>
       </section>
     </div>
   );
 }
+
+function EcoCard({ icon: Icon, title, desc }: { icon: any; title: string; desc: string }) {
+  return (
+    <div className="flex gap-4 p-4 rounded-lg border border-border hover:border-accent/50 transition-colors">
+      <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
+        <Icon className="h-6 w-6 text-accent" />
+      </div>
+      <div>
+        <h4 className="font-semibold text-foreground mb-1">{title}</h4>
+        <p className="text-sm text-muted-foreground">{desc}</p>
+      </div>
+    </div>
+  );
+}
+
