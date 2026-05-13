@@ -16,7 +16,7 @@ import { AppAuthGate } from "@/components/auth/AppAuthGate";
 const Landing = lazy(() => import("./pages/landing/Landing"));
 const HomePage = lazy(() => import("./pages/HomePage"));
 const AboutUs = lazy(() => import("./pages/landing/AboutUs"));
-const OdenehoAI = lazy(() => import("./pages/landing/OdenehoAI"));
+const OdenehoAIPage = lazy(() => import("./pages/landing/OdenehoAIPage"));
 const AGStockPage = lazy(() => import("./pages/landing/AGStockPage"));
 const AGISPage = lazy(() => import("./pages/landing/AGISPage"));
 const AmnivaPage = lazy(() => import("./pages/landing/AmnivaPage"));
