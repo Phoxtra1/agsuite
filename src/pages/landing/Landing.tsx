@@ -5,7 +5,7 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import amvLogo from "@/assets/amv_global_logo.png";
 
 const apps = [
-  { label: "Odeneho AI", to: "apps/odeneho-ai" },
+  { label: "Odeneho AI", to: "/apps/odeneho-ai" },
   { label: "AGStock", to: "/apps/agstock" },
   { label: "AgroClimate", to: "/apps/agroclimate" },
 ];
