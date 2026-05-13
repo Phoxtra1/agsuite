@@ -188,7 +188,6 @@ function AppRoutes() {
           <Route path="about-us" element={<AboutUs />} />
           <Route path="/apps/agstock" element={<AGStockPage />} />
           <Route path="/apps/agroclimate" element={<AgroClimatePage />} />
-          <Route path="/apps/odeneho-ai" element={<OdenehoAIPage />} />
           <Route path="explainer/agis" element={<AGISPage />} />
           <Route path="explainer/amniva" element={<AmnivaPage />} />
           <Route path="explainer/aminevaops" element={<AminevaOpsPage />} />
