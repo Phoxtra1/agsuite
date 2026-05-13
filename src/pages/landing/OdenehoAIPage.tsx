@@ -5,8 +5,6 @@ import {
   Landmark, BookOpen, Library, Feather, Film, Radio, Newspaper,
   Sparkles, Globe, Shield, Zap, ArrowRight, Network, Mic,
 } from "lucide-react";
-import Header from "@/components/Header";
-import Footer from "@/components/Footer";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
