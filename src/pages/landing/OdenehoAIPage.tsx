@@ -2,16 +2,18 @@ import { FC } from "react";
 import { motion } from "framer-motion";
 import {
   Brain, Search, BarChart3, PenTool, CalendarClock, FileText,
-  Landmark, BookOpen, Library, Feather, Film, Radio,
+  Landmark, BookOpen, Library, Feather, Film, Radio, Newspaper,
   Sparkles, Globe, Shield, Zap, ArrowRight, Network, Mic,
 } from "lucide-react";
+import Header from "@/components/Header";
+import Footer from "@/components/Footer";
 
 const fadeUp = {
   hidden: { opacity: 0, y: 30 },
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.5 } }),
 };
 
-const OdenehoAI: FC = () => {
+const OdenehoAIPage: FC = () => {
   const capabilities = [
     { icon: Search, title: "Research & Analysis", desc: "Deep, source-grounded research across domains with citation-ready synthesis and comparative analysis." },
     { icon: BarChart3, title: "Data Insights", desc: "Turn raw datasets into clear narratives — patterns, correlations, and forecasts you can act on." },
@@ -38,8 +40,8 @@ const OdenehoAI: FC = () => {
   ];
 
   return (
-    <div className="w-full">
-      {/* Hero */}
+    <div className="min-h-screen bg-background">
+      <Header />
       <section className="relative py-24 lg:py-36 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/80" />
         <div className="relative z-10 max-w-5xl mx-auto text-center px-6">
@@ -54,17 +56,13 @@ const OdenehoAI: FC = () => {
             <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto mb-8">
               An intelligent AI companion for research, writing, planning, documentation, storytelling, knowledge systems, and data analysis — rooted in African knowledge and built for the world.
             </p>
-            <a
-              href="#capabilities"
-              className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg"
-            >
+            <a href="#capabilities" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg">
               Explore Odeneho <ArrowRight className="h-5 w-5" />
             </a>
           </motion.div>
         </div>
       </section>
 
-      {/* Pillars */}
       <section className="max-w-7xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
           <span className="text-sm font-semibold text-accent uppercase tracking-wider">The Odeneho Mind</span>
@@ -81,7 +79,6 @@ const OdenehoAI: FC = () => {
         </div>
       </section>
 
-      {/* Capabilities */}
       <section id="capabilities" className="bg-secondary py-20 px-6">
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
@@ -103,7 +100,6 @@ const OdenehoAI: FC = () => {
         </div>
       </section>
 
-      {/* How It Works */}
       <section className="max-w-7xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
           <span className="text-sm font-semibold text-accent uppercase tracking-wider">How It Works</span>
@@ -125,7 +121,6 @@ const OdenehoAI: FC = () => {
         </div>
       </section>
 
-      {/* Why Odeneho */}
       <section className="bg-secondary py-20 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
@@ -150,23 +145,20 @@ const OdenehoAI: FC = () => {
         </div>
       </section>
 
-      {/* CTA */}
       <section className="py-20 px-6 bg-gradient-to-r from-primary to-primary/90 text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Begin Your Journey with Odeneho</h2>
           <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
             Join thinkers, creators, and researchers using Odeneho AI to explore knowledge, craft stories, and shape the future.
           </p>
-          <a
-            href="#capabilities"
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg"
-          >
+          <a href="#capabilities" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg">
             Get Started <ArrowRight className="h-5 w-5" />
           </a>
         </motion.div>
       </section>
+      <Footer />
     </div>
   );
 };
 
-export default OdenehoAI;
+export default OdenehoAIPage;
