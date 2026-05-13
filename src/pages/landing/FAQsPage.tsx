@@ -21,53 +21,57 @@ interface FAQItem {
 
 const categories: { title: string; faqs: FAQItem[] }[] = [
   {
-    title: "General",
+    title: "About Amineva Global",
     faqs: [
-      { q: "What is Amineva Global?", a: "Amineva Global is a tech-driven information provider that creates and manages digital systems enabling businesses and individuals to manage operations, receive insight, predict outcomes, verify decisions, and deliver services efficiently." },
-      { q: "Who can use Amineva's platforms?", a: "Our platforms serve enterprises, institutions, professionals, and service providers across various sectors. Each product is designed for specific use cases — from retail inventory management to market forecasting." },
-      { q: "Is Amineva available in my country?", a: "Amineva currently operates across Africa, Europe, and expanding globally. AGStock supports multiple currencies including GHS, NGN, KES, ZAR, CFA, EUR, GBP, and USD." },
-      { q: "How do I create an account?", a: "Visit the Amineva Suite homepage, select the product category you're interested in, choose the product, and follow the sign-up process. You can register with your email address." },
+      { q: "What is Amineva Global?", a: "Amineva Global is a technology and innovation company building intelligent digital systems and infrastructure that power operational intelligence, predictive analytics, environmental monitoring, research, and verification across critical African sectors." },
+      { q: "Is Amineva Global a software company?", a: "Amineva Global is an innovation ecosystem rather than a single software vendor. We design and operate connected platforms, intelligence systems, and digital infrastructure that scale across sectors and partners." },
+      { q: "What sectors does Amineva Global operate in?", a: "Agriculture, climate resilience, transport, commerce, digital trade, financial operations, research, and operational intelligence — with continued expansion into adjacent African sectors." },
+      { q: "How are the platforms connected?", a: "Each platform is a division of one ecosystem. They share identity, intelligence pipelines, communication systems, and analytics — so insight, verification, and operations flow across the network." },
+      { q: "Does Amineva Global support innovation and startup collaboration?", a: "Yes. We support accelerator partnerships, sector-focused innovation programs, technology experimentation, and institutional collaborations across the continent." },
+      { q: "What is the company's long-term vision?", a: "To build the digital infrastructure layer for Africa's future — an interconnected innovation ecosystem powering intelligent operations, climate resilience, and scalable transformation." },
+      { q: "What makes Amineva Global different?", a: "Ecosystem architecture over isolated apps, African-focused intelligence over generic tools, and infrastructure-grade design built for institutions, partners, and scale." },
     ],
   },
   {
-    title: "AGStock",
+    title: "Odeneho AI",
     faqs: [
-      { q: "What is AGStock?", a: "AGStock is an inventory and sales management platform designed for retail shops, wholesalers, warehouses, restaurants, bars, and any entity requiring inventory management." },
-      { q: "Can I use AGStock for multiple locations?", a: "Yes. AGStock supports multi-location inventory management, allowing you to track stock across warehouses, stores, and distribution centres from a single dashboard." },
-      { q: "Does AGStock work offline?", a: "AGStock is a web-based platform that requires an internet connection. However, we're working on offline capabilities for areas with limited connectivity." },
-      { q: "How does employee management work?", a: "You can create staff accounts with PIN-based authentication, assign role-based permissions, and track employee activity logs for accountability." },
-    ],
-  },
-  {
-    title: "AGIS",
-    faqs: [
-      { q: "What services does AGIS provide?", a: "AGIS offers four core services: Data & Insights (surveys, market research), Field Project Inspection (on-ground verification), Strategic Assessment (feasibility studies, due diligence), and Documentation (company profiles, proposals, pitch decks)." },
-      { q: "How do I request a service?", a: "Log in to your AGIS client dashboard, click 'New Service Request', select the service type, provide the details, and submit. Our team will review and respond within 48 hours." },
-      { q: "Can AGIS provide field inspections internationally?", a: "Currently, AGIS operates primarily in Africa with expanding coverage. Contact our support team for availability in your specific region." },
-    ],
-  },
-  {
-    title: "Amniva",
-    faqs: [
-      { q: "What is Amniva?", a: "Amniva is a platform for market forecasting, trending, verification, predictions, and insights. It also features a social community where business leaders discuss the future of business tech and markets." },
-      { q: "How accurate are Amniva's predictions?", a: "Amniva uses AI-driven models trained on multiple data sources. While no prediction system is 100% accurate, our models are continuously refined with real-world feedback and institutional data." },
-      { q: "Can I contribute to the Amniva community?", a: "Yes! Once registered, you can participate in community discussions, share market insights, and engage with other business leaders on the platform." },
+      { q: "What is Odeneho AI?", a: "Odeneho AI is Amineva Global's intelligent companion for research, writing, planning, documentation, storytelling, knowledge systems, and data analysis — powering insight across the ecosystem." },
+      { q: "What can I use Odeneho AI for?", a: "Research and analysis, content creation, planning and scheduling, business documentation, historical and cultural knowledge, storytelling, library access, and curated narration." },
     ],
   },
   {
     title: "AgroClimate",
     faqs: [
-      { q: "What is AgroClimate?", a: "AgroClimate is a smart farming platform providing real-time weather forecasts, agro production alerts for livestock, crops, and aquaculture, environmental predictions, drone advisory, AI farming assistant, and learning resources." },
-      { q: "Is AgroClimate free to use?", a: "AgroClimate offers a free tier with basic weather and alert features. Premium features including drone advisory and AI assistant are available on paid plans." },
-      { q: "How does the AI assistant work?", a: "The AI assistant answers farming questions about crop management, livestock care, pest identification, planting calendars, and soil health — all personalized to your location and conditions." },
+      { q: "What is AgroClimate?", a: "AgroClimate is the climate-tech and environmental intelligence infrastructure of the ecosystem — supporting agriculture, environmental monitoring, forecasting, transport resilience, and operational risk awareness." },
+      { q: "Who is AgroClimate built for?", a: "Farmers, cooperatives, agribusinesses, transport operators, and institutions that need climate-aware planning and environmental intelligence." },
+    ],
+  },
+  {
+    title: "AGStock",
+    faqs: [
+      { q: "What is AGStock?", a: "AGStock is the AI-backed inventory, commerce, sales, and operational management infrastructure for smart business systems within the Amineva Global ecosystem." },
+      { q: "Who uses AGStock?", a: "Retailers, wholesalers, restaurants, warehouses, and any operator that needs intelligent inventory and sales infrastructure." },
+    ],
+  },
+  {
+    title: "AGIS & AminevaOps",
+    faqs: [
+      { q: "What is AGIS?", a: "AGIS is the strategic assessment, field inspection, verification, operational intelligence, and documentation infrastructure of the ecosystem." },
+      { q: "What is AminevaOps?", a: "AminevaOps is the AI-backed financial operations, monitoring, workflow intelligence, and operational oversight infrastructure for African financial networks." },
+    ],
+  },
+  {
+    title: "Amniva",
+    faqs: [
+      { q: "What is Amniva?", a: "Amniva is the predictive intelligence and verification infrastructure for forecasting, trend analysis, monitoring, and strategic insight systems across the ecosystem." },
     ],
   },
   {
     title: "Security & Privacy",
     faqs: [
-      { q: "How does Amineva protect my data?", a: "We use 256-bit encryption, secure authentication protocols, and follow industry-standard security practices. All data is stored in compliant data centres with regular security audits." },
-      { q: "Can I delete my account?", a: "Yes. You can request account deletion by contacting support@amineva.com. All personal data will be permanently removed within 30 days of the request." },
-      { q: "Does Amineva share my data with third parties?", a: "We do not sell or share your personal data with third parties for marketing purposes. Data may be processed by trusted service providers strictly for platform operations, as outlined in our Privacy Policy." },
+      { q: "How does Amineva protect my data?", a: "We use 256-bit encryption, secure authentication protocols, and follow industry-standard practices. Data is stored in compliant infrastructure with regular security audits." },
+      { q: "Can I delete my account?", a: "Yes. Contact support@amineva.com to request account deletion. Personal data is permanently removed within 30 days." },
+      { q: "Does Amineva share my data with third parties?", a: "We do not sell or share personal data with third parties for marketing. Trusted service providers may process data strictly for platform operations, as outlined in our Privacy Policy." },
     ],
   },
 ];
