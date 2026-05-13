@@ -5,16 +5,19 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import amvLogo from "@/assets/amv_global_logo.png";
 
 const apps = [
-  { label: "AGStock", to: "/explainer/agstock" },
-  { label: "AgroClimate", to: "/explainer/agroclimate" },
+  { label: "Odeneho AI", to: "https://ode.amineva.com", external: true },
+  { label: "AGStock", to: "https://stock.amineva.com", external: true },
+  { label: "AgroClimate", to: "https://agro.amineva.com", external: true },
 ];
 
 const explainerItems = [
-  { label: "AGStock", to: "/explainer/agstock" },
-  { label: "AGIS", to: "/explainer/agis" },
-  { label: "Amniva", to: "/explainer/amniva" },
-  { label: "AgroClimate", to: "/explainer/agroclimate" },
-  { label: "AminevaOps", to: "/explainer/aminevaops" },
+  { label: "Innovation Ecosystem", to: "/about-us#innovation-ecosystem" },
+  { label: "Intelligence Infrastructure", to: "/about-us#what-we-build" },
+  { label: "Climate & Operational Systems", to: "/about-us#climate-systems" },
+  { label: "Research & Predictive Systems", to: "/about-us#research" },
+  { label: "AGIS — Verification Infrastructure", to: "/explainer/agis" },
+  { label: "Amniva — Predictive Intelligence", to: "/explainer/amniva" },
+  { label: "AminevaOps — Financial Operations", to: "/explainer/aminevaops" },
 ];
 
 const navLinks = [
@@ -80,13 +83,25 @@ export default function Landing() {
                 <div className="p-2">
                   <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">Our Platforms</p>
                   {apps.map((app) => (
-                    <Link
-                      key={app.label}
-                      to={app.to}
-                      className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
-                    >
-                      {app.label}
-                    </Link>
+                    app.external ? (
+                      <a
+                        key={app.label}
+                        href={app.to}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
+                      >
+                        {app.label}
+                      </a>
+                    ) : (
+                      <Link
+                        key={app.label}
+                        to={app.to}
+                        className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
+                      >
+                        {app.label}
+                      </Link>
+                    )
                   ))}
                 </div>
               </DropdownMenu>
@@ -134,9 +149,15 @@ export default function Landing() {
                 <div className="p-4 space-y-1">
                   <p className="text-xs font-semibold text-muted-foreground uppercase px-3 py-1">Apps</p>
                   {apps.map((app) => (
-                    <Link key={app.label} to={app.to} onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg">
-                      {app.label}
-                    </Link>
+                    app.external ? (
+                      <a key={app.label} href={app.to} target="_blank" rel="noreferrer" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg">
+                        {app.label}
+                      </a>
+                    ) : (
+                      <Link key={app.label} to={app.to} onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg">
+                        {app.label}
+                      </Link>
+                    )
                   ))}
                   <p className="text-xs font-semibold text-muted-foreground uppercase px-3 py-1 mt-2">Explainer</p>
                   {explainerItems.map((item) => (
