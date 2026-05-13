@@ -342,7 +342,6 @@ export default function HomePage() {
 
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
             {/* Insight & Report */}
-            <a href="https://hub.amineva.com" target="_blank" rel="noreferrer" className="hover:text-foreground transition cursor-pointer">Insight &amp; Report</a>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>
 
