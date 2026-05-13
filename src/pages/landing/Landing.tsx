@@ -5,19 +5,16 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import amvLogo from "@/assets/amv_global_logo.png";
 
 const apps = [
-  { label: "Odeneho AI", to: "https://ode.amineva.com", external: true },
-  { label: "AGStock", to: "https://stock.amineva.com", external: true },
-  { label: "AgroClimate", to: "https://agro.amineva.com", external: true },
+  { label: "Odeneho AI", to: "apps/odeneho-ai" },
+  { label: "AGStock", to: "/apps/agstock" },
+  { label: "AgroClimate", to: "/apps/agroclimate" },
 ];
 
 const explainerItems = [
-  { label: "Innovation Ecosystem", to: "/about-us#innovation-ecosystem" },
-  { label: "Intelligence Infrastructure", to: "/about-us#what-we-build" },
-  { label: "Climate & Operational Systems", to: "/about-us#climate-systems" },
-  { label: "Research & Predictive Systems", to: "/about-us#research" },
-  { label: "AGIS — Verification Infrastructure", to: "/explainer/agis" },
-  { label: "Amniva — Predictive Intelligence", to: "/explainer/amniva" },
-  { label: "AminevaOps — Financial Operations", to: "/explainer/aminevaops" },
+  { label: "Innovation Ecosystem", to: "/about-us" },
+  { label: "AGIS", to: "/explainer/agis" },
+  { label: "Amniva", to: "/explainer/amniva" },
+  { label: "AminevaOps", to: "/explainer/aminevaops" },
 ];
 
 const navLinks = [
