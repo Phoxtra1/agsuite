@@ -149,9 +149,15 @@ export default function Landing() {
                 <div className="p-4 space-y-1">
                   <p className="text-xs font-semibold text-muted-foreground uppercase px-3 py-1">Apps</p>
                   {apps.map((app) => (
-                    <Link key={app.label} to={app.to} onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg">
-                      {app.label}
-                    </Link>
+                    app.external ? (
+                      <a key={app.label} href={app.to} target="_blank" rel="noreferrer" onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg">
+                        {app.label}
+                      </a>
+                    ) : (
+                      <Link key={app.label} to={app.to} onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg">
+                        {app.label}
+                      </Link>
+                    )
                   ))}
                   <p className="text-xs font-semibold text-muted-foreground uppercase px-3 py-1 mt-2">Explainer</p>
                   {explainerItems.map((item) => (
