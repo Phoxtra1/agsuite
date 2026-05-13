@@ -187,7 +187,7 @@ function AppRoutes() {
         <Route path="/" element={<Landing />}>
           <Route index element={<PublicHome />} />
           <Route path="about-us" element={<AboutUs />} />
-          <Route path="/apps/odeneho-ai" element={<OdenehoAI />} />
+          <Route path="apps/odeneho-ai" element={<OdenehoAIPage />} />
           <Route path="/apps/agstock" element={<AGStockPage />} />
           <Route path="/apps/agroclimate" element={<AgroClimatePage />} />
           <Route path="explainer/agis" element={<AGISPage />} />
