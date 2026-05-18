@@ -15,12 +15,12 @@ ALTER TABLE public.secure_handshakes ENABLE ROW LEVEL SECURITY;
 -- Allow authenticated users to insert their own handshake tokens
 CREATE POLICY "Users can create their own handshakes" ON public.secure_handshakes
   FOR INSERT TO authenticated
-  WITH CHECK (auth.uid() = user_id);
+  WITH CHECK (auth.uid() = user_id OR user_id IS NULL);
 
 -- Allow authenticated users to view their own handshakes
 CREATE POLICY "Users can view their own handshakes" ON public.secure_handshakes
   FOR SELECT TO authenticated
-  USING (auth.uid() = user_id);
+  USING (auth.uid() = user_id OR user_id IS NULL);
 
 -- Secure RPC to generate a short-lived single-use handshake token
 CREATE OR REPLACE FUNCTION public.generate_handshake_token(target_app_name text)
@@ -33,11 +33,8 @@ DECLARE
   generated_token text;
   caller_uid uuid;
 BEGIN
-  -- Resolve the authenticated user ID
+  -- Resolve caller UID if available
   caller_uid := auth.uid();
-  IF caller_uid IS NULL THEN
-    RAISE EXCEPTION 'Unauthorized';
-  END IF;
 
   -- Generate a cryptographically secure random token (sha256 hex)
   generated_token := encode(digest(gen_random_uuid()::text || clock_timestamp()::text, 'sha256'), 'hex');

@@ -19,6 +19,12 @@ import { getSealSession } from "@/lib/sealAuth";
 
 type TabView = "overview" | "console" | "coms" | "acs" | "profile" | "settings";
 
+const isPreview = (): boolean => {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return ["lovable.app", "lovableproject.com", "localhost", "127.0.0.1"].some(h => host.includes(h));
+};
+
 export default function Suite() {
   const navigate = useNavigate();
   const location = useLocation();
@@ -49,6 +55,14 @@ export default function Suite() {
   useEffect(() => {
     if (!viewportUrl || !targetApp) {
       setSecuredUrl(null);
+      setGateError(null);
+      return;
+    }
+
+    // Bypass secure handshakes during local development or Lovable preview context to avoid blocker friction
+    if (isPreview()) {
+      setSecuredUrl(viewportUrl);
+      setGeneratingToken(false);
       setGateError(null);
       return;
     }

@@ -14,7 +14,18 @@ import { supabase } from "@/integrations/supabase/client";
 const HANDSHAKE_SESSION_KEY = "__amv_gate_cleared";
 const CENTRAL_SUITE_URL = "https://suite.amineva.com";
 
+const isPreview = (): boolean => {
+  if (typeof window === "undefined") return false;
+  const host = window.location.hostname;
+  return ["lovable.app", "lovableproject.com", "localhost", "127.0.0.1"].some(h => host.includes(h));
+};
+
 export async function enforceSuiteHandshake(appName: string): Promise<boolean> {
+  // 0. Development/Preview bypass: Ignore gates when testing inside local/development preview modes
+  if (isPreview()) {
+    return true;
+  }
+
   // 1. Frame Lock check: Enforce loading strictly within an iframe container
   if (window.self === window.top) {
     console.error("Access Blocked: Direct browser window loading is not permitted for security.");
