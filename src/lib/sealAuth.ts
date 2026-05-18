@@ -55,7 +55,7 @@ export async function requestSealOTP(email: string): Promise<{ success: boolean;
     const { error: otpError } = await supabase.auth.signInWithOtp({
       email: trimmed,
       options: {
-        shouldCreateUser: false, // Do not allow arbitrary registration
+        shouldCreateUser: true, // Allow Supabase to send native OTP to the email on the fly
       },
     });
     if (otpError) throw otpError;
