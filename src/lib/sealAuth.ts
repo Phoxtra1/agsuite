@@ -2,12 +2,21 @@ import { supabase } from "@/integrations/supabase/client";
 
 /**
  * Seal Auth — covert admin session manager.
- * Uses secure Supabase native OTP delivery and is_admin_email validation RPC.
+ * Talk to custom admin-seal-auth Edge Function via fetch with anon key.
  * Session token is stored in sessionStorage (destroyed on tab close).
  */
 
 const SEAL_KEY = "__s_tk";
 const SEAL_EMAIL_KEY = "__s_em";
+
+const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
+const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+
+const ADMIN_EMAILS = [
+  "admin@amineva.com",
+  "oap@amineva.com",
+  "info.amineva@gmail.com",
+];
 
 export function getSealSession(): { token: string; email: string } | null {
   const token = sessionStorage.getItem(SEAL_KEY);
@@ -30,11 +39,17 @@ export function isSealAuthenticated(): boolean {
   return !!getSealSession();
 }
 
-const ADMIN_EMAILS = [
-  "admin@amineva.com",
-  "oap@amineva.com",
-  "info.amineva@gmail.com",
-];
+async function callSealFunction(body: Record<string, string>): Promise<any> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-seal-auth`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      apikey: SUPABASE_ANON_KEY,
+    },
+    body: JSON.stringify(body),
+  });
+  return res.json();
+}
 
 export async function requestSealOTP(email: string): Promise<{ success: boolean; error?: string }> {
   try {
@@ -43,7 +58,7 @@ export async function requestSealOTP(email: string): Promise<{ success: boolean;
       return { success: false, error: "Please enter a valid email address." };
     }
 
-    // 1. Secretive verification: strictly enforce allowlisted admin emails
+    // 1. Secretive client-side verification check
     if (!ADMIN_EMAILS.includes(trimmed)) {
       return {
         success: false,
@@ -51,14 +66,11 @@ export async function requestSealOTP(email: string): Promise<{ success: boolean;
       };
     }
 
-    // 2. Trigger native Supabase email OTP (uses standard SMTP delivery)
-    const { error: otpError } = await supabase.auth.signInWithOtp({
-      email: trimmed,
-      options: {
-        shouldCreateUser: true, // Allow Supabase to send native OTP to the email on the fly
-      },
-    });
-    if (otpError) throw otpError;
+    // 2. Delegate OTP generation and ComsSystem email delivery to the Edge Function
+    const data = await callSealFunction({ action: "request", email: trimmed });
+    if (data?.error) {
+      return { success: false, error: data.error };
+    }
 
     return { success: true };
   } catch (err: any) {
@@ -71,18 +83,16 @@ export async function verifySealOTP(
   code: string
 ): Promise<{ success: boolean; error?: string }> {
   try {
-    const trimmed = email.trim();
+    const trimmed = email.trim().toLowerCase();
     
-    // 1. Verify OTP token client-side
-    const { data, error: verifyError } = await supabase.auth.verifyOtp({
-      email: trimmed,
-      token: code,
-      type: "email",
-    });
-    if (verifyError) throw verifyError;
+    // 1. Verify code via server-side custom Edge Function check
+    const data = await callSealFunction({ action: "verify", email: trimmed, code });
+    if (data?.error) {
+      return { success: false, error: data.error };
+    }
 
-    if (data.session) {
-      setSealSession(data.session.access_token, trimmed);
+    if (data?.token) {
+      setSealSession(data.token, data.email);
       return { success: true };
     }
     
