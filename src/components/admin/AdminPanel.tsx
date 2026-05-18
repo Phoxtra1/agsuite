@@ -1,4 +1,5 @@
 import React, { useMemo, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAdminProducts, useAdminProductMutations } from "@/hooks/useProducts";
 import {
   ProductData,
@@ -70,6 +71,7 @@ function normalizeUrl(url: string) {
 
 export function AdminPanel() {
   const { products, refresh } = useAdminProducts();
+  const navigate = useNavigate();
   const { save, remove } = useAdminProductMutations();
   const [isDialogOpen, setIsDialogOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -165,10 +167,10 @@ export function AdminPanel() {
     setDeleteConfirm(null);
   };
 
-  const openAdminUrl = (url?: string) => {
+  const openAdminUrl = (url?: string, productName?: string) => {
     const u = normalizeUrl(url || "");
     if (!u) return;
-    window.open(u, "_blank", "noopener,noreferrer");
+    navigate(`/suite?viewport=${encodeURIComponent(u)}&name=${encodeURIComponent(productName || "Product")}`);
   };
 
   return (
@@ -212,7 +214,7 @@ export function AdminPanel() {
                     </TableCell>
                     <TableCell>
                       {product.adminUrl ? (
-                        <Button variant="ghost" size="sm" className="text-accent hover:text-accent/80 h-8 px-2" onClick={() => openAdminUrl(product.adminUrl)}>
+                        <Button variant="ghost" size="sm" className="text-accent hover:text-accent/80 h-8 px-2" onClick={() => openAdminUrl(product.adminUrl, product.name)}>
                           <ExternalLink className="h-4 w-4 mr-1" /> Open
                         </Button>
                       ) : (

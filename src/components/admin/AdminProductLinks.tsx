@@ -1,4 +1,5 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 import { DEFAULT_CATEGORIES, ProductData } from '@/types/product';
 import { getProductIcon } from '@/lib/products';
 import { useAdminProducts } from '@/hooks/useProducts';
@@ -8,6 +9,7 @@ import { ExternalLink, Settings } from 'lucide-react';
 
 export function AdminProductLinks() {
   const { products } = useAdminProducts();
+  const navigate = useNavigate();
   
   // Group products by category for admin links
   const adminProducts = DEFAULT_CATEGORIES.map(category => ({
@@ -27,8 +29,8 @@ export function AdminProductLinks() {
     ? [...adminProducts, { id: 'other', name: 'Other Applications', order: 99, products: uncategorizedProducts }]
     : adminProducts;
 
-  const handleOpenAdmin = (adminUrl: string) => {
-    window.open(adminUrl, '_blank');
+  const handleOpenAdmin = (adminUrl: string, productName: string) => {
+    navigate(`/suite?viewport=${encodeURIComponent(adminUrl)}&name=${encodeURIComponent(productName)}`);
   };
 
   if (allAdminProducts.length === 0) {
@@ -57,7 +59,7 @@ export function AdminProductLinks() {
                 return (
                   <button
                     key={product.id}
-                    onClick={() => !isDisabled && handleOpenAdmin(product.adminUrl!)}
+                    onClick={() => !isDisabled && handleOpenAdmin(product.adminUrl!, product.name)}
                     disabled={isDisabled}
                     className={`
                       w-full flex items-center gap-3 p-3 rounded-lg border border-border transition-all text-left

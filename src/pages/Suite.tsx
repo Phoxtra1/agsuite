@@ -1,5 +1,7 @@
 import React from "react";
-import { Routes, Route, Navigate, useNavigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from "react-router-dom";
+import { Button } from "@/components/ui/button";
+import { ShieldCheck, X } from "lucide-react";
 
 import { SuiteNav } from "@/components/suite/SuiteNav";
 import { OverviewPage } from "@/components/suite/pages/OverviewPage";
@@ -34,6 +36,9 @@ export default function Suite() {
   };
 
   const currentTab = getCurrentTab();
+  const [searchParams] = useSearchParams();
+  const viewportUrl = searchParams.get("viewport");
+  const viewportName = searchParams.get("name") || "Application";
 
   const handleTabChange = (tab: TabView) => {
     if (["console", "coms", "acs"].includes(tab) && !isAdmin) {
@@ -50,6 +55,51 @@ export default function Suite() {
     };
     navigate(paths[tab]);
   };
+
+  if (viewportUrl) {
+    return (
+      <div className="h-screen w-screen flex flex-col bg-slate-950 overflow-hidden select-none animate-in fade-in duration-500">
+        {/* Secure Enclave Top Bar */}
+        <div className="h-14 bg-slate-900 border-b border-white/5 px-6 flex items-center justify-between z-50">
+          <div className="flex items-center gap-3">
+            <ShieldCheck className="h-5 w-5 text-emerald-400 animate-pulse" />
+            <div className="flex items-center gap-2">
+              <span className="text-sm font-semibold text-white tracking-wide">{viewportName}</span>
+              <span className="text-[10px] uppercase font-bold tracking-wider px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                Secure Enclave
+              </span>
+            </div>
+          </div>
+          
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-slate-400 hidden md:inline">
+              Session locked to Amineva Suite container
+            </span>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => navigate("/suite", { replace: true })}
+              className="h-8 border-white/10 hover:bg-white/5 text-slate-300 hover:text-white text-xs gap-1.5 cursor-pointer"
+            >
+              <X className="h-3.5 w-3.5" />
+              Close Sandbox
+            </Button>
+          </div>
+        </div>
+
+        {/* Dynamic Sandbox Viewport */}
+        <div className="flex-1 w-full h-full bg-slate-900 relative">
+          <iframe
+            src={viewportUrl}
+            title={viewportName}
+            className="w-full h-full border-none bg-slate-900"
+            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+            referrerPolicy="no-referrer"
+          />
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-background">
