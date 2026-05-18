@@ -167,10 +167,10 @@ export function AdminPanel() {
     setDeleteConfirm(null);
   };
 
-  const openAdminUrl = (url?: string, productName?: string) => {
+  const openAdminUrl = (url?: string, productName?: string, productSlug?: string) => {
     const u = normalizeUrl(url || "");
     if (!u) return;
-    navigate(`/suite?viewport=${encodeURIComponent(u)}&name=${encodeURIComponent(productName || "Product")}`);
+    navigate(`/suite?viewport=${encodeURIComponent(u)}&name=${encodeURIComponent(productName || "Product")}&app=${encodeURIComponent(productSlug || "")}`);
   };
 
   return (
@@ -214,7 +214,7 @@ export function AdminPanel() {
                     </TableCell>
                     <TableCell>
                       {product.adminUrl ? (
-                        <Button variant="ghost" size="sm" className="text-accent hover:text-accent/80 h-8 px-2" onClick={() => openAdminUrl(product.adminUrl, product.name)}>
+                        <Button variant="ghost" size="sm" className="text-accent hover:text-accent/80 h-8 px-2" onClick={() => openAdminUrl(product.adminUrl, product.name, product.id)}>
                           <ExternalLink className="h-4 w-4 mr-1" /> Open
                         </Button>
                       ) : (

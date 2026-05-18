@@ -29,8 +29,8 @@ export function AdminProductLinks() {
     ? [...adminProducts, { id: 'other', name: 'Other Applications', order: 99, products: uncategorizedProducts }]
     : adminProducts;
 
-  const handleOpenAdmin = (adminUrl: string, productName: string) => {
-    navigate(`/suite?viewport=${encodeURIComponent(adminUrl)}&name=${encodeURIComponent(productName)}`);
+  const handleOpenAdmin = (adminUrl: string, productName: string, productSlug: string) => {
+    navigate(`/suite?viewport=${encodeURIComponent(adminUrl)}&name=${encodeURIComponent(productName)}&app=${encodeURIComponent(productSlug)}`);
   };
 
   if (allAdminProducts.length === 0) {
@@ -59,7 +59,7 @@ export function AdminProductLinks() {
                 return (
                   <button
                     key={product.id}
-                    onClick={() => !isDisabled && handleOpenAdmin(product.adminUrl!, product.name)}
+                    onClick={() => !isDisabled && handleOpenAdmin(product.adminUrl!, product.name, product.id)}
                     disabled={isDisabled}
                     className={`
                       w-full flex items-center gap-3 p-3 rounded-lg border border-border transition-all text-left

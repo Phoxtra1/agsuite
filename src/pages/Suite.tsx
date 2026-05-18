@@ -1,7 +1,8 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, X } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 import { SuiteNav } from "@/components/suite/SuiteNav";
 import { OverviewPage } from "@/components/suite/pages/OverviewPage";
@@ -39,6 +40,54 @@ export default function Suite() {
   const [searchParams] = useSearchParams();
   const viewportUrl = searchParams.get("viewport");
   const viewportName = searchParams.get("name") || "Application";
+  const targetApp = searchParams.get("app");
+
+  const [securedUrl, setSecuredUrl] = useState<string | null>(null);
+  const [generatingToken, setGeneratingToken] = useState(false);
+  const [gateError, setGateError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!viewportUrl || !targetApp) {
+      setSecuredUrl(null);
+      setGateError(null);
+      return;
+    }
+
+    let isMounted = true;
+
+    async function authorizeEnclave() {
+      setGeneratingToken(true);
+      setGateError(null);
+      try {
+        // Generate a cryptographically secure, single-use SSO handshake token
+        const { data: token, error } = await supabase.rpc("generate_handshake_token", {
+          target_app_name: targetApp.toLowerCase().trim()
+        });
+
+        if (error || !token) throw error || new Error("Failed to generate secure SSO session parameters.");
+
+        if (isMounted) {
+          const separator = viewportUrl.includes("?") ? "&" : "?";
+          setSecuredUrl(`${viewportUrl}${separator}handshake=${token}`);
+        }
+      } catch (err: any) {
+        console.error("SSO Enclave Handshake Failure:", err);
+        if (isMounted) {
+          setGateError(err?.message || "Secure gateway SSO authentication failed.");
+        }
+      } finally {
+        if (isMounted) {
+          setGeneratingToken(false);
+        }
+      }
+    }
+
+    authorizeEnclave();
+
+    return () => {
+      isMounted = false;
+    };
+  }, [viewportUrl, targetApp]);
 
   const handleTabChange = (tab: TabView) => {
     if (["console", "coms", "acs"].includes(tab) && !isAdmin) {
@@ -88,14 +137,38 @@ export default function Suite() {
         </div>
 
         {/* Dynamic Sandbox Viewport */}
-        <div className="flex-1 w-full h-full bg-slate-900 relative">
-          <iframe
-            src={viewportUrl}
-            title={viewportName}
-            className="w-full h-full border-none bg-slate-900"
-            sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
-            referrerPolicy="no-referrer"
-          />
+        <div className="flex-1 w-full h-full bg-slate-900 relative flex items-center justify-center">
+          {generatingToken && (
+            <div className="flex flex-col items-center gap-3 text-slate-400 text-sm">
+              <div className="h-5 w-5 border-2 border-emerald-500 border-t-transparent rounded-full animate-spin" />
+              <span>Authenticating Secure SSO Session...</span>
+            </div>
+          )}
+          
+          {gateError && (
+            <div className="flex flex-col items-center gap-4 text-center max-w-sm px-6">
+              <div className="h-12 w-12 rounded-full bg-destructive/10 border border-destructive/20 flex items-center justify-center">
+                <X className="h-6 w-6 text-destructive" />
+              </div>
+              <div className="space-y-1">
+                <h3 className="font-bold text-white text-base">Enclave Auth Failed</h3>
+                <p className="text-xs text-slate-400">{gateError}</p>
+              </div>
+              <Button size="sm" onClick={() => navigate("/suite", { replace: true })} className="bg-white/10 hover:bg-white/15 text-white">
+                Back to Dashboard
+              </Button>
+            </div>
+          )}
+
+          {!generatingToken && !gateError && securedUrl && (
+            <iframe
+              src={securedUrl}
+              title={viewportName}
+              className="w-full h-full border-none bg-slate-900"
+              sandbox="allow-same-origin allow-scripts allow-forms allow-popups"
+              referrerPolicy="no-referrer"
+            />
+          )}
         </div>
       </div>
     );
