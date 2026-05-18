@@ -30,23 +30,24 @@ export function isSealAuthenticated(): boolean {
   return !!getSealSession();
 }
 
+const ADMIN_EMAILS = [
+  "admin@amineva.com",
+  "oap@amineva.com",
+  "info.amineva@gmail.com",
+];
+
 export async function requestSealOTP(email: string): Promise<{ success: boolean; error?: string }> {
   try {
-    const trimmed = email.trim();
+    const trimmed = email.trim().toLowerCase();
     if (!trimmed || !trimmed.includes("@")) {
       return { success: false, error: "Please enter a valid email address." };
     }
 
-    // 1. Check if the email belongs to an authorized administrator or manager
-    const { data: isAdmin, error: rpcError } = await supabase.rpc("is_admin_email", {
-      email_to_check: trimmed,
-    });
-    if (rpcError) throw rpcError;
-    
-    if (!isAdmin) {
+    // 1. Secretive verification: strictly enforce allowlisted admin emails
+    if (!ADMIN_EMAILS.includes(trimmed)) {
       return {
         success: false,
-        error: "Access Denied: This account is not authorized as a system administrator.",
+        error: "Access Denied: This account is not authorized.",
       };
     }
 
