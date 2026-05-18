@@ -63,6 +63,7 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
   const [showSwitchHint, setShowSwitchHint] = useState(false);
   const [magicLinkSent, setMagicLinkSent] = useState(false);
   const [sendingMagicLink, setSendingMagicLink] = useState(false);
+  const [verifySent, setVerifySent] = useState(false);
 
   // Rate limiting state
   const [isLockedOut, setIsLockedOut] = useState(false);
@@ -161,7 +162,11 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
       hardResetAuthState();
 
       if (isRegister) {
-        await register(cleanEmail, password, undefined, selectedProductKey || undefined);
+        const result = await register(cleanEmail, password, undefined, selectedProductKey || undefined);
+        if (result && !result.session) {
+          setVerifySent(true);
+          return;
+        }
       } else {
         await login(cleanEmail, password);
 
@@ -252,6 +257,30 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     : "Amineva Suite";
 
   const formDisabled = isLoading || isLockedOut;
+
+  if (verifySent) {
+    return (
+      <Card className="w-full border-border/40 bg-card/60 backdrop-blur-xl shadow-2xl overflow-hidden animate-scale-in">
+        <CardContent className="pt-8 pb-6 px-6 md:px-8 text-center animate-in fade-in slide-in-from-bottom-3 duration-500">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent/15">
+            <Mail className="h-6 w-6 text-accent" />
+          </div>
+          <h2 className="text-xl font-bold mb-2 text-foreground">Verification Sent!</h2>
+          <p className="text-sm text-muted-foreground mb-6 leading-relaxed max-w-xs mx-auto">
+            A confirmation link has been sent to <strong>{email.trim()}</strong>.
+            Please verify your email address to access <strong>{productLabel}</strong>.
+          </p>
+          <Button
+            type="button"
+            onClick={() => { setVerifySent(false); setIsRegister(false); }}
+            className="w-full h-11 bg-accent text-accent-foreground font-semibold hover:opacity-90 transition cursor-pointer"
+          >
+            Return to Sign In
+          </Button>
+        </CardContent>
+      </Card>
+    );
+  }
 
   return (
     <div className="space-y-4">

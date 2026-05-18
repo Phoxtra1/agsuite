@@ -26,7 +26,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string, registeredProduct?: string) => Promise<void>;
+  register: (email: string, password: string, name?: string, registeredProduct?: string) => Promise<{ user: any; session: any } | null>;
   socialLogin: (provider: "google" | "apple") => Promise<void>;
   sendMagicLink: (email: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -117,6 +117,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authActionInProgress.current = true;
     setIsLoading(true);
     try {
+      const redirectTarget = registeredProduct ? `/auth/verify-email?product=${registeredProduct}` : '/auth/verify-email';
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -125,31 +126,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
             name,
             registered_product: registeredProduct
           },
-          emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=/`,
+          emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(redirectTarget)}`,
         },
       });
       if (error) throw error;
 
-      // Auto-confirm is enabled, so session is available immediately
       if (data.session) {
         const mapped = mapUser(data.session.user);
         handleUserChange(mapped?.id ?? null);
         setUser(mapped);
         setIsAuthenticated(true);
-
-        // Send branded verification email via ComsSystem (non-blocking)
-        supabase.functions
-          .invoke("send-verification-email", {
-            body: { origin: window.location.origin },
-          })
-          .catch((err) =>
-            console.warn("[register] Verification email failed (non-blocking):", err)
-          );
       } else {
         handleUserChange(null);
         setUser(null);
         setIsAuthenticated(false);
       }
+      return data;
     } finally {
       setIsLoading(false);
       authActionInProgress.current = false;

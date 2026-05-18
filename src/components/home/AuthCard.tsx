@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { formatAuthError, isAlreadyRegisteredError } from "@/lib/auth";
 import { getProductRedirectUrl } from "@/lib/productRouting";
 import { loadAppAccess } from "@/lib/auth/appAccess";
+import { Mail } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface AuthCardProps {
@@ -35,6 +36,7 @@ export default function AuthCard({
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const [showSwitchHint, setShowSwitchHint] = useState(false);
+  const [verifySent, setVerifySent] = useState(false);
 
   const isRegister = authTab === "register";
   const loading = isLoading || busy;
@@ -61,7 +63,11 @@ export default function AuthCard({
     setBusy(true);
     try {
       if (isRegister) {
-        await register(email.trim(), password, undefined, product.id);
+        const result = await register(email.trim(), password, undefined, product.id);
+        if (result && !result.session) {
+          setVerifySent(true);
+          return;
+        }
       } else {
         await login(email.trim(), password);
 
@@ -101,6 +107,40 @@ export default function AuthCard({
       setBusy(false);
     }
   };
+
+  if (verifySent) {
+    return (
+      <>
+        <button
+          type="button"
+          onClick={() => setVerifySent(false)}
+          className="text-sm text-muted-foreground hover:text-foreground flex items-center gap-2 mb-4 cursor-pointer"
+        >
+          ← Back to selection
+        </button>
+
+        <div className="border border-border rounded-2xl bg-card text-card-foreground shadow-sm p-8 text-center animate-in fade-in slide-in-from-bottom-3 duration-500">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent/15">
+            <Mail className="h-6 w-6 text-accent" />
+          </div>
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">Verification Sent!</h2>
+          <p className="text-sm text-muted-foreground mt-2 leading-relaxed">
+            A confirmation link has been sent to <strong>{email}</strong>.
+            Please verify your email address to access <strong>{product.name}</strong>.
+          </p>
+          <div className="mt-6">
+            <button
+              type="button"
+              onClick={() => { setVerifySent(false); setAuthTab("signin"); }}
+              className="w-full rounded-lg bg-accent text-accent-foreground font-semibold py-3 hover:opacity-90 transition cursor-pointer"
+            >
+              Return to Sign In
+            </button>
+          </div>
+        </div>
+      </>
+    );
+  }
 
   return (
     <>

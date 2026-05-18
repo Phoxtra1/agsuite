@@ -4,6 +4,7 @@ import { ProductData } from "@/types/product";
 import { useAuth } from "@/contexts/AuthContext";
 import { loadAppAccess } from "@/lib/auth/appAccess";
 import { supabase } from "@/integrations/supabase/client";
+import { Mail } from "lucide-react";
 
 interface AuthCardProps {
   product: ProductData;
@@ -31,6 +32,7 @@ export default function AuthCard({
 
   const [confirmPassword, setConfirmPassword] = useState("");
   const [errMsg, setErrMsg] = useState("");
+  const [verifySent, setVerifySent] = useState(false);
 
   const isRegister = authTab === "register";
 
@@ -52,7 +54,11 @@ export default function AuthCard({
     setErrMsg("");
     try {
       if (isRegister) {
-        await register(email.trim(), password, undefined, product.id);
+        const result = await register(email.trim(), password, undefined, product.id);
+        if (result && !result.session) {
+          setVerifySent(true);
+          return;
+        }
       } else {
         await login(email.trim(), password);
 
@@ -79,6 +85,28 @@ export default function AuthCard({
       setErrMsg(e?.message || "Authentication failed.");
     }
   };
+
+  if (verifySent) {
+    return (
+      <div className="p-8 border rounded-xl text-center animate-in fade-in slide-in-from-bottom-3 duration-500 max-w-md bg-card">
+        <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent/15">
+          <Mail className="h-6 w-6 text-accent" />
+        </div>
+        <h2 className="text-xl font-semibold mb-2">Verification Sent!</h2>
+        <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
+          A confirmation link has been sent to <strong>{email}</strong>.
+          Please check your inbox and verify your email to access <strong>{product.name}</strong>.
+        </p>
+        <button
+          type="button"
+          onClick={() => { setVerifySent(false); setAuthTab("signin"); }}
+          className="w-full rounded-lg bg-accent text-accent-foreground font-semibold py-3 hover:opacity-90 transition cursor-pointer"
+        >
+          Return to Sign In
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="p-8 border rounded-xl">

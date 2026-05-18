@@ -52,13 +52,20 @@ export function EmailVerificationBanner() {
   const handleResend = async () => {
     setResending(true);
     try {
-      const { error } = await supabase.functions.invoke("send-verification-email", {
-        body: { origin: window.location.origin },
+      const redirectTarget = access?.appId 
+        ? `/auth/verify-email?product=${access.appId}` 
+        : '/auth/verify-email';
+      const { error } = await supabase.auth.resend({
+        type: 'signup',
+        email: user.email,
+        options: {
+          emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(redirectTarget)}`,
+        }
       });
       if (error) throw error;
       toast.success("Verification email sent — check your inbox.");
-    } catch {
-      toast.error("Failed to send verification email. Try again later.");
+    } catch (err: any) {
+      toast.error(err?.message || "Failed to send verification email. Try again later.");
     } finally {
       setResending(false);
     }
