@@ -64,6 +64,14 @@ export const acs: ACSAdapter = {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) throw new Error("Sign in required to create an ACS sync snapshot");
 
+    // 1. Trigger high-fidelity server-side ETL sync on actual platform profiles & activities
+    try {
+      const { error: rpcError } = await supabase.rpc("sync_acs_data_lake", { caller_uid: user.id });
+      if (rpcError) throw rpcError;
+    } catch (rpcErr) {
+      console.warn("ACS server sync RPC failed or missing, running client-side fallback:", rpcErr);
+    }
+
     const { data, error } = await supabase
       .from("acs_sync_logs")
       .insert([{ source, status: "syncing", started_at: new Date().toISOString(), user_id: user.id }])
