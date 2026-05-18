@@ -24,6 +24,11 @@ export const PRODUCT_ROUTES: Record<string, ProductRouteConfig> = {
     defaultPath: '/dashboard',
     requiresCountry: false,
   },
+  aminevaops: {
+    baseUrl: 'https://ops.amineva.com',
+    defaultPath: '/dashboard',
+    requiresCountry: false,
+  },
   agroclimate: {
     baseUrl: 'https://agro.amineva.com',
     defaultPath: '/',

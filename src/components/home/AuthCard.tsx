@@ -4,6 +4,8 @@ import { ProductData } from "@/types/product";
 import { useAuth } from "@/contexts/AuthContext";
 import { formatAuthError, isAlreadyRegisteredError } from "@/lib/auth";
 import { getProductRedirectUrl } from "@/lib/productRouting";
+import { loadAppAccess } from "@/lib/auth/appAccess";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthCardProps {
   product: ProductData;
@@ -59,9 +61,26 @@ export default function AuthCard({
     setBusy(true);
     try {
       if (isRegister) {
-        await register(email.trim(), password);
+        await register(email.trim(), password, undefined, product.id);
       } else {
         await login(email.trim(), password);
+
+        // Security Access Control Check
+        const { data: { session } } = await supabase.auth.getSession();
+        if (session?.user) {
+          const access = await loadAppAccess(session.user.id, product.id);
+          if (!access.allowed) {
+            // Check if they are a super_admin / manager of the suite
+            const suiteAccess = await loadAppAccess(session.user.id, "suite");
+            const isAdmin = ["super_admin", "manager"].includes(suiteAccess.role ?? "");
+
+            if (!isAdmin) {
+              await supabase.auth.signOut();
+              setError(`You do not have access to ${product.name}. Please register or request access.`);
+              return;
+            }
+          }
+        }
       }
 
       const productDestination = product.url

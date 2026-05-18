@@ -26,7 +26,7 @@ type AuthContextValue = {
   isAuthenticated: boolean;
   isLoading: boolean;
   login: (email: string, password: string) => Promise<void>;
-  register: (email: string, password: string, name?: string) => Promise<void>;
+  register: (email: string, password: string, name?: string, registeredProduct?: string) => Promise<void>;
   socialLogin: (provider: "google" | "apple") => Promise<void>;
   sendMagicLink: (email: string) => Promise<void>;
   logout: () => Promise<void>;
@@ -74,7 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUser(mapped);
         setIsAuthenticated(!!mapped);
         setIsLoading(false);
-
+ 
         // Trigger device check on sign-in events (non-blocking)
         if (event === "SIGNED_IN" && session?.user) {
           checkLoginDevice();
@@ -113,7 +113,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   }, [handleUserChange]);
 
-  const register = useCallback(async (email: string, password: string, name?: string) => {
+  const register = useCallback(async (email: string, password: string, name?: string, registeredProduct?: string) => {
     authActionInProgress.current = true;
     setIsLoading(true);
     try {
@@ -121,7 +121,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         email,
         password,
         options: {
-          data: { name },
+          data: { 
+            name,
+            registered_product: registeredProduct
+          },
           emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=/`,
         },
       });

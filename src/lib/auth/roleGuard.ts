@@ -24,11 +24,15 @@ const EMPLOYEE_ROLES: readonly string[] = ['staff', 'salesperson', 'accountant',
 const OWNER_PATHS: Record<string, string[]> = {
   agstock: ['/shop', '/dashboard', '/settings', '/billing'],
   agis: ['/dashboard', '/clients', '/projects', '/billing'],
+  aminevaops: ['/dashboard', '/organizations', '/projects', '/billing'],
+  amniva: ['/dashboard', '/teams', '/settings'],
 };
 
 const EMPLOYEE_PATHS: Record<string, string[]> = {
   agstock: ['/employees', '/pos', '/inventory', '/sales'],
   agis: ['/team', '/team-register', '/tasks', '/reports'],
+  aminevaops: ['/team', '/tasks', '/reports'],
+  amniva: ['/team', '/tasks'],
 };
 
 /**
@@ -121,6 +125,18 @@ export function getDashboardForRole(product: string, role?: string | null): stri
         return 'https://app.amineva.com/team';
       }
       return 'https://app.amineva.com/dashboard';
+
+    case 'aminevaops':
+      if (roleCategory === 'employee') {
+        return 'https://ops.amineva.com/team';
+      }
+      return 'https://ops.amineva.com/dashboard';
+
+    case 'amniva':
+      if (roleCategory === 'employee') {
+        return 'https://amniva.com/team';
+      }
+      return 'https://amniva.com/dashboard';
 
     default:
       return '/suite';

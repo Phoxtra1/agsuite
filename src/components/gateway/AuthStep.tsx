@@ -19,6 +19,9 @@ import {
   formatLockoutTime,
 } from "@/lib/auth/rateLimiter";
 
+import { loadAppAccess } from "@/lib/auth/appAccess";
+import { supabase } from "@/integrations/supabase/client";
+
 // Social login button component
 const SocialButton = React.forwardRef<
   HTMLButtonElement,
@@ -158,9 +161,28 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
       hardResetAuthState();
 
       if (isRegister) {
-        await register(cleanEmail, password);
+        await register(cleanEmail, password, undefined, selectedProductKey || undefined);
       } else {
         await login(cleanEmail, password);
+
+        // Security Access Control Check
+        if (selectedProductKey && selectedProductKey !== "suite") {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            const access = await loadAppAccess(session.user.id, selectedProductKey);
+            if (!access.allowed) {
+              // Check if they are a super_admin / manager of the suite
+              const suiteAccess = await loadAppAccess(session.user.id, "suite");
+              const isAdmin = ["super_admin", "manager"].includes(suiteAccess.role ?? "");
+
+              if (!isAdmin) {
+                await supabase.auth.signOut();
+                setError(`You do not have access to ${productLabel}. Please register or request access.`);
+                return;
+              }
+            }
+          }
+        }
       }
       // Success — clear attempts
       clearAttempts();
