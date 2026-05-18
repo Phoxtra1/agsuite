@@ -53,6 +53,34 @@ export default function AuthCard({
   const submit = async () => {
     setErrMsg("");
     try {
+      // Multi-app strict ecosystem isolation checks
+      const { data: availability, error: availError } = await supabase.rpc(
+        "check_email_availability",
+        { email_to_check: email.trim() }
+      );
+      
+      if (!availError && availability) {
+        const res = availability as { available: boolean; registered_product?: string };
+        if (!res.available) {
+          const registeredProduct = res.registered_product || "suite";
+          if (registeredProduct !== product.id) {
+            const friendlyNames: Record<string, string> = {
+              suite: "Amineva Global Suite",
+              aminevaops: "AminevaOps",
+              agstock: "AGStock",
+              agis: "AGIS",
+              amniva: "Amniva",
+              agroclimate: "AgroClimate",
+            };
+            const appName = friendlyNames[registeredProduct] || registeredProduct;
+            setErrMsg(
+              `This email is registered for ${appName} within the Amineva Ecosystem. To maintain account privacy and security, separate email addresses must be used for different applications.`
+            );
+            return;
+          }
+        }
+      }
+
       if (isRegister) {
         const result = await register(email.trim(), password, undefined, product.id);
         if (result && !result.session) {

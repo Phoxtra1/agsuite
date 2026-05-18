@@ -161,6 +161,35 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     try {
       hardResetAuthState();
 
+      // Multi-app strict ecosystem isolation checks
+      const targetProduct = selectedProductKey || "suite";
+      const { data: availability, error: availError } = await supabase.rpc(
+        "check_email_availability",
+        { email_to_check: cleanEmail }
+      );
+      
+      if (!availError && availability) {
+        const res = availability as { available: boolean; registered_product?: string };
+        if (!res.available) {
+          const registeredProduct = res.registered_product || "suite";
+          if (registeredProduct !== targetProduct) {
+            const friendlyNames: Record<string, string> = {
+              suite: "Amineva Global Suite",
+              aminevaops: "AminevaOps",
+              agstock: "AGStock",
+              agis: "AGIS",
+              amniva: "Amniva",
+              agroclimate: "AgroClimate",
+            };
+            const appName = friendlyNames[registeredProduct] || registeredProduct;
+            setError(
+              `This email is registered for ${appName} within the Amineva Ecosystem. To maintain account privacy and security, separate email addresses must be used for different applications.`
+            );
+            return;
+          }
+        }
+      }
+
       if (isRegister) {
         const result = await register(cleanEmail, password, undefined, selectedProductKey || undefined);
         if (result && !result.session) {
