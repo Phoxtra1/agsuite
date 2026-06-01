@@ -66,7 +66,7 @@ export const acs: ACSAdapter = {
 
     // 1. Trigger high-fidelity server-side ETL sync on actual platform profiles & activities
     try {
-      const { error: rpcError } = await supabase.rpc("sync_acs_data_lake", { caller_uid: user.id });
+      const { error: rpcError } = await (supabase.rpc as any)("sync_acs_data_lake", { caller_uid: user.id });
       if (rpcError) throw rpcError;
     } catch (rpcErr) {
       console.warn("ACS server sync RPC failed or missing, running client-side fallback:", rpcErr);
