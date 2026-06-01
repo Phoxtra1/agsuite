@@ -161,35 +161,6 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     try {
       hardResetAuthState();
 
-      // Multi-app strict ecosystem isolation checks
-      const targetProduct = selectedProductKey || "suite";
-      const { data: availability, error: availError } = await supabase.rpc(
-        "check_email_availability",
-        { email_to_check: cleanEmail }
-      );
-      
-      if (!availError && availability) {
-        const res = availability as { available: boolean; registered_product?: string };
-        if (!res.available) {
-          const registeredProduct = res.registered_product || "suite";
-          if (registeredProduct !== targetProduct) {
-            const friendlyNames: Record<string, string> = {
-              suite: "Amineva Global Suite",
-              aminevaops: "AminevaOps",
-              agstock: "AGStock",
-              agis: "AGIS",
-              amniva: "Amniva",
-              agroclimate: "AgroClimate",
-            };
-            const appName = friendlyNames[registeredProduct] || registeredProduct;
-            setError(
-              `This email is registered for ${appName} within the Amineva Ecosystem. To maintain account privacy and security, separate email addresses must be used for different applications.`
-            );
-            return;
-          }
-        }
-      }
-
       if (isRegister) {
         const result = await register(cleanEmail, password, undefined, selectedProductKey || undefined);
         if (result && !result.session) {
@@ -205,15 +176,9 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
           if (session?.user) {
             const access = await loadAppAccess(session.user.id, selectedProductKey);
             if (!access.allowed) {
-              // Check if they are a super_admin / manager of the suite
-              const suiteAccess = await loadAppAccess(session.user.id, "suite");
-              const isAdmin = ["super_admin", "manager"].includes(suiteAccess.role ?? "");
-
-              if (!isAdmin) {
-                await supabase.auth.signOut();
-                setError(`You do not have access to ${productLabel}. Please register or request access.`);
-                return;
-              }
+              await supabase.auth.signOut();
+              setError(`This account is not authorized for ${productLabel}. Please sign in with a ${productLabel} account or request access.`);
+              return;
             }
           }
         }
