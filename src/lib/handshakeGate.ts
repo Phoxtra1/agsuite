@@ -50,7 +50,7 @@ export async function enforceSuiteHandshake(appName: string): Promise<boolean> {
 
   try {
     // 4. Verify and consume the handshake token via shared Supabase backend RPC
-    const { data: isValid, error } = await supabase.rpc("verify_handshake_token", {
+    const { data: isValid, error } = await (supabase.rpc as any)("verify_handshake_token", {
       token_to_verify: token,
       target_app_name: appName.toLowerCase().trim()
     });

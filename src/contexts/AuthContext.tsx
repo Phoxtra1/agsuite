@@ -99,6 +99,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authActionInProgress.current = true;
     setIsLoading(true);
     try {
+      // Force every sign-in to start from a clean session. This prevents a
+      // previous account/app dashboard from being reused while credentials swap.
+      resetClientState(queryClient);
+      if (lastUserIdRef.current) {
+        await supabase.auth.signOut();
+        lastUserIdRef.current = null;
+      }
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) throw error;
       const mapped = mapUser(data.user);
@@ -111,7 +118,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsLoading(false);
       authActionInProgress.current = false;
     }
-  }, [handleUserChange]);
+  }, [handleUserChange, queryClient]);
 
   const register = useCallback(async (email: string, password: string, name?: string, registeredProduct?: string) => {
     authActionInProgress.current = true;

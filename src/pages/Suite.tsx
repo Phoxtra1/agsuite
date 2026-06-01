@@ -74,7 +74,7 @@ export default function Suite() {
       setGateError(null);
       try {
         // Generate a cryptographically secure, single-use SSO handshake token
-        const { data: token, error } = await supabase.rpc("generate_handshake_token", {
+        const { data: token, error } = await (supabase.rpc as any)("generate_handshake_token", {
           target_app_name: targetApp.toLowerCase().trim()
         });
 
