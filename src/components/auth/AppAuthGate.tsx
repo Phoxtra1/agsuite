@@ -32,12 +32,6 @@ export function useAppSession() {
   return ctx;
 }
 
-const isPreview = (): boolean => {
-  if (typeof window === "undefined") return false;
-  const host = window.location.hostname;
-  return ["lovable.app", "lovableproject.com", "localhost", "127.0.0.1"].some(h => host.includes(h));
-};
-
 export function AppAuthGate({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading: authLoading } = useAuth();
   const location = useLocation();
@@ -57,23 +51,6 @@ export function AppAuthGate({ children }: { children: React.ReactNode }) {
       setProfile(null);
 
       if (!user?.id) {
-        if (isPreview()) {
-          setAccess({
-            allowed: true,
-            appId: "mock-app-id",
-            appSlug: appSlug,
-            role: "super_admin",
-            permissions: { all: true }
-          });
-          setProfile({
-            id: "mock-profile-id",
-            userId: "mock-user-id",
-            appId: "mock-app-id",
-            email: "preview-admin@amineva.com",
-            name: "Preview Admin",
-            role: "super_admin"
-          });
-        }
         setLoading(false);
         return;
       }
@@ -83,26 +60,6 @@ export function AppAuthGate({ children }: { children: React.ReactNode }) {
       if (cancelled) return;
 
       if (!a.allowed) {
-        if (isPreview()) {
-          const mockA = {
-            allowed: true,
-            appId: a.appId || "mock-app-id",
-            appSlug: appSlug,
-            role: "super_admin",
-            permissions: { all: true }
-          };
-          setAccess(mockA);
-          setProfile({
-            id: "mock-profile-id",
-            userId: user.id,
-            appId: mockA.appId,
-            email: user.email,
-            name: user.name || "Preview Admin",
-            role: "super_admin"
-          });
-          setLoading(false);
-          return;
-        }
         setAccess(a);
         setLoading(false);
         return;
@@ -130,28 +87,6 @@ export function AppAuthGate({ children }: { children: React.ReactNode }) {
   }
 
   if (!isAuthenticated) {
-    if (isPreview()) {
-      const mockAccess = {
-        allowed: true,
-        appId: "mock-app-id",
-        appSlug: appSlug,
-        role: "super_admin",
-        permissions: { all: true }
-      };
-      const mockProfile = {
-        id: "mock-profile-id",
-        userId: "mock-user-id",
-        appId: "mock-app-id",
-        email: "preview-admin@amineva.com",
-        name: "Preview Admin",
-        role: "super_admin"
-      };
-      return (
-        <AppSessionContext.Provider value={{ appSlug, access: mockAccess, profile: mockProfile, loading: false }}>
-          {children}
-        </AppSessionContext.Provider>
-      );
-    }
     const next = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/?authRedirect=${next}`} replace />;
   }
