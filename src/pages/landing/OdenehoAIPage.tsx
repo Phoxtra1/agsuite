@@ -39,7 +39,6 @@ const OdenehoAIPage: FC = () => {
 
   return (
     <div className="min-h-screen bg-background">
-      <Header />
       <section className="relative py-24 lg:py-36 overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/80" />
         <div className="relative z-10 max-w-5xl mx-auto text-center px-6">
@@ -154,7 +153,6 @@ const OdenehoAIPage: FC = () => {
           </a>
         </motion.div>
       </section>
-      <Footer />
     </div>
   );
 };
