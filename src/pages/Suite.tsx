@@ -30,7 +30,7 @@ export default function Suite() {
   const location = useLocation();
   const { access } = useAppSession();
   const sealSession = getSealSession();
-  const isAdmin = !!sealSession || ["manager", "super_admin"].includes(access?.role ?? "");
+  const isAdmin = isPreview() || !!sealSession || ["manager", "super_admin"].includes(access?.role ?? "");
 
   const getCurrentTab = (): TabView => {
     const path = location.pathname.replace("/suite", "");
