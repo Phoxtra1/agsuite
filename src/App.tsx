@@ -147,16 +147,13 @@ function AppTelemetry() {
 }
 
 function SuiteGuard() {
-  // In preview mode, allow direct access for development
+  // In preview/dev, render the Suite directly so hot-reloads and direct
+  // visits to /suite never bounce back to "/". Production keeps the
+  // seal-auth requirement and the per-app authorization gate.
   if (isPreview()) {
-    return (
-      <AppAuthGate>
-        <Suite />
-      </AppAuthGate>
-    );
+    return <Suite />;
   }
 
-  // Production: require seal (admin OTP) authentication
   if (!isSealAuthenticated()) return <Navigate to="/" replace />;
 
   return (
