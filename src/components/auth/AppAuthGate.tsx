@@ -26,10 +26,11 @@ interface AppSession {
 
 const AppSessionContext = createContext<AppSession | null>(null);
 
-export function useAppSession() {
+export function useAppSession(): AppSession {
   const ctx = useContext(AppSessionContext);
-  if (!ctx) throw new Error("useAppSession must be used within AppAuthGate");
-  return ctx;
+  if (ctx) return ctx;
+  // Fallback for preview/dev where Suite may render outside the gate.
+  return { appSlug: getCurrentAppSlug(), access: null, profile: null, loading: false };
 }
 
 export function AppAuthGate({ children }: { children: React.ReactNode }) {
