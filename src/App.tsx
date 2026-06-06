@@ -207,13 +207,8 @@ function AppRoutes() {
         {/* Seal (hidden admin entry) */}
         <Route path="/seal" element={<Seal />} />
 
-        {/* Suite */}
+        {/* Suite (canonical routes: /suite, /suite/console, /suite/coms, /suite/acs, /suite/profile, /suite/settings) */}
         <Route path="/suite/*" element={<SuiteGuard />} />
-
-        {/* Legacy Redirects */}
-        <Route path="/admin/*" element={<Navigate to="/suite" replace />} />
-        <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
-        <Route path="/auth/verify-2fa" element={<Navigate to="/" replace />} />
 
         <Route path="/access-denied" element={<AccessDenied />} />
 
