@@ -210,6 +210,13 @@ function AppRoutes() {
         {/* Suite (canonical routes: /suite, /suite/console, /suite/coms, /suite/acs, /suite/profile, /suite/settings) */}
         <Route path="/suite/*" element={<SuiteGuard />} />
 
+        {/* Legacy/shorthand redirects → canonical /suite/* (preserves login context) */}
+        <Route path="/console" element={<Navigate to="/suite/console" replace />} />
+        <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
+        <Route path="/acs" element={<Navigate to="/suite/acs" replace />} />
+        <Route path="/profile" element={<Navigate to="/suite/profile" replace />} />
+        <Route path="/settings" element={<Navigate to="/suite/settings" replace />} />
+
         <Route path="/access-denied" element={<AccessDenied />} />
 
         {/* 404 */}
