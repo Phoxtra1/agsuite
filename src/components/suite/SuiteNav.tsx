@@ -14,7 +14,7 @@ import {
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import { Avatar, AvatarFallback } from '@/components/ui/avatar';
-import { Sun, Moon, LogOut, User, Settings, LayoutDashboard, Package, HelpCircle, Workflow, Terminal, Megaphone, Database } from 'lucide-react';
+import { Sun, Moon, LogOut, User, Settings, LayoutDashboard, Package, HelpCircle, Workflow, Terminal, Megaphone, Database, UserCircle, SlidersHorizontal } from 'lucide-react';
 import amvLogo from '@/assets/amv_logo.png';
 
 type TabView = 'overview' | 'console' | 'coms' | 'acs' | 'profile' | 'settings';
@@ -123,6 +123,33 @@ export function SuiteNav({ currentTab, onTabChange, isAdmin }: SuiteNavProps) {
             </Button>
           </>
         )}
+
+        {/* Account section */}
+        <div className="pt-4 pb-2">
+          <span className="text-xs font-medium text-sidebar-foreground/60 uppercase tracking-wider px-3">
+            Account
+          </span>
+        </div>
+        <Button
+          variant="ghost"
+          onClick={() => onTabChange('profile')}
+          className={`w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+            currentTab === 'profile' ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : ''
+          }`}
+        >
+          <UserCircle className="h-4 w-4" />
+          <span className="text-sm">Profile</span>
+        </Button>
+        <Button
+          variant="ghost"
+          onClick={() => onTabChange('settings')}
+          className={`w-full justify-start gap-3 h-11 text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground ${
+            currentTab === 'settings' ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium' : ''
+          }`}
+        >
+          <SlidersHorizontal className="h-4 w-4" />
+          <span className="text-sm">Settings</span>
+        </Button>
       </nav>
       
       {/* Bottom section - Theme toggle and user menu */}
