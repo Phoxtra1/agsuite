@@ -30,7 +30,7 @@ const platformEcosystem = [
   { icon: BarChart3, title: "AGStock", role: "AI-backed inventory, commerce, and operational management infrastructure for smart business systems." },
   { icon: ShieldCheck, title: "AGIS", role: "Strategic assessment, field inspection, verification, and documentation infrastructure." },
   { icon: LineChart, title: "AminevaOps", role: "AI-backed financial operations, monitoring, and oversight infrastructure." },
-  { icon: Eye, title: "Amniva", role: "Predictive intelligence and verification infrastructure for forecasting and trend analysis." },
+  { icon: Eye, title: "ABI", role: "Amineva Business Intelligence — unified BI infrastructure for dashboards, KPIs, market analytics, and data-driven decision support." },
 ];
 
 const coreValues = [

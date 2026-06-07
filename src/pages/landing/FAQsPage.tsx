@@ -61,9 +61,9 @@ const categories: { title: string; faqs: FAQItem[] }[] = [
     ],
   },
   {
-    title: "Amniva",
+    title: "ABI",
     faqs: [
-      { q: "What is Amniva?", a: "Amniva is the predictive intelligence and verification infrastructure for forecasting, trend analysis, monitoring, and strategic insight systems across the ecosystem." },
+      { q: "What is ABI?", a: "ABI (Amineva Business Intelligence) is the unified business intelligence infrastructure of the ecosystem — delivering dashboards, KPIs, market analytics, reporting, and data-driven decision support for business leaders and institutions." },
     ],
   },
   {
