@@ -60,8 +60,8 @@ export const DEFAULT_CATEGORIES: ProductCategory[] = [
     products: ["aminevaops"],
   },
   {
-    id: "trend-forecasting",
-    name: "Trend & Forecasting",
+    id: "business-intelligence",
+    name: "Business Intelligence",
     order: 2,
     products: ["amniva"],
   },

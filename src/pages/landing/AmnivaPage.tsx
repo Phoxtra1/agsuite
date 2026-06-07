@@ -2,8 +2,8 @@ import { FC } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
-  TrendingUp, ShieldCheck, BarChart3, Users, MessageCircle,
-  ArrowRight, Lightbulb, Globe, Zap, Eye,
+  BarChart3, LineChart, PieChart, Database, Users, MessageCircle,
+  ArrowRight, Lightbulb, Globe, Zap, Gauge,
 } from "lucide-react";
 
 const fadeUp = {
@@ -13,19 +13,19 @@ const fadeUp = {
 
 const AmnivaPage: FC = () => {
   const features = [
-    { icon: TrendingUp, title: "Market Forecast & Trending", desc: "Real-time market trends, price movements, and predictive analytics across sectors." },
-    { icon: ShieldCheck, title: "Verification", desc: "Verify claims, credentials, and market data with Amniva's trusted verification engine." },
-    { icon: BarChart3, title: "Predictions & Insights", desc: "AI-driven predictions on market behavior, consumer trends, and business outcomes." },
-    { icon: MessageCircle, title: "Social Community", desc: "A forum where business leaders discuss the future of business tech and market space." },
+    { icon: Gauge, title: "Dashboards & KPIs", desc: "Real-time executive dashboards, KPI tracking, and operational scorecards across every business unit." },
+    { icon: BarChart3, title: "Reporting & Analytics", desc: "Self-service reporting, drill-down analytics, and automated insight delivery for decision-makers." },
+    { icon: LineChart, title: "Market & Performance Intelligence", desc: "Track market performance, sales trends, and business health with verified data pipelines." },
+    { icon: MessageCircle, title: "Business Community", desc: "A forum where business leaders share intelligence, benchmarks, and the future of data-driven business." },
   ];
 
   const steps = [
     { step: "1", title: "Visit Homepage", desc: "Go to the Amineva Suite homepage where product categories are listed." },
-    { step: "2", title: "Click 'Trend & Forecasting'", desc: "From the category dropdown, select 'Trend & Forecasting' to find Amniva." },
-    { step: "3", title: "Select Amniva", desc: "Click on Amniva to access the sign-in / register panel." },
+    { step: "2", title: "Click 'Business Intelligence'", desc: "From the category dropdown, select 'Business Intelligence' to find ABI." },
+    { step: "3", title: "Select ABI", desc: "Click on ABI to access the sign-in / register panel." },
     { step: "4", title: "Create Account or Login", desc: "Register with your email or sign in with existing credentials." },
-    { step: "5", title: "Access Dashboard", desc: "You'll be redirected to your Amniva dashboard upon authentication." },
-    { step: "6", title: "Explore & Request", desc: "Browse market forecasts, join the community, or submit a service request." },
+    { step: "5", title: "Access Dashboard", desc: "You'll be redirected to your ABI workspace upon authentication." },
+    { step: "6", title: "Explore & Build", desc: "Connect data sources, build dashboards, join the community, or submit a service request." },
   ];
 
   return (
@@ -36,14 +36,14 @@ const AmnivaPage: FC = () => {
         <div className="relative z-10 max-w-5xl mx-auto text-center px-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-medium mb-6">
-              <TrendingUp className="h-4 w-4" /> Trend & Forecast Platform
+              <BarChart3 className="h-4 w-4" /> Business Intelligence Platform
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6">
-              Predict. Verify.<br />
-              <span className="text-accent">Decide with Confidence.</span>
+              Measure. Analyze.<br />
+              <span className="text-accent">Decide with Data.</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 max-w-3xl mx-auto mb-8">
-              Amniva is your platform for market forecasting, trending, verification, predictions, and insights — complemented by a social community where business leaders shape the future.
+              ABI (Amineva Business Intelligence) is the unified BI infrastructure of the ecosystem — dashboards, KPIs, reporting, and analytics that turn business data into confident decisions.
             </p>
             <Link
               to="/"
@@ -55,11 +55,11 @@ const AmnivaPage: FC = () => {
         </div>
       </section>
 
-      {/* What Amniva Offers */}
+      {/* Features */}
       <section className="max-w-7xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
-          <span className="text-sm font-semibold text-accent uppercase tracking-wider">Platform Features</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">What Amniva Offers</h2>
+          <span className="text-sm font-semibold text-accent uppercase tracking-wider">Platform Capabilities</span>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">What ABI Offers</h2>
         </div>
         <div className="grid md:grid-cols-2 gap-8">
           {features.map((f, i) => (
@@ -77,13 +77,13 @@ const AmnivaPage: FC = () => {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
             <span className="text-sm font-semibold text-accent uppercase tracking-wider">How It Works</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Visual Explainer</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">From Data to Decisions</h2>
           </div>
           <div className="grid md:grid-cols-3 gap-8 mb-16">
             {[
-              { icon: Globe, title: "Collect", desc: "We aggregate data from markets, institutions, and field sources globally." },
-              { icon: Zap, title: "Analyze", desc: "AI models process patterns, detect trends, and generate predictions." },
-              { icon: Lightbulb, title: "Deliver", desc: "Actionable insights reach your dashboard in real-time for confident decisions." },
+              { icon: Database, title: "Connect", desc: "Bring in data from your operations, sales, finance, and ecosystem platforms." },
+              { icon: Zap, title: "Model", desc: "BI engines clean, model, and prepare data into reliable analytical views." },
+              { icon: PieChart, title: "Visualize", desc: "Dashboards, KPIs, and reports surface insight where decisions are made." },
             ].map((s, i) => (
               <motion.div key={s.title} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="relative p-8 rounded-2xl border border-border bg-card text-center">
                 <div className="h-16 w-16 rounded-full bg-accent/10 flex items-center justify-center mx-auto mb-4">
@@ -102,7 +102,7 @@ const AmnivaPage: FC = () => {
       <section className="max-w-5xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
           <span className="text-sm font-semibold text-accent uppercase tracking-wider">Step-by-Step</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">How to Access Amniva</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">How to Access ABI</h2>
         </div>
         <div className="space-y-4">
           {steps.map((s, i) => (
@@ -122,10 +122,10 @@ const AmnivaPage: FC = () => {
       {/* Community */}
       <section className="bg-secondary py-20 px-6 text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          <MessageCircle className="h-12 w-12 text-accent mx-auto mb-4" />
-          <h2 className="text-3xl font-bold text-foreground mb-4">Join the Amniva Community</h2>
+          <Users className="h-12 w-12 text-accent mx-auto mb-4" />
+          <h2 className="text-3xl font-bold text-foreground mb-4">Join the ABI Community</h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mb-6">
-            Connect with business leaders, share market insights, and discuss the future of business technology and market dynamics in our social community.
+            Connect with business leaders, share benchmarks, and discuss the future of data-driven business in our intelligence community.
           </p>
         </motion.div>
       </section>
@@ -133,9 +133,9 @@ const AmnivaPage: FC = () => {
       {/* CTA */}
       <section className="py-20 px-6 bg-gradient-to-r from-primary to-primary/90 text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Ready to See the Future?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Ready to Lead with Intelligence?</h2>
           <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-            Access market forecasts, verified data, and predictive insights from Amniva.
+            Unlock dashboards, KPIs, and analytics built for modern business decisions with ABI.
           </p>
           <Link
             to="/"

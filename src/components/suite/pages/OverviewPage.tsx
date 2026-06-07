@@ -102,8 +102,8 @@ export function OverviewPage() {
                 desc="Strategic assessment, field inspection, verification, operational intelligence, and documentation infrastructure." />
               <EcoCard icon={TrendingUp} title="AminevaOps"
                 desc="AI-backed financial operations, monitoring systems, workflow intelligence, and operational oversight infrastructure." />
-              <EcoCard icon={Eye} title="Amniva"
-                desc="Predictive intelligence and verification infrastructure for forecasting, trend analysis, and strategic insight systems." />
+              <EcoCard icon={Eye} title="ABI"
+                desc="Amineva Business Intelligence — unified BI infrastructure for dashboards, KPIs, market analytics, and data-driven decision support across the ecosystem." />
             </div>
           </CardContent>
         </Card>
