@@ -20,7 +20,7 @@ const TermsPage: FC = () => {
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
           <div>
             <h2 className="text-2xl font-bold text-foreground mb-3">1. Acceptance of Terms</h2>
-            <p className="text-muted-foreground leading-relaxed">By accessing or using any services provided by Amineva Global ("Amineva," "we," "us," or "our"), including but not limited to AGStock, AGIS, Amniva, and AgroClimate (collectively, the "Services"), you agree to be bound by these Terms of Service. If you do not agree to these Terms, you must not use the Services.</p>
+            <p className="text-muted-foreground leading-relaxed">By accessing or using any services provided by Amineva Global ("Amineva," "we," "us," or "our"), including but not limited to AGStock, AGIS, ABI, and AgroClimate (collectively, the "Services"), you agree to be bound by these Terms of Service. If you do not agree to these Terms, you must not use the Services.</p>
           </div>
 
           <div>
