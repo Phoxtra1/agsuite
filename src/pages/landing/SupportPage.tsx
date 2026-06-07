@@ -64,7 +64,7 @@ const SupportPage: FC = () => {
     { value: "general", label: "General Inquiry" },
     { value: "agstock", label: "AGStock" },
     { value: "agis", label: "AGIS" },
-    { value: "amniva", label: "Amniva" },
+    { value: "amniva", label: "ABI" },
     { value: "agroclimate", label: "AgroClimate" },
     { value: "partnership", label: "Partnership" },
     { value: "services", label: "Services" },

@@ -20,7 +20,7 @@ const PrivacyPage: FC = () => {
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
           <div>
             <h2 className="text-2xl font-bold text-foreground mb-3">1. Introduction</h2>
-            <p className="text-muted-foreground leading-relaxed">Amineva Global ("Amineva," "we," "us," or "our") is committed to protecting the privacy and security of your personal information. This Privacy Policy describes how we collect, use, disclose, and safeguard your information when you use our platforms and services, including AGStock, AGIS, Amniva, and AgroClimate.</p>
+            <p className="text-muted-foreground leading-relaxed">Amineva Global ("Amineva," "we," "us," or "our") is committed to protecting the privacy and security of your personal information. This Privacy Policy describes how we collect, use, disclose, and safeguard your information when you use our platforms and services, including AGStock, AGIS, ABI, and AgroClimate.</p>
           </div>
 
           <div>

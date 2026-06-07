@@ -16,7 +16,7 @@ const SOURCES = ['agstock', 'agis', 'amniva', 'agroclimate', 'aminevaops', 'oden
 const SOURCE_LABELS: Record<string, string> = {
   agstock: 'AGStock',
   agis: 'AGIS',
-  amniva: 'Amniva',
+  amniva: 'ABI',
   agroclimate: 'AgroClimate',
   aminevaops: 'AminevaOps',
   odeneho: 'Odeneho',
