@@ -206,6 +206,31 @@ export function IconAgroClimate({ className }: ProductIconProps) {
     </svg>
   );
 }
+// Workspace - Layered productivity surface for AG Docs / Sheets / Slides
+export function IconWorkspace({ className }: ProductIconProps) {
+  return (
+    <svg
+      viewBox="0 0 64 64"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className={cn('w-12 h-12', className)}
+    >
+      <rect width="64" height="64" rx="12" className="fill-primary" />
+      {/* Back sheet */}
+      <rect x="14" y="14" width="28" height="34" rx="3" stroke="hsl(38 92% 50%)" strokeWidth="2" fill="none" opacity="0.45" />
+      {/* Middle sheet */}
+      <rect x="20" y="18" width="28" height="34" rx="3" stroke="hsl(38 92% 50%)" strokeWidth="2" fill="none" opacity="0.7" />
+      {/* Front sheet */}
+      <rect x="26" y="22" width="24" height="28" rx="3" stroke="hsl(38 92% 50%)" strokeWidth="2" fill="hsl(222 30% 14% / 0.15)" />
+      <line x1="30" y1="29" x2="46" y2="29" stroke="hsl(38 92% 50%)" strokeWidth="1.5" />
+      <line x1="30" y1="34" x2="42" y2="34" stroke="hsl(38 92% 50%)" strokeWidth="1.5" />
+      <line x1="30" y1="39" x2="44" y2="39" stroke="hsl(38 92% 50%)" strokeWidth="1.5" />
+      <circle cx="33" cy="45" r="1.5" fill="hsl(38 92% 50%)" />
+      <circle cx="38" cy="45" r="1.5" fill="hsl(38 92% 50%)" opacity="0.6" />
+    </svg>
+  );
+}
+
 
 // Generic placeholder icon
 export function IconPlaceholder({ className }: ProductIconProps) {
