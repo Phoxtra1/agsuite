@@ -214,6 +214,24 @@ function AppRoutes() {
         {/* Suite (canonical routes: /suite, /suite/console, /suite/coms, /suite/acs, /suite/profile, /suite/settings) */}
         <Route path="/suite/*" element={<SuiteGuard />} />
 
+        {/* Workspace — productivity & data intelligence hub */}
+        <Route
+          path="/workspace/*"
+          element={
+            isPreview() ? (
+              <Workspace />
+            ) : (
+              <AppAuthGate>
+                <Workspace />
+              </AppAuthGate>
+            )
+          }
+        />
+
+        {/* Public shareable AG Docs viewer (no auth required) */}
+        <Route path="/share/doc/:token" element={<SharedDocViewer />} />
+
+
         {/* Legacy/shorthand redirects → canonical /suite/* (preserves login context) */}
         <Route path="/console" element={<Navigate to="/suite/console" replace />} />
         <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
