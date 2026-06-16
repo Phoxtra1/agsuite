@@ -27,6 +27,10 @@ function normalizeId(id: string): string {
 export function getProductIcon(productId: ProductData["id"] | string) {
   const id = normalizeId(productId as string);
 
+  if (id.includes("workspace")) {
+    return IconWorkspace;
+  }
+
   if (id.includes("agstock") || id.includes("stock")) {
     return IconAGStock;
   }
