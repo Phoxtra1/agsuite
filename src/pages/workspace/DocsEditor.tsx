@@ -10,7 +10,7 @@ import { useDocEditor, EditorSurface } from "@/components/workspace/docs/DocEdit
 import { MenuBar, FormattingToolbar } from "@/components/workspace/docs/EditorChrome";
 import { ShareDialog } from "@/components/workspace/docs/ShareDialog";
 import { exportCSV, exportDOC, exportJSON, exportPDF } from "@/components/workspace/docs/exporters";
-import { ChevronLeft, CloudCheck, Loader2 } from "lucide-react";
+import { ChevronLeft, CloudUpload, Loader2 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 
 export default function DocsEditor() {
@@ -189,7 +189,7 @@ export default function DocsEditor() {
         <div className="flex-1" />
         <div className="text-xs text-muted-foreground flex items-center gap-1.5">
           {saving === "saving" ? <><Loader2 className="h-3 w-3 animate-spin"/> Saving…</> :
-           saving === "saved" ? <><CloudCheck className="h-3.5 w-3.5"/> Saved</> : null}
+           saving === "saved" ? <><CloudUpload className="h-3.5 w-3.5"/> Saved</> : null}
         </div>
         <button
           onClick={() => setShowShare(true)}
