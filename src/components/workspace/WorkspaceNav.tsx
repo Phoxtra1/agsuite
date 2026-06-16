@@ -58,7 +58,7 @@ export function WorkspaceNav() {
           <ArrowLeft className="h-3.5 w-3.5" /> Back to Suite
         </button>
         <button
-          onClick={() => signOut?.()}
+          onClick={() => logout?.()}
           className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition"
         >
           <LogOut className="h-3.5 w-3.5" /> Sign out
