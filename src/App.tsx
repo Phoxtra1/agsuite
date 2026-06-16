@@ -28,6 +28,9 @@ const TermsPage = lazy(() => import("./pages/landing/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/landing/PrivacyPage"));
 
 const Suite = lazy(() => import("./pages/Suite"));
+const Workspace = lazy(() => import("./pages/Workspace"));
+const SharedDocViewer = lazy(() => import("./pages/workspace/SharedDocViewer"));
+const WorkspacePage = lazy(() => import("./pages/landing/WorkspacePage"));
 const InviteBridge = lazy(() => import("./pages/InviteBridge"));
 
 const Recovery = lazy(() => import("./pages/auth/Recovery"));
@@ -190,6 +193,7 @@ function AppRoutes() {
           <Route path="explainer/agis" element={<AGISPage />} />
           <Route path="explainer/amniva" element={<AmnivaPage />} />
           <Route path="explainer/aminevaops" element={<AminevaOpsPage />} />
+          <Route path="explainer/workspace" element={<WorkspacePage />} />
           <Route path="support" element={<SupportPage />} />
           <Route path="faqs" element={<FAQsPage />} />
           <Route path="terms" element={<TermsPage />} />
@@ -209,6 +213,24 @@ function AppRoutes() {
 
         {/* Suite (canonical routes: /suite, /suite/console, /suite/coms, /suite/acs, /suite/profile, /suite/settings) */}
         <Route path="/suite/*" element={<SuiteGuard />} />
+
+        {/* Workspace — productivity & data intelligence hub */}
+        <Route
+          path="/workspace/*"
+          element={
+            isPreview() ? (
+              <Workspace />
+            ) : (
+              <AppAuthGate>
+                <Workspace />
+              </AppAuthGate>
+            )
+          }
+        />
+
+        {/* Public shareable AG Docs viewer (no auth required) */}
+        <Route path="/share/doc/:token" element={<SharedDocViewer />} />
+
 
         {/* Legacy/shorthand redirects → canonical /suite/* (preserves login context) */}
         <Route path="/console" element={<Navigate to="/suite/console" replace />} />
