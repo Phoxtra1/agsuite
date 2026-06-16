@@ -9,7 +9,7 @@ const items = [
 ];
 
 export function WorkspaceNav() {
-  const { user, signOut } = useAuth() as any;
+  const { user, logout } = useAuth() as any;
   const navigate = useNavigate();
   return (
     <aside className="fixed inset-y-0 left-0 w-64 bg-card border-r border-border flex flex-col">
