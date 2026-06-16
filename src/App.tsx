@@ -28,6 +28,9 @@ const TermsPage = lazy(() => import("./pages/landing/TermsPage"));
 const PrivacyPage = lazy(() => import("./pages/landing/PrivacyPage"));
 
 const Suite = lazy(() => import("./pages/Suite"));
+const Workspace = lazy(() => import("./pages/Workspace"));
+const SharedDocViewer = lazy(() => import("./pages/workspace/SharedDocViewer"));
+const WorkspacePage = lazy(() => import("./pages/landing/WorkspacePage"));
 const InviteBridge = lazy(() => import("./pages/InviteBridge"));
 
 const Recovery = lazy(() => import("./pages/auth/Recovery"));
