@@ -954,6 +954,109 @@ export type Database = {
           },
         ]
       }
+      workspace_document_shares: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          document_id: string
+          expires_at: string | null
+          id: string
+          mode: string
+          revoked: boolean
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          document_id: string
+          expires_at?: string | null
+          id?: string
+          mode?: string
+          revoked?: boolean
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          document_id?: string
+          expires_at?: string | null
+          id?: string
+          mode?: string
+          revoked?: boolean
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_document_shares_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_document_versions: {
+        Row: {
+          content_json: Json
+          created_at: string
+          created_by: string | null
+          document_id: string
+          id: string
+        }
+        Insert: {
+          content_json: Json
+          created_at?: string
+          created_by?: string | null
+          document_id: string
+          id?: string
+        }
+        Update: {
+          content_json?: Json
+          created_at?: string
+          created_by?: string | null
+          document_id?: string
+          id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_document_versions_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_documents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_documents: {
+        Row: {
+          content_json: Json
+          content_text: string
+          created_at: string
+          id: string
+          owner_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_json?: Json
+          content_text?: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          content_json?: Json
+          content_text?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -962,6 +1065,16 @@ export type Database = {
       ensure_app_profile: {
         Args: { _app_id: string; _user_id: string }
         Returns: string
+      }
+      get_shared_document: {
+        Args: { _token: string }
+        Returns: {
+          content_json: Json
+          id: string
+          mode: string
+          title: string
+          updated_at: string
+        }[]
       }
       has_app_access: {
         Args: { _app_slug: string; _user_id: string }
@@ -972,6 +1085,15 @@ export type Database = {
         Returns: boolean
       }
       process_sla_alerts: { Args: never; Returns: number }
+      update_shared_document: {
+        Args: {
+          _content_json: Json
+          _content_text: string
+          _title?: string
+          _token: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
       [_ in never]: never
