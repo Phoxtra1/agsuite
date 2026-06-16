@@ -7,6 +7,7 @@ import {
   IconAmniva,
   IconPhoxtra,
   IconAgroClimate,
+  IconWorkspace,
   IconPlaceholder,
 } from "@/components/icons/ProductIcons";
 /**
