@@ -309,6 +309,29 @@ ul[data-type="taskList"] li > div {
 .doc-surface .ProseMirror h1 { font-size: 2rem; font-weight: 700; margin: 1.4em 0 0.5em; }
 .doc-surface .ProseMirror h2 { font-size: 1.5rem; font-weight: 700; margin: 1.2em 0 0.4em; }
 .doc-surface .ProseMirror h3 { font-size: 1.2rem; font-weight: 600; margin: 1em 0 0.3em; }
+
+/* Print styling for AG Docs */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+  #doc-scroll-container, #doc-scroll-container * {
+    visibility: visible;
+  }
+  #doc-scroll-container {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: white;
+  }
+  .doc-surface {
+    box-shadow: none;
+    min-height: auto;
+  }
+}
 .doc-surface .ProseMirror ul,
 .doc-surface .ProseMirror ol { padding-left: 1.5rem; margin: 0 0 0.75em; }
 .doc-surface .ProseMirror blockquote {

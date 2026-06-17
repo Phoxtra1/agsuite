@@ -43,10 +43,19 @@ export default function DocsEditor() {
       if (!d) { toast({ title: "Document not found", variant: "destructive" as any }); navigate("/workspace/docs"); return; }
       setDoc(d);
       setTitle(d.title);
+      document.title = d.title ? `${d.title} - AG Docs` : "Untitled Document - AG Docs";
       editor?.commands.setContent(d.content_json || { type: "doc", content: [{ type: "paragraph" }] });
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, editor]);
+
+  useEffect(() => {
+    if (title) {
+      document.title = `${title} - AG Docs`;
+    } else {
+      document.title = "Untitled Document - AG Docs";
+    }
+  }, [title]);
 
   function scheduleSave() {
     if (!id || !editor) return;

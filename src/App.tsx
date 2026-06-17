@@ -166,6 +166,26 @@ function SuiteGuard() {
   );
 }
 
+function WorkspaceGuard({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const location = useLocation();
+
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-background">
+        <div className="text-sm text-muted-foreground">Verifying access…</div>
+      </div>
+    );
+  }
+
+  if (!isAuthenticated) {
+    const next = encodeURIComponent(location.pathname + location.search);
+    return <Navigate to={`/?authRedirect=${next}`} replace />;
+  }
+
+  return <>{children}</>;
+}
+
 function PublicHome() {
   // If seal-authenticated, redirect to Suite
   if (!isPreview() && isSealAuthenticated()) {
@@ -221,9 +241,9 @@ function AppRoutes() {
             isPreview() ? (
               <Workspace />
             ) : (
-              <AppAuthGate>
+              <WorkspaceGuard>
                 <Workspace />
-              </AppAuthGate>
+              </WorkspaceGuard>
             )
           }
         />
