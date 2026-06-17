@@ -1,9 +1,10 @@
 import { useState } from "react";
 import type { Editor } from "@tiptap/react";
 import {
-  Bold, Italic, Underline as UnderlineIcon, Strikethrough, AlignLeft, AlignCenter, AlignRight,
-  List, ListOrdered, Quote, Heading1, Heading2, Heading3, Image as ImgIcon, Table as TableIcon,
-  Link as LinkIcon, Minus, Highlighter, Palette, Tag, Undo, Redo,
+  Bold, Italic, Underline as UnderlineIcon, Strikethrough, AlignLeft, AlignCenter, AlignRight, AlignJustify,
+  List, ListOrdered, ListTodo, Quote, Heading1, Heading2, Heading3, Image as ImgIcon, Table as TableIcon,
+  Link as LinkIcon, Minus, Highlighter, Palette, Tag, Undo, Redo, Superscript as SupIcon, Subscript as SubIcon,
+  Type
 } from "lucide-react";
 import { INTELLIGENCE_TAGS, type IntelligenceTagType } from "./IntelligenceTagExtension";
 
@@ -120,29 +121,38 @@ export function FormattingToolbar({ editor }: { editor: Editor }) {
   const active = "bg-accent/20 text-accent";
 
   return (
+  return (
     <div className="flex flex-wrap items-center gap-0.5 px-3 py-1.5 border-b border-border bg-background">
       <button className={`${btn} ${editor.can().undo() ? "" : "opacity-40"}`} onClick={() => editor.chain().focus().undo().run()} title="Undo"><Undo className="h-4 w-4"/></button>
       <button className={`${btn} ${editor.can().redo() ? "" : "opacity-40"}`} onClick={() => editor.chain().focus().redo().run()} title="Redo"><Redo className="h-4 w-4"/></button>
       <Sep />
-      <button className={`${btn} ${editor.isActive("heading", { level: 1 }) ? active : ""}`} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()}><Heading1 className="h-4 w-4"/></button>
-      <button className={`${btn} ${editor.isActive("heading", { level: 2 }) ? active : ""}`} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()}><Heading2 className="h-4 w-4"/></button>
-      <button className={`${btn} ${editor.isActive("heading", { level: 3 }) ? active : ""}`} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()}><Heading3 className="h-4 w-4"/></button>
+      
+      <FontFamilyPicker editor={editor} />
       <Sep />
-      <button className={`${btn} ${editor.isActive("bold") ? active : ""}`} onClick={() => editor.chain().focus().toggleBold().run()}><Bold className="h-4 w-4"/></button>
-      <button className={`${btn} ${editor.isActive("italic") ? active : ""}`} onClick={() => editor.chain().focus().toggleItalic().run()}><Italic className="h-4 w-4"/></button>
-      <button className={`${btn} ${editor.isActive("underline") ? active : ""}`} onClick={() => editor.chain().focus().toggleUnderline().run()}><UnderlineIcon className="h-4 w-4"/></button>
-      <button className={`${btn} ${editor.isActive("strike") ? active : ""}`} onClick={() => editor.chain().focus().toggleStrike().run()}><Strikethrough className="h-4 w-4"/></button>
+
+      <button className={`${btn} ${editor.isActive("heading", { level: 1 }) ? active : ""}`} onClick={() => editor.chain().focus().toggleHeading({ level: 1 }).run()} title="Heading 1"><Heading1 className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive("heading", { level: 2 }) ? active : ""}`} onClick={() => editor.chain().focus().toggleHeading({ level: 2 }).run()} title="Heading 2"><Heading2 className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive("heading", { level: 3 }) ? active : ""}`} onClick={() => editor.chain().focus().toggleHeading({ level: 3 }).run()} title="Heading 3"><Heading3 className="h-4 w-4"/></button>
       <Sep />
-      <button className={btn} onClick={() => editor.chain().focus().setTextAlign("left").run()}><AlignLeft className="h-4 w-4"/></button>
-      <button className={btn} onClick={() => editor.chain().focus().setTextAlign("center").run()}><AlignCenter className="h-4 w-4"/></button>
-      <button className={btn} onClick={() => editor.chain().focus().setTextAlign("right").run()}><AlignRight className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive("bold") ? active : ""}`} onClick={() => editor.chain().focus().toggleBold().run()} title="Bold"><Bold className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive("italic") ? active : ""}`} onClick={() => editor.chain().focus().toggleItalic().run()} title="Italic"><Italic className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive("underline") ? active : ""}`} onClick={() => editor.chain().focus().toggleUnderline().run()} title="Underline"><UnderlineIcon className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive("strike") ? active : ""}`} onClick={() => editor.chain().focus().toggleStrike().run()} title="Strikethrough"><Strikethrough className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive("superscript") ? active : ""}`} onClick={() => editor.chain().focus().toggleSuperscript().run()} title="Superscript"><SupIcon className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive("subscript") ? active : ""}`} onClick={() => editor.chain().focus().toggleSubscript().run()} title="Subscript"><SubIcon className="h-4 w-4"/></button>
       <Sep />
-      <button className={`${btn} ${editor.isActive("bulletList") ? active : ""}`} onClick={() => editor.chain().focus().toggleBulletList().run()}><List className="h-4 w-4"/></button>
-      <button className={`${btn} ${editor.isActive("orderedList") ? active : ""}`} onClick={() => editor.chain().focus().toggleOrderedList().run()}><ListOrdered className="h-4 w-4"/></button>
-      <button className={`${btn} ${editor.isActive("blockquote") ? active : ""}`} onClick={() => editor.chain().focus().toggleBlockquote().run()}><Quote className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive({ textAlign: "left" }) ? active : ""}`} onClick={() => editor.chain().focus().setTextAlign("left").run()} title="Align Left"><AlignLeft className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive({ textAlign: "center" }) ? active : ""}`} onClick={() => editor.chain().focus().setTextAlign("center").run()} title="Align Center"><AlignCenter className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive({ textAlign: "right" }) ? active : ""}`} onClick={() => editor.chain().focus().setTextAlign("right").run()} title="Align Right"><AlignRight className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive({ textAlign: "justify" }) ? active : ""}`} onClick={() => editor.chain().focus().setTextAlign("justify").run()} title="Justify"><AlignJustify className="h-4 w-4"/></button>
+      <Sep />
+      <button className={`${btn} ${editor.isActive("bulletList") ? active : ""}`} onClick={() => editor.chain().focus().toggleBulletList().run()} title="Bullet List"><List className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive("orderedList") ? active : ""}`} onClick={() => editor.chain().focus().toggleOrderedList().run()} title="Numbered List"><ListOrdered className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive("taskList") ? active : ""}`} onClick={() => editor.chain().focus().toggleTaskList().run()} title="Task List"><ListTodo className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive("blockquote") ? active : ""}`} onClick={() => editor.chain().focus().toggleBlockquote().run()} title="Quote"><Quote className="h-4 w-4"/></button>
       <Sep />
       <ColorButton editor={editor} />
-      <button className={`${btn} ${editor.isActive("highlight") ? active : ""}`} onClick={() => editor.chain().focus().toggleHighlight().run()}><Highlighter className="h-4 w-4"/></button>
+      <button className={`${btn} ${editor.isActive("highlight") ? active : ""}`} onClick={() => editor.chain().focus().toggleHighlight().run()} title="Highlight"><Highlighter className="h-4 w-4"/></button>
       <Sep />
       <button className={btn} title="Insert table" onClick={() => editor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}><TableIcon className="h-4 w-4"/></button>
       <button className={btn} title="Insert image" onClick={() => {
@@ -164,6 +174,42 @@ export function FormattingToolbar({ editor }: { editor: Editor }) {
 
 function Sep() {
   return <div className="h-5 w-px bg-border mx-1" />;
+}
+
+function FontFamilyPicker({ editor }: { editor: Editor }) {
+  const fonts = ["Inter", "Arial", "Roboto", "Times New Roman", "Georgia", "Verdana"];
+  const [open, setOpen] = useState(false);
+  
+  return (
+    <div className="relative" onMouseLeave={() => setOpen(false)}>
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className="h-8 inline-flex items-center gap-1.5 px-2 rounded-md hover:bg-muted text-foreground text-xs"
+        title="Font Family"
+      >
+        <Type className="h-3.5 w-3.5 text-muted-foreground" />
+        Font
+      </button>
+      {open && (
+        <div className="absolute top-full left-0 mt-1 z-20 min-w-[140px] rounded-lg border border-border bg-popover shadow-lg py-1">
+          {fonts.map((f) => (
+            <button
+              key={f}
+              onClick={() => { editor.chain().focus().setFontFamily(f).run(); setOpen(false); }}
+              className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted ${editor.isActive('textStyle', { fontFamily: f }) ? 'text-accent' : 'text-foreground'}`}
+              style={{ fontFamily: f }}
+            >
+              {f}
+            </button>
+          ))}
+          <button
+            onClick={() => { editor.chain().focus().unsetFontFamily().run(); setOpen(false); }}
+            className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-muted-foreground border-t border-border mt-1"
+          >Default</button>
+        </div>
+      )}
+    </div>
+  );
 }
 
 function ColorButton({ editor }: { editor: Editor }) {

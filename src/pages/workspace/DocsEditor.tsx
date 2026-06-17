@@ -8,10 +8,12 @@ import {
 } from "@/lib/workspace/documents";
 import { useDocEditor, EditorSurface } from "@/components/workspace/docs/DocEditor";
 import { MenuBar, FormattingToolbar } from "@/components/workspace/docs/EditorChrome";
+import { AGIntelligencePanel } from "@/components/workspace/docs/AGIntelligencePanel";
 import { ShareDialog } from "@/components/workspace/docs/ShareDialog";
 import { exportCSV, exportDOC, exportJSON, exportPDF } from "@/components/workspace/docs/exporters";
-import { ChevronLeft, CloudUpload, Loader2 } from "lucide-react";
+import { ChevronLeft, CloudUpload, Loader2, Download, Search, Settings } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 export default function DocsEditor() {
   const { id } = useParams();
@@ -146,8 +148,8 @@ export default function DocsEditor() {
       }
       case "tool:structure": setShowStructure((v) => !v); break;
 
-      case "view:zoom-in": setZoom((z) => Math.min(1.6, +(z + 0.1).toFixed(2))); break;
-      case "view:zoom-out": setZoom((z) => Math.max(0.6, +(z - 0.1).toFixed(2))); break;
+      case "view:zoom-in": setZoom((z) => Math.min(2.0, +(z + 0.1).toFixed(2))); break;
+      case "view:zoom-out": setZoom((z) => Math.max(0.5, +(z - 0.1).toFixed(2))); break;
       case "view:zoom-reset": setZoom(1); break;
       case "view:fullscreen":
         if (!document.fullscreenElement) document.documentElement.requestFullscreen();
@@ -175,57 +177,122 @@ export default function DocsEditor() {
   return (
     <div className="min-h-screen flex flex-col bg-muted/20">
       {/* Header */}
-      <header className="h-14 flex items-center gap-3 px-4 border-b border-border bg-card">
-        <button onClick={() => navigate("/workspace/docs")} className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm">
-          <ChevronLeft className="h-4 w-4" /> Docs
-        </button>
-        <div className="h-5 w-px bg-border" />
-        <input
-          value={title}
-          onChange={(e) => { setTitle(e.target.value); scheduleSave(); }}
-          onBlur={commitTitle}
-          className="text-sm font-medium text-foreground bg-transparent border-0 outline-none focus:ring-2 focus:ring-accent/40 rounded px-2 py-1 min-w-[200px]"
-        />
-        <div className="flex-1" />
-        <div className="text-xs text-muted-foreground flex items-center gap-1.5">
-          {saving === "saving" ? <><Loader2 className="h-3 w-3 animate-spin"/> Saving…</> :
-           saving === "saved" ? <><CloudUpload className="h-3.5 w-3.5"/> Saved</> : null}
+      <header className="h-16 flex items-center justify-between px-4 border-b border-border bg-card">
+        <div className="flex items-center gap-3">
+          <button onClick={() => navigate("/workspace/docs")} className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1 text-sm font-medium">
+            Workspace
+            <ChevronLeft className="h-4 w-4 opacity-50" />
+            <span className="text-accent font-semibold">AG Docs</span>
+          </button>
+          
+          <div className="h-6 w-px bg-border mx-1" />
+          
+          <div className="flex flex-col">
+            <input
+              value={title}
+              onChange={(e) => { setTitle(e.target.value); scheduleSave(); }}
+              onBlur={commitTitle}
+              placeholder="Untitled Document"
+              className="text-lg font-bold text-foreground bg-transparent border-0 outline-none focus:ring-2 focus:ring-accent/40 rounded px-2 py-0.5 min-w-[200px]"
+            />
+            <div className="flex items-center gap-2 px-2 text-xs text-muted-foreground mt-0.5">
+              {saving === "saving" ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin text-accent"/> Saving...</span> :
+               saving === "saved" ? <span className="flex items-center gap-1"><CloudUpload className="h-3 w-3 text-success"/> Saved</span> : null}
+              <span className="opacity-50">•</span>
+              <span>Last edited just now</span>
+            </div>
+          </div>
         </div>
-        <button
-          onClick={() => setShowShare(true)}
-          className="px-3 py-1.5 rounded-md bg-accent text-accent-foreground text-xs font-medium hover:bg-accent/90"
-        >
-          Share
-        </button>
+        
+        <div className="flex items-center gap-3">
+          <div className="flex items-center bg-muted/50 rounded-lg p-1 border border-border">
+            <button
+              onClick={() => handleAction('edit:find')}
+              className="p-1.5 text-muted-foreground hover:text-foreground rounded-md hover:bg-background"
+              title="Search Document"
+            >
+              <Search className="h-4 w-4" />
+            </button>
+          </div>
+
+          <button
+            onClick={() => handleAction('file:export-pdf')}
+            className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground border border-border text-xs font-medium hover:bg-secondary/80 flex items-center gap-1.5"
+          >
+            <Download className="h-3.5 w-3.5" />
+            Export
+          </button>
+          <button
+            onClick={() => setShowShare(true)}
+            className="px-4 py-1.5 rounded-md bg-accent text-accent-foreground text-xs font-medium hover:bg-accent/90"
+          >
+            Share
+          </button>
+          <Avatar className="h-8 w-8 ml-2 border border-border cursor-pointer hover:ring-2 hover:ring-accent/50 transition-all">
+            <AvatarImage src="https://github.com/shadcn.png" />
+            <AvatarFallback>AG</AvatarFallback>
+          </Avatar>
+        </div>
       </header>
 
       <MenuBar editor={editor} onAction={handleAction} />
       <FormattingToolbar editor={editor} />
 
-      <div className="flex-1 flex">
-        <main className="flex-1 overflow-auto py-8 px-4">
-          <div ref={surfaceRef} style={{ transform: `scale(${zoom})`, transformOrigin: "top center", width: "min(820px, 100%)", margin: "0 auto" }}>
+      <div className="flex-1 flex overflow-hidden">
+        {/* Left Sidebar - Outline */}
+        {showStructure && (
+          <aside className="w-64 border-r border-border bg-card/50 flex flex-col">
+            <div className="p-3 border-b border-border bg-card">
+              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Document Outline</h3>
+            </div>
+            <div className="flex-1 overflow-auto p-3">
+              {headings.length === 0 ? (
+                <p className="text-xs text-muted-foreground">Add headings to build a structure outline.</p>
+              ) : (
+                <ul className="space-y-1 text-sm">
+                  {headings.map((h, i) => (
+                    <li key={i} style={{ paddingLeft: (h.level - 1) * 12 }} className="text-foreground/80 hover:text-foreground hover:bg-muted/50 px-2 py-1 rounded cursor-pointer truncate transition-colors">
+                      {h.text || "Untitled section"}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </aside>
+        )}
+
+        {/* Center - Editor Surface */}
+        <main className="flex-1 overflow-auto py-8 px-4 bg-muted/20 relative" id="doc-scroll-container">
+          <div ref={surfaceRef} style={{ transform: `scale(${zoom})`, transformOrigin: "top center", width: "min(850px, 100%)", margin: "0 auto", paddingBottom: "100px" }}>
             <EditorSurface editor={editor} />
           </div>
         </main>
 
-        {showStructure && (
-          <aside className="w-64 border-l border-border bg-card p-4 overflow-auto">
-            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Structure</h3>
-            {headings.length === 0 ? (
-              <p className="text-xs text-muted-foreground">Add headings to build a structure outline.</p>
-            ) : (
-              <ul className="space-y-1 text-sm">
-                {headings.map((h, i) => (
-                  <li key={i} style={{ paddingLeft: (h.level - 1) * 10 }} className="text-foreground truncate">
-                    {h.text || "Untitled section"}
-                  </li>
-                ))}
-              </ul>
-            )}
-          </aside>
-        )}
+        {/* Right Sidebar - AG Intelligence */}
+        <AGIntelligencePanel editor={editor} />
       </div>
+
+      {/* Bottom Status Bar */}
+      <footer className="h-8 border-t border-border bg-card flex items-center justify-between px-4 text-[11px] font-medium text-muted-foreground">
+        <div className="flex items-center gap-4">
+          <span className="flex items-center gap-1 hover:text-foreground cursor-pointer">
+            Words: {editor.storage.characterCount?.words() || 0}
+          </span>
+          <span className="flex items-center gap-1 hover:text-foreground cursor-pointer">
+            Characters: {editor.storage.characterCount?.characters() || 0}
+          </span>
+          <span>Page 1</span>
+        </div>
+        <div className="flex items-center gap-4">
+          <span className="hover:text-foreground cursor-pointer">English (US)</span>
+          <div className="flex items-center gap-2 bg-muted/50 px-2 py-0.5 rounded">
+            <button onClick={() => handleAction('view:zoom-out')} className="hover:text-foreground">-</button>
+            <span>{Math.round(zoom * 100)}%</span>
+            <button onClick={() => handleAction('view:zoom-in')} className="hover:text-foreground">+</button>
+          </div>
+          <span className="text-success">{saving === "saved" ? "Saved" : saving === "saving" ? "Saving..." : "Saved"}</span>
+        </div>
+      </footer>
 
       {showShare && id && <ShareDialog documentId={id} onClose={() => setShowShare(false)} />}
     </div>

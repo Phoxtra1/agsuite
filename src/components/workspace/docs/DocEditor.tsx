@@ -13,6 +13,12 @@ import Color from "@tiptap/extension-color";
 import Highlight from "@tiptap/extension-highlight";
 import Placeholder from "@tiptap/extension-placeholder";
 import { IntelligenceTag } from "./IntelligenceTagExtension";
+import FontFamily from "@tiptap/extension-font-family";
+import Superscript from "@tiptap/extension-superscript";
+import Subscript from "@tiptap/extension-subscript";
+import TaskList from "@tiptap/extension-task-list";
+import TaskItem from "@tiptap/extension-task-item";
+import CharacterCount from "@tiptap/extension-character-count";
 import type { Editor } from "@tiptap/react";
 
 export function useDocEditor(opts: {
@@ -36,6 +42,12 @@ export function useDocEditor(opts: {
       Highlight.configure({ multicolor: false }),
       Placeholder.configure({ placeholder: "Start writing… use the toolbar to structure your intelligence." }),
       IntelligenceTag,
+      FontFamily,
+      Superscript,
+      Subscript,
+      TaskList,
+      TaskItem.configure({ nested: true }),
+      CharacterCount,
     ],
     content: opts.initialContent,
     editable: opts.editable ?? true,

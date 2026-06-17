@@ -271,13 +271,39 @@
 /* ===================================================================
    AG Docs — editor + intelligence tag styles
    =================================================================== */
+.doc-surface {
+  background: #ffffff !important;
+  color: #1a1a1a !important;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  min-height: 842px; /* A4 ratio approx */
+}
+
 .doc-surface .ProseMirror {
   min-height: 60vh;
   padding: 3.5rem 4rem;
   outline: none;
-  color: hsl(var(--foreground));
   font-size: 15px;
   line-height: 1.7;
+}
+
+/* Custom Checkbox/Task List styling */
+ul[data-type="taskList"] {
+  list-style: none;
+  padding: 0;
+}
+ul[data-type="taskList"] p {
+  margin: 0;
+}
+ul[data-type="taskList"] li {
+  display: flex;
+}
+ul[data-type="taskList"] li > label {
+  flex: 0 0 auto;
+  margin-right: 0.5rem;
+  user-select: none;
+}
+ul[data-type="taskList"] li > div {
+  flex: 1 1 auto;
 }
 .doc-surface .ProseMirror p { margin: 0 0 0.75em; }
 .doc-surface .ProseMirror h1 { font-size: 2rem; font-weight: 700; margin: 1.4em 0 0.5em; }

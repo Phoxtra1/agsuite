@@ -63,6 +63,12 @@ export const DEFAULT_CATEGORIES: ProductCategory[] = [
     id: "business-intelligence",
     name: "Business Intelligence",
     order: 2,
-    products: ["amniva", "workspace"],
+    products: ["amniva"],
+  },
+  {
+    id: "workspace",
+    name: "Workspace",
+    order: 4,
+    products: ["workspace"],
   },
 ];
