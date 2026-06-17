@@ -115,12 +115,11 @@ function DropMenu({
   );
 }
 
-export function FormattingToolbar({ editor }: { editor: Editor }) {
+  export function FormattingToolbar({ editor }: { editor: Editor }) {
   if (!editor) return null;
   const btn = "h-8 w-8 inline-flex items-center justify-center rounded-md hover:bg-muted text-muted-foreground";
   const active = "bg-accent/20 text-accent";
 
-  return (
   return (
     <div className="flex flex-wrap items-center gap-0.5 px-3 py-1.5 border-b border-border bg-background">
       <button className={`${btn} ${editor.can().undo() ? "" : "opacity-40"}`} onClick={() => editor.chain().focus().undo().run()} title="Undo"><Undo className="h-4 w-4"/></button>
