@@ -5,7 +5,7 @@ import amvLogo from "@/assets/amv_global_logo.png";
 
 const items = [
   { to: "/workspace", icon: LayoutGrid, label: "Dashboard", end: true },
-  { to: "/workspace/docs", icon: FileText, label: "AG Docs" },
+  { to: "/workspace/docs", icon: FileText, label: "Amineva Docs" },
 ];
 
 export function WorkspaceNav() {

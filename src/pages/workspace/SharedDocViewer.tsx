@@ -58,7 +58,7 @@ export default function SharedDocViewer() {
   return (
     <div className="min-h-screen bg-muted/20">
       <header className="h-14 flex items-center gap-3 px-4 border-b border-border bg-card">
-        <span className="text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-accent/15 text-accent">AG Docs</span>
+        <span className="text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-accent/15 text-accent">Amineva Docs</span>
         <span className="font-medium text-foreground text-sm">{payload.title}</span>
         <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${editable ? "bg-amber-500/15 text-amber-600" : "bg-blue-500/15 text-blue-600"}`}>
           {payload.mode === "edit" ? "Editable" : "View only"}

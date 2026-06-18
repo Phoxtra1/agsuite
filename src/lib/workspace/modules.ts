@@ -9,47 +9,47 @@ export interface WorkspaceModule {
   status: WorkspaceModuleStatus;
   icon: LucideIcon;
   route?: string;
-  accent: string; // tailwind class for the icon background
+  accent: string;
 }
 
 export const WORKSPACE_MODULES: WorkspaceModule[] = [
   {
-    id: "ag-docs",
-    name: "AG Docs",
+    id: "amineva-docs",
+    name: "Amineva Docs",
     description:
-      "Structured document editor with intelligence tagging, multi-format export, and shareable links.",
+      "Professional document workspace with structured intelligence, AI assistance and multi-format export.",
     status: "active",
     icon: FileText,
     route: "/workspace/docs",
     accent: "bg-blue-500/15 text-blue-500",
   },
   {
-    id: "ag-sheets",
-    name: "AG Sheets",
+    id: "amineva-sheets",
+    name: "Amineva Sheets",
     description: "Collaborative spreadsheets connected to your data intelligence layer.",
     status: "coming_soon",
     icon: Sheet,
     accent: "bg-emerald-500/15 text-emerald-500",
   },
   {
-    id: "ag-slides",
-    name: "AG Slides",
+    id: "amineva-slides",
+    name: "Amineva Slides",
     description: "Boardroom-grade presentations built from live Workspace data.",
     status: "coming_soon",
     icon: Presentation,
     accent: "bg-amber-500/15 text-amber-500",
   },
   {
-    id: "ag-forms",
-    name: "AG Forms",
+    id: "amineva-forms",
+    name: "Amineva Forms",
     description: "Structured data collection forms with link-based distribution.",
     status: "coming_soon",
     icon: ClipboardList,
     accent: "bg-fuchsia-500/15 text-fuchsia-500",
   },
   {
-    id: "ag-drive",
-    name: "AG Drive",
+    id: "amineva-drive",
+    name: "Amineva Drive",
     description: "Unified storage layer for every Workspace document and export.",
     status: "coming_soon",
     icon: FolderOpen,
