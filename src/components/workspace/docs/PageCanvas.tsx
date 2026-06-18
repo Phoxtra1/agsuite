@@ -782,71 +782,51 @@ export function PageCanvas({
       <style>{tableCss}</style>
 
       <div
+        className="doc-canvas-sheet relative"
         style={{
-          position: "relative",
           width: w,
-          height: stackHeight,
+          minHeight: h,
+          background: settings.pageColor ?? "#ffffff",
+          boxShadow: "0 8px 24px rgba(15,23,42,0.12)",
+          border: settings.pageBorder ? "2px solid #0f172a" : "1px solid #e5e7eb",
+          overflow: "hidden",
+          margin: "0 auto",
         }}
       >
-        {/* Page sheets — single source of truth (no duplicate background). */}
-        {Array.from({ length: pageCount }).map((_, pageIndex) => {
-          const top = pageIndex * (h + PAGE_GAP);
-          const pageOne = pageIndex + 1;
-          const showWatermark = inRange(pageOne, settings.watermarkPages)
-            && !(settings.coverPage && pageIndex === 0);
-          return (
-            <div
-              key={`sheet-${pageIndex}`}
-              className="doc-canvas-sheet"
-              style={{
-                position: "absolute",
-                top, left: 0,
-                width: w, height: h,
-                background: settings.pageColor ?? "#ffffff",
-                boxShadow: "0 8px 24px rgba(15,23,42,0.12)",
-                border: settings.pageBorder ? "2px solid #0f172a" : "1px solid #e5e7eb",
-                overflow: "hidden",
-              }}
-              data-page-index={pageIndex}
-            >
-              {showWatermark && <WatermarkLayer settings={settings} w={w} />}
-              <OverlayLayerView
-                items={overlays}
-                layer="behind"
-                pageIndex={pageIndex}
-                onChange={onOverlaysChange}
-                selectedId={selectedOverlayId}
-                onSelect={onSelectOverlay}
-              />
-              <PageChrome
-                pageIndex={pageIndex}
-                pageCount={pageCount}
-                settings={settings}
-                margins={margins}
-                onHeaderChange={onHeaderChange}
-                onFooterChange={onFooterChange}
-                today={today}
-              />
-              <OverlayLayerView
-                items={overlays}
-                layer="front"
-                pageIndex={pageIndex}
-                onChange={onOverlaysChange}
-                selectedId={selectedOverlayId}
-                onSelect={onSelectOverlay}
-              />
-            </div>
-          );
-        })}
-
-        {/* Single TipTap editor, positioned over the sheet stack. */}
+        {/* Watermark in the background */}
+        {inRange(1, settings.watermarkPages) && !settings.coverPage && (
+          <WatermarkLayer settings={settings} w={w} />
+        )}
+        
+        {/* Overlays (Behind) */}
+        <OverlayLayerView
+          items={overlays}
+          layer="behind"
+          pageIndex={0}
+          onChange={onOverlaysChange}
+          selectedId={selectedOverlayId}
+          onSelect={onSelectOverlay}
+        />
+        
+        {/* Header and Footer */}
+        <PageChrome
+          pageIndex={0}
+          pageCount={pageCount}
+          settings={settings}
+          margins={margins}
+          onHeaderChange={onHeaderChange}
+          onFooterChange={onFooterChange}
+          today={today}
+        />
+        
+        {/* Editable Content Layer */}
         <div
           ref={editorWrapRef}
           className="doc-canvas"
           style={{
-            position: "absolute",
-            top: editorTopOffset,
-            left: margins.left,
+            position: "relative",
+            marginTop: editorTopOffset,
+            marginLeft: margins.left,
             width: innerWidth,
             minHeight: innerHeight,
             columnCount: settings.columns > 1 ? settings.columns : undefined,
@@ -858,6 +838,16 @@ export function PageCanvas({
         >
           <EditorContent editor={editor} />
         </div>
+
+        {/* Overlays (Front) */}
+        <OverlayLayerView
+          items={overlays}
+          layer="front"
+          pageIndex={0}
+          onChange={onOverlaysChange}
+          selectedId={selectedOverlayId}
+          onSelect={onSelectOverlay}
+        />
       </div>
     </div>
   );
