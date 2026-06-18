@@ -5,10 +5,9 @@ import {
   AlignLeft, AlignCenter, AlignRight, AlignJustify, List, ListOrdered, ListTodo,
   Quote, Image as ImgIcon, Link as LinkIcon, Minus, Highlighter, Palette,
   Heading1, Heading2, Heading3, Scissors, Copy, Clipboard, Undo, Redo,
-  Table as TableIcon, FileImage, Smile, Square, ZoomIn, ZoomOut, Maximize2,
+  Table as TableIcon, FileImage, Smile, Square, ZoomIn, ZoomOut,
   Eye, BookOpen, FileText, Hash, RotateCcw, Languages, MessageSquare,
-  ListChecks, FilePlus2, FileDown, Search, Replace, Indent, Outdent,
-  CheckCircle, ChevronUp,
+  ListChecks, FilePlus2, Indent, Outdent, CheckCircle,
 } from "lucide-react";
 import type { PageSettings } from "./PageCanvas";
 
