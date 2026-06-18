@@ -1,13 +1,4 @@
-/* ============================================================
- * Amineva Workspace — Document Exporters
- * Supports: JSON, DOC (Word-HTML), HTML, TXT, PDF, DOCX, CSV
- * Plus: AI translate action via Supabase Edge Function.
- *
- * Dependencies (install in main project):
- *   bun add html2pdf.js docx
- *
- * Copy to: src/components/docs/exporters.ts
- * ========================================================== */
+// Exporters for Amineva Docs — PDF, DOC-like, JSON, CSV.
 
 export function exportJSON(filename: string, json: any) {
   const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
@@ -23,149 +14,19 @@ export function exportDOC(filename: string, html: string, title: string) {
   download(blob, `${safeName(filename)}.doc`);
 }
 
-export function exportHTML(filename: string, html: string, title: string) {
-  const wrapped = `<!doctype html><html><head><meta charset="utf-8"><title>${escapeHtml(title)}</title>
-    <style>body{font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif;max-width:860px;margin:40px auto;padding:0 24px;color:#0f172a}
-    table{border-collapse:collapse;width:100%}th,td{border:1px solid #cbd5e1;padding:6px}
-    img{max-width:100%}</style></head><body>${html}</body></html>`;
-  const blob = new Blob([wrapped], { type: "text/html;charset=utf-8" });
-  download(blob, `${safeName(filename)}.html`);
-}
-
-export function exportTXT(filename: string, json: any) {
-  const txt = extractText(json).replace(/[ \t]+\n/g, "\n").replace(/\n{3,}/g, "\n\n").trim();
-  const blob = new Blob([txt], { type: "text/plain;charset=utf-8" });
-  download(blob, `${safeName(filename)}.txt`);
-}
-
-export interface PdfPageOptions {
-  format?: "a3" | "a4" | "a5" | "letter" | "legal" | "tabloid";
-  orientation?: "portrait" | "landscape";
-  marginMm?: number;
-}
-
-export async function exportPDF(
-  filename: string,
-  element: HTMLElement,
-  opts: PdfPageOptions = {}
-) {
+export async function exportPDF(filename: string, element: HTMLElement) {
   // @ts-ignore - no types
   const html2pdf = (await import("html2pdf.js")).default;
-  await html2pdf()
+  html2pdf()
     .set({
-      margin: opts.marginMm ?? 12,
+      margin: 12,
       filename: `${safeName(filename)}.pdf`,
       image: { type: "jpeg", quality: 0.95 },
       html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
-      jsPDF: {
-        unit: "mm",
-        format: opts.format ?? "a4",
-        orientation: opts.orientation ?? "portrait",
-      },
-      pagebreak: { mode: ["css", "legacy"], before: "[data-page-break='true'], .page-break" },
+      jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
     })
     .from(element)
     .save();
-}
-
-/* ============================================================
- * DOCX export — real .docx using the `docx` library.
- * Run: bun add docx
- * ========================================================== */
-export async function exportDOCX(filename: string, json: any, title: string) {
-  const docx = await import("docx");
-  const {
-    Document, Packer, Paragraph, TextRun, HeadingLevel,
-    Table, TableRow, TableCell, WidthType, AlignmentType,
-  } = docx;
-
-  const children: any[] = [];
-
-  const walk = (node: any) => {
-    if (!node) return;
-    const type = node.type;
-
-    if (type === "heading") {
-      const lvl = Math.min(6, Math.max(1, node.attrs?.level ?? 1));
-      const map: any = {
-        1: HeadingLevel.HEADING_1, 2: HeadingLevel.HEADING_2, 3: HeadingLevel.HEADING_3,
-        4: HeadingLevel.HEADING_4, 5: HeadingLevel.HEADING_5, 6: HeadingLevel.HEADING_6,
-      };
-      children.push(new Paragraph({ heading: map[lvl], children: nodeRuns(node, TextRun) }));
-      return;
-    }
-    if (type === "paragraph") {
-      children.push(new Paragraph({
-        children: nodeRuns(node, TextRun),
-        alignment: alignMap(node.attrs?.textAlign, AlignmentType),
-      }));
-      return;
-    }
-    if (type === "bulletList" || type === "orderedList") {
-      const numbered = type === "orderedList";
-      (node.content || []).forEach((li: any) => {
-        const runs = nodeRuns(li, TextRun);
-        children.push(new Paragraph({
-          children: runs,
-          bullet: numbered ? undefined : { level: 0 },
-          numbering: numbered ? { reference: "default-numbering", level: 0 } : undefined,
-        }));
-      });
-      return;
-    }
-    if (type === "pageBreak" || node.attrs?.pageBreak) {
-      children.push(new Paragraph({ children: [new TextRun({ break: 1 })], pageBreakBefore: true }));
-      return;
-    }
-    if (type === "table") {
-      const rows = (node.content || []).map((row: any) => new TableRow({
-        children: (row.content || []).map((cell: any) => new TableCell({
-          children: [new Paragraph({ children: [new TextRun(extractText(cell).trim())] })],
-        })),
-      }));
-      children.push(new Table({ rows, width: { size: 100, type: WidthType.PERCENTAGE } }));
-      return;
-    }
-    (node.content || []).forEach(walk);
-  };
-
-  walk(json);
-
-  const doc = new Document({
-    sections: [{ properties: {}, children: children.length ? children : [new Paragraph(title)] }],
-  });
-  const blob = await Packer.toBlob(doc);
-  download(blob, `${safeName(filename)}.docx`);
-}
-
-function nodeRuns(node: any, TextRun: any): any[] {
-  const runs: any[] = [];
-  const collect = (n: any) => {
-    if (!n) return;
-    if (n.text) {
-      const marks = n.marks || [];
-      runs.push(new TextRun({
-        text: n.text,
-        bold: marks.some((m: any) => m.type === "bold"),
-        italics: marks.some((m: any) => m.type === "italic"),
-        underline: marks.some((m: any) => m.type === "underline") ? {} : undefined,
-        strike: marks.some((m: any) => m.type === "strike"),
-      }));
-      return;
-    }
-    (n.content || []).forEach(collect);
-  };
-  (node.content || []).forEach(collect);
-  return runs;
-}
-
-function alignMap(a: string | undefined, Align: any) {
-  switch (a) {
-    case "center": return Align.CENTER;
-    case "right": return Align.RIGHT;
-    case "justify": return Align.JUSTIFIED;
-    default: return Align.LEFT;
-  }
 }
 
 // Walk TipTap JSON, collect every `table` node, and emit CSV.
@@ -204,11 +65,7 @@ function collectTables(node: any, out: string[][][] = []): string[][][] {
 function extractText(node: any): string {
   if (!node) return "";
   if (node.text) return node.text;
-  if (node.type === "paragraph" || node.type === "heading") {
-    return (node.content || []).map(extractText).join("") + "\n";
-  }
-  if (node.type === "hardBreak") return "\n";
-  return (node.content || []).map(extractText).join(node.type === "tableRow" ? "\t" : " ");
+  return (node.content || []).map(extractText).join(" ");
 }
 
 function csvCell(value: string): string {
@@ -234,40 +91,4 @@ function download(blob: Blob, filename: string) {
   a.click();
   a.remove();
   setTimeout(() => URL.revokeObjectURL(url), 1000);
-}
-
-/* ============================================================
- * AI: action "translate" — wires the toolbar `ai` action.
- * Calls a Supabase Edge Function `ai-translate` (Lovable AI Gateway).
- * Falls back to returning the input if the endpoint is not deployed.
- * ========================================================== */
-export interface TranslateRequest {
-  text: string;
-  target: string;          // e.g. "fr", "es", "en", "Spanish"
-  source?: string;
-}
-
-export async function runAITranslate(req: TranslateRequest): Promise<string> {
-  try {
-    const base = (import.meta as any).env?.VITE_SUPABASE_URL || "";
-    const anon =
-      (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY ||
-      (import.meta as any).env?.VITE_SUPABASE_ANON_KEY ||
-      "";
-    if (!base) return req.text;
-    const res = await fetch(`${base}/functions/v1/ai-translate`, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        ...(anon ? { Authorization: `Bearer ${anon}`, apikey: anon } : {}),
-      },
-      body: JSON.stringify(req),
-    });
-    if (!res.ok) throw new Error(`translate failed: ${res.status}`);
-    const data = await res.json();
-    return data.translated ?? data.text ?? req.text;
-  } catch (e) {
-    console.warn("[runAITranslate] fallback (no edge function):", e);
-    return req.text;
-  }
 }
