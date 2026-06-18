@@ -954,6 +954,63 @@ export type Database = {
           },
         ]
       }
+      workspace_document_comments: {
+        Row: {
+          author_id: string
+          body: string
+          created_at: string
+          document_id: string
+          id: string
+          parent_id: string | null
+          range_from: number | null
+          range_to: number | null
+          resolved: boolean
+          selection_text: string | null
+          updated_at: string
+        }
+        Insert: {
+          author_id: string
+          body: string
+          created_at?: string
+          document_id: string
+          id?: string
+          parent_id?: string | null
+          range_from?: number | null
+          range_to?: number | null
+          resolved?: boolean
+          selection_text?: string | null
+          updated_at?: string
+        }
+        Update: {
+          author_id?: string
+          body?: string
+          created_at?: string
+          document_id?: string
+          id?: string
+          parent_id?: string | null
+          range_from?: number | null
+          range_to?: number | null
+          resolved?: boolean
+          selection_text?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_document_comments_document_id_fkey"
+            columns: ["document_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_documents"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "workspace_document_comments_parent_id_fkey"
+            columns: ["parent_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_document_comments"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       workspace_document_shares: {
         Row: {
           created_at: string
@@ -1029,28 +1086,37 @@ export type Database = {
       }
       workspace_documents: {
         Row: {
+          classification: string | null
           content_json: Json
           content_text: string
           created_at: string
           id: string
+          language: string | null
+          outline: Json | null
           owner_id: string
           title: string
           updated_at: string
         }
         Insert: {
+          classification?: string | null
           content_json?: Json
           content_text?: string
           created_at?: string
           id?: string
+          language?: string | null
+          outline?: Json | null
           owner_id: string
           title?: string
           updated_at?: string
         }
         Update: {
+          classification?: string | null
           content_json?: Json
           content_text?: string
           created_at?: string
           id?: string
+          language?: string | null
+          outline?: Json | null
           owner_id?: string
           title?: string
           updated_at?: string
