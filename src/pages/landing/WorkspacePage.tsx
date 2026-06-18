@@ -10,11 +10,11 @@ const fadeUp = {
 
 const WorkspacePage: FC = () => {
   const modules = [
-    { icon: FileText, name: "AG Docs", note: "Available now", live: true },
-    { icon: Sheet, name: "AG Sheets", note: "Coming soon" },
-    { icon: Presentation, name: "AG Slides", note: "Coming soon" },
-    { icon: ClipboardList, name: "AG Forms", note: "Coming soon" },
-    { icon: FolderOpen, name: "AG Drive", note: "Coming soon" },
+    { icon: FileText, name: "Amineva Docs", note: "Available now", live: true },
+    { icon: Sheet, name: "Amineva Sheets", note: "Coming soon" },
+    { icon: Presentation, name: "Amineva Slides", note: "Coming soon" },
+    { icon: ClipboardList, name: "Amineva Forms", note: "Coming soon" },
+    { icon: FolderOpen, name: "Amineva Drive", note: "Coming soon" },
   ];
   const pillars = [
     { icon: Tag, title: "Structured intelligence", desc: "Tag sections as insight, data, summary, evidence, or reference — every document becomes structured intelligence." },
@@ -35,7 +35,7 @@ const WorkspacePage: FC = () => {
               A workspace that <span className="text-accent">thinks in data.</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 max-w-3xl mx-auto mb-8">
-              Workspace is the unified hub for documents, data, and structured intelligence — starting with AG Docs and expanding into Sheets, Slides, Forms, and Drive.
+              Workspace is the unified hub for documents, data, and structured intelligence — starting with Amineva Docs and expanding into Sheets, Slides, Forms, and Drive.
             </p>
             <Link to="/" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg">
               Open Workspace <ArrowRight className="h-5 w-5" />
@@ -79,7 +79,7 @@ const WorkspacePage: FC = () => {
       </section>
 
       <section className="py-20 px-6 bg-gradient-to-r from-primary to-primary/90 text-center">
-        <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Start with AG Docs.</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Start with Amineva Docs.</h2>
         <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">Create your first structured document in seconds.</p>
         <Link to="/" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg">
           Get Started <ArrowRight className="h-5 w-5" />
