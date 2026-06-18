@@ -57,7 +57,7 @@ export function useDocEditor(opts: {
 
 export function EditorSurface({ editor }: { editor: Editor | null }) {
   return (
-    <div className="doc-surface mx-auto bg-background border border-border rounded-xl shadow-sm">
+    <div className="doc-canvas mx-auto bg-transparent border-0 rounded-none shadow-none">
       <EditorContent editor={editor} />
     </div>
   );

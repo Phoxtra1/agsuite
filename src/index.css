@@ -272,14 +272,21 @@
    Amineva Docs — editor + canvas styles
    =================================================================== */
 .doc-canvas {
-  background: #ffffff !important;
-  color: #1a1a1a !important;
+  background: transparent !important;
+  box-shadow: none;
 }
+
 .doc-canvas .ProseMirror {
+  min-height: 842px; /* A4 size */
+  width: 100%;
+  padding: 96px; /* 1 inch margins approx */
   outline: none;
   font-size: 15px;
   line-height: 1.7;
-  min-height: 200px;
+  background: #ffffff;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  margin-bottom: 2rem;
+  border: 1px solid hsl(var(--border));
 }
 .doc-canvas .ProseMirror p { margin: 0 0 0.75em; }
 .doc-canvas .ProseMirror h1 { font-size: 2rem; font-weight: 700; margin: 1.2em 0 0.5em; color: #0f172a; }
