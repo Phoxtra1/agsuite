@@ -7,11 +7,24 @@ import {
   Heading1, Heading2, Heading3, Scissors, Copy, Clipboard, Undo, Redo,
   Table as TableIcon, FileImage, Smile, Square, ZoomIn, ZoomOut,
   Eye, BookOpen, FileText, Hash, RotateCcw, Languages, MessageSquare,
-  ListChecks, FilePlus2, Indent, Outdent, CheckCircle,
+  ListChecks, FilePlus2, Indent, Outdent, CheckCircle, Paintbrush,
+  Superscript as SuperscriptIcon, Subscript as SubscriptIcon, CaseSensitive,
+  Search, Replace as ReplaceIcon, FileSignature, Bookmark as BookmarkIcon,
+  Sigma, FunctionSquare, Box, FileUp, Layers, Columns as ColumnsIcon,
+  PaintBucket, Frame, Stamp, Hash as LineNumIcon, BookMarked, ListTree,
+  Pilcrow, ArrowUpDown, ArrowLeftRight, AlignHorizontalDistributeCenter,
+  Calculator, Pencil, Split, Merge, ShieldCheck, GitCompare, MessagesSquare,
+  Check, X, ChevronLeft, ChevronRight, Lock, Unlock, Grid3x3, Ruler,
+  PanelLeft, PanelRight, SplitSquareHorizontal, Maximize2, Plus,
+  File as FileIcon, FolderOpen, Save, Mail, Printer, Download, Upload,
+  KeyRound, Database, Wrench, Puzzle, Code2, Settings2, Type as TypeIcon,
+  PaintbrushVertical, Building2, Sparkles,
 } from "lucide-react";
 import type { PageSettings } from "./PageCanvas";
 
-type RibbonTab = "home" | "insert" | "layout" | "references" | "review" | "view";
+type RibbonTab =
+  | "file" | "home" | "insert" | "layout" | "references"
+  | "review" | "view" | "tools";
 
 export function Ribbon({
   editor,
@@ -41,20 +54,23 @@ export function Ribbon({
   onToggleRuler: () => void;
 }) {
   const [tab, setTab] = useState<RibbonTab>("home");
+  const [findOpen, setFindOpen] = useState(false);
 
   if (!editor) return null;
 
   const tabs: { id: RibbonTab; label: string }[] = [
+    { id: "file", label: "File" },
     { id: "home", label: "Home" },
     { id: "insert", label: "Insert" },
     { id: "layout", label: "Page Layout" },
     { id: "references", label: "References" },
     { id: "review", label: "Review" },
     { id: "view", label: "View" },
+    { id: "tools", label: "Tools" },
   ];
 
   return (
-    <div className="border-b border-border bg-card">
+    <div className="sticky top-0 z-50 border-b border-border bg-card shadow-sm">
       <div className="flex items-center gap-0 px-3 border-b border-border">
         {tabs.map((t) => (
           <button
@@ -64,16 +80,37 @@ export function Ribbon({
               tab === t.id
                 ? "border-accent text-foreground"
                 : "border-transparent text-muted-foreground hover:text-foreground"
-            }`}
+            } ${t.id === "file" ? "bg-accent/10 text-accent rounded-t" : ""}`}
           >
-            {t.label}
+            {t.id === "file" ? (
+              <span className="inline-flex items-center gap-1.5">
+                <FileIcon className="h-3.5 w-3.5" /> {t.label}
+              </span>
+            ) : (
+              t.label
+            )}
           </button>
         ))}
+        <div className="ml-auto flex items-center gap-1">
+          <button
+            onClick={() => setFindOpen((v) => !v)}
+            className="h-7 px-2 inline-flex items-center gap-1 rounded-md text-xs hover:bg-muted text-foreground"
+            title="Find & Replace (Ctrl+F)"
+          >
+            <Search className="h-3.5 w-3.5" /> Find
+          </button>
+        </div>
       </div>
+
+      {findOpen && <FindReplace editor={editor} onClose={() => setFindOpen(false)} />}
+
       <div className="flex items-stretch gap-3 overflow-x-auto px-3 py-2 min-h-[68px]">
-        {tab === "home" && <HomeTab editor={editor} />}
+        {tab === "file" && <FileTab onAction={onAction} />}
+        {tab === "home" && <HomeTab editor={editor} onAction={onAction} />}
         {tab === "insert" && <InsertTab editor={editor} onAction={onAction} />}
-        {tab === "layout" && <LayoutTab pageSettings={pageSettings} onPageSettings={onPageSettings} />}
+        {tab === "layout" && (
+          <LayoutTab pageSettings={pageSettings} onPageSettings={onPageSettings} onAction={onAction} />
+        )}
         {tab === "references" && <ReferencesTab editor={editor} onAction={onAction} />}
         {tab === "review" && (
           <ReviewTab editor={editor} wordsCount={wordsCount} charCount={charCount} onAction={onAction} />
@@ -88,8 +125,10 @@ export function Ribbon({
             onToggleRuler={onToggleRuler}
             onPageSettings={onPageSettings}
             pageSettings={pageSettings}
+            onAction={onAction}
           />
         )}
+        {tab === "tools" && <ToolsTab onAction={onAction} />}
       </div>
     </div>
   );
@@ -99,8 +138,10 @@ export function Ribbon({
 function Group({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="flex flex-col items-stretch px-2 border-r border-border last:border-r-0">
-      <div className="flex items-center gap-0.5 flex-1">{children}</div>
-      <div className="text-[10px] text-muted-foreground uppercase tracking-wider text-center mt-1">{label}</div>
+      <div className="flex items-center gap-0.5 flex-1 flex-wrap">{children}</div>
+      <div className="text-[10px] text-muted-foreground uppercase tracking-wider text-center mt-1">
+        {label}
+      </div>
     </div>
   );
 }
@@ -136,8 +177,10 @@ function DropBtn({
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className={`absolute top-full left-0 mt-1 z-50 ${width} rounded-lg border border-border bg-popover shadow-xl py-1`}>
+          <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
+          <div
+            className={`absolute top-full left-0 mt-1 z-[70] ${width} rounded-lg border border-border bg-popover shadow-2xl py-1`}
+          >
             {children(() => setOpen(false))}
           </div>
         </>
@@ -145,9 +188,103 @@ function DropBtn({
     </div>
   );
 }
+function MenuItem({
+  icon: Icon, label, onClick, danger,
+}: { icon?: any; label: string; onClick: () => void; danger?: boolean }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`w-full text-left px-3 py-1.5 text-xs hover:bg-muted inline-flex items-center gap-2 ${
+        danger ? "text-destructive" : "text-foreground"
+      }`}
+    >
+      {Icon && <Icon className="h-3.5 w-3.5 opacity-70" />} {label}
+    </button>
+  );
+}
+
+/* ---------- FIND & REPLACE ---------- */
+function FindReplace({ editor, onClose }: { editor: Editor; onClose: () => void }) {
+  const [q, setQ] = useState("");
+  const [r, setR] = useState("");
+
+  const findNext = () => {
+    if (!q) return;
+    const text = editor.state.doc.textBetween(0, editor.state.doc.content.size, " ");
+    const from = editor.state.selection.to;
+    const idx = text.toLowerCase().indexOf(q.toLowerCase(), from);
+    const target = idx === -1 ? text.toLowerCase().indexOf(q.toLowerCase()) : idx;
+    if (target === -1) return;
+    editor.chain().focus().setTextSelection({ from: target + 1, to: target + 1 + q.length }).run();
+  };
+  const replaceOne = () => {
+    const { from, to } = editor.state.selection;
+    if (from === to) { findNext(); return; }
+    editor.chain().focus().insertContentAt({ from, to }, r).run();
+    findNext();
+  };
+  const replaceAll = () => {
+    if (!q) return;
+    const html = editor.getHTML();
+    const escaped = q.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    const next = html.replace(new RegExp(escaped, "gi"), r);
+    editor.chain().focus().setContent(next).run();
+  };
+
+  return (
+    <div className="flex items-center gap-2 px-3 py-2 border-b border-border bg-muted/30">
+      <Search className="h-4 w-4 text-muted-foreground" />
+      <input
+        autoFocus value={q} onChange={(e) => setQ(e.target.value)}
+        placeholder="Find"
+        className="h-7 px-2 text-xs rounded-md border border-border bg-background w-40"
+      />
+      <input
+        value={r} onChange={(e) => setR(e.target.value)}
+        placeholder="Replace with"
+        className="h-7 px-2 text-xs rounded-md border border-border bg-background w-40"
+      />
+      <button onClick={findNext} className="h-7 px-2 text-xs rounded-md hover:bg-muted">Find Next</button>
+      <button onClick={replaceOne} className="h-7 px-2 text-xs rounded-md hover:bg-muted">Replace</button>
+      <button onClick={replaceAll} className="h-7 px-2 text-xs rounded-md hover:bg-muted">Replace All</button>
+      <button onClick={onClose} className="ml-auto h-7 w-7 inline-flex items-center justify-center rounded-md hover:bg-muted">
+        <X className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+/* ---------- FILE ---------- */
+function FileTab({ onAction }: { onAction: (a: string, p?: any) => void }) {
+  return (
+    <>
+      <Group label="Document">
+        <Btn icon={FilePlus2} title="New" onClick={() => onAction("file:new")} />
+        <Btn icon={FolderOpen} title="Open" onClick={() => onAction("file:open")} />
+        <Btn icon={Save} title="Save" onClick={() => onAction("file:save")} />
+        <Btn icon={Download} title="Save As" onClick={() => onAction("file:saveAs")} />
+        <Btn icon={Pencil} title="Rename" onClick={() => onAction("file:rename")} />
+      </Group>
+      <Group label="Export">
+        <Btn icon={FileText} title="Export PDF" onClick={() => onAction("file:exportPDF")} />
+        <Btn icon={ImgIcon} title="Export Image" onClick={() => onAction("file:exportImage")} />
+        <Btn icon={Layers} title="Export PPTX" onClick={() => onAction("file:exportPPTX")} />
+      </Group>
+      <Group label="Share">
+        <Btn icon={Printer} title="Print" onClick={() => window.print()} />
+        <Btn icon={Mail} title="Send Email" onClick={() => onAction("file:email")} />
+      </Group>
+      <Group label="Protect">
+        <Btn icon={KeyRound} title="Encrypt Document" onClick={() => onAction("file:encrypt")} />
+        <Btn icon={Database} title="Backup" onClick={() => onAction("file:backup")} />
+        <Btn icon={Upload} title="Store" onClick={() => onAction("file:store")} />
+      </Group>
+    </>
+  );
+}
 
 /* ---------- HOME ---------- */
-function HomeTab({ editor }: { editor: Editor }) {
+function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p?: any) => void }) {
   const isHeading = (lvl: number) => editor.isActive("heading", { level: lvl });
 
   const applyStyle = (style: string) => {
@@ -179,8 +316,21 @@ function HomeTab({ editor }: { editor: Editor }) {
     editor.chain().focus().deleteSelection().insertContent(out).run();
   };
 
-  const setFontSize = (size: string) => editor.chain().focus().setMark("textStyle", { fontSize: size } as any).run();
+  const setFontSize = (size: string) =>
+    editor.chain().focus().setMark("textStyle", { fontSize: size } as any).run();
   const setFontFamily = (f: string) => editor.chain().focus().setFontFamily(f).run();
+
+  const bumpFont = (delta: number) => {
+    const cur = (editor.getAttributes("textStyle") as any).fontSize || "16px";
+    const n = parseInt(cur, 10) || 16;
+    setFontSize(`${Math.max(6, Math.min(120, n + delta))}px`);
+  };
+
+  const setLineSpacing = (s: string) => {
+    document.querySelectorAll<HTMLElement>(".doc-canvas .ProseMirror").forEach((el) => {
+      el.style.lineHeight = s;
+    });
+  };
 
   return (
     <>
@@ -199,6 +349,7 @@ function HomeTab({ editor }: { editor: Editor }) {
           const text = editor.state.doc.textBetween(from, to, " ");
           try { await navigator.clipboard.writeText(text); } catch {}
         }} />
+        <Btn icon={Paintbrush} title="Format Painter" onClick={() => onAction("format:painter")} />
       </Group>
 
       <Group label="Font">
@@ -225,16 +376,21 @@ function HomeTab({ editor }: { editor: Editor }) {
             </>
           )}
         </DropBtn>
+        <Btn icon={Plus} title="Increase font size" onClick={() => bumpFont(2)} />
+        <Btn icon={Minus} title="Decrease font size" onClick={() => bumpFont(-2)} />
         <Btn icon={Bold} title="Bold (Ctrl+B)" active={editor.isActive("bold")} onClick={() => editor.chain().focus().toggleBold().run()} />
         <Btn icon={Italic} title="Italic (Ctrl+I)" active={editor.isActive("italic")} onClick={() => editor.chain().focus().toggleItalic().run()} />
         <Btn icon={UnderlineIcon} title="Underline (Ctrl+U)" active={editor.isActive("underline")} onClick={() => editor.chain().focus().toggleUnderline().run()} />
         <Btn icon={Strikethrough} title="Strikethrough" active={editor.isActive("strike")} onClick={() => editor.chain().focus().toggleStrike().run()} />
+        <Btn icon={SuperscriptIcon} title="Superscript" active={editor.isActive("superscript")} onClick={() => (editor.chain().focus() as any).toggleSuperscript?.().run()} />
+        <Btn icon={SubscriptIcon} title="Subscript" active={editor.isActive("subscript")} onClick={() => (editor.chain().focus() as any).toggleSubscript?.().run()} />
         <ColorPicker editor={editor} />
-        <Btn icon={Highlighter} title="Highlight" active={editor.isActive("highlight")} onClick={() => editor.chain().focus().toggleHighlight().run()} />
+        <Btn icon={Highlighter} title="Highlight (character shading)" active={editor.isActive("highlight")} onClick={() => editor.chain().focus().toggleHighlight().run()} />
+        <Btn icon={Frame} title="Character border" onClick={() => onAction("char:border")} />
       </Group>
 
       <Group label="Case">
-        <DropBtn label="Aa" width="w-44">
+        <DropBtn label="Aa" icon={CaseSensitive} width="w-44">
           {(close) => (
             <>
               {[
@@ -252,32 +408,97 @@ function HomeTab({ editor }: { editor: Editor }) {
       </Group>
 
       <Group label="Paragraph">
-        <Btn icon={List} title="Bullets" active={editor.isActive("bulletList")} onClick={() => editor.chain().focus().toggleBulletList().run()} />
-        <Btn icon={ListOrdered} title="Numbering" active={editor.isActive("orderedList")} onClick={() => editor.chain().focus().toggleOrderedList().run()} />
+        <DropBtn label="" icon={List} width="w-44">
+          {(close) => (
+            <>
+              {[
+                ["•", "disc"], ["◦", "circle"], ["▪", "square"],
+                ["–", "dash"], ["→", "arrow"], ["★", "star"], ["✓", "check"],
+              ].map(([sym]) => (
+                <button
+                  key={sym}
+                  onClick={() => {
+                    editor.chain().focus().toggleBulletList().run();
+                    document.querySelectorAll<HTMLElement>(".doc-canvas .ProseMirror ul").forEach((el) => {
+                      el.style.listStyleType = "none";
+                      el.setAttribute("data-bullet", sym);
+                    });
+                    close();
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted"
+                >
+                  <span className="inline-block w-6">{sym}</span> Bullet
+                </button>
+              ))}
+            </>
+          )}
+        </DropBtn>
+        <DropBtn label="" icon={ListOrdered} width="w-44">
+          {(close) => (
+            <>
+              {[
+                ["decimal", "1. 2. 3."],
+                ["lower-alpha", "a. b. c."],
+                ["upper-alpha", "A. B. C."],
+                ["lower-roman", "i. ii. iii."],
+                ["upper-roman", "I. II. III."],
+              ].map(([t, l]) => (
+                <button
+                  key={t}
+                  onClick={() => {
+                    editor.chain().focus().toggleOrderedList().run();
+                    document.querySelectorAll<HTMLElement>(".doc-canvas .ProseMirror ol").forEach((el) => {
+                      el.style.listStyleType = t as string;
+                    });
+                    close();
+                  }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted"
+                >{l}</button>
+              ))}
+            </>
+          )}
+        </DropBtn>
         <Btn icon={ListTodo} title="Task list" active={editor.isActive("taskList")} onClick={() => editor.chain().focus().toggleTaskList().run()} />
         <Btn icon={Outdent} title="Decrease indent" onClick={() => editor.chain().focus().liftListItem("listItem").run()} />
         <Btn icon={Indent} title="Increase indent" onClick={() => editor.chain().focus().sinkListItem("listItem").run()} />
+        <Btn icon={ArrowUpDown} title="Sort selection" onClick={() => onAction("paragraph:sort")} />
         <Btn icon={AlignLeft} title="Align left" active={editor.isActive({ textAlign: "left" })} onClick={() => editor.chain().focus().setTextAlign("left").run()} />
         <Btn icon={AlignCenter} title="Center" active={editor.isActive({ textAlign: "center" })} onClick={() => editor.chain().focus().setTextAlign("center").run()} />
         <Btn icon={AlignRight} title="Align right" active={editor.isActive({ textAlign: "right" })} onClick={() => editor.chain().focus().setTextAlign("right").run()} />
         <Btn icon={AlignJustify} title="Justify" active={editor.isActive({ textAlign: "justify" })} onClick={() => editor.chain().focus().setTextAlign("justify").run()} />
-        <DropBtn label="Spacing" width="w-32">
+        <Btn icon={AlignHorizontalDistributeCenter} title="Distributed" onClick={() => editor.chain().focus().setTextAlign("justify").run()} />
+        <DropBtn label="Line" icon={Pilcrow} width="w-32">
           {(close) => (
             <>
-              {["1.0", "1.15", "1.5", "2.0"].map((s) => (
+              {["1.0", "1.15", "1.5", "2.0", "2.5", "3.0"].map((s) => (
+                <button key={s} onClick={() => { setLineSpacing(s); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">{s}</button>
+              ))}
+            </>
+          )}
+        </DropBtn>
+        <DropBtn label="¶" width="w-40">
+          {(close) => (
+            <>
+              {[
+                ["0", "None"], ["8px", "Compact"], ["12px", "Normal"], ["20px", "Relaxed"], ["32px", "Wide"],
+              ].map(([v, l]) => (
                 <button
-                  key={s}
+                  key={v}
                   onClick={() => {
-                    document.querySelectorAll<HTMLElement>(".doc-canvas .ProseMirror").forEach((el) => { el.style.lineHeight = s; });
+                    document.querySelectorAll<HTMLElement>(".doc-canvas .ProseMirror p").forEach((el) => {
+                      el.style.marginBottom = v as string;
+                    });
                     close();
                   }}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted"
-                >{s}</button>
+                >{l}</button>
               ))}
             </>
           )}
         </DropBtn>
         <Btn icon={Quote} title="Block quote" active={editor.isActive("blockquote")} onClick={() => editor.chain().focus().toggleBlockquote().run()} />
+        <Btn icon={Square} title="Borders" onClick={() => onAction("paragraph:borders")} />
+        <Btn icon={PaintBucket} title="Shading" onClick={() => onAction("paragraph:shading")} />
       </Group>
 
       <Group label="Styles">
@@ -298,6 +519,11 @@ function HomeTab({ editor }: { editor: Editor }) {
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-foreground"
                 >{l}</button>
               ))}
+              <div className="border-t border-border my-1" />
+              <button
+                onClick={() => { onAction("style:custom"); close(); }}
+                className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-accent"
+              >+ Custom style…</button>
             </>
           )}
         </DropBtn>
@@ -334,25 +560,46 @@ function ColorPicker({ editor }: { editor: Editor }) {
 /* ---------- INSERT ---------- */
 function InsertTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p?: any) => void }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
+  const textFileRef = useRef<HTMLInputElement | null>(null);
 
   return (
     <>
       <Group label="Pages">
-        <Btn icon={FilePlus2} title="Blank page" onClick={() => editor.chain().focus().insertContent("<p></p>").setHardBreak().run()} />
-        <Btn icon={Minus} title="Page break" onClick={() => editor.chain().focus().setHorizontalRule().run()} />
+        <Btn icon={FileSignature} title="Cover Page" onClick={() => onAction("insert:cover")} />
+        <Btn icon={FilePlus2} title="Blank page" onClick={() => onAction("insert:blankPage")} />
+        <Btn icon={Minus} title="Page break" onClick={() => onAction("insert:pageBreak")} />
+      </Group>
+
+      <Group label="Breaks">
+        <DropBtn label="Break" icon={Split} width="w-52">
+          {(close) => (
+            <>
+              <MenuItem label="Page break" onClick={() => { onAction("insert:break", "page"); close(); }} />
+              <MenuItem label="Column break" onClick={() => { onAction("insert:break", "column"); close(); }} />
+              <div className="border-t border-border my-1" />
+              <MenuItem label="Next page section" onClick={() => { onAction("insert:break", "section-next"); close(); }} />
+              <MenuItem label="Continuous section" onClick={() => { onAction("insert:break", "section-continuous"); close(); }} />
+              <MenuItem label="Even page section" onClick={() => { onAction("insert:break", "section-even"); close(); }} />
+              <MenuItem label="Odd page section" onClick={() => { onAction("insert:break", "section-odd"); close(); }} />
+            </>
+          )}
+        </DropBtn>
       </Group>
 
       <Group label="Tables">
         <TablePicker editor={editor} />
+        <Btn icon={Pencil} title="Draw table" onClick={() => onAction("table:draw")} />
         <Btn icon={TableIcon} title="Toggle header row" onClick={() => editor.chain().focus().toggleHeaderRow().run()} />
-        <DropBtn label="Cells" width="w-36">
+        <DropBtn label="Cells" width="w-40">
           {(close) => (
             <>
-              <button onClick={() => { editor.chain().focus().mergeCells().run(); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Merge cells</button>
-              <button onClick={() => { editor.chain().focus().splitCell().run(); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Split cell</button>
-              <button onClick={() => { editor.chain().focus().addRowAfter().run(); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Add row</button>
-              <button onClick={() => { editor.chain().focus().addColumnAfter().run(); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Add column</button>
-              <button onClick={() => { editor.chain().focus().deleteTable().run(); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-destructive">Delete table</button>
+              <MenuItem icon={Merge} label="Merge cells" onClick={() => { editor.chain().focus().mergeCells().run(); close(); }} />
+              <MenuItem icon={Split} label="Split cell" onClick={() => { editor.chain().focus().splitCell().run(); close(); }} />
+              <MenuItem label="Select row" onClick={() => { onAction("table:selectRow"); close(); }} />
+              <MenuItem label="Select column" onClick={() => { onAction("table:selectColumn"); close(); }} />
+              <MenuItem label="Add row" onClick={() => { editor.chain().focus().addRowAfter().run(); close(); }} />
+              <MenuItem label="Add column" onClick={() => { editor.chain().focus().addColumnAfter().run(); close(); }} />
+              <MenuItem danger label="Delete table" onClick={() => { editor.chain().focus().deleteTable().run(); close(); }} />
             </>
           )}
         </DropBtn>
@@ -366,17 +613,28 @@ function InsertTab({ editor, onAction }: { editor: Editor; onAction: (a: string,
           reader.readAsDataURL(f);
           e.target.value = "";
         }} />
-        <Btn icon={ImgIcon} title="Upload image" onClick={() => fileRef.current?.click()} />
+        <Btn icon={Upload} title="Upload image from device" onClick={() => fileRef.current?.click()} />
+        <Btn icon={ImgIcon} title="Image positioning / wrapping" onClick={() => onAction("image:position")} />
         <Btn icon={FileImage} title="Image from URL" onClick={() => {
           const url = window.prompt("Image URL");
           if (url) editor.chain().focus().setImage({ src: url }).run();
         }} />
       </Group>
 
+      <Group label="Header & Footer">
+        <Btn icon={PanelLeft} title="Header" onClick={() => onAction("insert:header")} />
+        <Btn icon={PanelRight} title="Footer" onClick={() => onAction("insert:footer")} />
+        <Btn icon={Hash} title="Page number" onClick={() => onAction("insert:pageNumber")} />
+      </Group>
+
       <Group label="Insert">
         <Btn icon={LinkIcon} title="Insert link" onClick={() => {
           const url = window.prompt("Link URL", "https://");
           if (url) editor.chain().focus().extendMarkRange("link").setLink({ href: url }).run();
+        }} />
+        <Btn icon={BookmarkIcon} title="Bookmark" onClick={() => {
+          const name = window.prompt("Bookmark name");
+          if (name) editor.chain().focus().insertContent(`<a id="${name}"></a>`).run();
         }} />
         <DropBtn label="Symbol" icon={Smile} width="w-56">
           {(close) => (
@@ -387,7 +645,22 @@ function InsertTab({ editor, onAction }: { editor: Editor; onAction: (a: string,
             </div>
           )}
         </DropBtn>
+        <Btn icon={Sigma} title="Equation" onClick={() => {
+          const eq = window.prompt("Equation (LaTeX or plain)");
+          if (eq) editor.chain().focus().insertContent(`<code>${eq}</code>`).run();
+        }} />
         <Btn icon={Square} title="Text box" onClick={() => editor.chain().focus().insertContent('<blockquote><p>Text box</p></blockquote>').run()} />
+        <Btn icon={TypeIcon} title="WordArt" onClick={() => onAction("insert:wordArt")} />
+        <Btn icon={Box} title="Object" onClick={() => onAction("insert:object")} />
+        <input ref={textFileRef} type="file" accept=".txt,.md,.html" className="hidden" onChange={(e) => {
+          const f = e.target.files?.[0]; if (!f) return;
+          const reader = new FileReader();
+          reader.onload = () => editor.chain().focus().insertContent(String(reader.result || "")).run();
+          reader.readAsText(f);
+          e.target.value = "";
+        }} />
+        <Btn icon={FileUp} title="Text from File" onClick={() => textFileRef.current?.click()} />
+        <Btn icon={Stamp} title="Signature" onClick={() => onAction("insert:signature")} />
         <Btn icon={Minus} title="Horizontal rule" onClick={() => editor.chain().focus().setHorizontalRule().run()} />
       </Group>
     </>
@@ -404,8 +677,8 @@ function TablePicker({ editor }: { editor: Editor }) {
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-50 p-2 rounded-lg border border-border bg-popover shadow-xl">
+          <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
+          <div className="absolute top-full left-0 mt-1 z-[70] p-2 rounded-lg border border-border bg-popover shadow-2xl">
             <div className="text-[11px] text-muted-foreground mb-2">{hover.r || 0} × {hover.c || 0}</div>
             <div className="grid grid-cols-10 gap-0.5">
               {Array.from({ length: 80 }).map((_, i) => {
@@ -432,17 +705,26 @@ function TablePicker({ editor }: { editor: Editor }) {
 }
 
 /* ---------- LAYOUT ---------- */
-function LayoutTab({ pageSettings, onPageSettings }: { pageSettings: PageSettings; onPageSettings: (p: Partial<PageSettings>) => void }) {
+function LayoutTab({
+  pageSettings, onPageSettings, onAction,
+}: {
+  pageSettings: PageSettings;
+  onPageSettings: (p: Partial<PageSettings>) => void;
+  onAction: (a: string, p?: any) => void;
+}) {
   return (
     <>
       <Group label="Margins">
-        <DropBtn label={`Margins (${pageSettings.margin})`} width="w-40">
+        <DropBtn label={`Margins (${pageSettings.margin})`} width="w-44">
           {(close) => (
             <>
-              {(["narrow", "normal", "wide"] as const).map((m) => (
-                <button key={m} onClick={() => { onPageSettings({ margin: m }); close(); }}
+              {(["narrow", "normal", "moderate", "wide"] as const).map((m) => (
+                <button key={m} onClick={() => { onPageSettings({ margin: m as any }); close(); }}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted capitalize">{m}</button>
               ))}
+              <div className="border-t border-border my-1" />
+              <button onClick={() => { onAction("layout:customMargins"); close(); }}
+                className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-accent">Custom Margins…</button>
             </>
           )}
         </DropBtn>
@@ -458,41 +740,70 @@ function LayoutTab({ pageSettings, onPageSettings }: { pageSettings: PageSetting
         </DropBtn>
       </Group>
       <Group label="Page Size">
-        <DropBtn label={pageSettings.size} width="w-32">
+        <DropBtn label={pageSettings.size} width="w-36">
           {(close) => (
             <>
               {(["A3", "A4", "A5", "A6", "Letter", "Legal", "Tabloid", "Statement"] as const).map((s) => (
-                <button key={s} onClick={() => { onPageSettings({ size: s }); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">{s}</button>
+                <button key={s} onClick={() => { onPageSettings({ size: s as any }); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">{s}</button>
               ))}
+              <div className="border-t border-border my-1" />
+              <button onClick={() => { onAction("layout:customSize"); close(); }}
+                className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-accent">Custom Size…</button>
             </>
           )}
         </DropBtn>
       </Group>
       <Group label="Columns">
-        <DropBtn label={`${pageSettings.columns} col`} width="w-28">
+        <DropBtn label={`${pageSettings.columns} col`} icon={ColumnsIcon} width="w-28">
           {(close) => (
             <>
-              {[1, 2, 3].map((n) => (
+              {[1, 2, 3, 4].map((n) => (
                 <button key={n} onClick={() => { onPageSettings({ columns: n }); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">{n} column{n>1?"s":""}</button>
               ))}
             </>
           )}
         </DropBtn>
+        <Btn icon={ArrowLeftRight} title="Text direction" onClick={() => onAction("layout:textDirection")} />
+      </Group>
+      <Group label="Themes">
+        <DropBtn label="Theme" icon={Sparkles} width="w-40">
+          {(close) => (
+            <>
+              <MenuItem icon={Palette} label="Theme colors" onClick={() => { onAction("layout:themeColors"); close(); }} />
+              <MenuItem icon={Type} label="Theme fonts" onClick={() => { onAction("layout:themeFonts"); close(); }} />
+              <MenuItem icon={Sparkles} label="Theme effects" onClick={() => { onAction("layout:themeEffects"); close(); }} />
+            </>
+          )}
+        </DropBtn>
+      </Group>
+      <Group label="Page">
+        <Btn icon={Frame} title="Page borders" onClick={() => onPageSettings({ pageBorder: !pageSettings.pageBorder })}
+          active={pageSettings.pageBorder} />
+        <Btn icon={PaintBucket} title="Page color" onClick={() => {
+          const c = window.prompt("Page background color (hex)", "#ffffff");
+          if (c) onAction("layout:pageColor", c);
+        }} />
+        <Btn icon={LineNumIcon} title="Line numbers" onClick={() => onAction("layout:lineNumbers")} />
+        <Btn icon={Settings2} title="Section settings" onClick={() => onAction("layout:section")} />
       </Group>
       <Group label="Watermark">
-        <button
-          onClick={() => {
-            const t = window.prompt("Watermark text (blank to remove)", pageSettings.watermark || "");
-            onPageSettings({ watermark: t || "" });
-          }}
-          className="h-8 px-2 rounded-md hover:bg-muted text-xs text-foreground inline-flex items-center gap-1"
-        >Set</button>
-      </Group>
-      <Group label="Borders">
-        <button
-          onClick={() => onPageSettings({ pageBorder: !pageSettings.pageBorder })}
-          className={`h-8 px-2 rounded-md text-xs inline-flex items-center gap-1 ${pageSettings.pageBorder ? "bg-accent/20 text-accent" : "text-foreground hover:bg-muted"}`}
-        >{pageSettings.pageBorder ? "On" : "Off"}</button>
+        <DropBtn label="Watermark" icon={Stamp} width="w-44">
+          {(close) => (
+            <>
+              {["Confidential", "Do Not Copy", "Original", "Draft", "Sample"].map((w) => (
+                <MenuItem key={w} label={w} onClick={() => { onPageSettings({ watermark: w }); close(); }} />
+              ))}
+              <div className="border-t border-border my-1" />
+              <MenuItem label="Custom text…" onClick={() => {
+                const t = window.prompt("Watermark text (blank to remove)", pageSettings.watermark || "");
+                onPageSettings({ watermark: t || "" });
+                close();
+              }} />
+              <MenuItem label="Image watermark…" onClick={() => { onAction("layout:imageWatermark"); close(); }} />
+              <MenuItem danger label="Remove" onClick={() => { onPageSettings({ watermark: "" }); close(); }} />
+            </>
+          )}
+        </DropBtn>
       </Group>
     </>
   );
@@ -500,12 +811,14 @@ function LayoutTab({ pageSettings, onPageSettings }: { pageSettings: PageSetting
 
 /* ---------- REFERENCES ---------- */
 function ReferencesTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p?: any) => void }) {
-  const insertTOC = () => {
+  const insertTOC = (maxLevel = 3) => {
     const json = editor.getJSON();
     const headings: { level: number; text: string }[] = [];
     const walk = (n: any) => {
       if (!n) return;
-      if (n.type === "heading") headings.push({ level: n.attrs?.level || 1, text: (n.content || []).map((c: any) => c.text || "").join("") });
+      if (n.type === "heading" && (n.attrs?.level || 1) <= maxLevel) {
+        headings.push({ level: n.attrs?.level || 1, text: (n.content || []).map((c: any) => c.text || "").join("") });
+      }
       (n.content || []).forEach(walk);
     };
     walk(json);
@@ -515,20 +828,38 @@ function ReferencesTab({ editor, onAction }: { editor: Editor; onAction: (a: str
     html += "</ul>";
     editor.chain().focus().insertContent(html).run();
   };
+
   return (
     <>
       <Group label="TOC">
-        <button onClick={insertTOC} className="h-8 px-3 rounded-md bg-accent/10 text-accent text-xs font-semibold hover:bg-accent/20 inline-flex items-center gap-1">
-          <ListChecks className="h-3.5 w-3.5" /> Insert TOC
-        </button>
+        <DropBtn label="Insert TOC" icon={ListChecks} width="w-44">
+          {(close) => (
+            <>
+              <MenuItem label="Levels 1–1" onClick={() => { insertTOC(1); close(); }} />
+              <MenuItem label="Levels 1–2" onClick={() => { insertTOC(2); close(); }} />
+              <MenuItem label="Levels 1–3" onClick={() => { insertTOC(3); close(); }} />
+              <MenuItem label="All levels" onClick={() => { insertTOC(6); close(); }} />
+              <div className="border-t border-border my-1" />
+              <MenuItem label="Update table" onClick={() => { onAction("toc:update"); close(); }} />
+            </>
+          )}
+        </DropBtn>
       </Group>
       <Group label="Footnotes">
-        <Btn icon={Hash} title="Insert footnote marker" onClick={() => editor.chain().focus().insertContent("<sup>[1]</sup>").run()} />
+        <Btn icon={Hash} title="Insert footnote" onClick={() => editor.chain().focus().insertContent("<sup>[1]</sup>").run()} />
+        <Btn icon={BookMarked} title="Insert endnote" onClick={() => onAction("ref:endnote")} />
+        <Btn icon={ChevronLeft} title="Previous note" onClick={() => onAction("ref:prevNote")} />
+        <Btn icon={ChevronRight} title="Next note" onClick={() => onAction("ref:nextNote")} />
       </Group>
       <Group label="Captions">
         <button onClick={() => {
           const c = window.prompt("Caption text"); if (c) editor.chain().focus().insertContent(`<p><em>Figure: ${c}</em></p>`).run();
         }} className="h-8 px-2 rounded-md hover:bg-muted text-xs text-foreground">Add caption</button>
+        <Btn icon={Layers} title="Table of Figures" onClick={() => onAction("ref:tableOfFigures")} />
+      </Group>
+      <Group label="Index">
+        <Btn icon={BookOpen} title="Insert Index" onClick={() => onAction("ref:index")} />
+        <Btn icon={ListTree} title="Mark Entry" onClick={() => onAction("ref:markEntry")} />
       </Group>
       <Group label="Citation">
         <button onClick={() => {
@@ -540,7 +871,9 @@ function ReferencesTab({ editor, onAction }: { editor: Editor; onAction: (a: str
 }
 
 /* ---------- REVIEW ---------- */
-function ReviewTab({ editor, wordsCount, charCount, onAction }: { editor: Editor; wordsCount: number; charCount: number; onAction: (a: string, p?: any) => void }) {
+function ReviewTab({
+  editor, wordsCount, charCount, onAction,
+}: { editor: Editor; wordsCount: number; charCount: number; onAction: (a: string, p?: any) => void }) {
   return (
     <>
       <Group label="Proofing">
@@ -548,14 +881,34 @@ function ReviewTab({ editor, wordsCount, charCount, onAction }: { editor: Editor
           <div className="font-semibold">{wordsCount} words</div>
           <div className="text-[10px] text-muted-foreground">{charCount} chars</div>
         </div>
-        <Btn icon={CheckCircle} title="AI Spelling & Grammar" onClick={() => onAction("ai", { action: "grammar", label: "Grammar" })} />
-        <Btn icon={Languages} title="Translate" onClick={() => onAction("ai", { action: "translate", label: "Translate" })} />
+        <Btn icon={CheckCircle} title="AI Spelling Check" onClick={() => onAction("ai", { action: "spelling", label: "Spelling" })} />
+        <Btn icon={Sparkles} title="AI Grammar Check" onClick={() => onAction("ai", { action: "grammar", label: "Grammar" })} />
+      </Group>
+      <Group label="Language">
+        <Btn icon={Languages} title="Amineva Translate" onClick={() => onAction("ai", { action: "translate", label: "Amineva Translate" })} />
+      </Group>
+      <Group label="Compare">
+        <Btn icon={GitCompare} title="Compare documents" onClick={() => onAction("review:compare")} />
       </Group>
       <Group label="Comments">
-        <Btn icon={MessageSquare} title="Add comment" onClick={() => onAction("comment:add")} />
+        <Btn icon={MessageSquare} title="New comment" onClick={() => onAction("comment:add")} />
+        <Btn icon={MessagesSquare} title="Show comments" onClick={() => onAction("comment:show")} />
+        <Btn icon={ChevronLeft} title="Previous comment" onClick={() => onAction("comment:prev")} />
+        <Btn icon={ChevronRight} title="Next comment" onClick={() => onAction("comment:next")} />
       </Group>
       <Group label="Track Changes">
         <Btn icon={RotateCcw} title="Toggle track changes" onClick={() => onAction("track:toggle")} />
+        <Btn icon={Eye} title="Show markup" onClick={() => onAction("track:showMarkup")} />
+      </Group>
+      <Group label="Changes">
+        <Btn icon={Check} title="Accept" onClick={() => onAction("track:accept")} />
+        <Btn icon={X} title="Reject" onClick={() => onAction("track:reject")} />
+        <Btn icon={ChevronLeft} title="Previous change" onClick={() => onAction("track:prev")} />
+        <Btn icon={ChevronRight} title="Next change" onClick={() => onAction("track:next")} />
+      </Group>
+      <Group label="Permissions">
+        <Btn icon={Lock} title="Restrict editing" onClick={() => onAction("perm:restrict")} />
+        <Btn icon={Unlock} title="Allow editing" onClick={() => onAction("perm:allow")} />
       </Group>
     </>
   );
@@ -563,41 +916,81 @@ function ReviewTab({ editor, wordsCount, charCount, onAction }: { editor: Editor
 
 /* ---------- VIEW ---------- */
 function ViewTab({
-  onToggleLeftPanel, onToggleRightPanel, onZoom, zoom, showRuler, onToggleRuler, onPageSettings, pageSettings,
+  onToggleLeftPanel, onToggleRightPanel, onZoom, zoom, showRuler, onToggleRuler, onPageSettings, pageSettings, onAction,
 }: any) {
   return (
     <>
       <Group label="Modes">
-        <DropBtn label={pageSettings.mode === "reading" ? "Reading" : pageSettings.mode === "web" ? "Web" : "Print"} width="w-36">
+        <DropBtn
+          label={
+            pageSettings.mode === "reading" ? "Reading" :
+            pageSettings.mode === "web" ? "Web" :
+            pageSettings.mode === "outline" ? "Outline" : "Print"
+          }
+          width="w-40"
+        >
           {(close) => (
             <>
-              <button onClick={() => { onPageSettings({ mode: "print" }); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Print Layout</button>
-              <button onClick={() => { onPageSettings({ mode: "web" }); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Web Layout</button>
-              <button onClick={() => { onPageSettings({ mode: "reading" }); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Reading Mode</button>
+              <MenuItem icon={BookOpen} label="Reading Mode" onClick={() => { onPageSettings({ mode: "reading" }); close(); }} />
+              <MenuItem icon={FileText} label="Print Layout" onClick={() => { onPageSettings({ mode: "print" }); close(); }} />
+              <MenuItem icon={Code2} label="Web Layout" onClick={() => { onPageSettings({ mode: "web" }); close(); }} />
+              <MenuItem icon={ListTree} label="Outline View" onClick={() => { onPageSettings({ mode: "outline" }); close(); }} />
             </>
           )}
         </DropBtn>
       </Group>
       <Group label="Panels">
-        <Btn icon={BookOpen} title="Toggle navigation panel" onClick={onToggleLeftPanel} />
-        <Btn icon={FileText} title="Toggle intelligence panel" onClick={onToggleRightPanel} />
+        <Btn icon={PanelLeft} title="Navigation panel" onClick={onToggleLeftPanel} />
+        <Btn icon={ListTree} title="Document outline" onClick={() => onAction("view:outline")} />
+        <Btn icon={PanelRight} title="Intelligence panel" onClick={onToggleRightPanel} />
       </Group>
       <Group label="Display">
-        <Btn icon={Eye} title="Toggle ruler" active={showRuler} onClick={onToggleRuler} />
+        <Btn icon={Ruler} title="Ruler" active={showRuler} onClick={onToggleRuler} />
+        <Btn icon={Grid3x3} title="Gridlines" onClick={() => onAction("view:gridlines")} />
+        <Btn icon={AlignHorizontalDistributeCenter} title="Guides" onClick={() => onAction("view:guides")} />
+      </Group>
+      <Group label="Window">
+        <Btn icon={Plus} title="New window" onClick={() => window.open(window.location.href, "_blank")} />
+        <Btn icon={SplitSquareHorizontal} title="Split window" onClick={() => onAction("view:split")} />
+        <Btn icon={Layers} title="Arrange all" onClick={() => onAction("view:arrange")} />
       </Group>
       <Group label="Zoom">
         <Btn icon={ZoomOut} title="Zoom out" onClick={() => onZoom(Math.max(0.5, zoom - 0.1))} />
         <span className="text-xs text-foreground px-1 min-w-[40px] text-center">{Math.round(zoom * 100)}%</span>
         <Btn icon={ZoomIn} title="Zoom in" onClick={() => onZoom(Math.min(2, zoom + 0.1))} />
-        <DropBtn label="Fit" width="w-32">
+        <DropBtn label="Fit" icon={Maximize2} width="w-36">
           {(close) => (
             <>
-              <button onClick={() => { onZoom("fit-width"); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Page width</button>
-              <button onClick={() => { onZoom("fit-page"); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Full page</button>
-              <button onClick={() => { onZoom(1); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">100%</button>
+              <MenuItem label="Page width" onClick={() => { onZoom("fit-width"); close(); }} />
+              <MenuItem label="Full page" onClick={() => { onZoom("fit-page"); close(); }} />
+              <MenuItem label="100%" onClick={() => { onZoom(1); close(); }} />
             </>
           )}
         </DropBtn>
+      </Group>
+      <Group label="Protect">
+        <Btn icon={ShieldCheck} title="High Protector Mode" onClick={() => onAction("view:highProtector")} />
+      </Group>
+    </>
+  );
+}
+
+/* ---------- TOOLS (Amineva) ---------- */
+function ToolsTab({ onAction }: { onAction: (a: string, p?: any) => void }) {
+  return (
+    <>
+      <Group label="Amineva Tools">
+        <Btn icon={Sparkles} title="Amineva AI Tools" onClick={() => onAction("tools:amineva")} />
+        <Btn icon={Calculator} title="Quick calc" onClick={() => onAction("tools:calc")} />
+        <Btn icon={Building2} title="Workspace tools" onClick={() => onAction("tools:workspace")} />
+      </Group>
+      <Group label="Add-ins">
+        <Btn icon={Puzzle} title="Add-ins" onClick={() => onAction("tools:addins")} />
+        <Btn icon={Sparkles} title="Amineva Add-ons" onClick={() => onAction("tools:addons")} />
+      </Group>
+      <Group label="Developer">
+        <Btn icon={Code2} title="Developer tools" onClick={() => onAction("tools:dev")} />
+        <Btn icon={Settings2} title="Extensions" onClick={() => onAction("tools:extensions")} />
       </Group>
     </>
   );
