@@ -61,8 +61,9 @@ export async function exportPDF(
  * DOCX export — real .docx using the `docx` library.
  * Run: bun add docx
  * ========================================================== */
-export async function exportDOCX(filename: string, json: any, title: string) {
-  const docx = await import("docx");
+export async function exportDOCX() {
+  throw new Error("DOCX export not yet enabled");
+}
   const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
 
   const children: any[] = [];
