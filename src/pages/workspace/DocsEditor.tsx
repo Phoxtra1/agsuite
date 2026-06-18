@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   getDocument, updateDocument, snapshotVersion, type WorkspaceDocument,
@@ -11,7 +11,7 @@ import { PageCanvas, DEFAULT_PAGE_SETTINGS, type PageSettings } from "@/componen
 import { ShareDialog } from "@/components/workspace/docs/ShareDialog";
 import { exportCSV, exportDOC, exportJSON, exportPDF } from "@/components/workspace/docs/exporters";
 import {
-  ChevronLeft, CloudUpload, Loader2, Download, Share2, ArrowLeft, Sparkles,
+  ChevronLeft, CloudUpload, Loader2, Download, Share2, ArrowLeft,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import { useTheme } from "@/contexts/ThemeContext";
