@@ -248,7 +248,7 @@ function AppRoutes() {
           }
         />
 
-        {/* Public shareable AG Docs viewer (no auth required) */}
+        {/* Public shareable Amineva Docs viewer (no auth required) */}
         <Route path="/share/doc/:token" element={<SharedDocViewer />} />
 
 

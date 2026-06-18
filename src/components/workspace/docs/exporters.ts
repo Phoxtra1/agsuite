@@ -1,4 +1,4 @@
-// Exporters for AG Docs — PDF, DOC-like, JSON, CSV.
+// Exporters for Amineva Docs — PDF, DOC-like, JSON, CSV.
 
 export function exportJSON(filename: string, json: any) {
   const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });

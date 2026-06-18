@@ -206,7 +206,7 @@ export function IconAgroClimate({ className }: ProductIconProps) {
     </svg>
   );
 }
-// Workspace - Layered productivity surface for AG Docs / Sheets / Slides
+// Workspace - Layered productivity surface for Amineva Docs / Sheets / Slides
 export function IconWorkspace({ className }: ProductIconProps) {
   return (
     <svg
