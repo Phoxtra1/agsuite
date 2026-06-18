@@ -1,4 +1,15 @@
-  export function exportJSON(filename: string, json: any) {
+/* ============================================================
+ * Amineva Workspace — Document Exporters
+ * Supports: JSON, DOC (Word-HTML), HTML, TXT, PDF, DOCX, CSV
+ * Plus: AI translate action via Supabase Edge Function.
+ *
+ * Dependencies (install in main project):
+ *   bun add html2pdf.js docx
+ *
+ * Copy to: src/components/docs/exporters.ts
+ * ========================================================== */
+
+export function exportJSON(filename: string, json: any) {
   const blob = new Blob([JSON.stringify(json, null, 2)], { type: "application/json" });
   download(blob, `${safeName(filename)}.json`);
 }
@@ -61,10 +72,12 @@ export async function exportPDF(
  * DOCX export — real .docx using the `docx` library.
  * Run: bun add docx
  * ========================================================== */
-export async function exportDOCX() {
-  throw new Error("DOCX export not yet enabled");
-}
-  const { Document, Packer, Paragraph, TextRun, HeadingLevel, Table, TableRow, TableCell, WidthType, AlignmentType } = docx;
+export async function exportDOCX(filename: string, json: any, title: string) {
+  const docx = await import("docx");
+  const {
+    Document, Packer, Paragraph, TextRun, HeadingLevel,
+    Table, TableRow, TableCell, WidthType, AlignmentType,
+  } = docx;
 
   const children: any[] = [];
 
@@ -74,12 +87,18 @@ export async function exportDOCX() {
 
     if (type === "heading") {
       const lvl = Math.min(6, Math.max(1, node.attrs?.level ?? 1));
-      const map: any = { 1: HeadingLevel.HEADING_1, 2: HeadingLevel.HEADING_2, 3: HeadingLevel.HEADING_3, 4: HeadingLevel.HEADING_4, 5: HeadingLevel.HEADING_5, 6: HeadingLevel.HEADING_6 };
+      const map: any = {
+        1: HeadingLevel.HEADING_1, 2: HeadingLevel.HEADING_2, 3: HeadingLevel.HEADING_3,
+        4: HeadingLevel.HEADING_4, 5: HeadingLevel.HEADING_5, 6: HeadingLevel.HEADING_6,
+      };
       children.push(new Paragraph({ heading: map[lvl], children: nodeRuns(node, TextRun) }));
       return;
     }
     if (type === "paragraph") {
-      children.push(new Paragraph({ children: nodeRuns(node, TextRun), alignment: alignMap(node.attrs?.textAlign, AlignmentType) }));
+      children.push(new Paragraph({
+        children: nodeRuns(node, TextRun),
+        alignment: alignMap(node.attrs?.textAlign, AlignmentType),
+      }));
       return;
     }
     if (type === "bulletList" || type === "orderedList") {
@@ -231,11 +250,17 @@ export interface TranslateRequest {
 export async function runAITranslate(req: TranslateRequest): Promise<string> {
   try {
     const base = (import.meta as any).env?.VITE_SUPABASE_URL || "";
-    const anon = (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY || (import.meta as any).env?.VITE_SUPABASE_ANON_KEY || "";
+    const anon =
+      (import.meta as any).env?.VITE_SUPABASE_PUBLISHABLE_KEY ||
+      (import.meta as any).env?.VITE_SUPABASE_ANON_KEY ||
+      "";
     if (!base) return req.text;
     const res = await fetch(`${base}/functions/v1/ai-translate`, {
       method: "POST",
-      headers: { "Content-Type": "application/json", ...(anon ? { Authorization: `Bearer ${anon}`, apikey: anon } : {}) },
+      headers: {
+        "Content-Type": "application/json",
+        ...(anon ? { Authorization: `Bearer ${anon}`, apikey: anon } : {}),
+      },
       body: JSON.stringify(req),
     });
     if (!res.ok) throw new Error(`translate failed: ${res.status}`);
