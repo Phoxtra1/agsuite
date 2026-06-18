@@ -1,4 +1,5 @@
-import { useRef, useState } from "react";
+import { useEffect, useLayoutEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
 import type { Editor } from "@tiptap/react";
 import {
   Bold, Italic, Underline as UnderlineIcon, Strikethrough, Type, ChevronDown,
@@ -9,16 +10,17 @@ import {
   Eye, BookOpen, FileText, Hash, RotateCcw, Languages, MessageSquare,
   ListChecks, FilePlus2, Indent, Outdent, CheckCircle, Paintbrush,
   Superscript as SuperscriptIcon, Subscript as SubscriptIcon, CaseSensitive,
-  Search, Replace as ReplaceIcon, FileSignature, Bookmark as BookmarkIcon,
-  Sigma, FunctionSquare, Box, FileUp, Layers, Columns as ColumnsIcon,
+  Search, FileSignature, Bookmark as BookmarkIcon,
+  Sigma, Box, FileUp, Layers, Columns as ColumnsIcon,
   PaintBucket, Frame, Stamp, Hash as LineNumIcon, BookMarked, ListTree,
   Pilcrow, ArrowUpDown, ArrowLeftRight, AlignHorizontalDistributeCenter,
   Calculator, Pencil, Split, Merge, ShieldCheck, GitCompare, MessagesSquare,
   Check, X, ChevronLeft, ChevronRight, Lock, Unlock, Grid3x3, Ruler,
   PanelLeft, PanelRight, SplitSquareHorizontal, Maximize2, Plus,
   File as FileIcon, FolderOpen, Save, Mail, Printer, Download, Upload,
-  KeyRound, Database, Wrench, Puzzle, Code2, Settings2, Type as TypeIcon,
-  PaintbrushVertical, Building2, Sparkles,
+  KeyRound, Database, Puzzle, Code2, Settings2, Type as TypeIcon,
+  Building2, Sparkles, Shapes as ShapesIcon, BringToFront, SendToBack,
+  MoveUp, MoveDown,
 } from "lucide-react";
 import type { PageSettings } from "./PageCanvas";
 
@@ -27,18 +29,8 @@ type RibbonTab =
   | "review" | "view" | "tools";
 
 export function Ribbon({
-  editor,
-  pageSettings,
-  onPageSettings,
-  onAction,
-  wordsCount,
-  charCount,
-  onToggleLeftPanel,
-  onToggleRightPanel,
-  onZoom,
-  zoom,
-  showRuler,
-  onToggleRuler,
+  editor, pageSettings, onPageSettings, onAction, wordsCount, charCount,
+  onToggleLeftPanel, onToggleRightPanel, onZoom, zoom, showRuler, onToggleRuler,
 }: {
   editor: Editor | null;
   pageSettings: PageSettings;
@@ -161,13 +153,39 @@ function Btn({
     </button>
   );
 }
+
+/* ------- Portal-based dropdown — always above the page canvas ------- */
+function Portal({ children }: { children: React.ReactNode }) {
+  if (typeof document === "undefined") return null;
+  return createPortal(children, document.body);
+}
+
+function useAnchorRect(open: boolean) {
+  const anchorRef = useRef<HTMLButtonElement | null>(null);
+  const [rect, setRect] = useState<DOMRect | null>(null);
+  useLayoutEffect(() => {
+    if (!open || !anchorRef.current) return;
+    const update = () => setRect(anchorRef.current!.getBoundingClientRect());
+    update();
+    window.addEventListener("resize", update);
+    window.addEventListener("scroll", update, true);
+    return () => {
+      window.removeEventListener("resize", update);
+      window.removeEventListener("scroll", update, true);
+    };
+  }, [open]);
+  return { anchorRef, rect };
+}
+
 function DropBtn({
   label, children, icon: Icon, width = "w-44",
 }: { label: string; children: (close: () => void) => React.ReactNode; icon?: any; width?: string }) {
   const [open, setOpen] = useState(false);
+  const { anchorRef, rect } = useAnchorRect(open);
   return (
-    <div className="relative">
+    <>
       <button
+        ref={anchorRef}
         onClick={() => setOpen((v) => !v)}
         className="h-8 inline-flex items-center gap-1 px-2 rounded-md hover:bg-muted text-foreground text-xs"
       >
@@ -176,18 +194,28 @@ function DropBtn({
         <ChevronDown className="h-3 w-3 opacity-60" />
       </button>
       {open && (
-        <>
-          <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
+        <Portal>
           <div
-            className={`absolute top-full left-0 mt-1 z-[70] ${width} rounded-lg border border-border bg-popover shadow-2xl py-1`}
+            className="fixed inset-0"
+            style={{ zIndex: 9998 }}
+            onClick={() => setOpen(false)}
+          />
+          <div
+            className={`fixed ${width} rounded-lg border border-border bg-popover shadow-2xl py-1`}
+            style={{
+              zIndex: 9999,
+              top: rect ? rect.bottom + 4 : 0,
+              left: rect ? rect.left : 0,
+            }}
           >
             {children(() => setOpen(false))}
           </div>
-        </>
+        </Portal>
       )}
-    </div>
+    </>
   );
 }
+
 function MenuItem({
   icon: Icon, label, onClick, danger,
 }: { icon?: any; label: string; onClick: () => void; danger?: boolean }) {
@@ -291,11 +319,9 @@ function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p
     const chain = editor.chain().focus();
     switch (style) {
       case "normal": chain.setParagraph().run(); break;
-      case "h1": chain.toggleHeading({ level: 1 }).run(); break;
-      case "h2": chain.toggleHeading({ level: 2 }).run(); break;
+      case "h1": case "title": chain.toggleHeading({ level: 1 }).run(); break;
+      case "h2": case "subtitle": chain.toggleHeading({ level: 2 }).run(); break;
       case "h3": chain.toggleHeading({ level: 3 }).run(); break;
-      case "title": chain.toggleHeading({ level: 1 }).run(); break;
-      case "subtitle": chain.toggleHeading({ level: 2 }).run(); break;
     }
   };
 
@@ -357,12 +383,9 @@ function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p
           {(close) => (
             <>
               {["Inter", "Arial", "Roboto", "Times New Roman", "Georgia", "Verdana", "Courier New"].map((f) => (
-                <button
-                  key={f}
-                  onClick={() => { setFontFamily(f); close(); }}
+                <button key={f} onClick={() => { setFontFamily(f); close(); }}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-foreground"
-                  style={{ fontFamily: f }}
-                >{f}</button>
+                  style={{ fontFamily: f }}>{f}</button>
               ))}
             </>
           )}
@@ -370,8 +393,9 @@ function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p
         <DropBtn label="Size" width="w-24">
           {(close) => (
             <>
-              {["10px", "12px", "14px", "16px", "18px", "20px", "24px", "28px", "32px", "40px", "48px"].map((s) => (
-                <button key={s} onClick={() => { setFontSize(s); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-foreground">{s}</button>
+              {["10px","12px","14px","16px","18px","20px","24px","28px","32px","40px","48px"].map((s) => (
+                <button key={s} onClick={() => { setFontSize(s); close(); }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-foreground">{s}</button>
               ))}
             </>
           )}
@@ -385,7 +409,7 @@ function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p
         <Btn icon={SuperscriptIcon} title="Superscript" active={editor.isActive("superscript")} onClick={() => (editor.chain().focus() as any).toggleSuperscript?.().run()} />
         <Btn icon={SubscriptIcon} title="Subscript" active={editor.isActive("subscript")} onClick={() => (editor.chain().focus() as any).toggleSubscript?.().run()} />
         <ColorPicker editor={editor} />
-        <Btn icon={Highlighter} title="Highlight (character shading)" active={editor.isActive("highlight")} onClick={() => editor.chain().focus().toggleHighlight().run()} />
+        <Btn icon={Highlighter} title="Highlight" active={editor.isActive("highlight")} onClick={() => editor.chain().focus().toggleHighlight().run()} />
         <Btn icon={Frame} title="Character border" onClick={() => onAction("char:border")} />
       </Group>
 
@@ -400,7 +424,8 @@ function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p
                 ["title", "Capitalize Each Word"],
                 ["toggle", "tOGGLE cASE"],
               ].map(([m, l]) => (
-                <button key={m} onClick={() => { changeCase(m as any); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-foreground">{l}</button>
+                <button key={m} onClick={() => { changeCase(m as any); close(); }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-foreground">{l}</button>
               ))}
             </>
           )}
@@ -411,22 +436,17 @@ function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p
         <DropBtn label="" icon={List} width="w-44">
           {(close) => (
             <>
-              {[
-                ["•", "disc"], ["◦", "circle"], ["▪", "square"],
-                ["–", "dash"], ["→", "arrow"], ["★", "star"], ["✓", "check"],
-              ].map(([sym]) => (
-                <button
-                  key={sym}
+              {[["•","disc"],["◦","circle"],["▪","square"],["–","dash"],["→","arrow"],["★","star"],["✓","check"]].map(([sym]) => (
+                <button key={sym}
                   onClick={() => {
                     editor.chain().focus().toggleBulletList().run();
                     document.querySelectorAll<HTMLElement>(".doc-canvas .ProseMirror ul").forEach((el) => {
                       el.style.listStyleType = "none";
-                      el.setAttribute("data-bullet", sym);
+                      el.setAttribute("data-bullet", sym as string);
                     });
                     close();
                   }}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted"
-                >
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">
                   <span className="inline-block w-6">{sym}</span> Bullet
                 </button>
               ))}
@@ -436,15 +456,8 @@ function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p
         <DropBtn label="" icon={ListOrdered} width="w-44">
           {(close) => (
             <>
-              {[
-                ["decimal", "1. 2. 3."],
-                ["lower-alpha", "a. b. c."],
-                ["upper-alpha", "A. B. C."],
-                ["lower-roman", "i. ii. iii."],
-                ["upper-roman", "I. II. III."],
-              ].map(([t, l]) => (
-                <button
-                  key={t}
+              {[["decimal","1. 2. 3."],["lower-alpha","a. b. c."],["upper-alpha","A. B. C."],["lower-roman","i. ii. iii."],["upper-roman","I. II. III."]].map(([t, l]) => (
+                <button key={t}
                   onClick={() => {
                     editor.chain().focus().toggleOrderedList().run();
                     document.querySelectorAll<HTMLElement>(".doc-canvas .ProseMirror ol").forEach((el) => {
@@ -452,8 +465,7 @@ function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p
                     });
                     close();
                   }}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted"
-                >{l}</button>
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">{l}</button>
               ))}
             </>
           )}
@@ -470,8 +482,9 @@ function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p
         <DropBtn label="Line" icon={Pilcrow} width="w-32">
           {(close) => (
             <>
-              {["1.0", "1.15", "1.5", "2.0", "2.5", "3.0"].map((s) => (
-                <button key={s} onClick={() => { setLineSpacing(s); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">{s}</button>
+              {["1.0","1.15","1.5","2.0","2.5","3.0"].map((s) => (
+                <button key={s} onClick={() => { setLineSpacing(s); close(); }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">{s}</button>
               ))}
             </>
           )}
@@ -479,19 +492,15 @@ function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p
         <DropBtn label="¶" width="w-40">
           {(close) => (
             <>
-              {[
-                ["0", "None"], ["8px", "Compact"], ["12px", "Normal"], ["20px", "Relaxed"], ["32px", "Wide"],
-              ].map(([v, l]) => (
-                <button
-                  key={v}
+              {[["0","None"],["8px","Compact"],["12px","Normal"],["20px","Relaxed"],["32px","Wide"]].map(([v, l]) => (
+                <button key={v}
                   onClick={() => {
                     document.querySelectorAll<HTMLElement>(".doc-canvas .ProseMirror p").forEach((el) => {
                       el.style.marginBottom = v as string;
                     });
                     close();
                   }}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted"
-                >{l}</button>
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">{l}</button>
               ))}
             </>
           )}
@@ -505,25 +514,13 @@ function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p
         <DropBtn label="Style" width="w-40">
           {(close) => (
             <>
-              {[
-                ["normal", "Normal"],
-                ["title", "Title"],
-                ["subtitle", "Subtitle"],
-                ["h1", "Heading 1"],
-                ["h2", "Heading 2"],
-                ["h3", "Heading 3"],
-              ].map(([id, l]) => (
-                <button
-                  key={id}
-                  onClick={() => { applyStyle(id as any); close(); }}
-                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-foreground"
-                >{l}</button>
+              {[["normal","Normal"],["title","Title"],["subtitle","Subtitle"],["h1","Heading 1"],["h2","Heading 2"],["h3","Heading 3"]].map(([id, l]) => (
+                <button key={id} onClick={() => { applyStyle(id as any); close(); }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-foreground">{l}</button>
               ))}
               <div className="border-t border-border my-1" />
-              <button
-                onClick={() => { onAction("style:custom"); close(); }}
-                className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-accent"
-              >+ Custom style…</button>
+              <button onClick={() => { onAction("style:custom"); close(); }}
+                className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-accent">+ Custom style…</button>
             </>
           )}
         </DropBtn>
@@ -550,7 +547,8 @@ function ColorPicker({ editor }: { editor: Editor }) {
             <button key={c} onClick={() => { editor.chain().focus().setColor(c).run(); close(); }}
               className="h-6 w-6 rounded-md border border-border" style={{ background: c }} />
           ))}
-          <button onClick={() => { editor.chain().focus().unsetColor().run(); close(); }} className="col-span-5 text-[11px] text-muted-foreground hover:text-foreground mt-1">Reset</button>
+          <button onClick={() => { editor.chain().focus().unsetColor().run(); close(); }}
+            className="col-span-5 text-[11px] text-muted-foreground hover:text-foreground mt-1">Reset</button>
         </div>
       )}
     </DropBtn>
@@ -561,6 +559,13 @@ function ColorPicker({ editor }: { editor: Editor }) {
 function InsertTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p?: any) => void }) {
   const fileRef = useRef<HTMLInputElement | null>(null);
   const textFileRef = useRef<HTMLInputElement | null>(null);
+  const sigRef = useRef<HTMLInputElement | null>(null);
+  const stampRef = useRef<HTMLInputElement | null>(null);
+  const objRef = useRef<HTMLInputElement | null>(null);
+
+  const readImageAsDataUrl = (file: File) => new Promise<string>((res, rej) => {
+    const r = new FileReader(); r.onload = () => res(r.result as string); r.onerror = rej; r.readAsDataURL(file);
+  });
 
   return (
     <>
@@ -587,10 +592,10 @@ function InsertTab({ editor, onAction }: { editor: Editor; onAction: (a: string,
       </Group>
 
       <Group label="Tables">
-        <TablePicker editor={editor} />
+        <TablePicker editor={editor} onAction={onAction} />
         <Btn icon={Pencil} title="Draw table" onClick={() => onAction("table:draw")} />
         <Btn icon={TableIcon} title="Toggle header row" onClick={() => editor.chain().focus().toggleHeaderRow().run()} />
-        <DropBtn label="Cells" width="w-40">
+        <DropBtn label="Cells" width="w-44">
           {(close) => (
             <>
               <MenuItem icon={Merge} label="Merge cells" onClick={() => { editor.chain().focus().mergeCells().run(); close(); }} />
@@ -599,6 +604,13 @@ function InsertTab({ editor, onAction }: { editor: Editor; onAction: (a: string,
               <MenuItem label="Select column" onClick={() => { onAction("table:selectColumn"); close(); }} />
               <MenuItem label="Add row" onClick={() => { editor.chain().focus().addRowAfter().run(); close(); }} />
               <MenuItem label="Add column" onClick={() => { editor.chain().focus().addColumnAfter().run(); close(); }} />
+              <div className="border-t border-border my-1" />
+              <MenuItem label="Column width…" onClick={() => {
+                const w = window.prompt("Column width (e.g. 120px or 20%)", "120px");
+                if (w) onAction("table:columnWidth", w); close();
+              }} />
+              <MenuItem label="Border style…" onClick={() => { onAction("table:borders"); close(); }} />
+              <MenuItem label="Format / shading…" onClick={() => { onAction("table:format"); close(); }} />
               <MenuItem danger label="Delete table" onClick={() => { editor.chain().focus().deleteTable().run(); close(); }} />
             </>
           )}
@@ -606,11 +618,10 @@ function InsertTab({ editor, onAction }: { editor: Editor; onAction: (a: string,
       </Group>
 
       <Group label="Media">
-        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
+        <input ref={fileRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
           const f = e.target.files?.[0]; if (!f) return;
-          const reader = new FileReader();
-          reader.onload = () => editor.chain().focus().setImage({ src: reader.result as string }).run();
-          reader.readAsDataURL(f);
+          const url = await readImageAsDataUrl(f);
+          editor.chain().focus().setImage({ src: url }).run();
           e.target.value = "";
         }} />
         <Btn icon={Upload} title="Upload image from device" onClick={() => fileRef.current?.click()} />
@@ -621,10 +632,24 @@ function InsertTab({ editor, onAction }: { editor: Editor; onAction: (a: string,
         }} />
       </Group>
 
+      <Group label="Illustrations">
+        <ShapesMenu onAction={onAction} />
+      </Group>
+
       <Group label="Header & Footer">
         <Btn icon={PanelLeft} title="Header" onClick={() => onAction("insert:header")} />
         <Btn icon={PanelRight} title="Footer" onClick={() => onAction("insert:footer")} />
-        <Btn icon={Hash} title="Page number" onClick={() => onAction("insert:pageNumber")} />
+        <DropBtn label="#" icon={Hash} width="w-44">
+          {(close) => (
+            <>
+              <MenuItem label="Top of page" onClick={() => { onAction("insert:pageNumber", "top"); close(); }} />
+              <MenuItem label="Bottom of page" onClick={() => { onAction("insert:pageNumber", "bottom"); close(); }} />
+              <MenuItem label="Current position" onClick={() => { onAction("insert:pageNumber", "inline"); close(); }} />
+              <div className="border-t border-border my-1" />
+              <MenuItem danger label="Remove page numbers" onClick={() => { onAction("insert:pageNumber", "remove"); close(); }} />
+            </>
+          )}
+        </DropBtn>
       </Group>
 
       <Group label="Insert">
@@ -636,22 +661,67 @@ function InsertTab({ editor, onAction }: { editor: Editor; onAction: (a: string,
           const name = window.prompt("Bookmark name");
           if (name) editor.chain().focus().insertContent(`<a id="${name}"></a>`).run();
         }} />
-        <DropBtn label="Symbol" icon={Smile} width="w-56">
+        <SymbolsMenu editor={editor} />
+        <EquationMenu editor={editor} />
+        <TextBoxMenu editor={editor} onAction={onAction} />
+        <Btn icon={TypeIcon} title="WordArt" onClick={() => onAction("insert:wordArt")} />
+
+        {/* Signature */}
+        <input ref={sigRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
+          const f = e.target.files?.[0]; if (!f) return;
+          const url = await readImageAsDataUrl(f);
+          editor.chain().focus().setImage({ src: url, alt: "signature" } as any).run();
+          onAction("insert:signature", { src: url });
+          e.target.value = "";
+        }} />
+        <DropBtn label="" icon={Stamp} width="w-44">
           {(close) => (
-            <div className="grid grid-cols-8 gap-1 p-2">
-              {["©","®","™","°","±","×","÷","≈","≠","≤","≥","→","←","↑","↓","•","§","¶","€","£","¥","$","✓","★"].map((s) => (
-                <button key={s} onClick={() => { editor.chain().focus().insertContent(s).run(); close(); }} className="h-7 w-7 hover:bg-muted rounded text-sm">{s}</button>
-              ))}
-            </div>
+            <>
+              <MenuItem icon={Upload} label="Upload signature image" onClick={() => { sigRef.current?.click(); close(); }} />
+              <MenuItem icon={Pencil} label="Draw signature" onClick={() => { onAction("insert:signatureDraw"); close(); }} />
+              <MenuItem icon={Type} label="Type signature" onClick={() => {
+                const t = window.prompt("Type your signature");
+                if (t) editor.chain().focus().insertContent(`<span style="font-family:'Brush Script MT',cursive;font-size:28px">${t}</span>`).run();
+                close();
+              }} />
+            </>
           )}
         </DropBtn>
-        <Btn icon={Sigma} title="Equation" onClick={() => {
-          const eq = window.prompt("Equation (LaTeX or plain)");
-          if (eq) editor.chain().focus().insertContent(`<code>${eq}</code>`).run();
+
+        {/* Stamp */}
+        <input ref={stampRef} type="file" accept="image/*" className="hidden" onChange={async (e) => {
+          const f = e.target.files?.[0]; if (!f) return;
+          const url = await readImageAsDataUrl(f);
+          editor.chain().focus().setImage({ src: url, alt: "stamp" } as any).run();
+          e.target.value = "";
         }} />
-        <Btn icon={Square} title="Text box" onClick={() => editor.chain().focus().insertContent('<blockquote><p>Text box</p></blockquote>').run()} />
-        <Btn icon={TypeIcon} title="WordArt" onClick={() => onAction("insert:wordArt")} />
-        <Btn icon={Box} title="Object" onClick={() => onAction("insert:object")} />
+        <DropBtn label="" icon={Stamp} width="w-44">
+          {(close) => (
+            <>
+              <MenuItem icon={Upload} label="Upload stamp" onClick={() => { stampRef.current?.click(); close(); }} />
+              {["APPROVED","CONFIDENTIAL","DRAFT","PAID","RECEIVED"].map((s) => (
+                <MenuItem key={s} label={s} onClick={() => {
+                  editor.chain().focus().insertContent(
+                    `<span style="display:inline-block;border:3px solid #dc2626;color:#dc2626;padding:4px 10px;font-weight:800;letter-spacing:2px;transform:rotate(-8deg)">${s}</span>`
+                  ).run();
+                  close();
+                }} />
+              ))}
+            </>
+          )}
+        </DropBtn>
+
+        {/* Object */}
+        <input ref={objRef} type="file" className="hidden" onChange={async (e) => {
+          const f = e.target.files?.[0]; if (!f) return;
+          onAction("insert:object", { name: f.name, type: f.type, size: f.size, file: f });
+          editor.chain().focus().insertContent(
+            `<p><span style="display:inline-flex;align-items:center;gap:6px;border:1px solid #ddd;padding:4px 8px;border-radius:6px">📎 ${f.name}</span></p>`
+          ).run();
+          e.target.value = "";
+        }} />
+        <Btn icon={Box} title="Insert object (file)" onClick={() => objRef.current?.click()} />
+
         <input ref={textFileRef} type="file" accept=".txt,.md,.html" className="hidden" onChange={(e) => {
           const f = e.target.files?.[0]; if (!f) return;
           const reader = new FileReader();
@@ -660,47 +730,210 @@ function InsertTab({ editor, onAction }: { editor: Editor; onAction: (a: string,
           e.target.value = "";
         }} />
         <Btn icon={FileUp} title="Text from File" onClick={() => textFileRef.current?.click()} />
-        <Btn icon={Stamp} title="Signature" onClick={() => onAction("insert:signature")} />
         <Btn icon={Minus} title="Horizontal rule" onClick={() => editor.chain().focus().setHorizontalRule().run()} />
       </Group>
     </>
   );
 }
 
-function TablePicker({ editor }: { editor: Editor }) {
+/* ---- Table picker (visual grid + size text) ---- */
+function TablePicker({ editor, onAction }: { editor: Editor; onAction: (a: string, p?: any) => void }) {
   const [open, setOpen] = useState(false);
   const [hover, setHover] = useState({ r: 0, c: 0 });
+  const { anchorRef, rect } = useAnchorRect(open);
   return (
-    <div className="relative">
-      <button onClick={() => setOpen((v) => !v)} className="h-8 inline-flex items-center gap-1 px-2 rounded-md hover:bg-muted text-foreground text-xs">
+    <>
+      <button ref={anchorRef} onClick={() => setOpen((v) => !v)}
+        className="h-8 inline-flex items-center gap-1 px-2 rounded-md hover:bg-muted text-foreground text-xs">
         <TableIcon className="h-3.5 w-3.5" /> Table <ChevronDown className="h-3 w-3 opacity-60" />
       </button>
       {open && (
-        <>
-          <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
-          <div className="absolute top-full left-0 mt-1 z-[70] p-2 rounded-lg border border-border bg-popover shadow-2xl">
+        <Portal>
+          <div className="fixed inset-0" style={{ zIndex: 9998 }} onClick={() => setOpen(false)} />
+          <div className="fixed p-2 rounded-lg border border-border bg-popover shadow-2xl"
+            style={{ zIndex: 9999, top: rect ? rect.bottom + 4 : 0, left: rect ? rect.left : 0 }}>
             <div className="text-[11px] text-muted-foreground mb-2">{hover.r || 0} × {hover.c || 0}</div>
             <div className="grid grid-cols-10 gap-0.5">
               {Array.from({ length: 80 }).map((_, i) => {
                 const r = Math.floor(i / 10) + 1; const c = (i % 10) + 1;
                 const on = r <= hover.r && c <= hover.c;
                 return (
-                  <button
-                    key={i}
-                    onMouseEnter={() => setHover({ r, c })}
+                  <button key={i} onMouseEnter={() => setHover({ r, c })}
                     onClick={() => {
                       editor.chain().focus().insertTable({ rows: r, cols: c, withHeaderRow: true }).run();
                       setOpen(false);
                     }}
-                    className={`h-4 w-4 border ${on ? "bg-accent border-accent" : "bg-background border-border"}`}
-                  />
+                    className={`h-4 w-4 border ${on ? "bg-accent border-accent" : "bg-background border-border"}`} />
                 );
               })}
             </div>
+            <div className="border-t border-border my-2" />
+            <div className="flex flex-col gap-1">
+              <button className="text-left text-xs px-2 py-1 hover:bg-muted rounded"
+                onClick={() => {
+                  const r = parseInt(window.prompt("Rows", "3") || "3", 10);
+                  const c = parseInt(window.prompt("Columns", "3") || "3", 10);
+                  editor.chain().focus().insertTable({ rows: r, cols: c, withHeaderRow: true }).run();
+                  setOpen(false);
+                }}>Insert Table…</button>
+              <button className="text-left text-xs px-2 py-1 hover:bg-muted rounded"
+                onClick={() => { onAction("table:borders"); setOpen(false); }}>Borders & rules…</button>
+              <button className="text-left text-xs px-2 py-1 hover:bg-muted rounded"
+                onClick={() => { onAction("table:format"); setOpen(false); }}>Table format…</button>
+            </div>
           </div>
+        </Portal>
+      )}
+    </>
+  );
+}
+
+/* ---- Symbols (grouped) ---- */
+function SymbolsMenu({ editor }: { editor: Editor }) {
+  const groups: { name: string; items: string[] }[] = [
+    { name: "Currency", items: ["$","€","£","¥","₹","₽","₩","₦","₵","¢","₤","฿","₫","₴","₪","₲"] },
+    { name: "General", items: ["©","®","™","§","¶","†","‡","•","°","№","℗","℠","☆","★","✓","✗"] },
+    { name: "Math", items: ["±","×","÷","≈","≠","≤","≥","∞","√","∑","∏","∫","∂","Δ","π","µ"] },
+    { name: "Arrows / Special", items: ["→","←","↑","↓","↔","⇒","⇐","⇔","«","»","“","”","‘","’","…","—"] },
+  ];
+  return (
+    <DropBtn label="Symbol" icon={Smile} width="w-72">
+      {(close) => (
+        <div className="p-2 max-h-80 overflow-auto">
+          {groups.map((g) => (
+            <div key={g.name} className="mb-2">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 mb-1">{g.name}</div>
+              <div className="grid grid-cols-8 gap-1">
+                {g.items.map((s) => (
+                  <button key={s} onClick={() => { editor.chain().focus().insertContent(s).run(); close(); }}
+                    className="h-7 w-7 hover:bg-muted rounded text-sm">{s}</button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </DropBtn>
+  );
+}
+
+/* ---- Equation builder ---- */
+function EquationMenu({ editor }: { editor: Editor }) {
+  const insert = (html: string) => editor.chain().focus().insertContent(html).run();
+  const items: { label: string; html: string }[] = [
+    { label: "Fraction  a/b", html: `<span class="eq"><sup>a</sup>&frasl;<sub>b</sub></span>` },
+    { label: "Superscript  x²", html: `<span class="eq">x<sup>2</sup></span>` },
+    { label: "Subscript  x₂", html: `<span class="eq">x<sub>2</sub></span>` },
+    { label: "Square root  √x", html: `<span class="eq">√<span style="border-top:1px solid">x</span></span>` },
+    { label: "Sum  Σ", html: `<span class="eq">Σ<sub>i=1</sub><sup>n</sup>&nbsp;a<sub>i</sub></span>` },
+    { label: "Integral  ∫", html: `<span class="eq">∫<sub>a</sub><sup>b</sup>&nbsp;f(x)dx</span>` },
+    { label: "Limit", html: `<span class="eq">lim<sub>x→∞</sub>&nbsp;f(x)</span>` },
+    { label: "Scientific  a×10ⁿ", html: `<span class="eq">a × 10<sup>n</sup></span>` },
+    { label: "Quadratic", html: `<span class="eq">x = (−b ± √(b<sup>2</sup>−4ac)) / 2a</span>` },
+  ];
+  return (
+    <DropBtn label="Equation" icon={Sigma} width="w-56">
+      {(close) => (
+        <>
+          {items.map((it) => (
+            <MenuItem key={it.label} label={it.label} onClick={() => { insert(it.html); close(); }} />
+          ))}
+          <div className="border-t border-border my-1" />
+          <MenuItem label="Custom LaTeX / plain…" onClick={() => {
+            const eq = window.prompt("Equation (LaTeX or plain)");
+            if (eq) editor.chain().focus().insertContent(`<code class="eq">${eq}</code>`).run();
+            close();
+          }} />
         </>
       )}
-    </div>
+    </DropBtn>
+  );
+}
+
+/* ---- Text Box menu with positioning / wrapping ---- */
+function TextBoxMenu({ editor, onAction }: { editor: Editor; onAction: (a: string, p?: any) => void }) {
+  const insertBox = (style: string) => {
+    editor.chain().focus().insertContent(
+      `<div class="text-box" data-tb="1" style="${style}"><p>Text box — click to edit</p></div>`
+    ).run();
+  };
+  return (
+    <DropBtn label="Text box" icon={Square} width="w-56">
+      {(close) => (
+        <>
+          <MenuItem label="Simple text box" onClick={() => {
+            insertBox("border:1px solid #cbd5e1;padding:8px 12px;border-radius:6px;display:inline-block;min-width:160px");
+            close();
+          }} />
+          <MenuItem label="Quote box" onClick={() => {
+            insertBox("border-left:3px solid #2563eb;padding:6px 12px;background:#f1f5f9;display:block");
+            close();
+          }} />
+          <div className="border-t border-border my-1" />
+          <div className="px-3 pt-1 text-[10px] uppercase tracking-wider text-muted-foreground">Position</div>
+          <MenuItem icon={BringToFront} label="Bring to front" onClick={() => { onAction("textbox:position", "front"); close(); }} />
+          <MenuItem icon={MoveUp} label="Bring forward" onClick={() => { onAction("textbox:position", "forward"); close(); }} />
+          <MenuItem icon={MoveDown} label="Send backward" onClick={() => { onAction("textbox:position", "backward"); close(); }} />
+          <MenuItem icon={SendToBack} label="Send to back" onClick={() => { onAction("textbox:position", "back"); close(); }} />
+          <MenuItem label="In front of text" onClick={() => { onAction("textbox:layer", "front-of-text"); close(); }} />
+          <MenuItem label="Behind text" onClick={() => { onAction("textbox:layer", "behind-text"); close(); }} />
+          <div className="border-t border-border my-1" />
+          <div className="px-3 pt-1 text-[10px] uppercase tracking-wider text-muted-foreground">Wrap text</div>
+          {[
+            ["inline", "Inline with text"],
+            ["square", "Square"],
+            ["tight", "Tight"],
+            ["top-bottom", "Top and bottom"],
+            ["through", "Through"],
+            ["none", "None"],
+          ].map(([v, l]) => (
+            <MenuItem key={v} label={l} onClick={() => { onAction("textbox:wrap", v); close(); }} />
+          ))}
+        </>
+      )}
+    </DropBtn>
+  );
+}
+
+/* ---- Shapes library ---- */
+function ShapesMenu({ onAction }: { onAction: (a: string, p?: any) => void }) {
+  const groups: { name: string; items: { id: string; label: string }[] }[] = [
+    { name: "Lines / Arrows", items: [
+      { id: "line", label: "Line" }, { id: "arrow", label: "Arrow" },
+      { id: "double-arrow", label: "Double arrow" }, { id: "elbow", label: "Elbow connector" },
+    ]},
+    { name: "Basic", items: [
+      { id: "rect", label: "Rectangle" }, { id: "rounded-rect", label: "Rounded" },
+      { id: "ellipse", label: "Ellipse" }, { id: "triangle", label: "Triangle" },
+      { id: "diamond", label: "Diamond" }, { id: "star", label: "Star" },
+      { id: "callout", label: "Callout" },
+    ]},
+    { name: "Flowchart", items: [
+      { id: "fc-process", label: "Process" }, { id: "fc-decision", label: "Decision" },
+      { id: "fc-terminator", label: "Terminator" }, { id: "fc-data", label: "Data" },
+      { id: "fc-document", label: "Document" }, { id: "fc-connector", label: "Connector" },
+    ]},
+  ];
+  return (
+    <DropBtn label="Shapes" icon={ShapesIcon} width="w-64">
+      {(close) => (
+        <div className="p-2 max-h-80 overflow-auto">
+          {groups.map((g) => (
+            <div key={g.name} className="mb-2">
+              <div className="text-[10px] uppercase tracking-wider text-muted-foreground px-1 mb-1">{g.name}</div>
+              <div className="grid grid-cols-2 gap-1">
+                {g.items.map((it) => (
+                  <button key={it.id} onClick={() => { onAction("insert:shape", it.id); close(); }}
+                    className="text-left text-xs px-2 py-1.5 rounded hover:bg-muted">{it.label}</button>
+                ))}
+              </div>
+            </div>
+          ))}
+          <div className="border-t border-border my-1" />
+          <MenuItem icon={Pencil} label="Draw on page" onClick={() => { onAction("insert:shape", "draw"); close(); }} />
+        </div>
+      )}
+    </DropBtn>
   );
 }
 
@@ -712,13 +945,14 @@ function LayoutTab({
   onPageSettings: (p: Partial<PageSettings>) => void;
   onAction: (a: string, p?: any) => void;
 }) {
+  const watermarkImgRef = useRef<HTMLInputElement | null>(null);
   return (
     <>
       <Group label="Margins">
         <DropBtn label={`Margins (${pageSettings.margin})`} width="w-44">
           {(close) => (
             <>
-              {(["narrow", "normal", "moderate", "wide"] as const).map((m) => (
+              {(["narrow","normal","moderate","wide"] as const).map((m) => (
                 <button key={m} onClick={() => { onPageSettings({ margin: m as any }); close(); }}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted capitalize">{m}</button>
               ))}
@@ -733,8 +967,10 @@ function LayoutTab({
         <DropBtn label={pageSettings.orientation === "portrait" ? "Portrait" : "Landscape"} width="w-36">
           {(close) => (
             <>
-              <button onClick={() => { onPageSettings({ orientation: "portrait" }); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Portrait</button>
-              <button onClick={() => { onPageSettings({ orientation: "landscape" }); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Landscape</button>
+              <button onClick={() => { onPageSettings({ orientation: "portrait" }); close(); }}
+                className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Portrait</button>
+              <button onClick={() => { onPageSettings({ orientation: "landscape" }); close(); }}
+                className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">Landscape</button>
             </>
           )}
         </DropBtn>
@@ -743,8 +979,9 @@ function LayoutTab({
         <DropBtn label={pageSettings.size} width="w-36">
           {(close) => (
             <>
-              {(["A3", "A4", "A5", "A6", "Letter", "Legal", "Tabloid", "Statement"] as const).map((s) => (
-                <button key={s} onClick={() => { onPageSettings({ size: s as any }); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">{s}</button>
+              {(["A3","A4","A5","A6","Letter","Legal","Tabloid","Statement"] as const).map((s) => (
+                <button key={s} onClick={() => { onPageSettings({ size: s as any }); close(); }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">{s}</button>
               ))}
               <div className="border-t border-border my-1" />
               <button onClick={() => { onAction("layout:customSize"); close(); }}
@@ -757,8 +994,9 @@ function LayoutTab({
         <DropBtn label={`${pageSettings.columns} col`} icon={ColumnsIcon} width="w-28">
           {(close) => (
             <>
-              {[1, 2, 3, 4].map((n) => (
-                <button key={n} onClick={() => { onPageSettings({ columns: n }); close(); }} className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">{n} column{n>1?"s":""}</button>
+              {[1,2,3,4].map((n) => (
+                <button key={n} onClick={() => { onPageSettings({ columns: n }); close(); }}
+                  className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted">{n} column{n>1?"s":""}</button>
               ))}
             </>
           )}
@@ -787,20 +1025,41 @@ function LayoutTab({
         <Btn icon={Settings2} title="Section settings" onClick={() => onAction("layout:section")} />
       </Group>
       <Group label="Watermark">
-        <DropBtn label="Watermark" icon={Stamp} width="w-44">
+        <input ref={watermarkImgRef} type="file" accept="image/*" className="hidden" onChange={(e) => {
+          const f = e.target.files?.[0]; if (!f) return;
+          const r = new FileReader();
+          r.onload = () => {
+            const src = r.result as string;
+            const op = parseFloat(window.prompt("Opacity 0.05 – 1", "0.2") || "0.2");
+            onAction("layout:imageWatermark", { src, opacity: isNaN(op) ? 0.2 : op });
+          };
+          r.readAsDataURL(f);
+          e.target.value = "";
+        }} />
+        <DropBtn label="Watermark" icon={Stamp} width="w-56">
           {(close) => (
             <>
-              {["Confidential", "Do Not Copy", "Original", "Draft", "Sample"].map((w) => (
+              <div className="px-3 pt-1 text-[10px] uppercase tracking-wider text-muted-foreground">Text</div>
+              {["Confidential","Do Not Copy","Original","Draft","Sample"].map((w) => (
                 <MenuItem key={w} label={w} onClick={() => { onPageSettings({ watermark: w }); close(); }} />
               ))}
-              <div className="border-t border-border my-1" />
               <MenuItem label="Custom text…" onClick={() => {
                 const t = window.prompt("Watermark text (blank to remove)", pageSettings.watermark || "");
+                const rot = parseInt(window.prompt("Rotation in degrees", "-30") || "-30", 10);
+                const op = parseFloat(window.prompt("Opacity 0.05 – 1", "0.15") || "0.15");
                 onPageSettings({ watermark: t || "" });
+                onAction("layout:textWatermark", { text: t || "", rotation: rot, opacity: op });
                 close();
               }} />
-              <MenuItem label="Image watermark…" onClick={() => { onAction("layout:imageWatermark"); close(); }} />
-              <MenuItem danger label="Remove" onClick={() => { onPageSettings({ watermark: "" }); close(); }} />
+              <div className="border-t border-border my-1" />
+              <div className="px-3 pt-1 text-[10px] uppercase tracking-wider text-muted-foreground">Image</div>
+              <MenuItem icon={Upload} label="Upload image watermark…" onClick={() => { watermarkImgRef.current?.click(); close(); }} />
+              <div className="border-t border-border my-1" />
+              <MenuItem danger label="Remove" onClick={() => {
+                onPageSettings({ watermark: "" });
+                onAction("layout:imageWatermark", null);
+                close();
+              }} />
             </>
           )}
         </DropBtn>
@@ -853,7 +1112,8 @@ function ReferencesTab({ editor, onAction }: { editor: Editor; onAction: (a: str
       </Group>
       <Group label="Captions">
         <button onClick={() => {
-          const c = window.prompt("Caption text"); if (c) editor.chain().focus().insertContent(`<p><em>Figure: ${c}</em></p>`).run();
+          const c = window.prompt("Caption text");
+          if (c) editor.chain().focus().insertContent(`<p><em>Figure: ${c}</em></p>`).run();
         }} className="h-8 px-2 rounded-md hover:bg-muted text-xs text-foreground">Add caption</button>
         <Btn icon={Layers} title="Table of Figures" onClick={() => onAction("ref:tableOfFigures")} />
       </Group>
@@ -863,7 +1123,8 @@ function ReferencesTab({ editor, onAction }: { editor: Editor; onAction: (a: str
       </Group>
       <Group label="Citation">
         <button onClick={() => {
-          const c = window.prompt("Citation (e.g. Smith, 2024)"); if (c) editor.chain().focus().insertContent(`(${c})`).run();
+          const c = window.prompt("Citation (e.g. Smith, 2024)");
+          if (c) editor.chain().focus().insertContent(`(${c})`).run();
         }} className="h-8 px-2 rounded-md hover:bg-muted text-xs text-foreground">Insert citation</button>
       </Group>
     </>
@@ -871,6 +1132,22 @@ function ReferencesTab({ editor, onAction }: { editor: Editor; onAction: (a: str
 }
 
 /* ---------- REVIEW ---------- */
+const AMINEVA_LANGUAGES: { code: string; label: string }[] = [
+  { code: "en", label: "English (Default)" },
+  { code: "tw", label: "Twi" },
+  { code: "he", label: "Hebrew" },
+  { code: "fr", label: "French" },
+  { code: "es", label: "Spanish" },
+  { code: "ar", label: "Arabic" },
+  { code: "pt", label: "Portuguese" },
+  { code: "zh-CN", label: "Chinese (Simplified)" },
+  { code: "de", label: "German" },
+  { code: "ru", label: "Russian" },
+  { code: "sw", label: "Swahili" },
+  { code: "hi", label: "Hindi" },
+  { code: "ja", label: "Japanese" },
+];
+
 function ReviewTab({
   editor, wordsCount, charCount, onAction,
 }: { editor: Editor; wordsCount: number; charCount: number; onAction: (a: string, p?: any) => void }) {
@@ -885,7 +1162,18 @@ function ReviewTab({
         <Btn icon={Sparkles} title="AI Grammar Check" onClick={() => onAction("ai", { action: "grammar", label: "Grammar" })} />
       </Group>
       <Group label="Language">
-        <Btn icon={Languages} title="Amineva Translate" onClick={() => onAction("ai", { action: "translate", label: "Amineva Translate" })} />
+        <DropBtn label="Amineva Translate" icon={Languages} width="w-56">
+          {(close) => (
+            <div className="max-h-80 overflow-auto">
+              {AMINEVA_LANGUAGES.map((l) => (
+                <MenuItem key={l.code} label={l.label} onClick={() => {
+                  onAction("ai", { action: "translate", label: "Amineva Translate", target: l.code, targetLabel: l.label });
+                  close();
+                }} />
+              ))}
+            </div>
+          )}
+        </DropBtn>
       </Group>
       <Group label="Compare">
         <Btn icon={GitCompare} title="Compare documents" onClick={() => onAction("review:compare")} />
@@ -995,3 +1283,6 @@ function ToolsTab({ onAction }: { onAction: (a: string, p?: any) => void }) {
     </>
   );
 }
+
+/* keep an explicit useEffect import alive for tree-shakers if needed */
+void useEffect;
