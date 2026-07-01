@@ -26,11 +26,12 @@ const sectorFocus = [
 
 const platformEcosystem = [
   { icon: Sparkles, title: "Odeneho AI", role: "Intelligent companion for research, writing, planning, knowledge systems, and storytelling." },
-  { icon: CloudSun, title: "AgroClimate", role: "Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, and operational risk." },
-  { icon: BarChart3, title: "AGStock", role: "AI-backed inventory, commerce, and operational management infrastructure for smart business systems." },
-  { icon: ShieldCheck, title: "AGIS", role: "Strategic assessment, field inspection, verification, and documentation infrastructure." },
-  { icon: LineChart, title: "AminevaOps", role: "AI-backed financial operations, monitoring, and oversight infrastructure." },
+  { icon: CloudSun, title: "Agyenkwa", role: "Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, and operational risk." },
+  { icon: BarChart3, title: "Nyansa", role: "AI-backed inventory, commerce, and operational management infrastructure for smart business systems." },
+  { icon: ShieldCheck, title: "Nkɔsoɔ", role: "Strategic assessment, field inspection, verification, and documentation infrastructure." },
+  { icon: LineChart, title: "Sikasɛm", role: "AI-backed financial operations, monitoring, and oversight infrastructure." },
   { icon: Eye, title: "ABI", role: "Amineva Business Intelligence — unified BI infrastructure for dashboards, KPIs, market analytics, and data-driven decision support." },
+  { icon: Lightbulb, title: "Adesua", role: "Digital learning and career pathway platform — ICT masterclass, learning resources, career guidance, school discovery, and scholarship opportunities." },
 ];
 
 const coreValues = [
