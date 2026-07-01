@@ -10,7 +10,7 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
 };
 
-const AGStockPage: FC = () => {
+const NyansaPage: FC = () => {
   const features = [
     { icon: Package, title: "Inventory Tracking", desc: "Real-time stock levels, low-stock alerts, and automated reorder points for every product." },
     { icon: ShoppingCart, title: "Point of Sale", desc: "Fast, intuitive POS system with barcode scanning, receipts, and multi-payment support." },
@@ -42,7 +42,7 @@ const AGStockPage: FC = () => {
               <span className="text-accent">Grow Your Business.</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto mb-8">
-              AGStock is an inventory and sales management platform built for retailer shops, wholesalers, warehouses, restaurants, bars, and any inventory-driven entity.
+              Nyansa is an inventory and sales management platform built for retailer shops, wholesalers, warehouses, restaurants, bars, and any inventory-driven entity.
             </p>
             <a
               href="https://stock.amineva.com"
@@ -101,7 +101,7 @@ const AGStockPage: FC = () => {
       <section className="max-w-7xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
           <span className="text-sm font-semibold text-accent uppercase tracking-wider">Built For</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Who Uses AGStock?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Who Uses Nyansa?</h2>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {audiences.map((a, i) => (
@@ -114,11 +114,11 @@ const AGStockPage: FC = () => {
         </div>
       </section>
 
-      {/* Why AGStock */}
+      {/* Why Nyansa */}
       <section className="bg-secondary py-20 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground">Why Choose AGStock?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">Why Choose Nyansa?</h2>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             {[
@@ -144,7 +144,7 @@ const AGStockPage: FC = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Start Managing Your Inventory Today</h2>
           <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-            Join businesses across Africa and beyond who trust AGStock to run their operations.
+            Join businesses across Africa and beyond who trust Nyansa to run their operations.
           </p>
           <a
             href="https://stock.amineva.com"
@@ -160,4 +160,4 @@ const AGStockPage: FC = () => {
   );
 };
 
-export default AGStockPage;
+export default NyansaPage;

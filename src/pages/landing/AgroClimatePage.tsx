@@ -10,7 +10,7 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
 };
 
-const AgroClimatePage: FC = () => {
+const AgyenkwaPage: FC = () => {
   const features = [
     { icon: Cloud, title: "Real-Time Weather Forecast", desc: "Hyper-local weather data updated every hour with 7-day forecasts for your exact farm location." },
     { icon: Leaf, title: "Agro Production Alerts", desc: "Smart alerts for livestock, crops, and aquaculture based on your location and current conditions." },
@@ -49,7 +49,7 @@ const AgroClimatePage: FC = () => {
               <span className="text-accent">Climate Intelligence</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 max-w-3xl mx-auto mb-8">
-              AgroClimate provides real-time weather forecasts, agro production alerts, environmental predictions, drone advisory, AI-powered farming assistance, and learning resources — built for community farming production.
+              Agyenkwa provides real-time weather forecasts, agro production alerts, environmental predictions, drone advisory, AI-powered farming assistance, and learning resources — built for community farming production.
             </p>
             <a
               href="https://agro.amineva.com"
@@ -155,7 +155,7 @@ const AgroClimatePage: FC = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Start Farming Smarter Today</h2>
           <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-            Join thousands of farmers using AgroClimate for weather intelligence and AI-powered farming guidance.
+            Join thousands of farmers using Agyenkwa for weather intelligence and AI-powered farming guidance.
           </p>
           <a
             href="https://agro.amineva.com"
@@ -171,4 +171,4 @@ const AgroClimatePage: FC = () => {
   );
 };
 
-export default AgroClimatePage;
+export default AgyenkwaPage;
