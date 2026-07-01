@@ -11,7 +11,7 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
 };
 
-const NkɔsoɔPage: FC = () => {
+const NkosooPage: FC = () => {
   const services = [
     { icon: Search, title: "Data & Insights", desc: "Data collection, surveys, market research, and consumer intelligence for informed decision-making." },
     { icon: MapPin, title: "Field Project Inspection", desc: "On-ground field visits, ongoing project confirmation supported by visuals and images. We serve as independent monitors in the absence of project owners." },
@@ -135,4 +135,4 @@ const NkɔsoɔPage: FC = () => {
   );
 };
 
-export default NkɔsoɔPage;
+export default NkosooPage;
