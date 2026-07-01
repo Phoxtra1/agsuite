@@ -31,7 +31,7 @@ const PrivacyPage: FC = () => {
               <li><strong className="text-foreground">Usage Data:</strong> Information about how you interact with our Services, including pages visited, features used, and time spent</li>
               <li><strong className="text-foreground">Device Information:</strong> Browser type, operating system, IP address, and device identifiers</li>
               <li><strong className="text-foreground">Business Data:</strong> Inventory records, sales data, and operational information you input into our platforms</li>
-              <li><strong className="text-foreground">Location Data:</strong> Geographic location when you use location-dependent features such as AgroClimate</li>
+              <li><strong className="text-foreground">Location Data:</strong> Geographic location when you use location-dependent features such as Agyenkwa</li>
             </ul>
           </div>
 
