@@ -326,7 +326,7 @@ export default function HomePage() {
                  rel="noreferrer"
                   className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
                  >
-                    AGStock
+                    Nyansa
                    </a>
 
                     <a
@@ -335,7 +335,16 @@ export default function HomePage() {
                      rel="noreferrer"
                      className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
                    >
-                     AgroClimate
+                     Agyenkwa
+                  </a>
+
+                    <a
+                      href="https://www.as.amineva.com"
+                      target="_blank"
+                     rel="noreferrer"
+                     className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
+                   >
+                     Adesua
                   </a>
                 </div>
              </HomeDropdown>
