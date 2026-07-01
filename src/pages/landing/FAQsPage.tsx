@@ -40,24 +40,31 @@ const categories: { title: string; faqs: FAQItem[] }[] = [
     ],
   },
   {
-    title: "AgroClimate",
+    title: "Agyenkwa",
     faqs: [
-      { q: "What is AgroClimate?", a: "AgroClimate is the climate-tech and environmental intelligence infrastructure of the ecosystem — supporting agriculture, environmental monitoring, forecasting, transport resilience, and operational risk awareness." },
-      { q: "Who is AgroClimate built for?", a: "Farmers, cooperatives, agribusinesses, transport operators, and institutions that need climate-aware planning and environmental intelligence." },
+      { q: "What is Agyenkwa?", a: "Agyenkwa is the climate-tech and environmental intelligence infrastructure of the ecosystem — supporting agriculture, environmental monitoring, forecasting, transport resilience, and operational risk awareness." },
+      { q: "Who is Agyenkwa built for?", a: "Farmers, cooperatives, agribusinesses, transport operators, and institutions that need climate-aware planning and environmental intelligence." },
     ],
   },
   {
-    title: "AGStock",
+    title: "Nyansa",
     faqs: [
-      { q: "What is AGStock?", a: "AGStock is the AI-backed inventory, commerce, sales, and operational management infrastructure for smart business systems within the Amineva Global ecosystem." },
-      { q: "Who uses AGStock?", a: "Retailers, wholesalers, restaurants, warehouses, and any operator that needs intelligent inventory and sales infrastructure." },
+      { q: "What is Nyansa?", a: "Nyansa is the AI-backed inventory, commerce, sales, and operational management infrastructure for smart business systems within the Amineva Global ecosystem." },
+      { q: "Who uses Nyansa?", a: "Retailers, wholesalers, restaurants, warehouses, and any operator that needs intelligent inventory and sales infrastructure." },
     ],
   },
   {
-    title: "AGIS & AminevaOps",
+    title: "Nkɔsoɔ & Sikasɛm",
     faqs: [
-      { q: "What is AGIS?", a: "AGIS is the strategic assessment, field inspection, verification, operational intelligence, and documentation infrastructure of the ecosystem." },
-      { q: "What is AminevaOps?", a: "AminevaOps is the AI-backed financial operations, monitoring, workflow intelligence, and operational oversight infrastructure for African financial networks." },
+      { q: "What is Nkɔsoɔ?", a: "Nkɔsoɔ is the strategic assessment, field inspection, verification, operational intelligence, and documentation infrastructure of the ecosystem." },
+      { q: "What is Sikasɛm?", a: "Sikasɛm is the AI-backed financial operations, monitoring, workflow intelligence, and operational oversight infrastructure for African financial networks." },
+    ],
+  },
+  {
+    title: "Adesua",
+    faqs: [
+      { q: "What is Adesua?", a: "Adesua is a digital learning and career pathway platform designed to help learners discover opportunities, build knowledge, and prepare for their future — combining learning resources, career guidance, school discovery, and scholarship opportunities." },
+      { q: "What does Adesua include?", a: "ICT Masterclass learning, structured digital learning resources, an external book learning section, a career pathway explorer, and a scholarship opportunity section." },
     ],
   },
   {
