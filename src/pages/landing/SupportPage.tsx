@@ -62,10 +62,12 @@ const SupportPage: FC = () => {
 
   const subjects = [
     { value: "general", label: "General Inquiry" },
-    { value: "agstock", label: "AGStock" },
-    { value: "agis", label: "AGIS" },
+    { value: "agstock", label: "Nyansa" },
+    { value: "agis", label: "Nkɔsoɔ" },
     { value: "amniva", label: "ABI" },
-    { value: "agroclimate", label: "AgroClimate" },
+    { value: "agroclimate", label: "Agyenkwa" },
+    { value: "aminevaops", label: "Sikasɛm" },
+    { value: "adesua", label: "Adesua" },
     { value: "partnership", label: "Partnership" },
     { value: "services", label: "Services" },
   ];
