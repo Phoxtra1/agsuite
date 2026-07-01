@@ -12,7 +12,7 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
 };
 
-const AminevaOpsPage: FC = () => {
+const SikasemPage: FC = () => {
   return (
     <div className="w-full">
       {/* Hero */}
@@ -38,7 +38,7 @@ const AminevaOpsPage: FC = () => {
               <span className="text-accent">Financial Networks</span>
             </h1>
             <p className="text-lg md:text-xl text-primary-foreground/80 max-w-3xl mx-auto leading-relaxed">
-              AminevaOps powers financial networks across Africa — from mobile money vendors and microcredit agencies to credit unions, microfinance institutions, forex bureaus, and insurance companies.
+              Sikasɛm powers financial networks across Africa — from mobile money vendors and microcredit agencies to credit unions, microfinance institutions, forex bureaus, and insurance companies.
             </p>
             <div className="mt-8 flex flex-wrap gap-4 justify-center">
               <Link
@@ -52,19 +52,19 @@ const AminevaOpsPage: FC = () => {
         </div>
       </section>
 
-      {/* What is AminevaOps */}
+      {/* What is Sikasɛm */}
       <section className="max-w-7xl mx-auto py-20 px-6">
         <div className="grid lg:grid-cols-2 gap-16 items-center">
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={0}>
-            <span className="text-sm font-semibold text-accent uppercase tracking-wider">What is AminevaOps</span>
+            <span className="text-sm font-semibold text-accent uppercase tracking-wider">What is Sikasɛm</span>
             <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2 mb-6">
               The Operating System for Financial Services
             </h2>
             <p className="text-muted-foreground leading-relaxed mb-4">
-              AminevaOps is a comprehensive digital infrastructure designed to modernize and connect financial service providers across Africa. It provides the tools, workflows, and integrations that financial networks need to operate efficiently, comply with regulations, and serve their communities.
+              Sikasɛm is a comprehensive digital infrastructure designed to modernize and connect financial service providers across Africa. It provides the tools, workflows, and integrations that financial networks need to operate efficiently, comply with regulations, and serve their communities.
             </p>
             <p className="text-muted-foreground leading-relaxed">
-              Whether you run a mobile money agency, manage a credit union, operate a microfinance institution, or run a forex bureau — AminevaOps gives you the digital backbone to scale operations while maintaining trust and transparency.
+              Whether you run a mobile money agency, manage a credit union, operate a microfinance institution, or run a forex bureau — Sikasɛm gives you the digital backbone to scale operations while maintaining trust and transparency.
             </p>
           </motion.div>
           <motion.div initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={1} className="grid grid-cols-2 gap-4">
@@ -114,7 +114,7 @@ const AminevaOpsPage: FC = () => {
       <section className="max-w-7xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
           <span className="text-sm font-semibold text-accent uppercase tracking-wider">Capabilities</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">What AminevaOps Delivers</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">What Sikasɛm Delivers</h2>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
@@ -161,11 +161,11 @@ const AminevaOpsPage: FC = () => {
         </div>
       </section>
 
-      {/* Why AminevaOps */}
+      {/* Why Sikasɛm */}
       <section className="max-w-5xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
           <span className="text-sm font-semibold text-accent uppercase tracking-wider">Advantages</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Why AminevaOps</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Why Sikasɛm</h2>
         </div>
         <div className="grid md:grid-cols-2 gap-6">
           {[
@@ -190,7 +190,7 @@ const AminevaOpsPage: FC = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Ready to Modernize Your Financial Network?</h2>
           <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-            Join the growing ecosystem of African financial institutions powered by AminevaOps.
+            Join the growing ecosystem of African financial institutions powered by Sikasɛm.
           </p>
           <Link to="/" className="inline-flex items-center gap-2 px-8 py-3 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition">
             Get Started <ArrowRight className="h-4 w-4" />
@@ -201,4 +201,4 @@ const AminevaOpsPage: FC = () => {
   );
 };
 
-export default AminevaOpsPage;
+export default SikasemPage;

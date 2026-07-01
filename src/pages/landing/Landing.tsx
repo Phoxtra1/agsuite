@@ -6,15 +6,16 @@ import amvLogo from "@/assets/amv_global_logo.png";
 
 const apps: Array<{ label: string; to: string; external?: boolean }> = [
   { label: "Odeneho AI", to: "/apps/odeneho-ai" },
-  { label: "AGStock", to: "/apps/agstock" },
-  { label: "AgroClimate", to: "/apps/agroclimate" },
+  { label: "Nyansa", to: "/apps/agstock" },
+  { label: "Agyenkwa", to: "/apps/agroclimate" },
+  { label: "Adesua", to: "https://www.as.amineva.com", external: true },
 ];
 
 const explainerItems = [
   { label: "Innovation Ecosystem", to: "/about-us" },
-  { label: "AGIS", to: "/explainer/agis" },
+  { label: "Nkɔsoɔ", to: "/explainer/agis" },
   { label: "ABI", to: "/explainer/amniva" },
-  { label: "AminevaOps", to: "/explainer/aminevaops" },
+  { label: "Sikasɛm", to: "/explainer/aminevaops" },
 ];
 
 const navLinks = [

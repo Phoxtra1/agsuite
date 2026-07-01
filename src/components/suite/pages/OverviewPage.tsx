@@ -94,13 +94,13 @@ export function OverviewPage() {
             <div className="grid md:grid-cols-2 gap-6 mt-6">
               <EcoCard icon={Sparkles} title="Odeneho AI"
                 desc="Intelligent companion for research, writing, planning, documentation, storytelling, knowledge systems, and data analysis." />
-              <EcoCard icon={CloudSun} title="AgroClimate"
+              <EcoCard icon={CloudSun} title="Agyenkwa"
                 desc="Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, transport resilience, and operational risk." />
-              <EcoCard icon={Shield} title="AGStock"
+              <EcoCard icon={Shield} title="Nyansa"
                 desc="AI-backed inventory, commerce, sales, and operational management infrastructure for smart business systems." />
-              <EcoCard icon={CheckCircle} title="AGIS"
+              <EcoCard icon={CheckCircle} title="Nkɔsoɔ"
                 desc="Strategic assessment, field inspection, verification, operational intelligence, and documentation infrastructure." />
-              <EcoCard icon={TrendingUp} title="AminevaOps"
+              <EcoCard icon={TrendingUp} title="Sikasɛm"
                 desc="AI-backed financial operations, monitoring systems, workflow intelligence, and operational oversight infrastructure." />
               <EcoCard icon={Eye} title="ABI"
                 desc="Amineva Business Intelligence — unified BI infrastructure for dashboards, KPIs, market analytics, and data-driven decision support across the ecosystem." />

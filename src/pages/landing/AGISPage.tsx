@@ -11,7 +11,7 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
 };
 
-const AGISPage: FC = () => {
+const NkosooPage: FC = () => {
   const services = [
     { icon: Search, title: "Data & Insights", desc: "Data collection, surveys, market research, and consumer intelligence for informed decision-making." },
     { icon: MapPin, title: "Field Project Inspection", desc: "On-ground field visits, ongoing project confirmation supported by visuals and images. We serve as independent monitors in the absence of project owners." },
@@ -21,8 +21,8 @@ const AGISPage: FC = () => {
 
   const steps = [
     { step: "1", title: "Visit Homepage", desc: "Go to the Amineva Suite homepage and look for the product categories listed." },
-    { step: "2", title: "Click 'Data Intelligence'", desc: "From the category dropdown, click on 'Data Intelligence' to see AGIS listed." },
-    { step: "3", title: "Select AGIS", desc: "Click on AGIS to open the sign-in / register panel." },
+    { step: "2", title: "Click 'Data Intelligence'", desc: "From the category dropdown, click on 'Data Intelligence' to see Nkɔsoɔ listed." },
+    { step: "3", title: "Select Nkɔsoɔ", desc: "Click on Nkɔsoɔ to open the sign-in / register panel." },
     { step: "4", title: "Create Account or Login", desc: "Register with your email or sign in to your existing account." },
     { step: "5", title: "Access Client Dashboard", desc: "Once authenticated, you'll be redirected to your client dashboard." },
     { step: "6", title: "Send Service Request", desc: "From the dashboard, submit your service request — data collection, field inspection, assessment, or documentation." },
@@ -43,7 +43,7 @@ const AGISPage: FC = () => {
               <span className="text-accent">Trust & Act On</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 max-w-3xl mx-auto mb-8">
-              AGIS renders data & insights, field project inspections, strategic assessments, and professional documentation — empowering investors, businesses, and decision-makers with verified intelligence.
+              Nkɔsoɔ renders data & insights, field project inspections, strategic assessments, and professional documentation — empowering investors, businesses, and decision-makers with verified intelligence.
             </p>
             <Link
               to="/"
@@ -59,7 +59,7 @@ const AGISPage: FC = () => {
       <section className="max-w-7xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
           <span className="text-sm font-semibold text-accent uppercase tracking-wider">Our Services</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">What AGIS Offers</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">What Nkɔsoɔ Offers</h2>
         </div>
         <div className="grid md:grid-cols-2 gap-8">
           {services.map((s, i) => (
@@ -77,7 +77,7 @@ const AGISPage: FC = () => {
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
             <span className="text-sm font-semibold text-accent uppercase tracking-wider">Step-by-Step</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">How to Access AGIS</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">How to Access Nkɔsoɔ</h2>
             <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">Follow these steps to create your account and start sending service requests.</p>
           </div>
           <div className="space-y-4">
@@ -99,7 +99,7 @@ const AGISPage: FC = () => {
       {/* Who Benefits */}
       <section className="max-w-7xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground">Who Benefits from AGIS?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">Who Benefits from Nkɔsoɔ?</h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {[
@@ -135,4 +135,4 @@ const AGISPage: FC = () => {
   );
 };
 
-export default AGISPage;
+export default NkosooPage;

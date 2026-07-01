@@ -21,6 +21,7 @@ const AGStockPage = lazy(() => import("./pages/landing/AGStockPage"));
 const AGISPage = lazy(() => import("./pages/landing/AGISPage"));
 const AmnivaPage = lazy(() => import("./pages/landing/AmnivaPage"));
 const AgroClimatePage = lazy(() => import("./pages/landing/AgroClimatePage"));
+const AdesuaPage = lazy(() => import("./pages/landing/AdesuaPage"));
 const AminevaOpsPage = lazy(() => import("./pages/landing/AminevaOpsPage"));
 const SupportPage = lazy(() => import("./pages/landing/SupportPage"));
 const FAQsPage = lazy(() => import("./pages/landing/FAQsPage"));
@@ -210,6 +211,8 @@ function AppRoutes() {
           <Route path="apps/odeneho-ai" element={<OdenehoAIPage />} />
           <Route path="/apps/agstock" element={<AGStockPage />} />
           <Route path="/apps/agroclimate" element={<AgroClimatePage />} />
+          <Route path="/apps/adesua" element={<AdesuaPage />} />
+          <Route path="explainer/adesua" element={<AdesuaPage />} />
           <Route path="explainer/agis" element={<AGISPage />} />
           <Route path="explainer/amniva" element={<AmnivaPage />} />
           <Route path="explainer/aminevaops" element={<AminevaOpsPage />} />
