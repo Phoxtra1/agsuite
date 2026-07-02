@@ -339,7 +339,7 @@ export default function HomePage() {
                   </a>
 
                     <a
-                      href="https://www.as.amineva.com"
+                      href="https://as.amineva.com"
                       target="_blank"
                      rel="noreferrer"
                      className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
