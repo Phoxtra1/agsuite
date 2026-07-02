@@ -97,7 +97,7 @@ const AdesuaPage: FC = () => {
             Discover ICT masterclasses, career pathways, schools, and scholarships — all in one place.
           </p>
           <a
-            href="https://www.as.amineva.com"
+            href="https://as.amineva.com"
             target="_blank"
             rel="noreferrer"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg"
