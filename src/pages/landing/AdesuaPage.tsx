@@ -38,7 +38,7 @@ const AdesuaPage: FC = () => {
               Adesua is a digital learning and career pathway platform designed to help learners discover opportunities, build knowledge, and prepare for their future.
             </p>
             <a
-              href="https://www.as.amineva.com"
+              href="https://as.amineva.com"
               target="_blank"
               rel="noreferrer"
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg"
