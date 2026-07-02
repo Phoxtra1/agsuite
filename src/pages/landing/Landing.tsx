@@ -8,7 +8,7 @@ const apps: Array<{ label: string; to: string; external?: boolean }> = [
   { label: "Odeneho AI", to: "/apps/odeneho-ai" },
   { label: "Nyansa", to: "/apps/agstock" },
   { label: "Agyenkwa", to: "/apps/agroclimate" },
-  { label: "Adesua", to: "https://as.amineva.com", external: true },
+  { label: "Adesua", to: "/apps/adesua" },
 ];
 
 const explainerItems = [
