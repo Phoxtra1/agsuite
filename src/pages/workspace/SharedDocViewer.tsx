@@ -1,8 +1,8 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
 import { fetchSharedDocument, pushSharedDocument, type SharedDocPayload } from "@/lib/workspace/documents";
-import { useDocEditor, EditorSurface } from "@/components/workspace/docs/DocEditor";
-import { FormattingToolbar } from "@/components/workspace/docs/EditorChrome";
+import { useDocEditor } from "@/components/workspace/docs/DocEditor";
+import { PageCanvas, DEFAULT_PAGE_SETTINGS, type PageSettings } from "@/components/workspace/docs/PageCanvas";
 import { Loader2 } from "lucide-react";
 
 export default function SharedDocViewer() {
@@ -10,6 +10,8 @@ export default function SharedDocViewer() {
   const [payload, setPayload] = useState<SharedDocPayload | null>(null);
   const [status, setStatus] = useState<"loading" | "ready" | "missing">("loading");
   const [saving, setSaving] = useState(false);
+  const [pageSettings] = useState<PageSettings>(DEFAULT_PAGE_SETTINGS);
+  const surfaceRef = useRef<HTMLDivElement | null>(null);
   const saveTimer = useRef<number | null>(null);
 
   const editable = payload?.mode === "edit";
@@ -56,10 +58,10 @@ export default function SharedDocViewer() {
   }
 
   return (
-    <div className="min-h-screen bg-muted/20">
-      <header className="h-14 flex items-center gap-3 px-4 border-b border-border bg-card">
+    <div className="min-h-screen bg-muted/30">
+      <header className="h-14 flex items-center gap-3 px-4 border-b border-border bg-card sticky top-0 z-30">
         <span className="text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-accent/15 text-accent">Amineva Docs</span>
-        <span className="font-medium text-foreground text-sm">{payload.title}</span>
+        <span className="font-medium text-foreground text-sm truncate">{payload.title}</span>
         <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${editable ? "bg-amber-500/15 text-amber-600" : "bg-blue-500/15 text-blue-600"}`}>
           {payload.mode === "edit" ? "Editable" : "View only"}
         </span>
@@ -71,12 +73,13 @@ export default function SharedDocViewer() {
         )}
       </header>
 
-      {editable && editor && <FormattingToolbar editor={editor} />}
-
       <main className="py-8 px-4">
-        <div style={{ width: "min(820px, 100%)", margin: "0 auto" }}>
-          <EditorSurface editor={editor} />
-        </div>
+        <PageCanvas
+          editor={editor}
+          settings={pageSettings}
+          zoom={1}
+          surfaceRef={surfaceRef}
+        />
       </main>
     </div>
   );
