@@ -1,121 +1,120 @@
-# Amineva Docs — Advanced Workspace Upgrade
+# Plan: Amineva Sheets + Amineva Docs fixes
 
-## Scope
-Upgrade the existing AG Docs system in-place. No new product, no schema changes (existing `workspace_documents`, `workspace_document_versions`, `workspace_document_shares`, `workspace_document_comments` tables stay as-is).
+Two coordinated deliverables. Docs fixes are quick; Sheets is a new intelligence-grade module. Everything is frontend/presentation plus one new DB table for sheet documents.
 
-## 1. Branding sweep: AG Docs → Amineva Docs
-Find/replace across:
-- `src/components/workspace/WorkspaceNav.tsx`
-- `src/components/workspace/docs/*` (DocHeader, AGIntelligencePanel → AmnivaIntelligencePanel rename, all toolbar labels)
-- `src/pages/workspace/Dashboard.tsx`, `DocsList.tsx`, `DocsEditor.tsx`, `SharedDocViewer.tsx`
-- `src/pages/landing/WorkspacePage.tsx`
-- `src/lib/workspace/modules.ts`
-- `src/types/product.ts` (workspace category copy)
-- Module names: Amineva Docs / Sheets / Slides / Forms / Drive
+---
 
-Rename component file `AGIntelligencePanel.tsx` → `AmnivaIntelligencePanel.tsx` and update imports. Rename internal label "AG Intelligence" → "Amineva Intelligence".
+## Part A — Amineva Docs fixes
 
-## 2. Force light theme inside the Docs editor (sticky default)
-- On first mount of `DocsEditor.tsx` page, if `localStorage.amineva_theme` is unset, set it to `"light"` via `setTheme("light")`. Respects user override afterward.
-- Add a small editor-scoped class on the editor shell so the document canvas stays paper-white even if user later flips global theme (canvas only — chrome follows theme).
+Files: `src/components/workspace/docs/PageCanvas.tsx`, `DocEditor.tsx`, `src/pages/workspace/DocsEditor.tsx`, `src/pages/workspace/SharedDocViewer.tsx`, `src/index.css`.
 
-## 3. DocsList portrait document cards
-Rewrite `src/pages/workspace/DocsList.tsx` cards:
-- Aspect ratio ~ `3/4` (portrait page mini-preview)
-- Top 70%: white "paper" preview rendering `content_text` first ~6 lines in tiny serif, with faux page lines
-- Bottom strip: title (bold, 1 line), last-updated date, doc type badge ("Document"), quick-action icons (open, rename, duplicate, share, delete) revealed on hover
-- Grid: `grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5`
-- "+ New Document" primary button stays top-right; also a portrait "ghost card" tile that creates a new doc
+1. **True page breaks + one page number per page**
+   - Replace the current single scrolling canvas with a real multi-page renderer:
+     - Measure editor content height after each update; split into fixed-height page frames based on `PageSettings.size` (A4/Letter/Legal) minus margins, header, footer.
+     - Each page is its own white `<div class="doc-page">` with the same margins, header, and footer. Only the last page shows a partial fill; content flows into the next page frame.
+     - Page footer renders `Page {n} of {total}` exactly once per page (respecting `pageSettings.footer` format, e.g. `Page X of Y`, `X / Y`, or user template).
+   - Remove the current ad-hoc page-number injection that produces duplicated / haphazard numbers.
+   - Print CSS: `@page { size: A4; margin: 0 }` + `.doc-page { break-after: page }` so print and PDF export match on-screen pagination exactly.
 
-## 4. Editor shell rebuild — `DocsEditor.tsx` page
-New layout (CSS grid):
+2. **Share view matches the doc editor page format**
+   - `SharedDocViewer.tsx` currently renders a full-screen editor. Replace its surface with the same `PageCanvas` component in read-only (or edit, based on share mode) so the shared link opens as paginated white pages with header/footer/page numbers — identical to the creation view, minus the ribbon/side panels.
+   - Keep a minimal top bar (title, mode badge, download).
+
+3. **Default white page background**
+   - Force `.doc-page { background: #ffffff; color: #111827 }` regardless of theme (dark mode only affects chrome around the page, not the page itself).
+   - Remove the "force light theme on first entry" localStorage hack — page whiteness is now guaranteed by the page component itself.
+
+---
+
+## Part B — Amineva Sheets (new Workspace module)
+
+Intelligence-grade spreadsheet. Not a toy grid. Built on **HyperFormula** (open-source, MIT, 400+ functions incl. statistical, financial, engineering, lookup, text, date, logical) as the calc engine, wrapped in our own virtualized grid so we control the look, keyboard model, and intelligence layer.
+
+### New route
+- `/workspace/sheets` → list of sheet documents
+- `/workspace/sheets/:id` → editor
+- Register in `src/pages/Workspace.tsx` and flip `amineva-sheets` in `src/lib/workspace/modules.ts` to `active`.
+
+### New files
 ```
-+----------------------------------------------------+
-| DocHeader (breadcrumb, title, save status, share) |
-+----------------------------------------------------+
-| Ribbon Tabs: Home Insert PageLayout References    |
-|              Review View                           |
-+----------------------------------------------------+
-| Ribbon Toolbar (contextual to active tab)         |
-+----+------------------------------------+---------+
-|Left| Page Canvas (paper, margins,       | Right   |
-|Nav | header/footer, page numbers)       | Intel   |
-+----+------------------------------------+---------+
-| StatusBar (words/chars/pages/zoom)                 |
-+----------------------------------------------------+
+src/pages/workspace/SheetsList.tsx
+src/pages/workspace/SheetsEditor.tsx
+src/components/workspace/sheets/SheetGrid.tsx          // virtualized grid (react-window)
+src/components/workspace/sheets/SheetRibbon.tsx        // Home / Insert / Formulas / Data / Analyze / View
+src/components/workspace/sheets/FormulaBar.tsx
+src/components/workspace/sheets/SheetTabs.tsx          // multi-sheet tabs
+src/components/workspace/sheets/AmnivaAnalysisPanel.tsx// right-side intelligence panel
+src/components/workspace/sheets/ChartPanel.tsx         // recharts-based
+src/components/workspace/sheets/exporters.ts           // CSV / XLSX (SheetJS) / JSON / PDF
+src/lib/workspace/sheets/engine.ts                     // HyperFormula wrapper
+src/lib/workspace/sheets/stats.ts                      // SPSS-style analyses
+src/lib/workspace/sheets/documents.ts                  // CRUD against workspace_sheets
+supabase/functions/sheets-intelligence/index.ts        // Lovable AI: explain data, suggest chart, generate formula
 ```
 
-### 4a. Left Navigation Panel (new)
-File: `src/components/workspace/docs/LeftDocPanel.tsx`
-- Collapsible (chevron toggle, animates width 280px ↔ 56px)
-- Sections: "+ New Document" primary button, "Recent" (last 8 from `listDocuments`), "All Documents" (scrollable), inline rename, delete confirm
-- Clicking item navigates `/workspace/docs/:id`
+### Core spreadsheet features
+- **Grid**: virtualized (react-window) up to 10k rows × 100 cols, freeze rows/cols, resize, merge cells, cell + range selection, keyboard navigation (arrows, Tab, Enter, Shift-select, Ctrl+C/V/X/Z/Y), fill-handle drag, autofill patterns.
+- **Formatting**: font, size, bold/italic/underline, color, fill, alignment, wrap, borders, number formats (general, number, currency, percent, date, time, scientific, custom), conditional formatting (color scales, data bars, highlight rules).
+- **Multi-sheet workbook** with tabs, rename/reorder/duplicate/delete.
+- **Named ranges**, **data validation** (list/number/date), **filter & sort**, **find & replace**, **freeze panes**, **hide/show rows/cols**.
+- **Import/Export**: CSV, XLSX (via SheetJS `xlsx`), JSON, PDF (via html2canvas + jsPDF, same pattern as Docs).
 
-### 4b. Ribbon system (new)
-File: `src/components/workspace/docs/Ribbon.tsx` plus per-tab files in `src/components/workspace/docs/ribbon/`:
-- `HomeTab.tsx` — Clipboard (Cut/Copy/Paste via `document.execCommand` + editor APIs), Font (family dropdown, size +/-, B/I/U/Strike, color, highlight), Change Case (transforms selected text via editor.chain), Paragraph (lists, indent, alignment, line spacing, borders, shading), Styles (Normal/H1-H3/Title/Subtitle)
-- `InsertTab.tsx` — Blank page, Page break, Table (grid picker popover for rows×cols up to 10×10), Merge/Split cells, Image upload (file input → base64 → `editor.chain().setImage`), Links (dialog), Symbols (popover), Shapes/Text boxes (insert as styled divs via custom node — minimal version: insert blockquote placeholder)
-- `PageLayoutTab.tsx` — Margins (Narrow/Normal/Wide/Custom), Orientation (Portrait/Landscape), Page Size (A3/A4/A5/A6/Letter/Legal/Tabloid/Statement/Custom), Columns (1/2/3), Watermark (text input → CSS), Page borders, Line numbers (toggle CSS counter)
-- `ReferencesTab.tsx` — TOC generator (scans headings, inserts list at cursor), Footnotes (custom mark — minimal: superscript number + bottom list), Captions (insert formatted caption paragraph), Index/Mark entry (stub with toast), Citation tools (stub)
-- `ReviewTab.tsx` — Word/char count (live from `editor.storage.characterCount`), Grammar/Spelling AI (calls `docs-intelligence` with action `grammar`), Translation (action `translate`), Thesaurus (action `synonyms`), Comments (toggle right panel comments tab), Track changes (toggle CSS marking new content), Accept/Reject/Prev/Next change, Permissions (Restrict/Allow comments/View only — local state for now)
-- `ViewTab.tsx` — Modes (Reading/Print Layout/Web Layout/Outline), toggles for Navigation panel, Outline, Gridlines, Ruler, Guides, Split window (stub), Zoom in/out/Full page/Page width
+### Formulas (via HyperFormula, all built-in)
+Math, statistical (AVERAGE, MEDIAN, MODE, STDEV, VAR, PERCENTILE, QUARTILE, CORREL, COVAR, SLOPE, INTERCEPT, FORECAST, TREND, LINEST), logical (IF, IFS, AND, OR, NOT, SWITCH), lookup (VLOOKUP, HLOOKUP, INDEX, MATCH, XLOOKUP), text (CONCAT, TEXTJOIN, LEFT/RIGHT/MID, REGEX*), date/time, financial (NPV, IRR, PMT, FV, PV), engineering, information. Formula bar with autocomplete, argument hints, and syntax highlighting.
 
-Each tab uses a horizontal scroll-safe flex with grouped sections separated by vertical dividers.
+### Amineva Analysis Panel (the SPSS-style differentiator)
+Right-side panel driven by the current selection / active range:
 
-### 4c. Page Canvas
-File: `src/components/workspace/docs/PageCanvas.tsx`
-- Wraps `<EditorContent>` in a "paper" container with configurable `pageSize`, `orientation`, `margins`, `columns`
-- Renders editable header band, editable footer band, page number token
-- Background `bg-white text-gray-900` (canvas stays light always), `shadow-lg`, centered with adjustable zoom transform
-- Page break visualization: CSS striped divider every Nth content height
+1. **Descriptive statistics** — n, mean, median, mode, min, max, range, variance, SD, SE, skewness, kurtosis, quartiles, IQR, sum.
+2. **Frequency table** with counts, percent, cumulative percent.
+3. **Correlation matrix** (Pearson + Spearman) across selected columns, with heatmap.
+4. **Linear regression** (simple + multiple): coefficients, R², adj-R², SE, t-stat, p-value, residual plot.
+5. **T-tests**: one-sample, independent two-sample, paired.
+6. **ANOVA** (one-way).
+7. **Chi-square** test of independence.
+8. **Cross-tabulation** with row/col %.
+9. **Outlier detection** (IQR + z-score).
+10. **Normality**: Shapiro-Wilk approximation + Q-Q plot.
+11. **Cluster preview**: k-means (k selectable) for numeric columns.
+12. **Time-series basics**: moving average, exponential smoothing, seasonal decomposition (additive).
+13. **Pivot table builder** (rows / cols / values / aggregator).
+14. **Charts**: column, bar, line, area, scatter, pie, histogram, boxplot, heatmap — all recharts based, insertable into the sheet as embedded objects.
 
-State held in `DocsEditor.tsx` via a `pageSettings` object persisted into `workspace_documents.outline` JSON (already exists) under key `__page__`.
+All analyses run client-side in `stats.ts` (pure TS, no server calls) and can be exported as a "Report" block into an Amineva Doc.
 
-### 4d. Right Intelligence Panel
-Replace `AGIntelligencePanel.tsx` with `AmnivaIntelligencePanel.tsx`:
-- Same tabs (Intelligence / Templates / Analyzer / Classification)
-- Collapsible: chevron on left edge toggles between full 320px and 0px (icon rail with 40px stays visible to re-expand)
-- Wire each action button to the existing `docs-intelligence` edge function via supabase.functions.invoke — replace nothing currently functional, just connect the unwired buttons. Apply AI output back into editor via `editor.chain().focus().insertContent(result)` or replace selection.
-- Templates: predefined TipTap JSON → `editor.commands.setContent` + autosave
-- Analyzer: call edge function with action `analyze`, display returned score/metrics
-- Classification: tag click writes to `workspace_documents.classification`
+### Amineva Intelligence (AI-assisted, edge function)
+`sheets-intelligence` edge function (Lovable AI Gateway, no key needed):
+- **Explain this range** — natural-language summary of the selection.
+- **Suggest chart** — returns chart type + fields.
+- **Generate formula** — user describes intent, model returns formula string validated against HyperFormula.
+- **Detect anomalies** — flags rows.
+- **Data cleanup suggestions** — trim, type coercion, deduplication.
 
-## 5. Persistence
-- Autosave (existing 800ms debounce) extended to also write `pageSettings` and `classification`
-- Title edits in DocHeader save via `updateDocument`
-- Document type column derived from settings (default "Document")
+### Storage (one migration)
+Table `workspace_sheets`:
+- `id`, `user_id`, `title`, `workbook_json` (jsonb — full multi-sheet workbook: sheets, cells, formats, named ranges, charts), `content_text` (searchable flatten), `created_at`, `updated_at`.
+- RLS: owner-only (`auth.uid() = user_id`), plus optional `workspace_sheet_shares` mirror of the Docs share pattern (token, mode, expires_at) with `get_shared_sheet` / `update_shared_sheet` security-definer functions.
+- Standard GRANTs (authenticated + service_role).
 
-## 6. Out of scope
-- Real-time multi-user cursors (Yjs)
-- Native PDF print engine (use existing html2pdf)
-- True column reflow across pages (CSS columns only)
-- Full grammar engine (AI-based via edge function only)
-- Shapes/text boxes as draggable canvas objects (simple inserted blocks only)
+### Look & feel
+- Matches Docs chrome: same header (breadcrumb, autosave state, Export, Share), same left panel (documents list → sheets list), same right intelligence panel style.
+- White grid background by default (same rule as Docs page).
+- Semantic tokens only.
 
-## Files
-**New**
-- `src/components/workspace/docs/LeftDocPanel.tsx`
-- `src/components/workspace/docs/Ribbon.tsx`
-- `src/components/workspace/docs/ribbon/HomeTab.tsx`
-- `src/components/workspace/docs/ribbon/InsertTab.tsx`
-- `src/components/workspace/docs/ribbon/PageLayoutTab.tsx`
-- `src/components/workspace/docs/ribbon/ReferencesTab.tsx`
-- `src/components/workspace/docs/ribbon/ReviewTab.tsx`
-- `src/components/workspace/docs/ribbon/ViewTab.tsx`
-- `src/components/workspace/docs/PageCanvas.tsx`
-- `src/components/workspace/docs/AmnivaIntelligencePanel.tsx`
+### Dependencies to add
+`hyperformula`, `xlsx` (SheetJS community), `react-window`. Recharts, html2canvas, jsPDF already present.
 
-**Edited**
-- `src/pages/workspace/DocsEditor.tsx` (full layout rebuild)
-- `src/pages/workspace/DocsList.tsx` (portrait cards)
-- `src/pages/workspace/Dashboard.tsx` (branding)
-- `src/components/workspace/WorkspaceNav.tsx` (branding + module list)
-- `src/components/workspace/docs/DocHeader.tsx` (branding)
-- `src/components/workspace/docs/MainToolbar.tsx` (deprecated — replaced by Ribbon; keep file but unused, or delete)
-- `src/lib/workspace/modules.ts` (Amineva naming)
-- `src/types/product.ts` (workspace copy)
-- `src/pages/landing/WorkspacePage.tsx` (copy)
-- `src/index.css` (paper canvas + ribbon styles)
+---
 
-**Deleted**
-- `src/components/workspace/docs/AGIntelligencePanel.tsx` (replaced)
+## Technical notes
+- Pagination measurement uses a hidden mirror div at page-content width; on each editor update we walk block nodes and pack them into page frames. Debounced to avoid layout thrash.
+- Share viewer becomes a thin wrapper: `PageCanvas` in read-only mode for `mode='view'`, editable for `mode='edit'` (reusing existing `update_shared_document` RPC).
+- HyperFormula runs in a Web Worker for sheets > 5k populated cells to keep the UI responsive.
+- Sheets autosave uses the same 800ms debounce + 30s version snapshot pattern as Docs.
+
+---
+
+## Out of scope (ask before adding)
+- Real-time multi-cursor collaboration on sheets.
+- Google Sheets / Excel Online live sync.
+- Server-side scheduled recomputation.

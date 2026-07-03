@@ -779,75 +779,83 @@ export function PageCanvas({
       style={{ transform: `scale(${zoom})`, transformOrigin: "top center" }}
       onMouseDown={() => onSelectOverlay?.(null)}
     >
-      <style>{tableCss}</style>
+      <style>{tableCss}
+        {`@media print {
+          @page { size: ${w}px ${h}px; margin: 0; }
+          .doc-page-frame { break-after: page; box-shadow: none !important; border: 0 !important; }
+        }`}
+      </style>
 
+      {/* Multi-page stack: one white sheet frame per page, each with its own chrome */}
       <div
-        className="doc-canvas-sheet relative"
-        style={{
-          width: w,
-          minHeight: h,
-          background: settings.pageColor ?? "#ffffff",
-          boxShadow: "0 8px 24px rgba(15,23,42,0.12)",
-          border: settings.pageBorder ? "2px solid #0f172a" : "1px solid #e5e7eb",
-          overflow: "hidden",
-          margin: "0 auto",
-        }}
+        className="relative"
+        style={{ width: w, height: stackHeight, margin: "0 auto" }}
       >
-        {/* Watermark in the background */}
-        {inRange(1, settings.watermarkPages) && !settings.coverPage && (
-          <WatermarkLayer settings={settings} w={w} />
-        )}
-        
-        {/* Overlays (Behind) */}
-        <OverlayLayerView
-          items={overlays}
-          layer="behind"
-          pageIndex={0}
-          onChange={onOverlaysChange}
-          selectedId={selectedOverlayId}
-          onSelect={onSelectOverlay}
-        />
-        
-        {/* Header and Footer */}
-        <PageChrome
-          pageIndex={0}
-          pageCount={pageCount}
-          settings={settings}
-          margins={margins}
-          onHeaderChange={onHeaderChange}
-          onFooterChange={onFooterChange}
-          today={today}
-        />
-        
-        {/* Editable Content Layer */}
+        {Array.from({ length: pageCount }).map((_, i) => (
+          <div
+            key={i}
+            className="doc-page-frame absolute"
+            style={{
+              top: i * (h + PAGE_GAP),
+              left: 0,
+              width: w,
+              height: h,
+              background: settings.pageColor ?? "#ffffff",
+              boxShadow: "0 8px 24px rgba(15,23,42,0.12)",
+              border: settings.pageBorder ? "2px solid #0f172a" : "1px solid #e5e7eb",
+              overflow: "hidden",
+              color: "#0f172a",
+            }}
+          >
+            {inRange(i + 1, settings.watermarkPages) && !(settings.coverPage && i === 0) && (
+              <WatermarkLayer settings={settings} w={w} />
+            )}
+            <OverlayLayerView
+              items={overlays}
+              layer="behind"
+              pageIndex={i}
+              onChange={onOverlaysChange}
+              selectedId={selectedOverlayId}
+              onSelect={onSelectOverlay}
+            />
+            <PageChrome
+              pageIndex={i}
+              pageCount={pageCount}
+              settings={settings}
+              margins={margins}
+              onHeaderChange={onHeaderChange}
+              onFooterChange={onFooterChange}
+              today={today}
+            />
+            <OverlayLayerView
+              items={overlays}
+              layer="front"
+              pageIndex={i}
+              onChange={onOverlaysChange}
+              selectedId={selectedOverlayId}
+              onSelect={onSelectOverlay}
+            />
+          </div>
+        ))}
+
+        {/* Single continuous editor overlay flowing across the page stack.
+            Page chrome (header/footer) sits at z-index 3 with solid background
+            to mask any content that lands in the header/footer bands. */}
         <div
           ref={editorWrapRef}
-          className="doc-canvas"
+          className="doc-canvas absolute"
           style={{
-            position: "relative",
-            marginTop: editorTopOffset,
-            marginLeft: margins.left,
+            top: editorTopOffset,
+            left: margins.left,
             width: innerWidth,
-            minHeight: innerHeight,
+            zIndex: 2,
             columnCount: settings.columns > 1 ? settings.columns : undefined,
             columnGap: 32,
-            zIndex: 2,
-            overflow: "visible",
             color: "#0f172a",
           }}
         >
           <EditorContent editor={editor} />
         </div>
-
-        {/* Overlays (Front) */}
-        <OverlayLayerView
-          items={overlays}
-          layer="front"
-          pageIndex={0}
-          onChange={onOverlaysChange}
-          selectedId={selectedOverlayId}
-          onSelect={onSelectOverlay}
-        />
       </div>
     </div>
   );

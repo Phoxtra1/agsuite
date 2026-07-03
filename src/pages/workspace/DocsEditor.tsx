@@ -38,13 +38,10 @@ export default function DocsEditor() {
   const saveTimer = useRef<number | null>(null);
   const versionTimer = useRef<number | null>(null);
 
-  // Force light mode on first ever entry into the docs editor
-  useEffect(() => {
-    if (!localStorage.getItem("amineva_docs_theme_init")) {
-      setTheme("light");
-      localStorage.setItem("amineva_docs_theme_init", "1");
-    }
-  }, [setTheme]);
+  // Docs always render on a white page (Amineva intelligence surface).
+  // Chrome around the page still respects the user's theme choice.
+  // No forced theme mutation here.
+
 
   const editor = useDocEditor({
     initialContent: { type: "doc", content: [{ type: "paragraph" }] },

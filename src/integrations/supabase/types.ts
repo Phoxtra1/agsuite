@@ -1123,6 +1123,77 @@ export type Database = {
         }
         Relationships: []
       }
+      workspace_sheet_shares: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          mode: string
+          revoked: boolean
+          sheet_id: string
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          mode?: string
+          revoked?: boolean
+          sheet_id: string
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          mode?: string
+          revoked?: boolean
+          sheet_id?: string
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_sheet_shares_sheet_id_fkey"
+            columns: ["sheet_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_sheets"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_sheets: {
+        Row: {
+          content_text: string
+          created_at: string
+          id: string
+          owner_id: string
+          title: string
+          updated_at: string
+          workbook_json: Json
+        }
+        Insert: {
+          content_text?: string
+          created_at?: string
+          id?: string
+          owner_id: string
+          title?: string
+          updated_at?: string
+          workbook_json?: Json
+        }
+        Update: {
+          content_text?: string
+          created_at?: string
+          id?: string
+          owner_id?: string
+          title?: string
+          updated_at?: string
+          workbook_json?: Json
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1142,6 +1213,16 @@ export type Database = {
           updated_at: string
         }[]
       }
+      get_shared_sheet: {
+        Args: { _token: string }
+        Returns: {
+          id: string
+          mode: string
+          title: string
+          updated_at: string
+          workbook_json: Json
+        }[]
+      }
       has_app_access: {
         Args: { _app_slug: string; _user_id: string }
         Returns: boolean
@@ -1157,6 +1238,15 @@ export type Database = {
           _content_text: string
           _title?: string
           _token: string
+        }
+        Returns: boolean
+      }
+      update_shared_sheet: {
+        Args: {
+          _content_text: string
+          _title?: string
+          _token: string
+          _workbook_json: Json
         }
         Returns: boolean
       }
