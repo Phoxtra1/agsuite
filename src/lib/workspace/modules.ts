@@ -26,9 +26,11 @@ export const WORKSPACE_MODULES: WorkspaceModule[] = [
   {
     id: "amineva-sheets",
     name: "Amineva Sheets",
-    description: "Collaborative spreadsheets connected to your data intelligence layer.",
-    status: "coming_soon",
+    description:
+      "Intelligence-grade spreadsheets with 400+ functions, SPSS-style analytics, and AI-assisted insight.",
+    status: "active",
     icon: Sheet,
+    route: "/workspace/sheets",
     accent: "bg-emerald-500/15 text-emerald-500",
   },
   {
