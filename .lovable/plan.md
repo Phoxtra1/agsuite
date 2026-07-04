@@ -1,120 +1,84 @@
-# Plan: Amineva Sheets + Amineva Docs fixes
+# Amineva Sheets — Enterprise UX Upgrade (Turn 1 of 3)
 
-Two coordinated deliverables. Docs fixes are quick; Sheets is a new intelligence-grade module. Everything is frontend/presentation plus one new DB table for sheet documents.
+Per your sequencing: **Sheets overhaul first**. Docs bug fixes, Dashboard recent-items sections, and realtime collaboration will follow in Turns 2 and 3. This turn keeps all existing Amineva Sheets features (HyperFormula engine, SPSS-style Analysis panel, AI intelligence edge function, XLSX/CSV I/O, sharing) and layers a professional spreadsheet interface on top.
+
+## What ships this turn
+
+### 1. Layout & shell
+- Full-height 3-row shell: Ribbon (tabbed) → Formula bar → Grid → Sheet tabs + Status bar.
+- Grid gets ~85% of viewport. Ribbon collapses to a slim mode via chevron.
+- New tabbed ribbon: **Home · Insert · Data · View · Formulas · Amineva AI**, each with logical groups (Clipboard, Font, Alignment, Number, Cells, Editing…).
+- Consistent 32px control height, 4px group gaps, group dividers, disabled/hover/active states, tooltips with shortcuts.
+
+### 2. Ribbon groups (Home tab)
+Clipboard (Cut/Copy/Paste/Format Painter) · Font (family, size, B/I/U, strike, color, fill, borders) · Alignment (H/V align, wrap, merge, rotation) · Number (currency, %, decimals ± , date/time, custom format) · Cells (insert/delete row/col, format) · Editing (find/replace, sort, filter, clear).
+Insert tab: chart, table, image, hyperlink, comment, function. Data tab: sort, filter, validation, remove duplicates, text-to-columns. View tab: freeze rows/cols/panes, gridlines toggle, headers toggle, formula bar toggle, zoom. Formulas tab: function library grouped by category (Math, Stats, Logical, Lookup, Text, Date, Financial). Amineva AI tab: explain selection, suggest chart, generate formula, detect anomalies, clean data (already wired to `sheets-intelligence`).
+
+### 3. Formula bar
+Name Box (editable, jumps to named range or A1) · fx button (function picker dialog) · resizable formula input with syntax highlighting and function autocomplete (built from HyperFormula's function registry), parameter helper tooltip, error underline.
+
+### 4. Right-click context menus (radix ContextMenu)
+- **Cell**: Cut, Copy, Paste, Paste Special, Insert/Delete cells (shift), Insert row above/below, Insert column left/right, Delete row/column, Clear contents, Clear formatting, Merge/Split, Add comment, Insert link, Conditional formatting, Data validation, Duplicate, Hide/Unhide row+col.
+- **Row header**: Insert above/below, Delete, Duplicate, Hide/Unhide, Resize, Auto-fit height, Freeze above.
+- **Column header**: Insert left/right, Delete, Duplicate, Hide/Unhide, Resize, Auto-fit width, Freeze left.
+- **Sheet tab**: Rename, Duplicate, Delete, Move left/right/start/end, Tab color, Hide/Unhide, Protect.
+
+### 5. Left-click quick-action popovers
+Small popover on row# / col-letter click with Insert · Delete · Duplicate · Hide · Resize. Right-click still shows the full menu.
+
+### 6. Sheet tabs
+Double-click to rename, drag-and-drop reorder (dnd-kit), context menu, tab color chip, sheet search dropdown, hidden-sheet manager, "+" affordance.
+
+### 7. Selection & interaction
+Single/range/row/column/all selection, shift-extend, ctrl-multi-range, drag-fill handle, keyboard nav (arrows, Tab/Shift-Tab, Enter, Home/End, Ctrl+arrows to edge, Ctrl+A). Copy animation (marching ants), active-cell 2px accent border, row/column header highlight, resize/drag indicators.
+
+### 8. Editing experience
+Undo/redo stack (50 steps, per-workbook). Shortcuts: Ctrl+C/V/X/Z/Y/B/I/U/S, Delete clears, F2 edit, Esc cancel. Paste Special (values / formulas / formatting).
+
+### 9. Formula intelligence
+Autocomplete popover on `=`, function signatures from HyperFormula, syntax highlight (bracket matching, string/number/ref colors), parameter helper as you type, recent + favorite functions.
+
+### 10. Status bar (bottom)
+Ready state · Selection: `12R × 3C` · Sum · Average · Min · Max · Count · Zoom slider (50–200%) · view mode toggle · Save state ("Saved · 2s ago").
+
+### 11. Freeze panes, column/row sizing
+Drag-resize on header borders, double-click to auto-fit, freeze first row / first col / custom panes via View tab. Frozen headers stay sticky during scroll.
+
+### 12. Performance
+Virtualization via `@tanstack/react-virtual` (rows + columns) — target 100k rows × 1k cols smoothly. Memoized cell renderer. HyperFormula evaluation debounced 80ms. Only visible cells re-render on selection change.
+
+### 13. Accessibility & responsiveness
+ARIA roles on grid/cells (`role="grid"`, `aria-rowindex`, `aria-colindex`), full keyboard navigation, screen-reader labels on ribbon buttons, focus rings, respects light/dark theme tokens (grid surface stays white as per intelligence-product rule). Touch: pinch-zoom, long-press = right-click, momentum scroll.
+
+### 14. What stays untouched
+`workspace_sheets` schema, share tokens, exporters (`XLSX`, CSV, JSON), Analysis panel (SPSS-style stats), `sheets-intelligence` edge function, HyperFormula engine wrapper.
 
 ---
 
-## Part A — Amineva Docs fixes
+## Technical section
 
-Files: `src/components/workspace/docs/PageCanvas.tsx`, `DocEditor.tsx`, `src/pages/workspace/DocsEditor.tsx`, `src/pages/workspace/SharedDocViewer.tsx`, `src/index.css`.
-
-1. **True page breaks + one page number per page**
-   - Replace the current single scrolling canvas with a real multi-page renderer:
-     - Measure editor content height after each update; split into fixed-height page frames based on `PageSettings.size` (A4/Letter/Legal) minus margins, header, footer.
-     - Each page is its own white `<div class="doc-page">` with the same margins, header, and footer. Only the last page shows a partial fill; content flows into the next page frame.
-     - Page footer renders `Page {n} of {total}` exactly once per page (respecting `pageSettings.footer` format, e.g. `Page X of Y`, `X / Y`, or user template).
-   - Remove the current ad-hoc page-number injection that produces duplicated / haphazard numbers.
-   - Print CSS: `@page { size: A4; margin: 0 }` + `.doc-page { break-after: page }` so print and PDF export match on-screen pagination exactly.
-
-2. **Share view matches the doc editor page format**
-   - `SharedDocViewer.tsx` currently renders a full-screen editor. Replace its surface with the same `PageCanvas` component in read-only (or edit, based on share mode) so the shared link opens as paginated white pages with header/footer/page numbers — identical to the creation view, minus the ribbon/side panels.
-   - Keep a minimal top bar (title, mode badge, download).
-
-3. **Default white page background**
-   - Force `.doc-page { background: #ffffff; color: #111827 }` regardless of theme (dark mode only affects chrome around the page, not the page itself).
-   - Remove the "force light theme on first entry" localStorage hack — page whiteness is now guaranteed by the page component itself.
-
----
-
-## Part B — Amineva Sheets (new Workspace module)
-
-Intelligence-grade spreadsheet. Not a toy grid. Built on **HyperFormula** (open-source, MIT, 400+ functions incl. statistical, financial, engineering, lookup, text, date, logical) as the calc engine, wrapped in our own virtualized grid so we control the look, keyboard model, and intelligence layer.
-
-### New route
-- `/workspace/sheets` → list of sheet documents
-- `/workspace/sheets/:id` → editor
-- Register in `src/pages/Workspace.tsx` and flip `amineva-sheets` in `src/lib/workspace/modules.ts` to `active`.
-
-### New files
-```
-src/pages/workspace/SheetsList.tsx
-src/pages/workspace/SheetsEditor.tsx
-src/components/workspace/sheets/SheetGrid.tsx          // virtualized grid (react-window)
-src/components/workspace/sheets/SheetRibbon.tsx        // Home / Insert / Formulas / Data / Analyze / View
-src/components/workspace/sheets/FormulaBar.tsx
-src/components/workspace/sheets/SheetTabs.tsx          // multi-sheet tabs
-src/components/workspace/sheets/AmnivaAnalysisPanel.tsx// right-side intelligence panel
-src/components/workspace/sheets/ChartPanel.tsx         // recharts-based
-src/components/workspace/sheets/exporters.ts           // CSV / XLSX (SheetJS) / JSON / PDF
-src/lib/workspace/sheets/engine.ts                     // HyperFormula wrapper
-src/lib/workspace/sheets/stats.ts                      // SPSS-style analyses
-src/lib/workspace/sheets/documents.ts                  // CRUD against workspace_sheets
-supabase/functions/sheets-intelligence/index.ts        // Lovable AI: explain data, suggest chart, generate formula
-```
-
-### Core spreadsheet features
-- **Grid**: virtualized (react-window) up to 10k rows × 100 cols, freeze rows/cols, resize, merge cells, cell + range selection, keyboard navigation (arrows, Tab, Enter, Shift-select, Ctrl+C/V/X/Z/Y), fill-handle drag, autofill patterns.
-- **Formatting**: font, size, bold/italic/underline, color, fill, alignment, wrap, borders, number formats (general, number, currency, percent, date, time, scientific, custom), conditional formatting (color scales, data bars, highlight rules).
-- **Multi-sheet workbook** with tabs, rename/reorder/duplicate/delete.
-- **Named ranges**, **data validation** (list/number/date), **filter & sort**, **find & replace**, **freeze panes**, **hide/show rows/cols**.
-- **Import/Export**: CSV, XLSX (via SheetJS `xlsx`), JSON, PDF (via html2canvas + jsPDF, same pattern as Docs).
-
-### Formulas (via HyperFormula, all built-in)
-Math, statistical (AVERAGE, MEDIAN, MODE, STDEV, VAR, PERCENTILE, QUARTILE, CORREL, COVAR, SLOPE, INTERCEPT, FORECAST, TREND, LINEST), logical (IF, IFS, AND, OR, NOT, SWITCH), lookup (VLOOKUP, HLOOKUP, INDEX, MATCH, XLOOKUP), text (CONCAT, TEXTJOIN, LEFT/RIGHT/MID, REGEX*), date/time, financial (NPV, IRR, PMT, FV, PV), engineering, information. Formula bar with autocomplete, argument hints, and syntax highlighting.
-
-### Amineva Analysis Panel (the SPSS-style differentiator)
-Right-side panel driven by the current selection / active range:
-
-1. **Descriptive statistics** — n, mean, median, mode, min, max, range, variance, SD, SE, skewness, kurtosis, quartiles, IQR, sum.
-2. **Frequency table** with counts, percent, cumulative percent.
-3. **Correlation matrix** (Pearson + Spearman) across selected columns, with heatmap.
-4. **Linear regression** (simple + multiple): coefficients, R², adj-R², SE, t-stat, p-value, residual plot.
-5. **T-tests**: one-sample, independent two-sample, paired.
-6. **ANOVA** (one-way).
-7. **Chi-square** test of independence.
-8. **Cross-tabulation** with row/col %.
-9. **Outlier detection** (IQR + z-score).
-10. **Normality**: Shapiro-Wilk approximation + Q-Q plot.
-11. **Cluster preview**: k-means (k selectable) for numeric columns.
-12. **Time-series basics**: moving average, exponential smoothing, seasonal decomposition (additive).
-13. **Pivot table builder** (rows / cols / values / aggregator).
-14. **Charts**: column, bar, line, area, scatter, pie, histogram, boxplot, heatmap — all recharts based, insertable into the sheet as embedded objects.
-
-All analyses run client-side in `stats.ts` (pure TS, no server calls) and can be exported as a "Report" block into an Amineva Doc.
-
-### Amineva Intelligence (AI-assisted, edge function)
-`sheets-intelligence` edge function (Lovable AI Gateway, no key needed):
-- **Explain this range** — natural-language summary of the selection.
-- **Suggest chart** — returns chart type + fields.
-- **Generate formula** — user describes intent, model returns formula string validated against HyperFormula.
-- **Detect anomalies** — flags rows.
-- **Data cleanup suggestions** — trim, type coercion, deduplication.
-
-### Storage (one migration)
-Table `workspace_sheets`:
-- `id`, `user_id`, `title`, `workbook_json` (jsonb — full multi-sheet workbook: sheets, cells, formats, named ranges, charts), `content_text` (searchable flatten), `created_at`, `updated_at`.
-- RLS: owner-only (`auth.uid() = user_id`), plus optional `workspace_sheet_shares` mirror of the Docs share pattern (token, mode, expires_at) with `get_shared_sheet` / `update_shared_sheet` security-definer functions.
-- Standard GRANTs (authenticated + service_role).
-
-### Look & feel
-- Matches Docs chrome: same header (breadcrumb, autosave state, Export, Share), same left panel (documents list → sheets list), same right intelligence panel style.
-- White grid background by default (same rule as Docs page).
-- Semantic tokens only.
+### New / refactored files
+- `src/pages/workspace/SheetsEditor.tsx` — new shell layout, wires ribbon tabs, formula bar, grid, tabs, status bar.
+- `src/components/workspace/sheets/ribbon/` — `RibbonTabs.tsx`, `HomeTab.tsx`, `InsertTab.tsx`, `DataTab.tsx`, `ViewTab.tsx`, `FormulasTab.tsx`, `AmnivaAITab.tsx`, `RibbonGroup.tsx`, `RibbonButton.tsx`.
+- `src/components/workspace/sheets/FormulaBar.tsx` — rewritten with Name Box + fx + autocomplete.
+- `src/components/workspace/sheets/SheetGrid.tsx` — virtualized (tanstack-virtual), context-menu integrated, resize handles, fill handle, drag selection, freeze panes.
+- `src/components/workspace/sheets/context/CellContextMenu.tsx`, `RowContextMenu.tsx`, `ColContextMenu.tsx`, `SheetTabContextMenu.tsx`.
+- `src/components/workspace/sheets/StatusBar.tsx`.
+- `src/components/workspace/sheets/SheetTabs.tsx` — rewritten with dnd-kit, colors, search.
+- `src/components/workspace/sheets/hooks/`: `useUndoRedo.ts`, `useClipboard.ts`, `useSelection.ts`, `useKeyboardShortcuts.ts`, `useFormulaAutocomplete.ts`.
+- `src/lib/workspace/sheets/functions.ts` — function registry metadata (name, category, signature, description) for autocomplete + Formulas tab.
+- `src/lib/workspace/sheets/documents.ts` — extend `SheetPage` with `colWidths`, `rowHeights`, `frozenRows`, `frozenCols`, `hidden`, `tabColor`, `merges`.
 
 ### Dependencies to add
-`hyperformula`, `xlsx` (SheetJS community), `react-window`. Recharts, html2canvas, jsPDF already present.
+- `@tanstack/react-virtual` — grid virtualization.
+- `@dnd-kit/core` + `@dnd-kit/sortable` — sheet tab reorder.
+(Radix ContextMenu is already available via shadcn.)
 
----
+### Non-goals this turn
+- Docs pagination fixes, auto-doc-creation bug, workspace slowness → Turn 2.
+- Dashboard recent-sheets/recent-docs sections → Turn 2.
+- Realtime presence + live cells → Turn 3.
+- Real image/chart insertion pipelines beyond stubs that open the existing Analysis/Chart panel.
+- Server-side sheet protection enforcement (UI + client-side lock only this turn).
 
-## Technical notes
-- Pagination measurement uses a hidden mirror div at page-content width; on each editor update we walk block nodes and pack them into page frames. Debounced to avoid layout thrash.
-- Share viewer becomes a thin wrapper: `PageCanvas` in read-only mode for `mode='view'`, editable for `mode='edit'` (reusing existing `update_shared_document` RPC).
-- HyperFormula runs in a Web Worker for sheets > 5k populated cells to keep the UI responsive.
-- Sheets autosave uses the same 800ms debounce + 30s version snapshot pattern as Docs.
-
----
-
-## Out of scope (ask before adding)
-- Real-time multi-cursor collaboration on sheets.
-- Google Sheets / Excel Online live sync.
-- Server-side scheduled recomputation.
+Ready to build this?
