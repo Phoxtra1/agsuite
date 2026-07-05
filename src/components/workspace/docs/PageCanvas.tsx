@@ -753,6 +753,19 @@ export function PageCanvas({
       }
       .doc-canvas figure { margin: 8px 0; }
       .doc-canvas .ProseMirror { outline: none; min-height: 100%; }
+      /* Prevent block content from straddling the page border — jump to next */
+      .doc-canvas .ProseMirror > * {
+        break-inside: avoid-page;
+        page-break-inside: avoid;
+        orphans: 3;
+        widows: 3;
+      }
+      .doc-canvas .ProseMirror h1,
+      .doc-canvas .ProseMirror h2,
+      .doc-canvas .ProseMirror h3 {
+        break-after: avoid-page;
+        page-break-after: avoid;
+      }
       .doc-canvas .page-break, .doc-canvas [data-page-break] {
         break-after: page;
         page-break-after: always;
