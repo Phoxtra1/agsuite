@@ -50,6 +50,26 @@ export async function getDocument(id: string): Promise<WorkspaceDocument | null>
 export async function createDocument(title = "Untitled document"): Promise<WorkspaceDocument | null> {
   const { data: u } = await supabase.auth.getUser();
   if (!u.user) return null;
+
+  // Guard: if the user has an untitled+empty doc from the last 5 minutes, reuse it
+  // instead of spawning a duplicate. Prevents accidental "new document emerges"
+  // reports when the create button is clicked repeatedly or by mistake.
+  if (title === "Untitled document") {
+    const cutoff = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data: existing } = await supabase
+      .from("workspace_documents" as any)
+      .select("*")
+      .eq("owner_id", u.user.id)
+      .eq("title", "Untitled document")
+      .gte("created_at", cutoff)
+      .order("created_at", { ascending: false })
+      .limit(1);
+    const reuse = (existing as any)?.[0];
+    if (reuse && (!reuse.content_text || reuse.content_text.trim() === "")) {
+      return reuse as WorkspaceDocument;
+    }
+  }
+
   const { data, error } = await supabase
     .from("workspace_documents" as any)
     .insert({ title, owner_id: u.user.id, content_json: EMPTY_DOC, content_text: "" })

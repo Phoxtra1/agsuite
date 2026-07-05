@@ -12,10 +12,12 @@ import { FormulaBar } from "@/components/workspace/sheets/FormulaBar";
 import { SheetTabs } from "@/components/workspace/sheets/SheetTabs";
 import { StatusBar } from "@/components/workspace/sheets/StatusBar";
 import { AnalysisPanel } from "@/components/workspace/sheets/AnalysisPanel";
+import { ChartDialog } from "@/components/workspace/sheets/ChartDialog";
 import { exportCSV, exportJSON, exportXLSX, importXLSX } from "@/components/workspace/sheets/exporters";
 import { useUndoRedo } from "@/components/workspace/sheets/hooks/useUndoRedo";
 import { ArrowLeft, ChevronLeft, CloudUpload, Download, Loader2, Share2, Upload } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import type { SheetChart } from "@/lib/workspace/sheets/documents";
 
 export default function SheetsEditor() {
   const { id } = useParams();
@@ -38,6 +40,7 @@ export default function SheetsEditor() {
   const [gridlines, setGridlines] = useState(true);
   const [showHeaders, setShowHeaders] = useState(true);
   const [showFormulaBar, setShowFormulaBar] = useState(true);
+  const [showChartDialog, setShowChartDialog] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -274,7 +277,7 @@ export default function SheetsEditor() {
       gridlines, headers: showHeaders, formulaBar: showFormulaBar,
     },
     insert: {
-      chart: () => toast({ title: "Chart", description: "Open the Amineva Intelligence panel → Chart." }),
+      chart: () => setShowChartDialog(true),
       func: () => insertFormulaFn("SUM"),
       image: () => toast({ title: "Image insert coming soon" }),
       link: () => { const url = prompt("URL:"); if (url) setCell(cellId(selection.r1, selection.c1), url); },
@@ -463,6 +466,24 @@ export default function SheetsEditor() {
     });
   };
 
+  const insertChart = (chart: SheetChart) => {
+    mutateActive((s) => ({ ...s, charts: [...(s.charts ?? []), chart] }));
+    setShowChartDialog(false);
+    toast({ title: "Chart inserted" });
+  };
+  const updateChart = (id: string, patch: Partial<SheetChart>) => {
+    mutateActive((s) => ({ ...s, charts: (s.charts ?? []).map((c) => c.id === id ? { ...c, ...patch } : c) }));
+  };
+  const deleteChart = (id: string) => {
+    mutateActive((s) => ({ ...s, charts: (s.charts ?? []).filter((c) => c.id !== id) }));
+  };
+
+  const defaultChartRange = useMemo(() => {
+    const n = norm(selection);
+    if (n.r1 === n.r2 && n.c1 === n.c2) return "A1:B10";
+    return `${cellId(n.r1, n.c1)}:${cellId(n.r2, n.c2)}`;
+  }, [selection]);
+
   if (!doc) return null;
 
   return (
@@ -534,6 +555,8 @@ export default function SheetsEditor() {
             zoom={zoom}
             copiedRange={copiedRange}
             contextActions={contextActions}
+            onUpdateChart={updateChart}
+            onDeleteChart={deleteChart}
           />
           <SheetTabs
             sheets={wb.sheets}
@@ -568,6 +591,16 @@ export default function SheetsEditor() {
         onZoom={setZoom}
         saving={saving}
       />
+
+      {showChartDialog && (
+        <ChartDialog
+          sheet={activeSheet}
+          engine={engineRef.current}
+          defaultRange={defaultChartRange}
+          onCancel={() => setShowChartDialog(false)}
+          onInsert={insertChart}
+        />
+      )}
     </div>
   );
 }
