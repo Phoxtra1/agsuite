@@ -13,9 +13,11 @@ interface Props {
 export function FormulaBar({ activeCell, value, onCommit, onNameBox, onOpenFxPicker }: Props) {
   const [v, setV] = useState(value);
   const [name, setName] = useState(activeCell);
-  const [expanded, setExpanded] = useState(false);
+  const [focused, setFocused] = useState(false);
   const [showSuggest, setShowSuggest] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+  // Reverse logic: expand ONLY while typing/focused, collapse when done
+  const expanded = focused && (v.length > 60 || v.includes("\n"));
 
   useEffect(() => setV(value), [value, activeCell]);
   useEffect(() => setName(activeCell), [activeCell]);
