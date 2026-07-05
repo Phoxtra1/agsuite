@@ -40,6 +40,7 @@ export default function SheetsEditor() {
   const [gridlines, setGridlines] = useState(true);
   const [showHeaders, setShowHeaders] = useState(true);
   const [showFormulaBar, setShowFormulaBar] = useState(true);
+  const [showChartDialog, setShowChartDialog] = useState(false);
 
   useEffect(() => {
     if (!id) return;
