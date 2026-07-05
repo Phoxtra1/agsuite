@@ -73,8 +73,8 @@ export function FormulaBar({ activeCell, value, onCommit, onNameBox, onOpenFxPic
             ref={inputRef}
             value={v}
             onChange={(e) => { setV(e.target.value); setShowSuggest(e.target.value.startsWith("=")); }}
-            onFocus={() => setShowSuggest(v.startsWith("="))}
-            onBlur={() => { setTimeout(() => setShowSuggest(false), 150); commit(); }}
+            onFocus={() => { setFocused(true); setShowSuggest(v.startsWith("=")); }}
+            onBlur={() => { setFocused(false); setTimeout(() => setShowSuggest(false), 150); commit(); }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commit(); (e.target as HTMLTextAreaElement).blur(); }
               else if (e.key === "Escape") { setV(value); setShowSuggest(false); (e.target as HTMLTextAreaElement).blur(); }
@@ -82,16 +82,9 @@ export function FormulaBar({ activeCell, value, onCommit, onNameBox, onOpenFxPic
             }}
             placeholder="Enter a value or a formula starting with ="
             rows={expanded ? 4 : 1}
-            className="w-full h-full px-3 py-1.5 text-sm bg-transparent outline-none text-foreground font-mono resize-none"
+            className="w-full h-full px-3 py-1.5 text-sm bg-transparent outline-none text-foreground font-mono resize-none transition-all"
           />
         </div>
-        <button
-          onClick={() => setExpanded((e) => !e)}
-          className="px-2 border-l border-border text-muted-foreground hover:bg-muted flex items-center"
-          title={expanded ? "Collapse formula" : "Expand formula"}
-        >
-          <ChevronDown className={`h-4 w-4 transition-transform ${expanded ? "rotate-180" : ""}`} />
-        </button>
       </div>
 
       {/* Autocomplete */}
