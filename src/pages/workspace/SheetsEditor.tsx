@@ -555,6 +555,8 @@ export default function SheetsEditor() {
             zoom={zoom}
             copiedRange={copiedRange}
             contextActions={contextActions}
+            onUpdateChart={updateChart}
+            onDeleteChart={deleteChart}
           />
           <SheetTabs
             sheets={wb.sheets}
