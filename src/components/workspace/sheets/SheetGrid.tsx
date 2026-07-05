@@ -48,7 +48,36 @@ export function SheetGrid({
 
   const scale = zoom / 100;
   const rowH = (r: number) => (sheet.rowHeights?.[r] ?? DEFAULT_ROW_H) * scale;
-  const colW = (c: number) => (sheet.colWidths?.[c] ?? DEFAULT_COL_W) * scale;
+
+  // Auto-expand columns based on content length so text/figures never hide.
+  // User-set widths (from resize) win; otherwise pick max(default, longest content).
+  const autoColW = useMemo(() => {
+    const widths: Record<number, number> = {};
+    const CHAR_PX = 7.2; // ~7.2px per char at 13px Inter
+    const PAD = 16;
+    for (const [id, raw] of Object.entries(sheet.cells)) {
+      const p = parseCell(id); if (!p) continue;
+      let text = "";
+      if (typeof raw === "string" && raw.startsWith("=") && engine) {
+        const v = engine.getCell(sheet.name, p.row, p.col);
+        text = v == null ? "" : String(v);
+      } else {
+        text = raw == null ? "" : String(raw);
+      }
+      const fmt = sheet.formats?.[id];
+      text = formatCellValue(raw as any, fmt) || text;
+      const w = text.length * CHAR_PX + PAD;
+      if (!widths[p.col] || w > widths[p.col]) widths[p.col] = w;
+    }
+    return widths;
+  }, [sheet.cells, sheet.formats, sheet.name, engine]);
+
+  const colW = (c: number) => {
+    if (sheet.colWidths?.[c] != null) return sheet.colWidths[c] * scale;
+    const auto = autoColW[c];
+    const base = Math.max(DEFAULT_COL_W, Math.min(auto ?? 0, 480));
+    return base * scale;
+  };
 
   const norm = (s: Selection) => ({
     r1: Math.min(s.r1, s.r2), r2: Math.max(s.r1, s.r2),
