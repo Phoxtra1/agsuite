@@ -10,6 +10,15 @@ export interface WorkspaceSheet {
   updated_at: string;
 }
 
+export interface SheetChart {
+  id: string;
+  type: "bar" | "line" | "pie" | "area" | "scatter";
+  title?: string;
+  range: string; // e.g. "A1:C10"
+  headerRow?: boolean;
+  x: number; y: number; w: number; h: number;
+}
+
 export interface SheetPage {
   name: string;
   cells: Record<string, CellValue>;
@@ -23,6 +32,7 @@ export interface SheetPage {
   tabColor?: string;
   merges?: string[]; // "A1:C3"
   protected?: boolean;
+  charts?: SheetChart[];
 }
 
 export interface Workbook {
