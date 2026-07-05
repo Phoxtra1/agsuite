@@ -38,7 +38,7 @@ export function SheetGrid({
   sheet, engine, rowCount = 200, colCount = 26,
   selection, onSelect, onCellEdit, onFillDown,
   gridlines = true, showHeaders = true, zoom = 100,
-  copiedRange, contextActions,
+  copiedRange, contextActions, onUpdateChart, onDeleteChart,
 }: Props) {
   const [editing, setEditing] = useState<{ id: string; value: string } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
