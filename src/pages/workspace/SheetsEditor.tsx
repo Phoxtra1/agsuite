@@ -466,6 +466,24 @@ export default function SheetsEditor() {
     });
   };
 
+  const insertChart = (chart: SheetChart) => {
+    mutateActive((s) => ({ ...s, charts: [...(s.charts ?? []), chart] }));
+    setShowChartDialog(false);
+    toast({ title: "Chart inserted" });
+  };
+  const updateChart = (id: string, patch: Partial<SheetChart>) => {
+    mutateActive((s) => ({ ...s, charts: (s.charts ?? []).map((c) => c.id === id ? { ...c, ...patch } : c) }));
+  };
+  const deleteChart = (id: string) => {
+    mutateActive((s) => ({ ...s, charts: (s.charts ?? []).filter((c) => c.id !== id) }));
+  };
+
+  const defaultChartRange = useMemo(() => {
+    const n = norm(selection);
+    if (n.r1 === n.r2 && n.c1 === n.c2) return "A1:B10";
+    return `${cellId(n.r1, n.c1)}:${cellId(n.r2, n.c2)}`;
+  }, [selection]);
+
   if (!doc) return null;
 
   return (
