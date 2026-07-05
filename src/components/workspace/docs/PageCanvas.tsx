@@ -702,6 +702,52 @@ export function PageCanvas({
     };
   }, [editor, innerHeight, innerWidth]);
 
+  /* ---- Push blocks that cross a page boundary to the next page ---- */
+  useLayoutEffect(() => {
+    if (!editorWrapRef.current || settings.mode !== "print") return;
+    const wrap = editorWrapRef.current;
+    const pmRoot = wrap.querySelector<HTMLElement>(".ProseMirror");
+    if (!pmRoot) return;
+    const pageStep = innerHeight + PAGE_GAP + (HEADER_BAND + FOOTER_BAND + margins.top / 2 + margins.bottom / 2);
+
+    const rebalance = () => {
+      const children = Array.from(pmRoot.children) as HTMLElement[];
+      children.forEach((c) => (c.style.marginTop = c.dataset._origMt || ""));
+      let cursor = 0; // vertical position within editor wrap
+      for (const child of children) {
+        // Skip forced page breaks
+        if (child.hasAttribute("data-page-break") || child.classList.contains("page-break")) {
+          const currentPage = Math.floor(cursor / pageStep);
+          cursor = (currentPage + 1) * pageStep;
+          continue;
+        }
+        const h = child.getBoundingClientRect().height;
+        const currentPage = Math.floor(cursor / pageStep);
+        const pageBottom = (currentPage + 1) * innerHeight + currentPage * (pageStep - innerHeight);
+        if (h > innerHeight) { cursor += h; continue; } // block larger than a page, let it overflow
+        if (cursor + h > pageBottom) {
+          const push = (currentPage + 1) * pageStep - cursor;
+          child.dataset._origMt = child.style.marginTop || "";
+          child.style.marginTop = `${push + (parseFloat(getComputedStyle(child).marginTop) || 0)}px`;
+          cursor += push + h;
+        } else {
+          cursor += h;
+        }
+      }
+    };
+    rebalance();
+    const ro = new ResizeObserver(rebalance);
+    ro.observe(pmRoot);
+    const onUpdate = () => requestAnimationFrame(rebalance);
+    editor?.on("update", onUpdate);
+    editor?.on("transaction", onUpdate);
+    return () => {
+      ro.disconnect();
+      editor?.off("update", onUpdate);
+      editor?.off("transaction", onUpdate);
+    };
+  }, [editor, innerHeight, settings.mode, margins.top, margins.bottom]);
+
   // Hard page breaks: `<div data-page-break></div>` OR `.page-break`.
   const hardBreaks = useMemo(() => {
     if (!editor) return 0;
