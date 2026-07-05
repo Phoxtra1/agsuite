@@ -12,10 +12,12 @@ import { FormulaBar } from "@/components/workspace/sheets/FormulaBar";
 import { SheetTabs } from "@/components/workspace/sheets/SheetTabs";
 import { StatusBar } from "@/components/workspace/sheets/StatusBar";
 import { AnalysisPanel } from "@/components/workspace/sheets/AnalysisPanel";
+import { ChartDialog } from "@/components/workspace/sheets/ChartDialog";
 import { exportCSV, exportJSON, exportXLSX, importXLSX } from "@/components/workspace/sheets/exporters";
 import { useUndoRedo } from "@/components/workspace/sheets/hooks/useUndoRedo";
 import { ArrowLeft, ChevronLeft, CloudUpload, Download, Loader2, Share2, Upload } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import type { SheetChart } from "@/lib/workspace/sheets/documents";
 
 export default function SheetsEditor() {
   const { id } = useParams();
