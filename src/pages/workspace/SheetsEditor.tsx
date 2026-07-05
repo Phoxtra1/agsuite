@@ -591,6 +591,16 @@ export default function SheetsEditor() {
         onZoom={setZoom}
         saving={saving}
       />
+
+      {showChartDialog && (
+        <ChartDialog
+          sheet={activeSheet}
+          engine={engineRef.current}
+          defaultRange={defaultChartRange}
+          onCancel={() => setShowChartDialog(false)}
+          onInsert={insertChart}
+        />
+      )}
     </div>
   );
 }
