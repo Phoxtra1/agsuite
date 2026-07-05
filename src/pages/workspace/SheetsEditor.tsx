@@ -277,7 +277,7 @@ export default function SheetsEditor() {
       gridlines, headers: showHeaders, formulaBar: showFormulaBar,
     },
     insert: {
-      chart: () => toast({ title: "Chart", description: "Open the Amineva Intelligence panel → Chart." }),
+      chart: () => setShowChartDialog(true),
       func: () => insertFormulaFn("SUM"),
       image: () => toast({ title: "Image insert coming soon" }),
       link: () => { const url = prompt("URL:"); if (url) setCell(cellId(selection.r1, selection.c1), url); },
