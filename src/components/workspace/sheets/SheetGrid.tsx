@@ -317,6 +317,18 @@ export function SheetGrid({
           })}
         </tbody>
       </table>
+
+      {/* Chart overlays */}
+      {(sheet.charts ?? []).map((chart) => (
+        <SheetChartOverlay
+          key={chart.id}
+          chart={chart}
+          sheet={sheet}
+          engine={engine}
+          onChange={(patch) => onUpdateChart?.(chart.id, patch)}
+          onDelete={() => onDeleteChart?.(chart.id)}
+        />
+      ))}
     </div>
   );
 }
