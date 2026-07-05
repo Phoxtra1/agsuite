@@ -1,8 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import type { SheetPage, CellFormat, CellValue } from "@/lib/workspace/sheets/documents";
+import type { SheetPage, CellFormat, CellValue, SheetChart } from "@/lib/workspace/sheets/documents";
 import { colToLetter, cellId, parseCell, formatCellValue } from "@/lib/workspace/sheets/documents";
 import type { EngineHandle } from "@/lib/workspace/sheets/engine";
 import { CellContextMenu, RowContextMenu, ColContextMenu } from "./ContextMenus";
+import { SheetChartOverlay } from "./ChartDialog";
 
 export interface Selection { r1: number; c1: number; r2: number; c2: number; }
 
