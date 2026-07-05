@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SheetPage, CellFormat, CellValue } from "@/lib/workspace/sheets/documents";
-import { colToLetter, cellId, formatCellValue } from "@/lib/workspace/sheets/documents";
+import { colToLetter, cellId, parseCell, formatCellValue } from "@/lib/workspace/sheets/documents";
 import type { EngineHandle } from "@/lib/workspace/sheets/engine";
 import { CellContextMenu, RowContextMenu, ColContextMenu } from "./ContextMenus";
 
