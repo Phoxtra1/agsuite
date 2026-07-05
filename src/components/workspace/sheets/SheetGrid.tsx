@@ -23,6 +23,8 @@ interface Props {
   contextActions: {
     cell: any; row: (r: number) => any; col: (c: number) => any;
   };
+  onUpdateChart?: (id: string, patch: Partial<SheetChart>) => void;
+  onDeleteChart?: (id: string) => void;
 }
 
 const DEFAULT_ROW_H = 24;
