@@ -874,7 +874,7 @@ export function PageCanvas({
               .replace(/(<p>(\s|&nbsp;|<br\s*\/?\s*>)*<\/p>\s*)+$/i, "")
               .replace(/(<div[^>]*data-page-break[^>]*><\/div>\s*)+$/i, "")
               .replace(/(<hr[^>]*class="[^"]*page-break[^"]*"[^>]*\/?>\s*)+$/i, "");
-            editor.commands.setContent(html, false);
+            editor.commands.setContent(html);
             toast({ title: "Empty page removed" });
           };
           const copyPageText = async () => {
