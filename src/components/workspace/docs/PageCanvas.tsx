@@ -854,52 +854,103 @@ export function PageCanvas({
         className="relative"
         style={{ width: w, height: stackHeight, margin: "0 auto" }}
       >
-        {Array.from({ length: pageCount }).map((_, i) => (
-          <div
-            key={i}
-            className="doc-page-frame absolute"
-            style={{
-              top: i * (h + PAGE_GAP),
-              left: 0,
-              width: w,
-              height: h,
-              background: settings.pageColor ?? "#ffffff",
-              boxShadow: "0 8px 24px rgba(15,23,42,0.12)",
-              border: settings.pageBorder ? "2px solid #0f172a" : "1px solid #e5e7eb",
-              overflow: "hidden",
-              color: "#0f172a",
-            }}
-          >
-            {inRange(i + 1, settings.watermarkPages) && !(settings.coverPage && i === 0) && (
-              <WatermarkLayer settings={settings} w={w} />
-            )}
-            <OverlayLayerView
-              items={overlays}
-              layer="behind"
-              pageIndex={i}
-              onChange={onOverlaysChange}
-              selectedId={selectedOverlayId}
-              onSelect={onSelectOverlay}
-            />
-            <PageChrome
-              pageIndex={i}
-              pageCount={pageCount}
-              settings={settings}
-              margins={margins}
-              onHeaderChange={onHeaderChange}
-              onFooterChange={onFooterChange}
-              today={today}
-            />
-            <OverlayLayerView
-              items={overlays}
-              layer="front"
-              pageIndex={i}
-              onChange={onOverlaysChange}
-              selectedId={selectedOverlayId}
-              onSelect={onSelectOverlay}
-            />
-          </div>
-        ))}
+        {Array.from({ length: pageCount }).map((_, i) => {
+          const isLast = i === pageCount - 1;
+          // A page is "empty" if it's a trailing physical page beyond content —
+          // safe to delete when content stops before this page starts.
+          const pageTop = i * innerHeight;
+          const isEmptyPage = isLast && (contentHeight <= pageTop + 8) && pageCount > 1;
+          const isCover = settings.coverPage && i === 0;
+
+          const insertBreakHere = () => {
+            if (!editor) return;
+            editor.chain().focus().insertContent('<div data-page-break></div><p></p>').run();
+            toast({ title: "Page break inserted" });
+          };
+          const deleteEmptyPage = () => {
+            if (!editor || !isEmptyPage) return;
+            // Strip trailing page-break markers and empty paragraphs from the doc HTML.
+            const html = editor.getHTML()
+              .replace(/(<p>(\s|&nbsp;|<br\s*\/?\s*>)*<\/p>\s*)+$/i, "")
+              .replace(/(<div[^>]*data-page-break[^>]*><\/div>\s*)+$/i, "")
+              .replace(/(<hr[^>]*class="[^"]*page-break[^"]*"[^>]*\/?>\s*)+$/i, "");
+            editor.commands.setContent(html, false);
+            toast({ title: "Empty page removed" });
+          };
+          const copyPageText = async () => {
+            const wrap = editorWrapRef.current;
+            if (!wrap) return;
+            const pmRoot = wrap.querySelector<HTMLElement>(".ProseMirror");
+            if (!pmRoot) return;
+            const startY = i * innerHeight;
+            const endY = (i + 1) * innerHeight;
+            const wrapTop = wrap.getBoundingClientRect().top;
+            const parts: string[] = [];
+            for (const child of Array.from(pmRoot.children) as HTMLElement[]) {
+              const r = child.getBoundingClientRect();
+              const top = r.top - wrapTop;
+              if (top + r.height >= startY && top < endY) parts.push(child.innerText || "");
+            }
+            const text = parts.join("\n").trim();
+            if (!text) { toast({ title: "This page is empty" }); return; }
+            try { await navigator.clipboard.writeText(text); toast({ title: "Page text copied" }); }
+            catch { toast({ title: "Copy failed", variant: "destructive" as any }); }
+          };
+
+          return (
+          <ContextMenu key={i}>
+            <ContextMenuTrigger asChild>
+              <div
+                className="doc-page-frame absolute"
+                style={{
+                  top: i * (h + PAGE_GAP),
+                  left: 0,
+                  width: w,
+                  height: h,
+                  background: settings.pageColor ?? "#ffffff",
+                  boxShadow: "0 8px 24px rgba(15,23,42,0.12)",
+                  border: settings.pageBorder ? "2px solid #0f172a" : "1px solid #e5e7eb",
+                  overflow: "hidden",
+                  color: "#0f172a",
+                }}
+              >
+                {inRange(i + 1, settings.watermarkPages) && !(settings.coverPage && i === 0) && (
+                  <WatermarkLayer settings={settings} w={w} />
+                )}
+                <OverlayLayerView items={overlays} layer="behind" pageIndex={i}
+                  onChange={onOverlaysChange} selectedId={selectedOverlayId} onSelect={onSelectOverlay} />
+                <PageChrome pageIndex={i} pageCount={pageCount} settings={settings} margins={margins}
+                  onHeaderChange={onHeaderChange} onFooterChange={onFooterChange} today={today} />
+                <OverlayLayerView items={overlays} layer="front" pageIndex={i}
+                  onChange={onOverlaysChange} selectedId={selectedOverlayId} onSelect={onSelectOverlay} />
+              </div>
+            </ContextMenuTrigger>
+            <ContextMenuContent className="w-64">
+              <div className="px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground">
+                Page {i + 1} of {pageCount}{isCover ? " · Cover" : ""}
+              </div>
+              <ContextMenuSeparator />
+              <ContextMenuItem onSelect={insertBreakHere}>
+                Insert page break here
+              </ContextMenuItem>
+              <ContextMenuItem onSelect={copyPageText}>
+                Copy page text
+              </ContextMenuItem>
+              <ContextMenuItem onSelect={() => window.print()}>
+                Print… <ContextMenuShortcut>Ctrl+P</ContextMenuShortcut>
+              </ContextMenuItem>
+              <ContextMenuSeparator />
+              <ContextMenuItem
+                disabled={!isEmptyPage}
+                onSelect={deleteEmptyPage}
+                className={isEmptyPage ? "text-destructive focus:text-destructive" : ""}
+              >
+                {isEmptyPage ? "Delete this empty page" : "Delete page (only when empty)"}
+              </ContextMenuItem>
+            </ContextMenuContent>
+          </ContextMenu>
+          );
+        })}
 
         {/* Single continuous editor overlay flowing across the page stack.
             Page chrome (header/footer) sits at z-index 3 with solid background
