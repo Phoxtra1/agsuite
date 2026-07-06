@@ -1194,6 +1194,77 @@ export type Database = {
         }
         Relationships: []
       }
+      workspace_slide_shares: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          deck_id: string
+          expires_at: string | null
+          id: string
+          mode: string
+          revoked: boolean
+          token: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          deck_id: string
+          expires_at?: string | null
+          id?: string
+          mode?: string
+          revoked?: boolean
+          token: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          deck_id?: string
+          expires_at?: string | null
+          id?: string
+          mode?: string
+          revoked?: boolean
+          token?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "workspace_slide_shares_deck_id_fkey"
+            columns: ["deck_id"]
+            isOneToOne: false
+            referencedRelation: "workspace_slides"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      workspace_slides: {
+        Row: {
+          content_text: string
+          created_at: string
+          deck_json: Json
+          id: string
+          owner_id: string
+          title: string
+          updated_at: string
+        }
+        Insert: {
+          content_text?: string
+          created_at?: string
+          deck_json?: Json
+          id?: string
+          owner_id: string
+          title?: string
+          updated_at?: string
+        }
+        Update: {
+          content_text?: string
+          created_at?: string
+          deck_json?: Json
+          id?: string
+          owner_id?: string
+          title?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
@@ -1221,6 +1292,16 @@ export type Database = {
           title: string
           updated_at: string
           workbook_json: Json
+        }[]
+      }
+      get_shared_slides: {
+        Args: { _token: string }
+        Returns: {
+          deck_json: Json
+          id: string
+          mode: string
+          title: string
+          updated_at: string
         }[]
       }
       has_app_access: {
