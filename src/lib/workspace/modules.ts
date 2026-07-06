@@ -36,9 +36,11 @@ export const WORKSPACE_MODULES: WorkspaceModule[] = [
   {
     id: "amineva-slides",
     name: "Amineva Slides",
-    description: "Boardroom-grade presentations built from live Workspace data.",
-    status: "coming_soon",
+    description:
+      "Boardroom-grade presentations with AI generation, live data links, presenter tools and PDF export.",
+    status: "active",
     icon: Presentation,
+    route: "/workspace/slides",
     accent: "bg-amber-500/15 text-amber-500",
   },
   {
