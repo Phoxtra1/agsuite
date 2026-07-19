@@ -319,7 +319,7 @@ function OverlayLayerView({
       style={{
         position: "absolute",
         inset: 0,
-        pointerEvents: layer === "behind" ? "none" : "auto",
+        pointerEvents: "none",
         zIndex: layer === "behind" ? 0 : 5,
       }}
     >
@@ -356,6 +356,7 @@ function OverlayItemView({
     zIndex: item.zIndex,
     outline: selected ? "2px solid #2563eb" : undefined,
     cursor: "move",
+    pointerEvents: "auto",
   };
 
   // Drag-to-move (only when onChange supplied — editor mode)

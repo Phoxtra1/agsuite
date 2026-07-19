@@ -2,7 +2,18 @@ import { supabase } from "@/integrations/supabase/client";
 
 export type SlideElementKind = "text" | "shape" | "image";
 export type ShapeKind = "rect" | "ellipse" | "triangle" | "line" | "arrow";
-export type SlideLayout = "title" | "titleContent" | "twoColumn" | "sectionHeader" | "blank" | "quote";
+export type SlideLayout =
+  | "title"
+  | "titleContent"
+  | "twoColumn"
+  | "comparison"
+  | "sectionHeader"
+  | "timeline"
+  | "dashboard"
+  | "quote"
+  | "statistics"
+  | "closing"
+  | "blank";
 
 export interface SlideElement {
   id: string;
@@ -113,10 +124,51 @@ export function makeSlide(layout: SlideLayout = "titleContent", theme = DEFAULT_
     base.elements = [
       { id: newSlideId(), kind: "text", x: 120, y: 460, w: 1680, h: 180, text: "Section header", fontSize: 96, fontWeight: 800, color: "#ffffff", align: "left", fontFamily: theme.headerFont ?? theme.font },
     ];
+  } else if (layout === "comparison") {
+    base.elements = [
+      { id: newSlideId(), kind: "text", x: 120, y: 90, w: 1680, h: 120, text: "Comparison Layout", fontSize: 60, fontWeight: 700, color: titleColor, fontFamily: theme.headerFont ?? theme.font },
+      { id: newSlideId(), kind: "text", x: 120, y: 240, w: 800, h: 80, text: "Option A", fontSize: 44, fontWeight: 700, color: accent, fontFamily: theme.headerFont ?? theme.font },
+      { id: newSlideId(), kind: "text", x: 120, y: 340, w: 800, h: 600, text: "• High speed execution\n• Enhanced cloud scale\n• Seamless collaboration", fontSize: 32, color: titleColor, fontFamily: theme.font },
+      { id: newSlideId(), kind: "text", x: 1000, y: 240, w: 800, h: 80, text: "Option B", fontSize: 44, fontWeight: 700, color: titleColor, fontFamily: theme.headerFont ?? theme.font },
+      { id: newSlideId(), kind: "text", x: 1000, y: 340, w: 800, h: 600, text: "• Lower implementation cost\n• Standard integration tools\n• Traditional infrastructure", fontSize: 32, color: titleColor, fontFamily: theme.font },
+      { id: newSlideId(), kind: "shape", shape: "line", x: 960, y: 240, w: 4, h: 700, fill: accent },
+    ];
+  } else if (layout === "timeline") {
+    base.elements = [
+      { id: newSlideId(), kind: "text", x: 120, y: 90, w: 1680, h: 120, text: "Project Timeline", fontSize: 60, fontWeight: 700, color: titleColor, fontFamily: theme.headerFont ?? theme.font },
+      { id: newSlideId(), kind: "shape", shape: "arrow", x: 120, y: 540, w: 1680, h: 10, fill: accent },
+      { id: newSlideId(), kind: "text", x: 150, y: 300, w: 450, h: 200, text: "Phase 1: Research\n\nQ1 2026\nInitial planning & discovery", fontSize: 28, color: titleColor, align: "center", fontFamily: theme.font },
+      { id: newSlideId(), kind: "text", x: 735, y: 300, w: 450, h: 200, text: "Phase 2: Build\n\nQ2 2026\nActive development phase", fontSize: 28, color: titleColor, align: "center", fontFamily: theme.font },
+      { id: newSlideId(), kind: "text", x: 1320, y: 300, w: 450, h: 200, text: "Phase 3: Launch\n\nQ3 2026\nDeployment and release", fontSize: 28, color: titleColor, align: "center", fontFamily: theme.font },
+    ];
+  } else if (layout === "dashboard") {
+    base.elements = [
+      { id: newSlideId(), kind: "text", x: 120, y: 90, w: 1680, h: 120, text: "Performance Dashboard", fontSize: 60, fontWeight: 700, color: titleColor, fontFamily: theme.headerFont ?? theme.font },
+      { id: newSlideId(), kind: "shape", shape: "rect", x: 120, y: 260, w: 780, h: 320, fill: accent + "15" },
+      { id: newSlideId(), kind: "text", x: 150, y: 300, w: 720, h: 240, text: "$14.2M\nQuarterly Revenue (+15% YoY)", fontSize: 44, fontWeight: 700, color: titleColor, align: "center", fontFamily: theme.font },
+      { id: newSlideId(), kind: "shape", shape: "rect", x: 1020, y: 260, w: 780, h: 320, fill: accent + "15" },
+      { id: newSlideId(), kind: "text", x: 1050, y: 300, w: 720, h: 240, text: "94.8%\nCustomer Satisfaction Score", fontSize: 44, fontWeight: 700, color: titleColor, align: "center", fontFamily: theme.font },
+      { id: newSlideId(), kind: "shape", shape: "rect", x: 120, y: 640, w: 780, h: 320, fill: accent + "15" },
+      { id: newSlideId(), kind: "text", x: 150, y: 680, w: 720, h: 240, text: "420K\nMonthly Active Users (+8%)", fontSize: 44, fontWeight: 700, color: titleColor, align: "center", fontFamily: theme.font },
+      { id: newSlideId(), kind: "shape", shape: "rect", x: 1020, y: 640, w: 780, h: 320, fill: accent + "15" },
+      { id: newSlideId(), kind: "text", x: 1050, y: 680, w: 720, h: 240, text: "99.99%\nPlatform SLA & Uptime", fontSize: 44, fontWeight: 700, color: titleColor, align: "center", fontFamily: theme.font },
+    ];
   } else if (layout === "quote") {
     base.elements = [
       { id: newSlideId(), kind: "text", x: 200, y: 380, w: 1520, h: 220, text: "\u201CA great quote sits here.\u201D", fontSize: 64, italic: true, color: titleColor, align: "center", fontFamily: theme.headerFont ?? theme.font },
       { id: newSlideId(), kind: "text", x: 200, y: 640, w: 1520, h: 80, text: "— Attribution", fontSize: 28, color: accent, align: "center", fontFamily: theme.font },
+    ];
+  } else if (layout === "statistics") {
+    base.elements = [
+      { id: newSlideId(), kind: "text", x: 120, y: 90, w: 1680, h: 120, text: "Key Market Statistics", fontSize: 60, fontWeight: 700, color: titleColor, fontFamily: theme.headerFont ?? theme.font },
+      { id: newSlideId(), kind: "text", x: 120, y: 350, w: 1680, h: 250, text: "98%", fontSize: 240, fontWeight: 900, color: accent, align: "center", fontFamily: theme.headerFont ?? theme.font },
+      { id: newSlideId(), kind: "text", x: 120, y: 640, w: 1680, h: 120, text: "of enterprise clients report exceptional productivity gains with Odeneho Workspace.", fontSize: 44, color: titleColor, align: "center", fontFamily: theme.font },
+    ];
+  } else if (layout === "closing") {
+    base.background = theme.primary;
+    base.elements = [
+      { id: newSlideId(), kind: "text", x: 120, y: 350, w: 1680, h: 200, text: "Thank You!", fontSize: 120, fontWeight: 800, color: "#ffffff", align: "center", fontFamily: theme.headerFont ?? theme.font },
+      { id: newSlideId(), kind: "text", x: 120, y: 580, w: 1680, h: 120, text: "Questions? Get in touch:\nsupport@amineva.com | www.amineva.com", fontSize: 36, color: accent, align: "center", fontFamily: theme.font },
     ];
   }
   return base;

@@ -38,6 +38,18 @@ export default function DocsEditor() {
   const saveTimer = useRef<number | null>(null);
   const versionTimer = useRef<number | null>(null);
 
+  const titleRef = useRef(title);
+  useEffect(() => {
+    titleRef.current = title;
+  }, [title]);
+
+  const onUpdateRef = useRef<(() => void) | null>(null);
+  useEffect(() => {
+    onUpdateRef.current = () => {
+      scheduleSave();
+    };
+  });
+
   // Docs always render on a white page (Amineva intelligence surface).
   // Chrome around the page still respects the user's theme choice.
   // No forced theme mutation here.
@@ -45,7 +57,9 @@ export default function DocsEditor() {
 
   const editor = useDocEditor({
     initialContent: { type: "doc", content: [{ type: "paragraph" }] },
-    onUpdate: () => scheduleSave(),
+    onUpdate: () => {
+      onUpdateRef.current?.();
+    },
   });
 
   // Load
@@ -77,7 +91,7 @@ export default function DocsEditor() {
     saveTimer.current = window.setTimeout(async () => {
       const json = editor.getJSON();
       const text = editor.getText();
-      const ok = await updateDocument(id, { content_json: json, content_text: text, title, ...extra } as any);
+      const ok = await updateDocument(id, { content_json: json, content_text: text, title: titleRef.current, ...extra } as any);
       setSaving(ok ? "saved" : "idle");
     }, 800) as any;
     if (versionTimer.current) window.clearTimeout(versionTimer.current);
@@ -119,7 +133,7 @@ export default function DocsEditor() {
         const { action: a, label } = payload || {};
         const sel = editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, " ");
         const text = sel || editor.getText();
-        toast({ title: `${label}…`, description: "Amineva Intelligence is working." });
+        toast({ title: `${label}…`, description: "Odeneho is working." });
         const { data, error } = await supabase.functions.invoke("docs-intelligence", { body: { action: a, text } });
         if (error) throw error;
         const result = (data as any)?.result || (data as any)?.text;
@@ -280,8 +294,8 @@ function ExportMenu({ onPDF, onDOC, onJSON, onCSV, onPrint }: any) {
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-lg border border-border bg-popover shadow-xl py-1 text-sm">
+          <div className="fixed inset-0 z-[90]" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-1 z-[100] w-44 rounded-lg border border-border bg-popover shadow-xl py-1 text-sm">
             {[["PDF", onPDF], ["DOC", onDOC], ["JSON", onJSON], ["CSV", onCSV], ["Print", onPrint]].map(([l, fn]: any) => (
               <button key={l} onClick={() => { setOpen(false); fn(); }} className="w-full text-left px-3 py-1.5 hover:bg-muted text-foreground">{l}</button>
             ))}

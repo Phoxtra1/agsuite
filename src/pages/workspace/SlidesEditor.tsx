@@ -16,6 +16,20 @@ import {
 const CANVAS_W = 1920;
 const CANVAS_H = 1080;
 
+const ALL_LAYOUTS: { id: SlideLayout; label: string }[] = [
+  { id: "title", label: "Title" },
+  { id: "titleContent", label: "Title & Content" },
+  { id: "twoColumn", label: "Two Column" },
+  { id: "comparison", label: "Comparison" },
+  { id: "sectionHeader", label: "Section Header" },
+  { id: "timeline", label: "Timeline" },
+  { id: "dashboard", label: "Dashboard" },
+  { id: "quote", label: "Quote" },
+  { id: "statistics", label: "Statistics" },
+  { id: "closing", label: "Closing Slide" },
+  { id: "blank", label: "Blank" },
+];
+
 /* ------------------------- Scaled slide renderer -------------------- */
 function SlideView({
   slide,
@@ -262,6 +276,17 @@ export default function SlidesEditor() {
     push({ ...deck, slides: deck.slides.map((s, i) => i === active ? { ...s, ...patch } : s) });
   };
   const patchElements = (elements: SlideElement[]) => patchActiveSlide({ elements });
+
+  const switchActiveSlideLayout = (layout: SlideLayout) => {
+    const fresh = makeSlide(layout, deck.theme);
+    patchActiveSlide({
+      layout,
+      background: fresh.background,
+      elements: fresh.elements,
+    });
+    setSelectedElId(null);
+    toast({ title: `Switched layout to ${layout.replace(/([A-Z])/g, " $1")}` });
+  };
 
   const addSlide = (layout: SlideLayout = "titleContent") => {
     const s = makeSlide(layout, deck.theme);
@@ -544,7 +569,7 @@ export default function SlidesEditor() {
         {/* AI + layout panel */}
         <div className="w-72 border-l border-border bg-card overflow-y-auto flex flex-col">
           <div className="p-3 border-b border-border">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1"><Sparkles className="h-3 w-3 text-accent" /> Amineva AI</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2 flex items-center gap-1"><Sparkles className="h-3 w-3 text-accent" /> Odeneho</div>
             <textarea
               value={aiPrompt}
               onChange={(e) => setAiPrompt(e.target.value)}
@@ -560,11 +585,33 @@ export default function SlidesEditor() {
             </button>
           </div>
           <div className="p-3 border-b border-border">
-            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Add layout</div>
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Switch slide layout</div>
             <div className="grid grid-cols-2 gap-2">
-              {(["title","titleContent","twoColumn","sectionHeader","quote","blank"] as SlideLayout[]).map((l) => (
-                <button key={l} onClick={() => addSlide(l)} className="px-2 py-2 rounded border border-border hover:border-accent hover:bg-accent/5 text-xs capitalize text-left">
-                  {l.replace(/([A-Z])/g, " $1").toLowerCase()}
+              {ALL_LAYOUTS.map((l) => (
+                <button
+                  key={l.id}
+                  onClick={() => switchActiveSlideLayout(l.id)}
+                  className={`px-2 py-2 rounded border text-xs text-left transition ${
+                    currentSlide?.layout === l.id
+                      ? "border-accent bg-accent/10 text-accent font-semibold"
+                      : "border-border hover:border-accent hover:bg-accent/5"
+                  }`}
+                >
+                  {l.label}
+                </button>
+              ))}
+            </div>
+          </div>
+          <div className="p-3 border-b border-border">
+            <div className="text-[10px] uppercase tracking-wider text-muted-foreground mb-2">Add slide layout</div>
+            <div className="grid grid-cols-2 gap-2">
+              {ALL_LAYOUTS.map((l) => (
+                <button
+                  key={l.id}
+                  onClick={() => addSlide(l.id)}
+                  className="px-2 py-2 rounded border border-border hover:border-accent hover:bg-accent/5 text-xs text-left"
+                >
+                  {l.label}
                 </button>
               ))}
             </div>

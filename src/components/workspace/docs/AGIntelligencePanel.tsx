@@ -9,7 +9,7 @@ export function AGIntelligencePanel({ editor }: { editor: Editor | null }) {
     <aside className="w-80 border-l border-border bg-card flex flex-col h-full overflow-hidden">
       <div className="flex items-center gap-2 p-4 border-b border-border bg-muted/30">
         <Sparkles className="h-4 w-4 text-accent" />
-        <h2 className="text-sm font-semibold tracking-tight text-foreground">AG Intelligence</h2>
+        <h2 className="text-sm font-semibold tracking-tight text-foreground">Odeneho</h2>
       </div>
 
       <div className="flex border-b border-border">
@@ -21,7 +21,7 @@ export function AGIntelligencePanel({ editor }: { editor: Editor | null }) {
               activeTab === t ? "border-accent text-foreground bg-accent/5" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t === "intelligence" ? "AI" : t === "classification" ? "Tags" : t}
+            {t === "intelligence" ? "Odeneho" : t === "classification" ? "Tags" : t}
           </button>
         ))}
       </div>
@@ -60,7 +60,7 @@ function IntelligenceTab({ editor }: { editor: Editor | null }) {
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Select text or use the full document to apply AG Intelligence transformations.
+        Select text or use the full document to apply Odeneho transformations.
       </p>
       
       {/* Translate Section */}
@@ -69,7 +69,7 @@ function IntelligenceTab({ editor }: { editor: Editor | null }) {
           <div className="flex items-center justify-between">
              <div className="flex items-center gap-2 text-sm font-medium text-foreground">
                 <Languages className="h-4 w-4 text-accent" />
-                Amineva Translate
+                Odeneho Translate
              </div>
              <button 
                onClick={() => setShowLangs(!showLangs)}
@@ -126,7 +126,7 @@ function TemplatesTab() {
   ];
   return (
     <div className="space-y-4">
-      <p className="text-xs text-muted-foreground">Start with a professional AG business template.</p>
+      <p className="text-xs text-muted-foreground">Start with a professional Odeneho business template.</p>
       <div className="grid gap-2">
         {templates.map((t, i) => (
           <button key={i} className="px-3 py-2 text-left text-sm text-foreground bg-background border border-border rounded-lg hover:bg-muted transition-colors">
@@ -168,7 +168,7 @@ function ClassificationTab() {
   const tags = ["Business", "Finance", "Legal", "Research", "News", "Marketing", "Operations", "Personal"];
   return (
     <div className="space-y-4">
-      <p className="text-xs text-muted-foreground">Classify this document for the AG Workspace.</p>
+      <p className="text-xs text-muted-foreground">Classify this document for the Odeneho Workspace.</p>
       <div className="flex flex-wrap gap-2">
         {tags.map((t, i) => (
           <button key={i} className="px-3 py-1 text-xs font-medium bg-muted text-foreground rounded-full hover:bg-accent/20 hover:text-accent transition-colors border border-border">

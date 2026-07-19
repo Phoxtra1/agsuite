@@ -42,6 +42,11 @@ export default function SheetsEditor() {
   const [showFormulaBar, setShowFormulaBar] = useState(true);
   const [showChartDialog, setShowChartDialog] = useState(false);
 
+  const titleRef = useRef(title);
+  useEffect(() => {
+    titleRef.current = title;
+  }, [title]);
+
   useEffect(() => {
     if (!id) return;
     (async () => {
@@ -66,7 +71,7 @@ export default function SheetsEditor() {
 
   const activeSheet = wb.sheets[activeSheetIdx] ?? wb.sheets[0];
 
-  const persist = useCallback((nextWb: Workbook, nextTitle = title) => {
+  const persist = useCallback((nextWb: Workbook, nextTitle = titleRef.current) => {
     setSaving("saving");
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(async () => {
@@ -78,7 +83,7 @@ export default function SheetsEditor() {
       });
       setSaving(ok ? "saved" : "idle");
     }, 800) as any;
-  }, [id, title]);
+  }, [id]);
 
   const setWb = useCallback((updater: (prev: Workbook) => Workbook, record = true) => {
     wbUR.set((prev) => {
@@ -615,8 +620,8 @@ function ExportMenu({ onXLSX, onCSV, onJSON }: any) {
       </button>
       {open && (
         <>
-          <div className="fixed inset-0 z-40" onClick={() => setOpen(false)} />
-          <div className="absolute right-0 top-full mt-1 z-50 w-44 rounded-lg border border-border bg-popover shadow-xl py-1 text-sm">
+          <div className="fixed inset-0 z-[90]" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-1 z-[100] w-44 rounded-lg border border-border bg-popover shadow-xl py-1 text-sm">
             {[["XLSX", onXLSX], ["CSV (this sheet)", onCSV], ["JSON", onJSON]].map(([l, fn]: any) => (
               <button key={l} onClick={() => { setOpen(false); fn(); }} className="w-full text-left px-3 py-1.5 hover:bg-muted text-foreground">{l}</button>
             ))}

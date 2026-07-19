@@ -40,7 +40,7 @@ export interface RibbonActions {
 const TABS: { id: RibbonTab; label: string }[] = [
   { id: "home", label: "Home" }, { id: "insert", label: "Insert" },
   { id: "data", label: "Data" }, { id: "view", label: "View" },
-  { id: "formulas", label: "Formulas" }, { id: "ai", label: "Amineva AI" },
+  { id: "formulas", label: "Formulas" }, { id: "ai", label: "Odeneho" },
 ];
 
 export function RibbonTabs({ actions }: { actions: RibbonActions }) {
@@ -216,7 +216,7 @@ function FormulasTab({ actions: a }: { actions: RibbonActions }) {
 function AiTab({ actions: a }: { actions: RibbonActions }) {
   return (
     <>
-      <RibbonGroup label="Amineva Intelligence">
+      <RibbonGroup label="Odeneho">
         <RibbonButton title="Explain this data" onClick={a.ai.summarize}><Sparkles className="h-3.5 w-3.5" /> Explain</RibbonButton>
         <RibbonButton title="Suggest a chart" onClick={a.ai.suggestChart}><BarChart3 className="h-3.5 w-3.5" /> Chart</RibbonButton>
         <RibbonButton title="Detect anomalies" onClick={a.ai.anomalies}><TrendingUp className="h-3.5 w-3.5" /> Anomalies</RibbonButton>
