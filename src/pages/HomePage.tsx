@@ -312,15 +312,6 @@ export default function HomePage() {
               </p>
 
                <a
-                href="https://ode.amineva.com"
-                 target="_blank"
-                 rel="noreferrer"
-                  className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
-                 >
-                    Odeneho AI
-                   </a>
-
-               <a
                 href="https://stock.amineva.com"
                  target="_blank"
                  rel="noreferrer"
