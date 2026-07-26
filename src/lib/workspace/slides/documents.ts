@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export type SlideElementKind = "text" | "shape" | "image";
-export type ShapeKind = "rect" | "ellipse" | "triangle" | "line" | "arrow";
+export type SlideElementKind = "text" | "shape" | "image" | "table" | "chart" | "video" | "audio";
+export type ShapeKind = "rect" | "ellipse" | "triangle" | "line" | "arrow" | "star" | "banner" | "hexagon";
 export type SlideLayout =
   | "title"
   | "titleContent"
@@ -15,40 +15,149 @@ export type SlideLayout =
   | "closing"
   | "blank";
 
+export interface TableCell {
+  row: number;
+  col: number;
+  text: string;
+}
+
+export interface ChartData {
+  name: string;
+  value: number;
+}
+
+export interface ElementAnimation {
+  type: "entrance" | "emphasis" | "exit";
+  effect: "fade" | "flyIn" | "zoom" | "appear" | "pulse" | "spin" | "growShrink" | "flyOut" | "motionPath";
+  duration: number; // in seconds
+  delay: number; // in seconds
+  trigger: "click" | "afterPrevious" | "withPrevious";
+}
+
 export interface SlideElement {
   id: string;
   kind: SlideElementKind;
   x: number; y: number; w: number; h: number;   // 1920x1080 coord space
   rotation?: number;
   z?: number;
-  // text
+  locked?: boolean;
+  groupId?: string;
+
+  // text & WordArt
   text?: string;
   fontSize?: number;
   fontFamily?: string;
   fontWeight?: number;
   color?: string;
-  align?: "left" | "center" | "right";
+  align?: "left" | "center" | "right" | "justify";
   italic?: boolean;
   underline?: boolean;
+  strikethrough?: boolean;
+  bullet?: boolean;
+  numbering?: boolean;
+  lineSpacing?: number;
+  textDirection?: "horizontal" | "vertical";
+  indent?: number; // padding or indentation margin
+  highlightColor?: string;
+  wordArt?: boolean;
+  wordArtStyle?: string; // outline color, shadows, etc
+
   // shape
   shape?: ShapeKind;
   fill?: string;
   stroke?: string;
   strokeWidth?: number;
-  // image
+  effects?: {
+    shadow?: boolean;
+    shadowColor?: string;
+    glow?: boolean;
+    glowColor?: string;
+  };
+
+  // image & Crop
   src?: string;
   alt?: string;
+  crop?: {
+    x: number;
+    y: number;
+    w: number;
+    h: number;
+  };
+  opacity?: number;
+  blur?: number;
+
+  // table
+  rowsCount?: number;
+  colsCount?: number;
+  cells?: TableCell[];
+
+  // chart
+  chartType?: "bar" | "line" | "pie";
+  chartTitle?: string;
+  chartData?: ChartData[];
+
+  // media (video, audio)
+  mediaUrl?: string;
+  autoplay?: boolean;
+  loop?: boolean;
+  volume?: number;
+
+  // interactive
+  hyperlink?: string;
+  actionButton?: boolean;
+  actionType?: "next" | "prev" | "first" | "last" | "url";
+  embeddedCode?: string;
+
+  // animation
+  animations?: ElementAnimation[];
+}
+
+export interface BackgroundImageSettings {
+  url?: string;
+  x?: number;
+  y?: number;
+  w?: number;
+  h?: number;
+  cropX?: number;
+  cropY?: number;
+  cropW?: number;
+  cropH?: number;
+  opacity?: number;
+  blur?: number;
+}
+
+export interface SlideBackground {
+  type: "solid" | "gradient" | "pattern" | "image";
+  solidColor?: string;
+  gradient?: {
+    type: "linear" | "radial";
+    colors: string[]; // e.g. ["#ffffff", "#000000"]
+    angle?: number;
+  };
+  pattern?: string; // e.g. "dots", "stripes"
+  image?: BackgroundImageSettings;
+}
+
+export interface SlideComment {
+  id: string;
+  author: string;
+  text: string;
+  createdAt: string;
 }
 
 export interface Slide {
   id: string;
   layout: SlideLayout;
-  background: string;
+  background: string; // fallback string representation
+  bgConfig?: SlideBackground;
   elements: SlideElement[];
   notes?: string;
   name?: string;
   hidden?: boolean;
-  transition?: "none" | "fade" | "slide" | "zoom" | "morph";
+  transition?: "none" | "fade" | "slide" | "push" | "morph";
+  transitionDuration?: number; // seconds
+  transitionSound?: string;
+  comments?: SlideComment[];
 }
 
 export interface DeckTheme {
@@ -59,12 +168,21 @@ export interface DeckTheme {
   text?: string;
   font: string;
   headerFont?: string;
+  colorScheme?: string[];
+}
+
+export interface DeckVersion {
+  id: string;
+  timestamp: string;
+  title: string;
+  deck_json: any;
 }
 
 export interface Deck {
   slides: Slide[];
   theme: DeckTheme;
   activeSlide?: number;
+  versions?: DeckVersion[];
 }
 
 export interface WorkspaceSlideDoc {
@@ -85,6 +203,7 @@ export const DEFAULT_THEME: DeckTheme = {
   text: "#0f172a",
   font: "Inter",
   headerFont: "Inter",
+  colorScheme: ["#1E2761", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd"],
 };
 
 export function newSlideId(): string {
@@ -96,9 +215,11 @@ export function makeSlide(layout: SlideLayout = "titleContent", theme = DEFAULT_
     id: newSlideId(),
     layout,
     background: theme.background ?? "#ffffff",
+    bgConfig: { type: "solid", solidColor: theme.background ?? "#ffffff" },
     elements: [],
     notes: "",
     transition: "fade",
+    transitionDuration: 0.5,
   };
   const titleColor = theme.text ?? "#0f172a";
   const accent = theme.accent;
@@ -121,6 +242,7 @@ export function makeSlide(layout: SlideLayout = "titleContent", theme = DEFAULT_
     ];
   } else if (layout === "sectionHeader") {
     base.background = theme.primary;
+    base.bgConfig = { type: "solid", solidColor: theme.primary };
     base.elements = [
       { id: newSlideId(), kind: "text", x: 120, y: 460, w: 1680, h: 180, text: "Section header", fontSize: 96, fontWeight: 800, color: "#ffffff", align: "left", fontFamily: theme.headerFont ?? theme.font },
     ];
@@ -155,7 +277,7 @@ export function makeSlide(layout: SlideLayout = "titleContent", theme = DEFAULT_
     ];
   } else if (layout === "quote") {
     base.elements = [
-      { id: newSlideId(), kind: "text", x: 200, y: 380, w: 1520, h: 220, text: "\u201CA great quote sits here.\u201D", fontSize: 64, italic: true, color: titleColor, align: "center", fontFamily: theme.headerFont ?? theme.font },
+      { id: newSlideId(), kind: "text", x: 200, y: 380, w: 1520, h: 220, text: "“A great quote sits here.”", fontSize: 64, italic: true, color: titleColor, align: "center", fontFamily: theme.headerFont ?? theme.font },
       { id: newSlideId(), kind: "text", x: 200, y: 640, w: 1520, h: 80, text: "— Attribution", fontSize: 28, color: accent, align: "center", fontFamily: theme.font },
     ];
   } else if (layout === "statistics") {
@@ -166,6 +288,7 @@ export function makeSlide(layout: SlideLayout = "titleContent", theme = DEFAULT_
     ];
   } else if (layout === "closing") {
     base.background = theme.primary;
+    base.bgConfig = { type: "solid", solidColor: theme.primary };
     base.elements = [
       { id: newSlideId(), kind: "text", x: 120, y: 350, w: 1680, h: 200, text: "Thank You!", fontSize: 120, fontWeight: 800, color: "#ffffff", align: "center", fontFamily: theme.headerFont ?? theme.font },
       { id: newSlideId(), kind: "text", x: 120, y: 580, w: 1680, h: 120, text: "Questions? Get in touch:\nsupport@amineva.com | www.amineva.com", fontSize: 36, color: accent, align: "center", fontFamily: theme.font },
