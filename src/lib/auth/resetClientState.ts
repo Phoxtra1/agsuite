@@ -26,6 +26,7 @@ function purgeStorage(storage: Storage) {
     for (let i = 0; i < storage.length; i++) {
       const k = storage.key(i);
       if (!k) continue;
+      if (k === "amineva_theme") continue;
       if (PREFIXES.some((p) => k.startsWith(p))) keys.push(k);
     }
     keys.forEach((k) => storage.removeItem(k));
