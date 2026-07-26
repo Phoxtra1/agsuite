@@ -16,11 +16,17 @@ interface ThemeProviderProps {
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [theme, setThemeState] = useState<Theme>(() => {
+    let initialTheme: Theme = 'light';
     if (typeof window !== 'undefined') {
       const stored = localStorage.getItem('amineva_theme') as Theme;
-      if (stored === 'light' || stored === 'dark') return stored;
+      if (stored === 'light' || stored === 'dark') {
+        initialTheme = stored;
+      }
+      const root = window.document.documentElement;
+      root.classList.remove('light', 'dark');
+      root.classList.add(initialTheme);
     }
-    return 'light';
+    return initialTheme;
   });
 
   useEffect(() => {

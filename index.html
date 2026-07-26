@@ -6,6 +6,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
+  <!-- Synchronous Theme Initializer -->
+  <script>
+    (function() {
+      try {
+        var t = localStorage.getItem('amineva_theme');
+        var theme = (t === 'dark' || t === 'light') ? t : 'light';
+        document.documentElement.classList.remove('light', 'dark');
+        document.documentElement.classList.add(theme);
+      } catch (e) {}
+    })();
+  </script>
+
   <!-- Page Title -->
   <title>Amineva Global - Connect. Verify. Grow</title>
 
