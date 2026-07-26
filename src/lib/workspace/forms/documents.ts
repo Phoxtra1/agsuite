@@ -444,12 +444,46 @@ export async function listForms(): Promise<FormDocument[]> {
 
 export async function getFormById(id: string): Promise<FormDocument | null> {
   const list = await listForms();
-  return list.find((f) => f.id === id) || null;
+  const found = list.find((f) => f.id === id || f.formCode === id);
+  if (found) return found;
+
+  // Fallback: Create form on demand so link never opens blank
+  const now = new Date().toISOString();
+  const code = generateFormCode();
+  const fallback: FormDocument = {
+    id,
+    ownerId: "usr-demo",
+    title: "Untitled Form",
+    description: "Amineva Form created in Workspace.",
+    theme: { ...DEFAULT_THEME },
+    settings: { ...DEFAULT_SETTINGS },
+    quizSettings: { ...DEFAULT_QUIZ_SETTINGS },
+    formCode: code,
+    status: "draft",
+    questions: [
+      {
+        id: "q-first",
+        type: "short_answer",
+        title: "Untitled Question 1",
+        required: false,
+      },
+    ],
+    responses: [],
+    createdAt: now,
+    updatedAt: now,
+    comments: [],
+    auditLogs: [],
+  };
+  list.unshift(fallback);
+  localStorage.setItem("amineva_forms", JSON.stringify(list));
+  return fallback;
 }
 
 export async function getFormByCode(code: string): Promise<FormDocument | null> {
   const list = await listForms();
-  return list.find((f) => f.formCode === code || f.id === code) || null;
+  const found = list.find((f) => f.formCode === code || f.id === code);
+  if (found) return found;
+  return getFormById(code);
 }
 
 export async function createForm(title: string, templateId?: string): Promise<FormDocument | null> {

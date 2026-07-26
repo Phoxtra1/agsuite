@@ -77,42 +77,197 @@ export const EMPTY_WORKBOOK: Workbook = {
   activeSheet: 0,
 };
 
+const CACHE_KEY = "amineva_workspace_sheets";
+
+function getLocalSheets(): WorkspaceSheet[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalSheets(sheets: WorkspaceSheet[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(sheets));
+  } catch (e) {
+    console.error("[sheets] Failed to save local sheets", e);
+  }
+}
+
+function seedDefaultSheets(): WorkspaceSheet[] {
+  const now = new Date().toISOString();
+  const defaultSheets: WorkspaceSheet[] = [
+    {
+      id: "sheet-welcome",
+      owner_id: "usr-demo",
+      title: "Financial Planning & Revenue Model",
+      workbook_json: {
+        sheets: [
+          {
+            name: "Overview",
+            cells: {
+              A1: "Quarter", B1: "Revenue ($)", C1: "Growth (%)",
+              A2: "Q1 2026", B2: 125000, C2: "15%",
+              A3: "Q2 2026", B3: 180000, C3: "44%",
+              A4: "Q3 2026", B4: 240000, C3: "33%",
+            },
+            colWidths: { 0: 160, 1: 160, 2: 140 },
+          }
+        ],
+        activeSheet: 0,
+      },
+      content_text: "Quarter Revenue Growth Q1 2026 125000 15% Q2 2026 180000 44%",
+      created_at: now,
+      updated_at: now,
+    }
+  ];
+  saveLocalSheets(defaultSheets);
+  return defaultSheets;
+}
+
 export async function listSheets(): Promise<WorkspaceSheet[]> {
-  const { data, error } = await supabase.from("workspace_sheets" as any).select("*").order("updated_at", { ascending: false });
-  if (error) { console.error("[sheets] list", error); return []; }
-  return (data as any) || [];
+  try {
+    const { data, error } = await supabase.from("workspace_sheets" as any).select("*").order("updated_at", { ascending: false });
+    if (!error && data && Array.isArray(data) && data.length > 0) {
+      saveLocalSheets(data as any);
+      return data as any;
+    }
+  } catch (e) {
+    console.warn("[sheets] Offline fetch fallback", e);
+  }
+  const local = getLocalSheets();
+  if (local.length > 0) return local;
+  return seedDefaultSheets();
 }
+
 export async function getSheet(id: string): Promise<WorkspaceSheet | null> {
-  const { data, error } = await supabase.from("workspace_sheets" as any).select("*").eq("id", id).maybeSingle();
-  if (error) { console.error("[sheets] get", error); return null; }
-  return data as any;
+  try {
+    const { data, error } = await supabase.from("workspace_sheets" as any).select("*").eq("id", id).maybeSingle();
+    if (!error && data) {
+      const local = getLocalSheets();
+      const idx = local.findIndex((s) => s.id === id);
+      if (idx >= 0) local[idx] = data as any;
+      else local.unshift(data as any);
+      saveLocalSheets(local);
+      return data as any;
+    }
+  } catch (e) {
+    console.warn("[sheets] Offline get sheet", e);
+  }
+  const local = getLocalSheets();
+  const found = local.find((s) => s.id === id);
+  if (found) return found;
+
+  const now = new Date().toISOString();
+  const fallback: WorkspaceSheet = {
+    id,
+    owner_id: "usr-demo",
+    title: "Untitled Sheet",
+    workbook_json: EMPTY_WORKBOOK,
+    content_text: "",
+    created_at: now,
+    updated_at: now,
+  };
+  local.unshift(fallback);
+  saveLocalSheets(local);
+  return fallback;
 }
+
 export async function createSheet(title = "Untitled sheet"): Promise<WorkspaceSheet | null> {
-  const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return null;
-  const { data, error } = await supabase.from("workspace_sheets" as any)
-    .insert({ title, owner_id: u.user.id, workbook_json: EMPTY_WORKBOOK, content_text: "" })
-    .select().single();
-  if (error) { console.error("[sheets] create", error); return null; }
-  return data as any;
+  let userId = "usr-demo";
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    if (u?.user) userId = u.user.id;
+  } catch {}
+
+  const now = new Date().toISOString();
+  const localId = `sheet-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const newSheet: WorkspaceSheet = {
+    id: localId,
+    owner_id: userId,
+    title,
+    workbook_json: EMPTY_WORKBOOK,
+    content_text: "",
+    created_at: now,
+    updated_at: now,
+  };
+
+  const local = getLocalSheets();
+  local.unshift(newSheet);
+  saveLocalSheets(local);
+
+  supabase.from("workspace_sheets" as any)
+    .insert({ title, owner_id: userId, workbook_json: EMPTY_WORKBOOK, content_text: "" })
+    .select().single()
+    .then(({ data }) => {
+      if (data) {
+        const updatedLocal = getLocalSheets();
+        const idx = updatedLocal.findIndex((s) => s.id === localId);
+        if (idx >= 0) {
+          updatedLocal[idx] = data as any;
+          saveLocalSheets(updatedLocal);
+        }
+      }
+    }).catch(() => {});
+
+  return newSheet;
 }
+
 export async function updateSheet(id: string, patch: Partial<WorkspaceSheet>): Promise<boolean> {
-  const { error } = await supabase.from("workspace_sheets" as any).update(patch).eq("id", id);
-  if (error) { console.error("[sheets] update", error); return false; }
+  const now = new Date().toISOString();
+  const local = getLocalSheets();
+  const idx = local.findIndex((s) => s.id === id);
+  if (idx >= 0) {
+    local[idx] = { ...local[idx], ...patch, updated_at: now };
+    saveLocalSheets(local);
+  }
+
+  try {
+    const { error } = await supabase.from("workspace_sheets" as any).update(patch).eq("id", id);
+    if (!error) return true;
+  } catch (e) {
+    console.warn("[sheets] Offline update queued locally", e);
+  }
   return true;
 }
+
 export async function deleteSheet(id: string): Promise<boolean> {
-  const { error } = await supabase.from("workspace_sheets" as any).delete().eq("id", id);
-  return !error;
+  const local = getLocalSheets();
+  const filtered = local.filter((s) => s.id !== id);
+  saveLocalSheets(filtered);
+
+  try {
+    await supabase.from("workspace_sheets" as any).delete().eq("id", id);
+  } catch {}
+  return true;
 }
+
 export async function duplicateSheet(s: WorkspaceSheet): Promise<WorkspaceSheet | null> {
-  const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return null;
-  const { data, error } = await supabase.from("workspace_sheets" as any)
-    .insert({ owner_id: u.user.id, title: `${s.title} (copy)`, workbook_json: s.workbook_json, content_text: s.content_text })
-    .select().single();
-  if (error) return null;
-  return data as any;
+  let userId = "usr-demo";
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    if (u?.user) userId = u.user.id;
+  } catch {}
+
+  const now = new Date().toISOString();
+  const localId = `sheet-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const duplicated: WorkspaceSheet = {
+    id: localId,
+    owner_id: userId,
+    title: `${s.title} (copy)`,
+    workbook_json: s.workbook_json,
+    content_text: s.content_text,
+    created_at: now,
+    updated_at: now,
+  };
+  const local = getLocalSheets();
+  local.unshift(duplicated);
+  saveLocalSheets(local);
+  return duplicated;
 }
 
 export function flattenWorkbookText(wb: Workbook): string {

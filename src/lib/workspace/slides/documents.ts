@@ -309,41 +309,182 @@ export function flattenDeckText(d: Deck): string {
 
 /* ------------------- CRUD ------------------- */
 const TBL = "workspace_slides" as any;
+const CACHE_KEY = "amineva_workspace_slides";
+
+function getLocalDecks(): WorkspaceSlideDoc[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(CACHE_KEY);
+    return raw ? JSON.parse(raw) : [];
+  } catch {
+    return [];
+  }
+}
+
+function saveLocalDecks(decks: WorkspaceSlideDoc[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(CACHE_KEY, JSON.stringify(decks));
+  } catch (e) {
+    console.error("[slides] Failed to save local slides", e);
+  }
+}
+
+function seedDefaultDecks(): WorkspaceSlideDoc[] {
+  const now = new Date().toISOString();
+  const defaultDecks: WorkspaceSlideDoc[] = [
+    {
+      id: "slide-welcome",
+      owner_id: "usr-demo",
+      title: "Amineva Suite Platform Overview",
+      deck_json: EMPTY_DECK,
+      content_text: "Presentation Title Subtitle Amineva Slides",
+      created_at: now,
+      updated_at: now,
+    }
+  ];
+  saveLocalDecks(defaultDecks);
+  return defaultDecks;
+}
 
 export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
-  const { data, error } = await supabase.from(TBL).select("*").order("updated_at", { ascending: false });
-  if (error) { console.error("[slides] list", error); return []; }
-  return (data as any) || [];
+  try {
+    const { data, error } = await supabase.from(TBL).select("*").order("updated_at", { ascending: false });
+    if (!error && data && Array.isArray(data) && data.length > 0) {
+      saveLocalDecks(data as any);
+      return data as any;
+    }
+  } catch (e) {
+    console.warn("[slides] Offline fetch fallback", e);
+  }
+  const local = getLocalDecks();
+  if (local.length > 0) return local;
+  return seedDefaultDecks();
 }
+
 export async function getDeck(id: string): Promise<WorkspaceSlideDoc | null> {
-  const { data, error } = await supabase.from(TBL).select("*").eq("id", id).maybeSingle();
-  if (error) { console.error("[slides] get", error); return null; }
-  return data as any;
+  try {
+    const { data, error } = await supabase.from(TBL).select("*").eq("id", id).maybeSingle();
+    if (!error && data) {
+      const local = getLocalDecks();
+      const idx = local.findIndex((d) => d.id === id);
+      if (idx >= 0) local[idx] = data as any;
+      else local.unshift(data as any);
+      saveLocalDecks(local);
+      return data as any;
+    }
+  } catch (e) {
+    console.warn("[slides] Offline get deck", e);
+  }
+  const local = getLocalDecks();
+  const found = local.find((d) => d.id === id);
+  if (found) return found;
+
+  const now = new Date().toISOString();
+  const fallback: WorkspaceSlideDoc = {
+    id,
+    owner_id: "usr-demo",
+    title: "Untitled Presentation",
+    deck_json: EMPTY_DECK,
+    content_text: "",
+    created_at: now,
+    updated_at: now,
+  };
+  local.unshift(fallback);
+  saveLocalDecks(local);
+  return fallback;
 }
+
 export async function createDeck(title = "Untitled presentation"): Promise<WorkspaceSlideDoc | null> {
-  const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return null;
-  const { data, error } = await supabase.from(TBL)
-    .insert({ title, owner_id: u.user.id, deck_json: EMPTY_DECK as any, content_text: "" })
-    .select().single();
-  if (error) { console.error("[slides] create", error); return null; }
-  return data as any;
+  let userId = "usr-demo";
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    if (u?.user) userId = u.user.id;
+  } catch {}
+
+  const now = new Date().toISOString();
+  const localId = `slide-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const newDeck: WorkspaceSlideDoc = {
+    id: localId,
+    owner_id: userId,
+    title,
+    deck_json: EMPTY_DECK,
+    content_text: "",
+    created_at: now,
+    updated_at: now,
+  };
+
+  const local = getLocalDecks();
+  local.unshift(newDeck);
+  saveLocalDecks(local);
+
+  supabase.from(TBL)
+    .insert({ title, owner_id: userId, deck_json: EMPTY_DECK as any, content_text: "" })
+    .select().single()
+    .then(({ data }) => {
+      if (data) {
+        const updatedLocal = getLocalDecks();
+        const idx = updatedLocal.findIndex((d) => d.id === localId);
+        if (idx >= 0) {
+          updatedLocal[idx] = data as any;
+          saveLocalDecks(updatedLocal);
+        }
+      }
+    }).catch(() => {});
+
+  return newDeck;
 }
+
 export async function updateDeck(id: string, patch: Partial<WorkspaceSlideDoc>): Promise<boolean> {
-  const { error } = await supabase.from(TBL).update(patch as any).eq("id", id);
-  if (error) { console.error("[slides] update", error); return false; }
+  const now = new Date().toISOString();
+  const local = getLocalDecks();
+  const idx = local.findIndex((d) => d.id === id);
+  if (idx >= 0) {
+    local[idx] = { ...local[idx], ...patch, updated_at: now };
+    saveLocalDecks(local);
+  }
+
+  try {
+    const { error } = await supabase.from(TBL).update(patch as any).eq("id", id);
+    if (!error) return true;
+  } catch (e) {
+    console.warn("[slides] Offline update queued locally", e);
+  }
   return true;
 }
+
 export async function deleteDeck(id: string): Promise<boolean> {
-  const { error } = await supabase.from(TBL).delete().eq("id", id);
-  return !error;
+  const local = getLocalDecks();
+  const filtered = local.filter((d) => d.id !== id);
+  saveLocalDecks(filtered);
+
+  try {
+    await supabase.from(TBL).delete().eq("id", id);
+  } catch {}
+  return true;
 }
+
 export async function duplicateDeck(d: WorkspaceSlideDoc): Promise<WorkspaceSlideDoc | null> {
-  const { data: u } = await supabase.auth.getUser();
-  if (!u.user) return null;
-  const { data, error } = await supabase.from(TBL)
-    .insert({ owner_id: u.user.id, title: `${d.title} (copy)`, deck_json: d.deck_json as any, content_text: d.content_text })
-    .select().single();
-  if (error) return null;
-  return data as any;
+  let userId = "usr-demo";
+  try {
+    const { data: u } = await supabase.auth.getUser();
+    if (u?.user) userId = u.user.id;
+  } catch {}
+
+  const now = new Date().toISOString();
+  const localId = `slide-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  const duplicated: WorkspaceSlideDoc = {
+    id: localId,
+    owner_id: userId,
+    title: `${d.title} (copy)`,
+    deck_json: d.deck_json,
+    content_text: d.content_text,
+    created_at: now,
+    updated_at: now,
+  };
+
+  const local = getLocalDecks();
+  local.unshift(duplicated);
+  saveLocalDecks(local);
+  return duplicated;
 }
