@@ -7,6 +7,8 @@ import SheetsList from "./workspace/SheetsList";
 import SheetsEditor from "./workspace/SheetsEditor";
 import SlidesList from "./workspace/SlidesList";
 import SlidesEditor from "./workspace/SlidesEditor";
+import FormsList from "./workspace/FormsList";
+import FormsEditor from "./workspace/FormsEditor";
 
 export default function Workspace() {
   return (
@@ -15,6 +17,7 @@ export default function Workspace() {
       <Route path="docs/:id" element={<DocsEditor />} />
       <Route path="sheets/:id" element={<SheetsEditor />} />
       <Route path="slides/:id" element={<SlidesEditor />} />
+      <Route path="forms/:id" element={<FormsEditor />} />
 
       {/* Sidebar layout */}
       <Route
@@ -28,6 +31,7 @@ export default function Workspace() {
                 <Route path="docs" element={<DocsList />} />
                 <Route path="sheets" element={<SheetsList />} />
                 <Route path="slides" element={<SlidesList />} />
+                <Route path="forms" element={<FormsList />} />
                 <Route path="*" element={<Navigate to="/workspace" replace />} />
               </Routes>
             </main>
