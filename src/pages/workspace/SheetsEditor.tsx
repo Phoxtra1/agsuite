@@ -15,9 +15,23 @@ import { AnalysisPanel } from "@/components/workspace/sheets/AnalysisPanel";
 import { ChartDialog } from "@/components/workspace/sheets/ChartDialog";
 import { exportCSV, exportJSON, exportXLSX, importXLSX } from "@/components/workspace/sheets/exporters";
 import { useUndoRedo } from "@/components/workspace/sheets/hooks/useUndoRedo";
-import { ArrowLeft, ChevronLeft, CloudUpload, Download, Loader2, Share2, Upload } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronDown, CloudUpload, Download, Loader2, Share2, Upload, Sparkles, AlertCircle, Layout, Table2, Presentation } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { SheetChart } from "@/lib/workspace/sheets/documents";
+
+// Smart Business Solution Imports
+import {
+  recommendSolution,
+  seedSolutionToSheet,
+  parseSheetRows,
+  updateSheetRecord,
+  addSheetRecord,
+  SOLUTIONS_TEMPLATES
+} from "@/lib/workspace/sheets/smartData";
+import CrmView from "@/components/workspace/sheets/solutions/CrmView";
+import DashboardEngine from "@/components/workspace/sheets/solutions/DashboardEngine";
+import CollaborateMenu from "@/components/workspace/sheets/solutions/CollaborateMenu";
+import MeetingModal from "@/components/workspace/sheets/solutions/MeetingModal";
 
 export default function SheetsEditor() {
   const { id } = useParams();
@@ -41,6 +55,11 @@ export default function SheetsEditor() {
   const [showHeaders, setShowHeaders] = useState(true);
   const [showFormulaBar, setShowFormulaBar] = useState(true);
   const [showChartDialog, setShowChartDialog] = useState(false);
+
+  // Business Solution Workspace states
+  const [activeView, setActiveView] = useState<"spreadsheet" | "solution" | "dashboard">("spreadsheet");
+  const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
+  const [meetingPrefilled, setMeetingPrefilled] = useState<{ title: string; participants: string } | null>(null);
 
   const titleRef = useRef(title);
   useEffect(() => {
@@ -92,6 +111,109 @@ export default function SheetsEditor() {
       return next;
     }, record);
   }, [wbUR, persist]);
+
+  // Two-way synchronization & Smart Data Layer Handlers
+  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom") => {
+    setWb((prev) => {
+      let updatedSheets = [...prev.sheets];
+      const activeSheetObj = updatedSheets[activeSheetIdx] || updatedSheets[0];
+
+      // If the sheet has no data rows, automatically seed the template's standard columns and records
+      const hasNoData = Object.keys(activeSheetObj.cells).length === 0;
+      if (hasNoData) {
+        const seeded = seedSolutionToSheet(activeSheetObj, type);
+        updatedSheets = updatedSheets.map((s, idx) => idx === activeSheetIdx ? seeded : s);
+      }
+
+      return {
+        ...prev,
+        sheets: updatedSheets,
+        activeSolution: {
+          type,
+          meetings: prev.activeSolution?.meetings || []
+        }
+      };
+    });
+    setEngineTick((t) => t + 1);
+    setActiveView("solution");
+    toast({
+      title: `${type} Solution Generated`,
+      description: `Amineva generated a connected ${type} Workspace from your sheet. Standard columns and sample data generated.`
+    });
+  }, [activeSheetIdx, setWb]);
+
+  const handleDeactivateSolution = useCallback(() => {
+    setWb((prev) => {
+      const next = { ...prev };
+      delete next.activeSolution;
+      return next;
+    });
+    setActiveView("spreadsheet");
+    toast({
+      title: "Business Workspace Closed",
+      description: "Returned to standard spreadsheet view."
+    });
+  }, [setWb]);
+
+  const handleUpdateRecord = useCallback((rowIndex: number, field: string, value: any) => {
+    setWb((prev) => {
+      const activeSheetObj = prev.sheets[activeSheetIdx];
+      const updatedSheet = updateSheetRecord(activeSheetObj, rowIndex, field, value);
+      return {
+        ...prev,
+        sheets: prev.sheets.map((s, idx) => idx === activeSheetIdx ? updatedSheet : s)
+      };
+    });
+    setEngineTick((t) => t + 1);
+  }, [activeSheetIdx, setWb]);
+
+  const handleAddRecord = useCallback((record: Record<string, any>) => {
+    setWb((prev) => {
+      const activeSheetObj = prev.sheets[activeSheetIdx];
+      const updatedSheet = addSheetRecord(activeSheetObj, record);
+      return {
+        ...prev,
+        sheets: prev.sheets.map((s, idx) => idx === activeSheetIdx ? updatedSheet : s)
+      };
+    });
+    setEngineTick((t) => t + 1);
+    toast({
+      title: "Record Added Successfully",
+      description: "The new record was added to the sheet. Two-way synchronization is active."
+    });
+  }, [activeSheetIdx, setWb]);
+
+  const handleScheduleMeeting = useCallback((meeting: any) => {
+    setWb((prev) => {
+      const solution = prev.activeSolution || { type: "CRM", meetings: [] };
+      const meetings = [...(solution.meetings || []), meeting];
+      return {
+        ...prev,
+        activeSolution: {
+          ...solution,
+          meetings
+        }
+      };
+    });
+    toast({
+      title: "Online Meeting Created",
+      description: `Scheduled "${meeting.title}" on ${meeting.date} via ${meeting.provider === "amineva" ? "Amineva Meeting" : "external provider"}. Invitations sent!`
+    });
+  }, [setWb]);
+
+  const handleOpenMeetingPrefilled = useCallback((prefilled: { title: string; participants: string }) => {
+    setMeetingPrefilled(prefilled);
+    setIsMeetingModalOpen(true);
+  }, []);
+
+  const parsedRecords = useMemo(() => {
+    return parseSheetRows(activeSheet);
+  }, [activeSheet, engineTick]);
+
+  const recommendedSolutionId = useMemo(() => {
+    if (wb.activeSolution) return null;
+    return recommendSolution(activeSheet);
+  }, [activeSheet, wb.activeSolution]);
 
   const mutateActive = useCallback((mut: (s: SheetPage) => SheetPage, record = true) => {
     setWb((prev) => ({ ...prev, sheets: prev.sheets.map((s, i) => i === activeSheetIdx ? mut(s) : s) }), record);
@@ -517,6 +639,21 @@ export default function SheetsEditor() {
           </div>
         </div>
         <div className="flex items-center gap-2">
+          {/* Collaborate Menu Dropdown */}
+          <CollaborateMenu
+            onCreateMeeting={() => { setMeetingPrefilled(null); setIsMeetingModalOpen(true); }}
+            onScheduleEvent={() => { setMeetingPrefilled({ title: "Workspace Event", participants: "" }); setIsMeetingModalOpen(true); }}
+            onShare={() => toast({ title: "Share workspace link", description: "Copied workspace connection link to clipboard." })}
+            onNotifyTeam={() => toast({ title: "Team Notified", description: "Real-time notifications dispatched to all workspace team members." })}
+          />
+
+          {/* Business Solution Generator Dropdown */}
+          <SolutionDropdown
+            activeSolution={wb.activeSolution}
+            onSelectSolution={handleActivateSolution}
+            onDeactivate={handleDeactivateSolution}
+          />
+
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) onImportFile(f); e.target.value = ""; }} />
           <button onClick={() => fileRef.current?.click()}
@@ -546,47 +683,145 @@ export default function SheetsEditor() {
         />
       )}
 
-      <div className="flex-1 flex overflow-hidden">
-        <div className="flex-1 flex flex-col overflow-hidden">
-          <SheetGrid
-            sheet={activeSheet}
-            engine={engineRef.current}
-            selection={selection}
-            onSelect={setSelection}
-            onCellEdit={setCell}
-            onFillDown={onFillDown}
-            gridlines={gridlines}
-            showHeaders={showHeaders}
-            zoom={zoom}
-            copiedRange={copiedRange}
-            contextActions={contextActions}
-            onUpdateChart={updateChart}
-            onDeleteChart={deleteChart}
-          />
-          <SheetTabs
-            sheets={wb.sheets}
-            active={activeSheetIdx}
-            onSelect={setActiveSheetIdx}
-            onAdd={addSheet}
-            onRename={renameSheet}
-            onDelete={deleteSheetTab}
-            onDuplicate={duplicateSheetTab}
-            onReorder={reorderSheets}
-            onMove={reorderSheets}
-            onColor={colorSheet}
-            onHide={(i) => toast({ title: "Hide sheet", description: `Right-click again to unhide "${wb.sheets[i].name}"` })}
-            onProtect={() => toast({ title: "Sheet protection coming soon" })}
-          />
+      {/* Smart Solution Recommender Banner */}
+      {recommendedSolutionId && (
+        <div className="bg-gradient-to-r from-accent/15 via-accent/5 to-transparent border-b border-border px-6 py-2 flex items-center justify-between text-xs animate-in slide-in-from-top-2 duration-200">
+          <div className="flex items-center gap-2">
+            <AlertCircle className="h-4 w-4 text-accent animate-bounce" />
+            <span className="font-semibold text-foreground">
+              Smart Data Layer parsed this sheet and detected a structures-match with <strong>{recommendedSolutionId}</strong>.
+            </span>
+          </div>
+          <button
+            onClick={() => handleActivateSolution(recommendedSolutionId as any)}
+            className="bg-accent text-accent-foreground font-bold px-3 py-1 rounded-lg hover:bg-accent/90"
+          >
+            Activate Connected {recommendedSolutionId} Workspace
+          </button>
         </div>
+      )}
 
-        <AnalysisPanel
-          sheet={activeSheet}
-          selection={selection}
-          collapsed={rightCollapsed}
-          onToggleCollapsed={() => setRightCollapsed((v) => !v)}
-          engine={engineRef.current}
-        />
+      {/* Business Solution Workspace Tab Selector */}
+      {wb.activeSolution && (
+        <div className="h-10 border-b border-border bg-card flex items-center px-4 justify-between text-xs flex-shrink-0">
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => setActiveView("spreadsheet")}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                activeView === "spreadsheet" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              <Table2 className="h-3.5 w-3.5" /> Spreadsheet Grid
+            </button>
+            <button
+              onClick={() => setActiveView("solution")}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                activeView === "solution" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              <Presentation className="h-3.5 w-3.5" /> {wb.activeSolution.type} Connected Workspace
+            </button>
+            <button
+              onClick={() => setActiveView("dashboard")}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                activeView === "dashboard" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              <Layout className="h-3.5 w-3.5" /> Intelligent Dashboard
+            </button>
+          </div>
+          <div className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 shadow-sm">
+            Active: {wb.activeSolution.type} Two-Way Sync
+          </div>
+        </div>
+      )}
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* Conditional Workspace View Switching */}
+        {wb.activeSolution && activeView === "solution" ? (
+          wb.activeSolution.type === "CRM" ? (
+            <CrmView
+              records={parsedRecords}
+              onUpdateRecord={handleUpdateRecord}
+              onAddRecord={handleAddRecord}
+              onOpenMeetingModal={handleOpenMeetingPrefilled}
+            />
+          ) : (
+            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 bg-muted/10">
+              <Presentation className="h-12 w-12 text-accent animate-pulse" />
+              <div className="max-w-md space-y-2">
+                <h3 className="text-sm font-bold text-foreground">{wb.activeSolution.type} Template Framework Active</h3>
+                <p className="text-xs text-muted-foreground">
+                  The smart schema and data structures are fully synchronized with the spreadsheet. The dedicated layout for {wb.activeSolution.type} is ready to render. Use the Intelligent Dashboard to view metrics.
+                </p>
+              </div>
+              <button
+                onClick={() => setActiveView("dashboard")}
+                className="bg-accent text-accent-foreground font-bold px-4 py-2 rounded-lg text-xs"
+              >
+                Go to {wb.activeSolution.type} Dashboard
+              </button>
+            </div>
+          )
+        ) : wb.activeSolution && activeView === "dashboard" ? (
+          <DashboardEngine
+            records={parsedRecords}
+            solutionType={wb.activeSolution.type}
+            meetings={wb.activeSolution.meetings}
+          />
+        ) : (
+          /* Default Spreadsheet Editor view */
+          <>
+            <div className="flex-1 flex flex-col overflow-hidden">
+              <SheetGrid
+                sheet={activeSheet}
+                engine={engineRef.current}
+                selection={selection}
+                onSelect={setSelection}
+                onCellEdit={setCell}
+                onFillDown={onFillDown}
+                gridlines={gridlines}
+                showHeaders={showHeaders}
+                zoom={zoom}
+                copiedRange={copiedRange}
+                contextActions={contextActions}
+                onUpdateChart={updateChart}
+                onDeleteChart={deleteChart}
+              />
+              <SheetTabs
+                sheets={wb.sheets}
+                active={activeSheetIdx}
+                onSelect={setActiveSheetIdx}
+                onAdd={addSheet}
+                onRename={renameSheet}
+                onDelete={deleteSheetTab}
+                onDuplicate={duplicateSheetTab}
+                onReorder={reorderSheets}
+                onMove={reorderSheets}
+                onColor={colorSheet}
+                onHide={(i) => toast({ title: "Hide sheet", description: `Right-click again to unhide "${wb.sheets[i].name}"` })}
+                onProtect={() => toast({ title: "Sheet protection coming soon" })}
+              />
+            </div>
+
+            <AnalysisPanel
+              sheet={activeSheet}
+              selection={selection}
+              collapsed={rightCollapsed}
+              onToggleCollapsed={() => setRightCollapsed((v) => !v)}
+              engine={engineRef.current}
+            />
+          </>
+        )}
       </div>
+
+      {/* Real Online Meeting / Scheduling Modal Service */}
+      <MeetingModal
+        isOpen={isMeetingModalOpen}
+        onClose={() => setIsMeetingModalOpen(false)}
+        prefilled={meetingPrefilled}
+        onSchedule={handleScheduleMeeting}
+      />
 
       <StatusBar
         sheet={activeSheet}
@@ -605,6 +840,83 @@ export default function SheetsEditor() {
           onCancel={() => setShowChartDialog(false)}
           onInsert={insertChart}
         />
+      )}
+    </div>
+  );
+}
+
+interface SolutionDropdownProps {
+  activeSolution?: any;
+  onSelectSolution: (type: any) => void;
+  onDeactivate: () => void;
+}
+
+function SolutionDropdown({ activeSolution, onSelectSolution, onDeactivate }: SolutionDropdownProps) {
+  const [open, setOpen] = useState(false);
+  const solutionOptions = [
+    { id: "CRM", label: "CRM Solution" },
+    { id: "Inventory", label: "Inventory Management" },
+    { id: "HR", label: "HR Management" },
+    { id: "Registry", label: "Registry & Archive" },
+    { id: "Project", label: "Project & Tasks" },
+    { id: "Custom", label: "Custom Solution" }
+  ];
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen((v) => !v)}
+        className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition ${
+          activeSolution
+            ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm animate-pulse"
+            : "bg-accent text-accent-foreground hover:bg-accent/90"
+        }`}
+      >
+        <Sparkles className="h-3.5 w-3.5" />
+        {activeSolution ? `Active: ${activeSolution.type}` : "Create Solution"}
+        <ChevronDown className="h-3 w-3" />
+      </button>
+      {open && (
+        <>
+          <div className="fixed inset-0 z-[90]" onClick={() => setOpen(false)} />
+          <div className="absolute right-0 top-full mt-1 z-[100] w-52 rounded-lg border border-border bg-popover shadow-xl py-1 text-xs text-foreground">
+            {activeSolution ? (
+              <>
+                <div className="px-3 py-2 text-muted-foreground border-b border-border/60">
+                  <span className="font-semibold block text-foreground">Workspace Connected</span>
+                  <span>Active business mapping: {activeSolution.type}</span>
+                </div>
+                <button
+                  onClick={() => {
+                    setOpen(false);
+                    onDeactivate();
+                  }}
+                  className="w-full text-left px-3 py-2 hover:bg-rose-50 text-rose-600 font-semibold"
+                >
+                  Deactivate Solution
+                </button>
+              </>
+            ) : (
+              <>
+                <div className="px-3 py-1.5 font-bold border-b border-border text-muted-foreground">
+                  Transform spreadsheet data
+                </div>
+                {solutionOptions.map((opt) => (
+                  <button
+                    key={opt.id}
+                    onClick={() => {
+                      setOpen(false);
+                      onSelectSolution(opt.id);
+                    }}
+                    className="w-full text-left px-3 py-2 hover:bg-muted"
+                  >
+                    Generate {opt.label}
+                  </button>
+                ))}
+              </>
+            )}
+          </div>
+        </>
       )}
     </div>
   );

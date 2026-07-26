@@ -39,6 +39,10 @@ export interface Workbook {
   sheets: SheetPage[];
   namedRanges?: Record<string, string>;
   activeSheet?: number;
+  activeSolution?: {
+    type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom";
+    meetings?: any[];
+  };
 }
 
 export type CellValue = string | number | boolean | null;
