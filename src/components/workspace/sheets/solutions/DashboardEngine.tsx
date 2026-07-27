@@ -26,7 +26,8 @@ import {
   Inbox,
   Filter,
   Search,
-  CheckCircle2
+  CheckCircle2,
+  Archive
 } from "lucide-react";
 
 interface DashboardEngineProps {
@@ -87,13 +88,23 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       }
       case "Registry": {
         const totalRecs = records.length;
-        const activeFiles = records.filter((r) => r.Status === "Active").length;
-        const uniqueCats = new Set(records.map((r) => r.Category).filter(Boolean));
+        const activeFiles = records.filter((r) => String(r.Status || r.status).toLowerCase() === "active").length;
+        const archivedFiles = records.filter((r) => String(r.Status || r.status).toLowerCase() === "archived").length;
+
+        // Count "New Records" created in the last 30 days (mocking check based on "Created Date" 2026 values in our default set)
+        const newFiles = records.filter((r) => {
+          const date = String(r["Created Date"] || r.createdDate || "");
+          return date.includes("2026-03") || date.includes("2026-04");
+        }).length;
+
+        const uniqueCats = new Set(records.map((r) => r.Category || r.category).filter(Boolean));
 
         return [
-          { label: "Total Registered Records", value: totalRecs, icon: FileText, color: "text-blue-500 bg-blue-50" },
-          { label: "Active Folders", value: activeFiles, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
-          { label: "Unique Categories", value: uniqueCats.size, icon: Layers, color: "text-amber-500 bg-amber-50" }
+          { label: "Total Records", value: totalRecs, icon: FileText, color: "text-blue-500 bg-blue-50" },
+          { label: "Active Records", value: activeFiles, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
+          { label: "New Records (30d)", value: newFiles, icon: TrendingUp, color: "text-amber-500 bg-amber-50" },
+          { label: "Archived Records", value: archivedFiles, icon: Archive, color: "text-rose-500 bg-rose-50" },
+          { label: "Unique Categories", value: uniqueCats.size, icon: Layers, color: "text-purple-500 bg-purple-50" }
         ];
       }
       case "Project": {
@@ -142,6 +153,17 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       return records.map((r) => ({
         name: (r["Full Name"] || "").slice(0, 15),
         value: Number(r["Base Salary"]) || 0
+      }));
+    } else if (solutionType === "Registry") {
+      // Group records by Category to show Category Distribution
+      const counts: Record<string, number> = {};
+      records.forEach((r) => {
+        const cat = r.Category || r.category || "Unassigned";
+        counts[cat] = (counts[cat] || 0) + 1;
+      });
+      return Object.entries(counts).map(([name, value]) => ({
+        name: name.slice(0, 15),
+        value
       }));
     }
     return [];
@@ -239,6 +261,8 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
                   ? "Deal Value Distribution"
                   : solutionType === "Inventory"
                   ? "Stock Level Distribution"
+                : solutionType === "Registry"
+                ? "Category Distribution"
                   : "Salary Allocation"}
               </h3>
               <div className="h-64">

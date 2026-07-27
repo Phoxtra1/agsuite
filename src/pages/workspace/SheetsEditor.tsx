@@ -15,7 +15,7 @@ import { AnalysisPanel } from "@/components/workspace/sheets/AnalysisPanel";
 import { ChartDialog } from "@/components/workspace/sheets/ChartDialog";
 import { exportCSV, exportJSON, exportXLSX, importXLSX } from "@/components/workspace/sheets/exporters";
 import { useUndoRedo } from "@/components/workspace/sheets/hooks/useUndoRedo";
-import { ArrowLeft, ChevronLeft, ChevronDown, CloudUpload, Download, Loader2, Share2, Upload, Sparkles, AlertCircle, Layout, Table2, Presentation } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronDown, CloudUpload, Download, Loader2, Share2, Upload, Sparkles, AlertCircle, Layout, Table2, Presentation, BarChart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { SheetChart } from "@/lib/workspace/sheets/documents";
 
@@ -29,7 +29,9 @@ import {
   SOLUTIONS_TEMPLATES
 } from "@/lib/workspace/sheets/smartData";
 import CrmView from "@/components/workspace/sheets/solutions/CrmView";
+import RegistryView from "@/components/workspace/sheets/solutions/RegistryView";
 import DashboardEngine from "@/components/workspace/sheets/solutions/DashboardEngine";
+import ReportsView from "@/components/workspace/sheets/solutions/ReportsView";
 import CollaborateMenu from "@/components/workspace/sheets/solutions/CollaborateMenu";
 import MeetingModal from "@/components/workspace/sheets/solutions/MeetingModal";
 
@@ -57,7 +59,7 @@ export default function SheetsEditor() {
   const [showChartDialog, setShowChartDialog] = useState(false);
 
   // Business Solution Workspace states
-  const [activeView, setActiveView] = useState<"spreadsheet" | "solution" | "dashboard">("spreadsheet");
+  const [activeView, setActiveView] = useState<"spreadsheet" | "solution" | "dashboard" | "reports">("spreadsheet");
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [meetingPrefilled, setMeetingPrefilled] = useState<{ title: string; participants: string } | null>(null);
 
@@ -729,6 +731,14 @@ export default function SheetsEditor() {
             >
               <Layout className="h-3.5 w-3.5" /> Intelligent Dashboard
             </button>
+            <button
+              onClick={() => setActiveView("reports")}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                activeView === "reports" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              <BarChart className="h-3.5 w-3.5" /> Reports View
+            </button>
           </div>
           <div className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 shadow-sm">
             Active: {wb.activeSolution.type} Two-Way Sync
@@ -741,6 +751,13 @@ export default function SheetsEditor() {
         {wb.activeSolution && activeView === "solution" ? (
           wb.activeSolution.type === "CRM" ? (
             <CrmView
+              records={parsedRecords}
+              onUpdateRecord={handleUpdateRecord}
+              onAddRecord={handleAddRecord}
+              onOpenMeetingModal={handleOpenMeetingPrefilled}
+            />
+          ) : wb.activeSolution.type === "Registry" ? (
+            <RegistryView
               records={parsedRecords}
               onUpdateRecord={handleUpdateRecord}
               onAddRecord={handleAddRecord}
@@ -768,6 +785,11 @@ export default function SheetsEditor() {
             records={parsedRecords}
             solutionType={wb.activeSolution.type}
             meetings={wb.activeSolution.meetings}
+          />
+        ) : wb.activeSolution && activeView === "reports" ? (
+          <ReportsView
+            records={parsedRecords}
+            solutionType={wb.activeSolution.type}
           />
         ) : (
           /* Default Spreadsheet Editor view */
