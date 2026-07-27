@@ -15,7 +15,7 @@ import { AnalysisPanel } from "@/components/workspace/sheets/AnalysisPanel";
 import { ChartDialog } from "@/components/workspace/sheets/ChartDialog";
 import { exportCSV, exportJSON, exportXLSX, importXLSX } from "@/components/workspace/sheets/exporters";
 import { useUndoRedo } from "@/components/workspace/sheets/hooks/useUndoRedo";
-import { ArrowLeft, ChevronLeft, ChevronDown, CloudUpload, Download, Loader2, Share2, Upload, Sparkles, AlertCircle, Layout, Table2, Presentation } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronDown, CloudUpload, Download, Loader2, Share2, Upload, Sparkles, AlertCircle, Layout, Table2, Presentation, BarChart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
 import type { SheetChart } from "@/lib/workspace/sheets/documents";
 
@@ -32,8 +32,9 @@ import {
 import CrmView from "@/components/workspace/sheets/solutions/CrmView";
 import TasksView from "@/components/workspace/sheets/solutions/TasksView";
 import HrView from "@/components/workspace/sheets/solutions/HrView";
-import ReportsView from "@/components/workspace/sheets/solutions/ReportsView";
+import RegistryView from "@/components/workspace/sheets/solutions/RegistryView";
 import DashboardEngine from "@/components/workspace/sheets/solutions/DashboardEngine";
+import ReportsView from "@/components/workspace/sheets/solutions/ReportsView";
 import CollaborateMenu from "@/components/workspace/sheets/solutions/CollaborateMenu";
 import MeetingModal from "@/components/workspace/sheets/solutions/MeetingModal";
 import ProjectManagementView from "@/components/workspace/sheets/solutions/ProjectManagementView";
@@ -965,16 +966,14 @@ export default function SheetsEditor() {
             >
               <Layout className="h-3.5 w-3.5" /> Dashboard View
             </button>
-            {(wb.activeSolution.type === "Tasks" || wb.activeSolution.type === "HR" || wb.activeSolution.type === "Project" || wb.activeSolution.type === "ProjectManagement") && (
-              <button
-                onClick={() => setActiveView("reports")}
-                className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                  activeView === "reports" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
-                }`}
-              >
-                <Layout className="h-3.5 w-3.5" /> Reports View
-              </button>
-            )}
+            <button
+              onClick={() => setActiveView("reports")}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                activeView === "reports" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+              }`}
+            >
+              <Layout className="h-3.5 w-3.5" /> Reports View
+            </button>
           </div>
           <div className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 shadow-sm">
             Active: {wb.activeSolution.type} Two-Way Sync
@@ -987,6 +986,13 @@ export default function SheetsEditor() {
         {wb.activeSolution && activeView === "solution" ? (
           wb.activeSolution.type === "CRM" ? (
             <CrmView
+              records={parsedRecords}
+              onUpdateRecord={handleUpdateRecord}
+              onAddRecord={handleAddRecord}
+              onOpenMeetingModal={handleOpenMeetingPrefilled}
+            />
+          ) : wb.activeSolution.type === "Registry" ? (
+            <RegistryView
               records={parsedRecords}
               onUpdateRecord={handleUpdateRecord}
               onAddRecord={handleAddRecord}
@@ -1024,6 +1030,8 @@ export default function SheetsEditor() {
               crmRecords={projectManagementData.crmRecords}
               hrEmployees={projectManagementData.hrEmployees}
               registryRecords={projectManagementData.registryRecords}
+=======
+>>>>>>> origin/jules-10842899696782935597-81a00e2f
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 bg-muted/10">
@@ -1055,7 +1063,14 @@ export default function SheetsEditor() {
             allSheets={wb.sheets}
           />
         ) : wb.activeSolution && activeView === "reports" ? (
+<<<<<<< HEAD
           <ReportsView records={parsedRecords} />
+=======
+          <ReportsView
+            records={parsedRecords}
+            solutionType={wb.activeSolution.type}
+          />
+>>>>>>> origin/jules-10842899696782935597-81a00e2f
         ) : (
           /* Default Spreadsheet Editor view */
           <>

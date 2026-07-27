@@ -380,11 +380,85 @@ export const SOLUTIONS_TEMPLATES: Record<string, BusinessSolutionTemplate> = {
   Registry: {
     id: "Registry",
     name: "Registry & Records System",
-    description: "A centralized directory for categorizing legal, financial, or operational documents and files.",
-    defaultHeaders: ["Record ID", "Title", "Category", "Filing Location", "Owner", "Filing Date", "Status"],
+    description: "A versatile registry and repository for tracking multi-category organizational assets and records.",
+    defaultHeaders: [
+      "Record ID",
+      "Name",
+      "Category",
+      "Type",
+      "Status",
+      "Description",
+      "Owner",
+      "Contact Information",
+      "Location",
+      "Created Date",
+      "Updated Date",
+      "Notes"
+    ],
     defaultData: [
-      { "Record ID": "REG2026-001", "Title": "Agyenkwa Partnership Agreement", "Category": "Legal", "Filing Location": "Cabinet A-02", "Owner": "Legal Affairs", "Filing Date": "2026-01-10", "Status": "Active" },
-      { "Record ID": "REG2026-002", "Title": "FY25 Q4 Financial Audit", "Category": "Finance", "Filing Location": "Secure Vault B", "Owner": "Audit & Risk", "Filing Date": "2026-02-14", "Status": "Archived" }
+      {
+        "Record ID": "REG-001",
+        "Name": "Kofi Mensah",
+        "Category": "Farmers",
+        "Type": "Individual",
+        "Status": "Active",
+        "Description": "Cocoa smallholder sponsor",
+        "Owner": "Agri Extension",
+        "Contact Information": "+233 244 111222",
+        "Location": "Ashanti Region",
+        "Created Date": "2026-01-15",
+        "Updated Date": "2026-03-10",
+        "Notes": "Eligible for next fertilizer subsidy batch"
+      },
+      {
+        "Record ID": "REG-002",
+        "Name": "Tractor DX-90",
+        "Category": "Equipment",
+        "Type": "Asset",
+        "Status": "Active",
+        "Description": "Heavy-duty farm tractor",
+        "Owner": "Logistics Dept",
+        "Contact Information": "logistics@amineva.com",
+        "Location": "Greater Accra",
+        "Created Date": "2026-02-10",
+        "Updated Date": "2026-04-01",
+        "Notes": "Scheduled review on next Monday"
+      },
+      {
+        "Record ID": "REG-003",
+        "Name": "Grace Mensah",
+        "Category": "Students",
+        "Type": "Individual",
+        "Status": "Pending",
+        "Description": "High school scholarship beneficiary",
+        "Owner": "Amniva CSR",
+        "Contact Information": "grace.m@school.edu",
+        "Location": "Eastern Region",
+        "Created Date": "2026-03-01",
+        "Updated Date": "2026-03-15",
+        "Notes": "Awaiting certificate upload"
+      },
+      {
+        "Record ID": "REG-004",
+        "Name": "Vanguard Warehouse",
+        "Category": "Properties",
+        "Type": "Infrastructure",
+        "Status": "Archived",
+        "Description": "Storage unit B for post-harvest cacao",
+        "Owner": "Facility Manager",
+        "Contact Information": "warehouse@amineva.com",
+        "Location": "Western Region",
+        "Created Date": "2025-11-20",
+        "Updated Date": "2026-02-14",
+        "Notes": "Decommissioned for FY26"
+      }
+    ],
+    statuses: [
+      "Active",
+      "Inactive",
+      "Pending",
+      "Suspended",
+      "Archived"
     ]
   },
   Project: {
