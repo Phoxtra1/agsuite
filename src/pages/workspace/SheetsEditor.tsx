@@ -26,10 +26,12 @@ import {
   parseSheetRows,
   updateSheetRecord,
   addSheetRecord,
-  SOLUTIONS_TEMPLATES
+  SOLUTIONS_TEMPLATES,
+  seedHrSolutionToWorkbook
 } from "@/lib/workspace/sheets/smartData";
 import CrmView from "@/components/workspace/sheets/solutions/CrmView";
 import TasksView from "@/components/workspace/sheets/solutions/TasksView";
+import HrView from "@/components/workspace/sheets/solutions/HrView";
 import ReportsView from "@/components/workspace/sheets/solutions/ReportsView";
 import DashboardEngine from "@/components/workspace/sheets/solutions/DashboardEngine";
 import CollaborateMenu from "@/components/workspace/sheets/solutions/CollaborateMenu";
@@ -116,6 +118,10 @@ export default function SheetsEditor() {
   // Two-way synchronization & Smart Data Layer Handlers
   const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom" | "Tasks") => {
     setWb((prev) => {
+      if (type === "HR") {
+        return seedHrSolutionToWorkbook(prev);
+      }
+
       let updatedSheets = [...prev.sheets];
       const activeSheetObj = updatedSheets[activeSheetIdx] || updatedSheets[0];
 
@@ -883,7 +889,11 @@ export default function SheetsEditor() {
             >
               <Layout className="h-3.5 w-3.5" /> Dashboard View
             </button>
+<<<<<<< HEAD
             {wb.activeSolution.type === "Tasks" && (
+=======
+            {wb.activeSolution.type === "HR" && (
+>>>>>>> origin/hr-management-module-11167832066725240599
               <button
                 onClick={() => setActiveView("reports")}
                 className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
@@ -918,6 +928,16 @@ export default function SheetsEditor() {
               onOpenMeetingModal={handleOpenMeetingPrefilled}
               meetings={wb.activeSolution.meetings || []}
             />
+          ) : wb.activeSolution.type === "HR" ? (
+            <HrView
+              records={parsedRecords}
+              allSheets={wb.sheets}
+              activeSheetIdx={activeSheetIdx}
+              onSelectSheet={(idx) => setActiveSheetIdx(idx)}
+              onUpdateRecord={handleUpdateRecord}
+              onAddRecord={handleAddRecord}
+              onOpenMeetingModal={handleOpenMeetingPrefilled}
+            />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 bg-muted/10">
               <Presentation className="h-12 w-12 text-accent animate-pulse" />
@@ -935,11 +955,17 @@ export default function SheetsEditor() {
               </button>
             </div>
           )
+        ) : wb.activeSolution && activeView === "reports" ? (
+          <ReportsView
+            allSheets={wb.sheets}
+            parseRowsFn={parseSheetRows}
+          />
         ) : wb.activeSolution && activeView === "dashboard" ? (
           <DashboardEngine
             records={parsedRecords}
             solutionType={wb.activeSolution.type}
             meetings={wb.activeSolution.meetings}
+            allSheets={wb.sheets}
           />
         ) : wb.activeSolution && activeView === "reports" ? (
           <ReportsView records={parsedRecords} />
