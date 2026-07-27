@@ -26,9 +26,12 @@ import {
   parseSheetRows,
   updateSheetRecord,
   addSheetRecord,
-  SOLUTIONS_TEMPLATES
+  SOLUTIONS_TEMPLATES,
+  seedHrSolutionToWorkbook
 } from "@/lib/workspace/sheets/smartData";
 import CrmView from "@/components/workspace/sheets/solutions/CrmView";
+import HrView from "@/components/workspace/sheets/solutions/HrView";
+import ReportsView from "@/components/workspace/sheets/solutions/ReportsView";
 import DashboardEngine from "@/components/workspace/sheets/solutions/DashboardEngine";
 import CollaborateMenu from "@/components/workspace/sheets/solutions/CollaborateMenu";
 import MeetingModal from "@/components/workspace/sheets/solutions/MeetingModal";
@@ -57,7 +60,7 @@ export default function SheetsEditor() {
   const [showChartDialog, setShowChartDialog] = useState(false);
 
   // Business Solution Workspace states
-  const [activeView, setActiveView] = useState<"spreadsheet" | "solution" | "dashboard">("spreadsheet");
+  const [activeView, setActiveView] = useState<"spreadsheet" | "solution" | "dashboard" | "reports">("spreadsheet");
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [meetingPrefilled, setMeetingPrefilled] = useState<{ title: string; participants: string } | null>(null);
 
@@ -115,6 +118,10 @@ export default function SheetsEditor() {
   // Two-way synchronization & Smart Data Layer Handlers
   const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom") => {
     setWb((prev) => {
+      if (type === "HR") {
+        return seedHrSolutionToWorkbook(prev);
+      }
+
       let updatedSheets = [...prev.sheets];
       const activeSheetObj = updatedSheets[activeSheetIdx] || updatedSheets[0];
 
@@ -729,6 +736,16 @@ export default function SheetsEditor() {
             >
               <Layout className="h-3.5 w-3.5" /> Intelligent Dashboard
             </button>
+            {wb.activeSolution.type === "HR" && (
+              <button
+                onClick={() => setActiveView("reports")}
+                className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                  activeView === "reports" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                <Layout className="h-3.5 w-3.5" /> Reports View
+              </button>
+            )}
           </div>
           <div className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 shadow-sm">
             Active: {wb.activeSolution.type} Two-Way Sync
@@ -742,6 +759,16 @@ export default function SheetsEditor() {
           wb.activeSolution.type === "CRM" ? (
             <CrmView
               records={parsedRecords}
+              onUpdateRecord={handleUpdateRecord}
+              onAddRecord={handleAddRecord}
+              onOpenMeetingModal={handleOpenMeetingPrefilled}
+            />
+          ) : wb.activeSolution.type === "HR" ? (
+            <HrView
+              records={parsedRecords}
+              allSheets={wb.sheets}
+              activeSheetIdx={activeSheetIdx}
+              onSelectSheet={(idx) => setActiveSheetIdx(idx)}
               onUpdateRecord={handleUpdateRecord}
               onAddRecord={handleAddRecord}
               onOpenMeetingModal={handleOpenMeetingPrefilled}
@@ -763,6 +790,11 @@ export default function SheetsEditor() {
               </button>
             </div>
           )
+        ) : wb.activeSolution && activeView === "reports" ? (
+          <ReportsView
+            allSheets={wb.sheets}
+            parseRowsFn={parseSheetRows}
+          />
         ) : wb.activeSolution && activeView === "dashboard" ? (
           <DashboardEngine
             records={parsedRecords}
