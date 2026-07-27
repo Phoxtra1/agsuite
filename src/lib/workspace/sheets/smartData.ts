@@ -142,6 +142,89 @@ export const SOLUTIONS_TEMPLATES: Record<string, BusinessSolutionTemplate> = {
       { "Task ID": "TSK-101", "Task Name": "Integrate CRM Workspace", "Assigned To": "Jules Agent", "Priority": "High", "Status": "In Progress", "Due Date": "2026-04-12", "Estimated Hours": 16 },
       { "Task ID": "TSK-102", "Task Name": "Test Real Online Meetings", "Assigned To": "Ebenezer Ocloo", "Priority": "Medium", "Status": "To Do", "Due Date": "2026-04-19", "Estimated Hours": 8 }
     ]
+  },
+  ProjectManagement: {
+    id: "ProjectManagement",
+    name: "Project Management System",
+    description: "Manage end-to-end planning, milestones, task execution, and team assignments.",
+    defaultHeaders: [
+      "Project ID", "Project Name", "Description", "Project Type", "Project Owner", "Project Manager",
+      "Department", "Team", "Start Date", "End Date", "Status", "Priority", "Progress (%)", "Budget", "Location", "Notes"
+    ],
+    defaultData: [
+      {
+        "Project ID": "PRJ-001",
+        "Project Name": "Agyenkwa Climate Initiative",
+        "Description": "Implementing localized green and agro-climate resilient agricultural practices.",
+        "Project Type": "NGO Project",
+        "Project Owner": "JICA",
+        "Project Manager": "Emmanuel Quaye",
+        "Department": "Engineering",
+        "Team": "Climate Response Squad",
+        "Start Date": "2026-04-01",
+        "End Date": "2026-08-31",
+        "Status": "Active",
+        "Priority": "Critical",
+        "Progress (%)": 35,
+        "Budget": 250000,
+        "Location": "Eastern Region",
+        "Notes": "Partnering with West African Agro Services."
+      },
+      {
+        "Project ID": "PRJ-002",
+        "Project Name": "Digital Land Registry Portal",
+        "Description": "Building a GIS-backed secure property and title verification engine.",
+        "Project Type": "Government Project",
+        "Project Owner": "Ministry of Lands",
+        "Project Manager": "Grace Mensah",
+        "Department": "Product",
+        "Team": "Registry Builders",
+        "Start Date": "2026-05-10",
+        "End Date": "2026-12-15",
+        "Status": "Planning",
+        "Priority": "High",
+        "Progress (%)": 10,
+        "Budget": 450000,
+        "Location": "Greater Accra",
+        "Notes": "To be integrated with the Farmer Registry."
+      }
+    ],
+    statuses: ["Planning", "Not Started", "Active", "On Hold", "Under Review", "Completed", "Cancelled"]
+  },
+  ProjectTasks: {
+    id: "ProjectTasks",
+    name: "Project Tasks Execution",
+    description: "Granular tasks assigned to individuals linked back to Projects.",
+    defaultHeaders: ["Task ID", "Project ID", "Task Name", "Assigned To", "Priority", "Status", "Due Date", "Estimated Hours"],
+    defaultData: [
+      { "Task ID": "TSK-001", "Project ID": "PRJ-001", "Task Name": "Contact Partners", "Assigned To": "Emmanuel Quaye", "Priority": "High", "Status": "Completed", "Due Date": "2026-04-10", "Estimated Hours": 8 },
+      { "Task ID": "TSK-002", "Project ID": "PRJ-001", "Task Name": "Prepare Proposal", "Assigned To": "Grace Mensah", "Priority": "Critical", "Status": "In Progress", "Due Date": "2026-04-20", "Estimated Hours": 16 },
+      { "Task ID": "TSK-003", "Project ID": "PRJ-001", "Task Name": "Conduct Field Survey", "Assigned To": "Emmanuel Quaye", "Priority": "High", "Status": "To Do", "Due Date": "2026-05-15", "Estimated Hours": 24 },
+      { "Task ID": "TSK-004", "Project ID": "PRJ-001", "Task Name": "Submit Report", "Assigned To": "Emmanuel Quaye", "Priority": "Medium", "Status": "To Do", "Due Date": "2026-05-30", "Estimated Hours": 12 },
+      { "Task ID": "TSK-005", "Project ID": "PRJ-002", "Task Name": "Database Schema Setup", "Assigned To": "Grace Mensah", "Priority": "High", "Status": "In Progress", "Due Date": "2026-05-20", "Estimated Hours": 10 }
+    ]
+  },
+  ProjectMilestones: {
+    id: "ProjectMilestones",
+    name: "Project Milestones",
+    description: "Key milestones of progress indicating major project stages.",
+    defaultHeaders: ["Milestone ID", "Project ID", "Milestone Name", "Description", "Due Date", "Status", "Completion Percentage"],
+    defaultData: [
+      { "Milestone ID": "MS-001", "Project ID": "PRJ-001", "Milestone Name": "Phase 1 Complete", "Description": "Partner mobilization and initialization parameters established.", "Due Date": "2026-04-25", "Status": "In Progress", "Completion Percentage": 60 },
+      { "Milestone ID": "MS-002", "Project ID": "PRJ-001", "Milestone Name": "Research Completed", "Description": "All agricultural field data parsed and evaluated.", "Due Date": "2026-06-30", "Status": "Not Started", "Completion Percentage": 0 },
+      { "Milestone ID": "MS-003", "Project ID": "PRJ-001", "Milestone Name": "Launch Completed", "Description": "Full deployment of clean climate mechanisms across sites.", "Due Date": "2026-08-15", "Status": "Not Started", "Completion Percentage": 0 },
+      { "Milestone ID": "MS-004", "Project ID": "PRJ-002", "Milestone Name": "MVP Prototype Launch", "Description": "First public functional system live demo.", "Due Date": "2026-07-01", "Status": "In Progress", "Completion Percentage": 20 }
+    ]
+  },
+  ProjectTeams: {
+    id: "ProjectTeams",
+    name: "Project Teams Directory",
+    description: "Project teams mapping list of team names and corporate divisions.",
+    defaultHeaders: ["Team ID", "Team Name", "Manager", "Department", "Members"],
+    defaultData: [
+      { "Team ID": "TM-01", "Team Name": "Climate Response Squad", "Manager": "Emmanuel Quaye", "Department": "Engineering", "Members": "e.quaye@amineva.com, g.mensah@amineva.com" },
+      { "Team ID": "TM-02", "Team Name": "Registry Builders", "Manager": "Grace Mensah", "Department": "Product", "Members": "g.mensah@amineva.com" }
+    ]
   }
 };
 

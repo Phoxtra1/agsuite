@@ -32,6 +32,7 @@ import CrmView from "@/components/workspace/sheets/solutions/CrmView";
 import DashboardEngine from "@/components/workspace/sheets/solutions/DashboardEngine";
 import CollaborateMenu from "@/components/workspace/sheets/solutions/CollaborateMenu";
 import MeetingModal from "@/components/workspace/sheets/solutions/MeetingModal";
+import ProjectManagementView from "@/components/workspace/sheets/solutions/ProjectManagementView";
 
 export default function SheetsEditor() {
   const { id } = useParams();
@@ -113,16 +114,34 @@ export default function SheetsEditor() {
   }, [wbUR, persist]);
 
   // Two-way synchronization & Smart Data Layer Handlers
-  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom") => {
+  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "ProjectManagement" | "Custom") => {
     setWb((prev) => {
       let updatedSheets = [...prev.sheets];
-      const activeSheetObj = updatedSheets[activeSheetIdx] || updatedSheets[0];
 
-      // If the sheet has no data rows, automatically seed the template's standard columns and records
-      const hasNoData = Object.keys(activeSheetObj.cells).length === 0;
-      if (hasNoData) {
-        const seeded = seedSolutionToSheet(activeSheetObj, type);
-        updatedSheets = updatedSheets.map((s, idx) => idx === activeSheetIdx ? seeded : s);
+      if (type === "ProjectManagement") {
+        // Multi-tab workspace auto-seeding
+        const projectTemplates = ["ProjectManagement", "ProjectTasks", "ProjectMilestones", "ProjectTeams"];
+        const names = ["Projects", "Tasks", "Milestones", "Teams"];
+
+        names.forEach((name, i) => {
+          const tId = projectTemplates[i];
+          const foundIdx = updatedSheets.findIndex(s => s.name === name);
+          const sheetPage = foundIdx !== -1 ? updatedSheets[foundIdx] : { name, cells: {} };
+          const seeded = seedSolutionToSheet(sheetPage, tId);
+
+          if (foundIdx !== -1) {
+            updatedSheets[foundIdx] = seeded;
+          } else {
+            updatedSheets.push(seeded);
+          }
+        });
+      } else {
+        const activeSheetObj = updatedSheets[activeSheetIdx] || updatedSheets[0];
+        const hasNoData = Object.keys(activeSheetObj.cells).length === 0;
+        if (hasNoData) {
+          const seeded = seedSolutionToSheet(activeSheetObj, type);
+          updatedSheets = updatedSheets.map((s, idx) => idx === activeSheetIdx ? seeded : s);
+        }
       }
 
       return {
@@ -167,6 +186,19 @@ export default function SheetsEditor() {
     setEngineTick((t) => t + 1);
   }, [activeSheetIdx, setWb]);
 
+  const handleUpdateSheetRecordByName = useCallback((sheetName: string, rowIndex: number, field: string, value: any) => {
+    setWb((prev) => {
+      const sIdx = prev.sheets.findIndex(s => s.name === sheetName);
+      if (sIdx === -1) return prev;
+      const updatedSheet = updateSheetRecord(prev.sheets[sIdx], rowIndex, field, value);
+      return {
+        ...prev,
+        sheets: prev.sheets.map((s, idx) => idx === sIdx ? updatedSheet : s)
+      };
+    });
+    setEngineTick((t) => t + 1);
+  }, [setWb]);
+
   const handleAddRecord = useCallback((record: Record<string, any>) => {
     setWb((prev) => {
       const activeSheetObj = prev.sheets[activeSheetIdx];
@@ -182,6 +214,23 @@ export default function SheetsEditor() {
       description: "The new record was added to the sheet. Two-way synchronization is active."
     });
   }, [activeSheetIdx, setWb]);
+
+  const handleAddSheetRecordByName = useCallback((sheetName: string, record: Record<string, any>) => {
+    setWb((prev) => {
+      const sIdx = prev.sheets.findIndex(s => s.name === sheetName);
+      if (sIdx === -1) return prev;
+      const updatedSheet = addSheetRecord(prev.sheets[sIdx], record);
+      return {
+        ...prev,
+        sheets: prev.sheets.map((s, idx) => idx === sIdx ? updatedSheet : s)
+      };
+    });
+    setEngineTick((t) => t + 1);
+    toast({
+      title: "Record Added Successfully",
+      description: `The new record was added to the ${sheetName} sheet. Two-way synchronization is active.`
+    });
+  }, [setWb]);
 
   const handleScheduleMeeting = useCallback((meeting: any) => {
     setWb((prev) => {
@@ -209,6 +258,29 @@ export default function SheetsEditor() {
   const parsedRecords = useMemo(() => {
     return parseSheetRows(activeSheet);
   }, [activeSheet, engineTick]);
+
+  // Support multi-tab parsing for Project Management View
+  const projectManagementData = useMemo(() => {
+    const projectsSheet = wb.sheets.find(s => s.name === "Projects");
+    const tasksSheet = wb.sheets.find(s => s.name === "Tasks");
+    const milestonesSheet = wb.sheets.find(s => s.name === "Milestones");
+    const teamsSheet = wb.sheets.find(s => s.name === "Teams");
+
+    // Optional workspace directories to cross-reference
+    const crmSheet = wb.sheets.find(s => s.name === "CRM" || s.name === "Sheet1");
+    const hrSheet = wb.sheets.find(s => s.name === "HR" || s.name === "Employees");
+    const registrySheet = wb.sheets.find(s => s.name === "Registry");
+
+    return {
+      projects: projectsSheet ? parseSheetRows(projectsSheet) : [],
+      tasks: tasksSheet ? parseSheetRows(tasksSheet) : [],
+      milestones: milestonesSheet ? parseSheetRows(milestonesSheet) : [],
+      teams: teamsSheet ? parseSheetRows(teamsSheet) : [],
+      crmRecords: crmSheet ? parseSheetRows(crmSheet) : [],
+      hrEmployees: hrSheet ? parseSheetRows(hrSheet) : [],
+      registryRecords: registrySheet ? parseSheetRows(registrySheet) : []
+    };
+  }, [wb.sheets, engineTick]);
 
   const recommendedSolutionId = useMemo(() => {
     if (wb.activeSolution) return null;
@@ -746,6 +818,21 @@ export default function SheetsEditor() {
               onAddRecord={handleAddRecord}
               onOpenMeetingModal={handleOpenMeetingPrefilled}
             />
+          ) : wb.activeSolution.type === "ProjectManagement" ? (
+            <ProjectManagementView
+              projects={projectManagementData.projects}
+              tasks={projectManagementData.tasks}
+              milestones={projectManagementData.milestones}
+              teams={projectManagementData.teams}
+              onUpdateRecord={handleUpdateSheetRecordByName}
+              onAddRecord={handleAddSheetRecordByName}
+              onOpenMeetingModal={handleOpenMeetingPrefilled}
+              onScheduleEvent={(prefilled) => handleOpenMeetingPrefilled(prefilled)}
+              onNotifyTeam={(message) => toast({ title: "Team Notification Sent", description: message })}
+              crmRecords={projectManagementData.crmRecords}
+              hrEmployees={projectManagementData.hrEmployees}
+              registryRecords={projectManagementData.registryRecords}
+            />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 bg-muted/10">
               <Presentation className="h-12 w-12 text-accent animate-pulse" />
@@ -859,6 +946,7 @@ function SolutionDropdown({ activeSolution, onSelectSolution, onDeactivate }: So
     { id: "HR", label: "HR Management" },
     { id: "Registry", label: "Registry & Archive" },
     { id: "Project", label: "Project & Tasks" },
+    { id: "ProjectManagement", label: "Project Management System" },
     { id: "Custom", label: "Custom Solution" }
   ];
 
