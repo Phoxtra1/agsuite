@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  getSheet, updateSheet, EMPTY_WORKBOOK, cellId, parseCell,
+  getSheet, updateSheet, EMPTY_WORKBOOK, cellId, parseCell, parseMergeRange,
   insertRow, deleteRow, insertCol, deleteCol,
   type WorkspaceSheet, type Workbook, type SheetPage, type CellFormat, flattenWorkbookText,
 } from "@/lib/workspace/sheets/documents";
@@ -85,8 +85,7 @@ export default function SheetsEditor() {
     engineRef.current = buildEngine(wb);
     setEngineTick((t) => t + 1);
     return () => { engineRef.current?.destroy(); engineRef.current = null; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wb.sheets.length, wb.sheets.map((s) => s.name).join("|")]);
+  }, [wb]);
 
   const activeSheet = wb.sheets[activeSheetIdx] ?? wb.sheets[0];
 
@@ -300,7 +299,47 @@ export default function SheetsEditor() {
     navigator.clipboard?.writeText(rows.join("\n")).catch(() => {});
   }, [selection, activeSheet]);
 
-  const doPaste = useCallback(() => {
+  const doPaste = useCallback(async () => {
+    // 1. Try to read from native system clipboard first
+    try {
+      const text = await navigator.clipboard?.readText();
+      if (text) {
+        // Parse tab-separated values (tsv)
+        const rows = text.split(/\r?\n/).map((row) => row.split("\t"));
+        // Only parse if we have valid cells
+        if (rows.length > 0 && (rows.length > 1 || rows[0].length > 1 || rows[0][0] !== "")) {
+          const dst = norm(selection);
+          mutateActive((s) => {
+            const cells = { ...s.cells };
+            for (let r = 0; r < rows.length; r++) {
+              for (let c = 0; c < rows[r].length; c++) {
+                const targetRow = dst.r1 + r;
+                const targetCol = dst.c1 + c;
+                // Don't paste beyond grid bounds
+                if (targetRow >= 200 || targetCol >= 26) continue;
+
+                const targetId = cellId(targetRow, targetCol);
+                const val = rows[r][c];
+                if (val === "") {
+                  delete cells[targetId];
+                } else if (!isNaN(Number(val)) && val.trim() !== "") {
+                  cells[targetId] = Number(val);
+                } else {
+                  cells[targetId] = val;
+                }
+              }
+            }
+            return { ...s, cells };
+          });
+          toast({ title: "Pasted from system clipboard" });
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Could not read native clipboard, falling back to local clipboard", err);
+    }
+
+    // 2. Fallback to local clipboard (with formats)
     if (!clipboard) return;
     const dst = norm(selection);
     const src = clipboard.range;
@@ -325,6 +364,37 @@ export default function SheetsEditor() {
       return { ...s, cells, formats };
     });
     if (clipboard.cut) { setClipboard(null); setCopiedRange(null); }
+    toast({ title: "Pasted from local clipboard" });
+  }, [clipboard, selection, mutateActive]);
+
+  const doPasteSpecial = useCallback((mode: "values" | "formats") => {
+    if (!clipboard) {
+      toast({ title: "Clipboard is empty", description: "Copy or cut cells first before pasting." });
+      return;
+    }
+    const dst = norm(selection);
+    const src = clipboard.range;
+    const dr = dst.r1 - src.r1, dc = dst.c1 - src.c1;
+    mutateActive((s) => {
+      const cells = { ...s.cells };
+      const formats = { ...(s.formats ?? {}) };
+
+      if (mode === "values") {
+        for (const [k, v] of Object.entries(clipboard.cells)) {
+          const p = parseCell(k)!;
+          const nid = cellId(p.row + dr, p.col + dc);
+          cells[nid] = v;
+        }
+      } else if (mode === "formats") {
+        for (const [k, v] of Object.entries(clipboard.formats)) {
+          const p = parseCell(k)!;
+          const nid = cellId(p.row + dr, p.col + dc);
+          formats[nid] = v;
+        }
+      }
+      return { ...s, cells, formats };
+    });
+    toast({ title: `Pasted special: ${mode}` });
   }, [clipboard, selection, mutateActive]);
 
   // Structural ops
@@ -350,6 +420,89 @@ export default function SheetsEditor() {
     insertLeft: () => mutateActive((s) => insertCol(s, norm(selection).c1)),
     insertRight: () => mutateActive((s) => insertCol(s, norm(selection).c2 + 1)),
     delete: () => { const n = norm(selection); mutateActive((s) => deleteCol(s, n.c1, n.c2 - n.c1 + 1)); },
+  };
+
+  const handleMergeCells = (type: "block" | "horizontal" | "vertical") => {
+    const n = norm(selection);
+    if (n.r1 === n.r2 && n.c1 === n.c2) return; // single cell can't be merged
+
+    mutateActive((s) => {
+      let currentMerges = [...(s.merges ?? [])];
+      // First, remove any existing merges that intersect with this selection to avoid conflicts
+      currentMerges = currentMerges.filter((m) => {
+        const parsed = parseMergeRange(m);
+        if (!parsed) return false;
+        // Check intersection
+        return !(
+          parsed.r2 >= n.r1 &&
+          parsed.r1 <= n.r2 &&
+          parsed.c2 >= n.c1 &&
+          parsed.c1 <= n.c2
+        );
+      });
+
+      if (type === "block") {
+        const range = `${cellId(n.r1, n.c1)}:${cellId(n.r2, n.c2)}`;
+        currentMerges.push(range);
+      } else if (type === "horizontal") {
+        for (let r = n.r1; r <= n.r2; r++) {
+          const range = `${cellId(r, n.c1)}:${cellId(r, n.c2)}`;
+          currentMerges.push(range);
+        }
+      } else if (type === "vertical") {
+        for (let c = n.c1; c <= n.c2; c++) {
+          const range = `${cellId(n.r1, c)}:${cellId(n.r2, c)}`;
+          currentMerges.push(range);
+        }
+      }
+
+      // Also let's clear values of other cells in the merge range so only the primary cell's value remains, like Excel/Sheets
+      const cells = { ...s.cells };
+      // Keep only top-left value of each new merge range
+      if (type === "block") {
+        for (let r = n.r1; r <= n.r2; r++) {
+          for (let c = n.c1; c <= n.c2; c++) {
+            if (r === n.r1 && c === n.c1) continue;
+            delete cells[cellId(r, c)];
+          }
+        }
+      } else if (type === "horizontal") {
+        for (let r = n.r1; r <= n.r2; r++) {
+          for (let c = n.c1 + 1; c <= n.c2; c++) {
+            delete cells[cellId(r, c)];
+          }
+        }
+      } else if (type === "vertical") {
+        for (let c = n.c1; c <= n.c2; c++) {
+          for (let r = n.r1 + 1; r <= n.r2; r++) {
+            delete cells[cellId(r, c)];
+          }
+        }
+      }
+
+      return { ...s, merges: currentMerges, cells };
+    });
+    toast({ title: "Cells merged successfully" });
+  };
+
+  const handleUnmergeCells = () => {
+    const n = norm(selection);
+    mutateActive((s) => {
+      let currentMerges = [...(s.merges ?? [])];
+      currentMerges = currentMerges.filter((m) => {
+        const parsed = parseMergeRange(m);
+        if (!parsed) return false;
+        // Keep merges that DO NOT intersect with the selection
+        return !(
+          parsed.r2 >= n.r1 &&
+          parsed.r1 <= n.r2 &&
+          parsed.c2 >= n.c1 &&
+          parsed.c1 <= n.c2
+        );
+      });
+      return { ...s, merges: currentMerges };
+    });
+    toast({ title: "Cells unmerged successfully" });
   };
 
   const ribbon: RibbonActions = {
@@ -383,11 +536,7 @@ export default function SheetsEditor() {
           return { ...s, formats };
         });
       },
-      mergeCells: () => {
-        const n = norm(selection);
-        const range = `${cellId(n.r1, n.c1)}:${cellId(n.r2, n.c2)}`;
-        mutateActive((s) => ({ ...s, merges: [...(s.merges ?? []), range] }));
-      },
+      mergeCells: () => handleMergeCells("block"),
     },
     data: {
       sortAsc: () => sortSelection(true), sortDesc: () => sortSelection(false),
@@ -527,13 +676,16 @@ export default function SheetsEditor() {
   const contextActions = {
     cell: {
       cut: () => doCopy(true), copy: () => doCopy(false), paste: doPaste,
-      pasteSpecial: () => toast({ title: "Paste special", description: "Values / formulas / formats — coming next turn." }),
+      pasteValuesOnly: () => doPasteSpecial("values"),
+      pasteFormatsOnly: () => doPasteSpecial("formats"),
       insertRowAbove: rowOps.insertAbove, insertRowBelow: rowOps.insertBelow,
       insertColLeft: colOps.insertLeft, insertColRight: colOps.insertRight,
       deleteRow: rowOps.delete, deleteCol: colOps.delete,
       clearContents: ribbon.cells.clearContents, clearFormat: ribbon.cells.clearFormat,
-      mergeCells: ribbon.cells.mergeCells,
-      splitCells: () => mutateActive((s) => ({ ...s, merges: [] })),
+      mergeCells: () => handleMergeCells("block"),
+      mergeHorizontal: () => handleMergeCells("horizontal"),
+      mergeVertical: () => handleMergeCells("vertical"),
+      splitCells: handleUnmergeCells,
       addComment: () => toast({ title: "Comments coming soon" }),
       insertLink: ribbon.insert.link,
       conditionalFormat: () => toast({ title: "Conditional formatting coming soon" }),
