@@ -163,4 +163,39 @@ describe("Amineva Sheets Smart Business Solution tests", () => {
     expect(updated.cells[cellId(2, 1)]).toBe("Kofi Mensah");
     expect(updated.cells[cellId(2, 4)]).toBe("Proposal Sent");
   });
+
+  it("should correctly recommend the Tasks business solution template based on column headers", () => {
+    const sheetWithTaskHeaders: SheetPage = {
+      name: "Team Tasks",
+      cells: {
+        [cellId(0, 0)]: "Task Name",
+        [cellId(0, 1)]: "Assigned To",
+        [cellId(0, 2)]: "Department",
+        [cellId(0, 3)]: "Priority",
+        [cellId(0, 4)]: "Status",
+        [cellId(0, 5)]: "Due Date",
+        [cellId(0, 6)]: "Progress (%)"
+      }
+    };
+
+    const rec = recommendSolution(sheetWithTaskHeaders);
+    expect(rec).toBe("Tasks");
+  });
+
+  it("should seed the Tasks template structures and default records correctly", () => {
+    const blankSheet: SheetPage = { name: "Sheet1", cells: {} };
+
+    // Seed Tasks Solution
+    const seeded = seedSolutionToSheet(blankSheet, "Tasks");
+    expect(seeded.cells[cellId(0, 0)]).toBe("Task ID");
+    expect(seeded.cells[cellId(0, 1)]).toBe("Task Name");
+    expect(seeded.cells[cellId(0, 4)]).toBe("Assigned To");
+    expect(seeded.cells[cellId(0, 9)]).toBe("Status");
+
+    // Check first default row values
+    expect(seeded.cells[cellId(1, 0)]).toBe("TSK-001");
+    expect(seeded.cells[cellId(1, 1)]).toBe("Prepare Partnership Proposal");
+    expect(seeded.cells[cellId(1, 4)]).toBe("Jules Agent");
+    expect(seeded.cells[cellId(1, 9)]).toBe("In Progress");
+  });
 });
