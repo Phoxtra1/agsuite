@@ -5,12 +5,17 @@ import {
 } from "@/components/ui/context-menu";
 
 interface Actions {
-  cut: () => void; copy: () => void; paste: () => void; pasteSpecial: () => void;
+  cut: () => void; copy: () => void; paste: () => void;
+  pasteValuesOnly: () => void;
+  pasteFormatsOnly: () => void;
   insertRowAbove: () => void; insertRowBelow: () => void;
   insertColLeft: () => void; insertColRight: () => void;
   deleteRow: () => void; deleteCol: () => void;
   clearContents: () => void; clearFormat: () => void;
-  mergeCells: () => void; splitCells: () => void;
+  mergeCells: () => void;
+  mergeHorizontal: () => void;
+  mergeVertical: () => void;
+  splitCells: () => void;
   addComment: () => void; insertLink: () => void;
   conditionalFormat: () => void; dataValidation: () => void;
   duplicate: () => void; hideRow: () => void; hideCol: () => void;
@@ -24,7 +29,13 @@ export function CellContextMenu({ children, actions }: { children: ReactNode; ac
         <ContextMenuItem onClick={actions.cut}>Cut <span className="ml-auto text-[10px] text-muted-foreground">Ctrl+X</span></ContextMenuItem>
         <ContextMenuItem onClick={actions.copy}>Copy <span className="ml-auto text-[10px] text-muted-foreground">Ctrl+C</span></ContextMenuItem>
         <ContextMenuItem onClick={actions.paste}>Paste <span className="ml-auto text-[10px] text-muted-foreground">Ctrl+V</span></ContextMenuItem>
-        <ContextMenuItem onClick={actions.pasteSpecial}>Paste special…</ContextMenuItem>
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>Paste special…</ContextMenuSubTrigger>
+          <ContextMenuSubContent>
+            <ContextMenuItem onClick={actions.pasteValuesOnly}>Paste values only</ContextMenuItem>
+            <ContextMenuItem onClick={actions.pasteFormatsOnly}>Paste formatting only</ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
         <ContextMenuSeparator />
         <ContextMenuSub>
           <ContextMenuSubTrigger>Insert</ContextMenuSubTrigger>
@@ -47,8 +58,15 @@ export function CellContextMenu({ children, actions }: { children: ReactNode; ac
         <ContextMenuItem onClick={actions.clearContents}>Clear contents <span className="ml-auto text-[10px] text-muted-foreground">Del</span></ContextMenuItem>
         <ContextMenuItem onClick={actions.clearFormat}>Clear formatting</ContextMenuItem>
         <ContextMenuSeparator />
-        <ContextMenuItem onClick={actions.mergeCells}>Merge cells</ContextMenuItem>
-        <ContextMenuItem onClick={actions.splitCells}>Split cells</ContextMenuItem>
+        <ContextMenuSub>
+          <ContextMenuSubTrigger>Merge cells</ContextMenuSubTrigger>
+          <ContextMenuSubContent>
+            <ContextMenuItem onClick={actions.mergeCells}>Merge block</ContextMenuItem>
+            <ContextMenuItem onClick={actions.mergeHorizontal}>Merge horizontally</ContextMenuItem>
+            <ContextMenuItem onClick={actions.mergeVertical}>Merge vertically</ContextMenuItem>
+            <ContextMenuItem onClick={actions.splitCells}>Unmerge cells</ContextMenuItem>
+          </ContextMenuSubContent>
+        </ContextMenuSub>
         <ContextMenuSeparator />
         <ContextMenuItem onClick={actions.addComment}>Add comment</ContextMenuItem>
         <ContextMenuItem onClick={actions.insertLink}>Insert link</ContextMenuItem>

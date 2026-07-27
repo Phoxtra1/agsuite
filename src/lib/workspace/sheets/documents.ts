@@ -291,6 +291,27 @@ export function parseCell(id: string): { row: number; col: number } | null {
   return { col: letterToCol(m[1]), row: parseInt(m[2], 10) - 1 };
 }
 
+export interface MergeRange {
+  r1: number;
+  c1: number;
+  r2: number;
+  c2: number;
+}
+
+export function parseMergeRange(rangeStr: string): MergeRange | null {
+  const parts = rangeStr.split(":");
+  if (parts.length !== 2) return null;
+  const p1 = parseCell(parts[0]);
+  const p2 = parseCell(parts[1]);
+  if (!p1 || !p2) return null;
+  return {
+    r1: Math.min(p1.row, p2.row),
+    c1: Math.min(p1.col, p2.col),
+    r2: Math.max(p1.row, p2.row),
+    c2: Math.max(p1.col, p2.col),
+  };
+}
+
 /* ---------- Structural ops that shift cells + formats ---------- */
 type Remap = (row: number, col: number) => { row: number; col: number } | null;
 

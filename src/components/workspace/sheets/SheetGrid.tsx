@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { SheetPage, CellFormat, CellValue, SheetChart } from "@/lib/workspace/sheets/documents";
-import { colToLetter, cellId, parseCell, formatCellValue } from "@/lib/workspace/sheets/documents";
+import { colToLetter, cellId, parseCell, formatCellValue, parseMergeRange, type MergeRange } from "@/lib/workspace/sheets/documents";
 import type { EngineHandle } from "@/lib/workspace/sheets/engine";
 import { CellContextMenu, RowContextMenu, ColContextMenu } from "./ContextMenus";
 import { SheetChartOverlay } from "./ChartDialog";
@@ -34,23 +34,125 @@ const ROW_HEADER_W = 42;
 const MIN_COL_W = 32;
 const MIN_ROW_H = 18;
 
+interface CellInputProps {
+  initialValue: string;
+  selectOnFocus: boolean;
+  onCommit: (val: string, next?: { r: number; c: number }) => void;
+  onCancel: () => void;
+  row: number;
+  col: number;
+  scale: number;
+}
+
+function CellInput({
+  initialValue,
+  selectOnFocus,
+  onCommit,
+  onCancel,
+  row,
+  col,
+  scale,
+}: CellInputProps) {
+  const [val, setVal] = useState(initialValue);
+  const inputRef = useRef<HTMLInputElement | null>(null);
+  const hasCommitted = useRef(false);
+
+  useEffect(() => {
+    if (inputRef.current) {
+      inputRef.current.focus();
+      if (selectOnFocus) {
+        inputRef.current.select();
+      } else {
+        const len = inputRef.current.value.length;
+        inputRef.current.setSelectionRange(len, len);
+      }
+    }
+  }, [selectOnFocus]);
+
+  const handleCommit = (finalVal: string, next?: { r: number; c: number }) => {
+    if (hasCommitted.current) return;
+    hasCommitted.current = true;
+    onCommit(finalVal, next);
+  };
+
+  return (
+    <input
+      ref={inputRef}
+      value={val}
+      onChange={(e) => setVal(e.target.value)}
+      onBlur={() => handleCommit(val)}
+      onKeyDown={(e) => {
+        if (e.key === "Enter") {
+          handleCommit(val, { r: row + 1, c: col });
+          e.preventDefault();
+        } else if (e.key === "Tab") {
+          if (e.shiftKey) {
+            handleCommit(val, { r: row, c: Math.max(0, col - 1) });
+          } else {
+            handleCommit(val, { r: row, c: col + 1 });
+          }
+          e.preventDefault();
+        } else if (e.key === "Escape") {
+          onCancel();
+          e.preventDefault();
+        }
+      }}
+      className="absolute inset-0 w-full h-full outline-none bg-white text-foreground border-2 border-accent px-1.5 z-50 shadow-md animate-in fade-in-50 duration-75"
+      style={{ fontSize: 13 * scale }}
+    />
+  );
+}
+
 export function SheetGrid({
   sheet, engine, rowCount = 200, colCount = 26,
   selection, onSelect, onCellEdit, onFillDown,
   gridlines = true, showHeaders = true, zoom = 100,
   copiedRange, contextActions, onUpdateChart, onDeleteChart,
 }: Props) {
-  const [editing, setEditing] = useState<{ id: string; value: string } | null>(null);
+  const [editing, setEditing] = useState<{ id: string; value: string; selectOnFocus: boolean } | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
-  const inputRef = useRef<HTMLInputElement | null>(null);
   const dragStart = useRef<{ r: number; c: number } | null>(null);
   const [resizing, setResizing] = useState<{ type: "col" | "row"; index: number; start: number; origin: number } | null>(null);
   const [fillDrag, setFillDrag] = useState<{ toRow: number } | null>(null);
 
-  useEffect(() => { if (editing && inputRef.current) inputRef.current.focus(); }, [editing]);
-
   const scale = zoom / 100;
   const rowH = (r: number) => (sheet.rowHeights?.[r] ?? DEFAULT_ROW_H) * scale;
+
+  const mergeInfo = useMemo(() => {
+    const merges = sheet.merges ?? [];
+    const parsed: MergeRange[] = [];
+    for (const m of merges) {
+      const parsedRange = parseMergeRange(m);
+      if (parsedRange) parsed.push(parsedRange);
+    }
+
+    const cellMap = new Map<string, {
+      isPrimary: boolean;
+      primaryRow: number;
+      primaryCol: number;
+      rowSpan: number;
+      colSpan: number;
+      range: MergeRange;
+    }>();
+
+    for (const range of parsed) {
+      for (let r = range.r1; r <= range.r2; r++) {
+        for (let c = range.c1; c <= range.c2; c++) {
+          const key = `${r},${c}`;
+          const isPrimary = r === range.r1 && c === range.c1;
+          cellMap.set(key, {
+            isPrimary,
+            primaryRow: range.r1,
+            primaryCol: range.c1,
+            rowSpan: range.r2 - range.r1 + 1,
+            colSpan: range.c2 - range.c1 + 1,
+            range,
+          });
+        }
+      }
+    }
+    return cellMap;
+  }, [sheet.merges]);
 
   // Auto-expand columns based on content length so text/figures never hide.
   // User-set widths (from resize) win; otherwise pick max(default, longest content).
@@ -107,11 +209,15 @@ export function SheetGrid({
   function beginEdit(r: number, c: number, initial?: string) {
     const id = cellId(r, c);
     const raw = sheet.cells[id];
-    setEditing({ id, value: initial ?? (raw == null ? "" : String(raw)) });
+    setEditing({
+      id,
+      value: initial ?? (raw == null ? "" : String(raw)),
+      selectOnFocus: initial === undefined,
+    });
   }
-  function commitEdit(next?: { r: number; c: number }) {
+  function commitEdit(val: string, next?: { r: number; c: number }) {
     if (!editing) return;
-    onCellEdit(editing.id, editing.value);
+    onCellEdit(editing.id, val);
     setEditing(null);
     if (next) onSelect({ r1: next.r, c1: next.c, r2: next.r, c2: next.c });
   }
@@ -124,7 +230,15 @@ export function SheetGrid({
     let nr = r1, nc = c1;
     if (e.key === "ArrowDown") nr = Math.min(rowCount - 1, r1 + 1);
     else if (e.key === "ArrowUp") nr = Math.max(0, r1 - 1);
-    else if (e.key === "ArrowRight" || e.key === "Tab") { nc = Math.min(colCount - 1, c1 + 1); e.preventDefault(); }
+    else if (e.key === "Tab") {
+      if (e.shiftKey) {
+        nc = Math.max(0, c1 - 1);
+      } else {
+        nc = Math.min(colCount - 1, c1 + 1);
+      }
+      e.preventDefault();
+    }
+    else if (e.key === "ArrowRight") nc = Math.min(colCount - 1, c1 + 1);
     else if (e.key === "ArrowLeft") nc = Math.max(0, c1 - 1);
     else if (e.key === "Home") nc = 0;
     else if (e.key === "End") nc = colCount - 1;
@@ -142,6 +256,14 @@ export function SheetGrid({
     else onSelect({ r1: nr, c1: nc, r2: nr, c2: nc });
     e.preventDefault();
   };
+
+  useEffect(() => {
+    const onGlobalMouseUp = () => {
+      dragStart.current = null;
+    };
+    window.addEventListener("mouseup", onGlobalMouseUp);
+    return () => window.removeEventListener("mouseup", onGlobalMouseUp);
+  }, []);
 
   // Resize handlers
   useEffect(() => {
@@ -236,6 +358,13 @@ export function SheetGrid({
                 )}
                 {Array.from({ length: colCount }).map((_, c) => {
                   if (sheet.hiddenCols?.includes(c)) return null;
+
+                  // Merged cells logic
+                  const mergeDetails = mergeInfo.get(`${r},${c}`);
+                  if (mergeDetails && !mergeDetails.isPrimary) {
+                    return null;
+                  }
+
                   const id = cellId(r, c);
                   const fmt = sheet.formats?.[id];
                   const raw = sheet.cells[id];
@@ -246,8 +375,27 @@ export function SheetGrid({
                   const isBottomRight = isActive && n.r1 === n.r2 && n.c1 === n.c2;
                   const isSelBottomRight = r === n.r2 && c === n.c2;
 
+                  // Calculate custom dimension for merged cells
+                  let width = colW(c);
+                  let height = rowH(r);
+                  if (mergeDetails && mergeDetails.isPrimary) {
+                    let wSum = 0;
+                    for (let colIdx = mergeDetails.range.c1; colIdx <= mergeDetails.range.c2; colIdx++) {
+                      wSum += colW(colIdx);
+                    }
+                    width = wSum;
+
+                    let hSum = 0;
+                    for (let rowIdx = mergeDetails.range.r1; rowIdx <= mergeDetails.range.r2; rowIdx++) {
+                      hSum += rowH(rowIdx);
+                    }
+                    height = hSum;
+                  }
+
                   const cell = (
                     <td
+                      rowSpan={mergeDetails?.rowSpan}
+                      colSpan={mergeDetails?.colSpan}
                       onMouseDown={(e) => {
                         dragStart.current = { r, c };
                         if (e.shiftKey) onSelect({ ...selection, r2: r, c2: c });
@@ -266,11 +414,11 @@ export function SheetGrid({
                         }
                       }}
                       onDoubleClick={() => beginEdit(r, c)}
-                      className={`border-r border-b ${gridlines ? "border-border" : "border-transparent"} align-middle relative
+                      className={`border-r border-b ${gridlines ? "border-border" : "border-transparent"} relative
                         ${isActive ? "outline outline-2 outline-accent -outline-offset-2 z-[5]" : isSel ? "bg-accent/10" : ""}
                         ${isCopy ? "outline outline-1 outline-dashed outline-accent/70" : ""}`}
                       style={{
-                        width: colW(c), minWidth: colW(c), height: rowH(r),
+                        width: width, minWidth: width, height: height,
                         padding: "0 6px",
                         fontWeight: fmt?.bold ? 600 : undefined,
                         fontStyle: fmt?.italic ? "italic" : undefined,
@@ -278,23 +426,27 @@ export function SheetGrid({
                         color: fmt?.color,
                         background: !isSel && !isActive ? fmt?.bg : undefined,
                         textAlign: fmt?.align ?? (typeof raw === "number" ? "right" : "left"),
+                        verticalAlign: fmt?.valign ?? "middle",
+                        fontSize: fmt?.fontSize ? `${fmt.fontSize}px` : undefined,
+                        fontFamily: fmt?.fontFamily,
                         whiteSpace: fmt?.wrap ? "normal" : "nowrap",
                         cursor: "cell",
+                        // Custom borders
+                        borderTop: fmt?.border === "all" || fmt?.border === "top" ? "1px solid #94a3b8" : fmt?.border === "none" ? "none" : undefined,
+                        borderBottom: fmt?.border === "all" || fmt?.border === "bottom" ? "1px solid #94a3b8" : fmt?.border === "none" ? "none" : undefined,
+                        borderLeft: fmt?.border === "all" || fmt?.border === "left" ? "1px solid #94a3b8" : fmt?.border === "none" ? "none" : undefined,
+                        borderRight: fmt?.border === "all" || fmt?.border === "right" ? "1px solid #94a3b8" : fmt?.border === "none" ? "none" : undefined,
                       }}
                     >
                       {editingHere ? (
-                        <input
-                          ref={inputRef}
-                          value={editing!.value}
-                          onChange={(e) => setEditing({ id, value: e.target.value })}
-                          onBlur={() => commitEdit()}
-                          onKeyDown={(e) => {
-                            if (e.key === "Enter") { commitEdit({ r: r + 1, c }); e.preventDefault(); }
-                            else if (e.key === "Tab") { commitEdit({ r, c: c + 1 }); e.preventDefault(); }
-                            else if (e.key === "Escape") { setEditing(null); e.preventDefault(); }
-                          }}
-                          className="w-full h-full outline-none bg-white text-foreground border border-accent px-1"
-                          style={{ fontSize: 13 * scale }}
+                        <CellInput
+                          initialValue={editing!.value}
+                          selectOnFocus={editing!.selectOnFocus}
+                          onCommit={(val, next) => commitEdit(val, next)}
+                          onCancel={() => setEditing(null)}
+                          row={r}
+                          col={c}
+                          scale={scale}
                         />
                       ) : (
                         <span className="block truncate">{displayValue(r, c)}</span>
