@@ -29,6 +29,8 @@ import {
   SOLUTIONS_TEMPLATES
 } from "@/lib/workspace/sheets/smartData";
 import CrmView from "@/components/workspace/sheets/solutions/CrmView";
+import TasksView from "@/components/workspace/sheets/solutions/TasksView";
+import ReportsView from "@/components/workspace/sheets/solutions/ReportsView";
 import DashboardEngine from "@/components/workspace/sheets/solutions/DashboardEngine";
 import CollaborateMenu from "@/components/workspace/sheets/solutions/CollaborateMenu";
 import MeetingModal from "@/components/workspace/sheets/solutions/MeetingModal";
@@ -57,7 +59,7 @@ export default function SheetsEditor() {
   const [showChartDialog, setShowChartDialog] = useState(false);
 
   // Business Solution Workspace states
-  const [activeView, setActiveView] = useState<"spreadsheet" | "solution" | "dashboard">("spreadsheet");
+  const [activeView, setActiveView] = useState<"spreadsheet" | "solution" | "dashboard" | "reports">("spreadsheet");
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [meetingPrefilled, setMeetingPrefilled] = useState<{ title: string; participants: string } | null>(null);
 
@@ -113,7 +115,7 @@ export default function SheetsEditor() {
   }, [wbUR, persist]);
 
   // Two-way synchronization & Smart Data Layer Handlers
-  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom") => {
+  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom" | "Tasks") => {
     setWb((prev) => {
       let updatedSheets = [...prev.sheets];
       const activeSheetObj = updatedSheets[activeSheetIdx] || updatedSheets[0];
@@ -711,7 +713,7 @@ export default function SheetsEditor() {
                 activeView === "spreadsheet" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
               }`}
             >
-              <Table2 className="h-3.5 w-3.5" /> Spreadsheet Grid
+              <Table2 className="h-3.5 w-3.5" /> Spreadsheet View
             </button>
             <button
               onClick={() => setActiveView("solution")}
@@ -719,7 +721,7 @@ export default function SheetsEditor() {
                 activeView === "solution" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
               }`}
             >
-              <Presentation className="h-3.5 w-3.5" /> {wb.activeSolution.type} Connected Workspace
+              <Presentation className="h-3.5 w-3.5" /> {wb.activeSolution.type === "Tasks" ? "Tasks View" : `${wb.activeSolution.type} Connected Workspace`}
             </button>
             <button
               onClick={() => setActiveView("dashboard")}
@@ -727,8 +729,18 @@ export default function SheetsEditor() {
                 activeView === "dashboard" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
               }`}
             >
-              <Layout className="h-3.5 w-3.5" /> Intelligent Dashboard
+              <Layout className="h-3.5 w-3.5" /> Dashboard View
             </button>
+            {wb.activeSolution.type === "Tasks" && (
+              <button
+                onClick={() => setActiveView("reports")}
+                className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
+                  activeView === "reports" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+                }`}
+              >
+                <Layout className="h-3.5 w-3.5" /> Reports View
+              </button>
+            )}
           </div>
           <div className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 shadow-sm">
             Active: {wb.activeSolution.type} Two-Way Sync
@@ -745,6 +757,14 @@ export default function SheetsEditor() {
               onUpdateRecord={handleUpdateRecord}
               onAddRecord={handleAddRecord}
               onOpenMeetingModal={handleOpenMeetingPrefilled}
+            />
+          ) : wb.activeSolution.type === "Tasks" ? (
+            <TasksView
+              records={parsedRecords}
+              onUpdateRecord={handleUpdateRecord}
+              onAddRecord={handleAddRecord}
+              onOpenMeetingModal={handleOpenMeetingPrefilled}
+              meetings={wb.activeSolution.meetings || []}
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 bg-muted/10">
@@ -769,6 +789,8 @@ export default function SheetsEditor() {
             solutionType={wb.activeSolution.type}
             meetings={wb.activeSolution.meetings}
           />
+        ) : wb.activeSolution && activeView === "reports" ? (
+          <ReportsView records={parsedRecords} />
         ) : (
           /* Default Spreadsheet Editor view */
           <>
@@ -854,11 +876,12 @@ interface SolutionDropdownProps {
 function SolutionDropdown({ activeSolution, onSelectSolution, onDeactivate }: SolutionDropdownProps) {
   const [open, setOpen] = useState(false);
   const solutionOptions = [
+    { id: "Tasks", label: "Tasks & Projects" },
     { id: "CRM", label: "CRM Solution" },
     { id: "Inventory", label: "Inventory Management" },
     { id: "HR", label: "HR Management" },
     { id: "Registry", label: "Registry & Archive" },
-    { id: "Project", label: "Project & Tasks" },
+    { id: "Project", label: "Project & Sprints" },
     { id: "Custom", label: "Custom Solution" }
   ];
 

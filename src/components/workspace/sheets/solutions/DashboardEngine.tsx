@@ -31,7 +31,7 @@ import {
 
 interface DashboardEngineProps {
   records: Record<string, any>[];
-  solutionType: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom";
+  solutionType: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom" | "Tasks";
   meetings?: any[];
 }
 
@@ -96,6 +96,37 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
           { label: "Unique Categories", value: uniqueCats.size, icon: Layers, color: "text-amber-500 bg-amber-50" }
         ];
       }
+      case "Tasks": {
+        const totalTasks = records.length;
+        const completedTasks = records.filter((r) => (r.Status || r.status || "") === "Completed").length;
+        const pendingTasks = totalTasks - completedTasks;
+
+        // Overdue tasks calculation
+        const today = new Date("2026-04-14"); // Reference baseline date
+        const overdueTasks = records.filter((r) => {
+          const dueStr = r["Due Date"] || r.dueDate || "";
+          if (!dueStr) return false;
+          const dueDate = new Date(dueStr);
+          const status = r["Status"] || r.status || "Not Started";
+          return dueDate < today && status !== "Completed";
+        }).length;
+
+        const highPriority = records.filter((r) => {
+          const p = r["Priority"] || r.priority || "";
+          return p === "High" || p === "Critical";
+        }).length;
+
+        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+
+        return [
+          { label: "Total Tasks", value: totalTasks, icon: Briefcase, color: "text-blue-500 bg-blue-50" },
+          { label: "Completed Tasks", value: completedTasks, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
+          { label: "Pending Tasks", value: pendingTasks, icon: Clock, color: "text-purple-500 bg-purple-50" },
+          { label: "Overdue Tasks", value: overdueTasks, icon: AlertTriangle, color: "text-rose-500 bg-rose-50", alert: overdueTasks > 0 },
+          { label: "High/Critical Priority", value: highPriority, icon: AlertTriangle, color: "text-amber-500 bg-amber-50" },
+          { label: "Completion Rate", value: `${completionRate}%`, icon: TrendingUp, color: "text-emerald-500 bg-emerald-50" }
+        ];
+      }
       case "Project": {
         const totalTasks = records.length;
         const highPriority = records.filter((r) => r.Priority === "High").length;
@@ -142,6 +173,11 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       return records.map((r) => ({
         name: (r["Full Name"] || "").slice(0, 15),
         value: Number(r["Base Salary"]) || 0
+      }));
+    } else if (solutionType === "Tasks") {
+      return records.map((r) => ({
+        name: (r["Task Name"] || r.taskName || "").slice(0, 15),
+        value: Number(r["Progress (%)"] || r.progress) || 0
       }));
     }
     return [];
