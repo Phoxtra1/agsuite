@@ -26,23 +26,71 @@ import {
   Inbox,
   Filter,
   Search,
-  CheckCircle2
+  CheckCircle2,
+  Clock,
+  Award,
+  UserPlus,
+  ClipboardList
 } from "lucide-react";
+import { parseSheetRows } from "@/lib/workspace/sheets/smartData";
 
 interface DashboardEngineProps {
   records: Record<string, any>[];
   solutionType: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom";
   meetings?: any[];
+  allSheets?: any[];
 }
 
 const COLORS = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"];
 
-export default function DashboardEngine({ records = [], solutionType, meetings = [] }: DashboardEngineProps) {
+export default function DashboardEngine({ records = [], solutionType, meetings = [], allSheets = [] }: DashboardEngineProps) {
   const [search, setSearch] = useState("");
   const [filterValue, setFilterValue] = useState("all");
 
+  // Multi-sheet data parser for HR Solutions
+  const hrData = useMemo(() => {
+    if (solutionType !== "HR" || !allSheets.length) return null;
+    const findAndParse = (name: string) => {
+      const sheet = allSheets.find((s) => s.name === name);
+      return sheet ? parseSheetRows(sheet) : [];
+    };
+    return {
+      employees: findAndParse("Employees"),
+      departments: findAndParse("Departments"),
+      attendance: findAndParse("Attendance"),
+      leave: findAndParse("Leave"),
+      performance: findAndParse("Performance"),
+      recruitment: findAndParse("Recruitment")
+    };
+  }, [allSheets, solutionType]);
+
   // Dynamic Metrics Generation
   const metrics = useMemo(() => {
+    if (solutionType === "HR" && hrData) {
+      const emps = hrData.employees;
+      const totalEmployees = emps.length;
+      const activeEmployees = emps.filter(e => e["Employment Status"] === "Active").length;
+      const onLeave = emps.filter(e => e["Employment Status"] === "On Leave" || e["Status"] === "On Leave").length;
+      const newEmployees = emps.filter(e => {
+        const hireDate = e["Hire Date"];
+        return hireDate && hireDate.includes("2026");
+      }).length;
+
+      const totalDepts = hrData.departments.length || new Set(emps.map(e => e.Department).filter(Boolean)).size;
+      const openRecruitment = hrData.recruitment.filter(r => r["Hiring Status"] === "Under Review" || r["Application Status"] === "Applied" || r["Application Status"] === "Interview Scheduled").length;
+      const upcomingReviews = hrData.performance.length;
+
+      return [
+        { label: "Total Employees", value: totalEmployees, icon: Users, color: "text-blue-500 bg-blue-50" },
+        { label: "Active Employees", value: activeEmployees, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
+        { label: "Employees on Leave", value: onLeave, icon: Calendar, color: "text-amber-500 bg-amber-50" },
+        { label: "New Employees (2026)", value: newEmployees, icon: UserPlus, color: "text-purple-500 bg-purple-50" },
+        { label: "Departments", value: totalDepts, icon: Layers, color: "text-cyan-500 bg-cyan-50" },
+        { label: "Open Recruitment", value: openRecruitment, icon: Briefcase, color: "text-rose-500 bg-rose-50" },
+        { label: "Upcoming Reviews", value: upcomingReviews, icon: Award, color: "text-indigo-500 bg-indigo-50" }
+      ];
+    }
+
     if (!records.length) return [];
 
     switch (solutionType) {
@@ -74,17 +122,6 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
           { label: "Low Stock Alerts", value: lowStock, icon: AlertTriangle, color: "text-rose-500 bg-rose-50", alert: lowStock > 0 }
         ];
       }
-      case "HR": {
-        const totalEmp = records.length;
-        const uniqueDept = new Set(records.map((r) => r.Department).filter(Boolean));
-        const payroll = records.reduce((sum, r) => sum + (Number(r["Base Salary"]) || 0), 0);
-
-        return [
-          { label: "Total Employees", value: totalEmp, icon: Users, color: "text-blue-500 bg-blue-50" },
-          { label: "Departments", value: uniqueDept.size, icon: Layers, color: "text-purple-500 bg-purple-50" },
-          { label: "Monthly Payroll", value: `$${payroll.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" }
-        ];
-      }
       case "Registry": {
         const totalRecs = records.length;
         const activeFiles = records.filter((r) => r.Status === "Active").length;
@@ -112,17 +149,18 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       default:
         return [{ label: "Total Row Count", value: records.length, icon: Layers, color: "text-gray-500 bg-gray-50" }];
     }
-  }, [records, solutionType]);
+  }, [records, solutionType, hrData]);
 
   // Aggregate Status counts for charting
   const statusChartData = useMemo(() => {
+    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
     const counts: Record<string, number> = {};
-    records.forEach((r) => {
-      const statusKey = r.status || r.Status || "Unknown";
+    dataToUse.forEach((r) => {
+      const statusKey = r.status || r.Status || r["Employment Status"] || "Unknown";
       counts[statusKey] = (counts[statusKey] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [records]);
+  }, [records, solutionType, hrData]);
 
   // Value/Price Distribution chart
   const valueChartData = useMemo(() => {
@@ -139,28 +177,51 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         value: Number(r.Quantity) || 0
       }));
     } else if (solutionType === "HR") {
-      return records.map((r) => ({
-        name: (r["Full Name"] || "").slice(0, 15),
-        value: Number(r["Base Salary"]) || 0
-      }));
+      const dataToUse = hrData ? hrData.employees : records;
+      const counts: Record<string, number> = {};
+      dataToUse.forEach(e => {
+        const d = e.Department || "Unassigned";
+        counts[d] = (counts[d] || 0) + 1;
+      });
+      return Object.entries(counts).map(([name, value]) => ({ name, value }));
     }
     return [];
-  }, [records, solutionType]);
+  }, [records, solutionType, hrData]);
 
   // Filter list of records for summary table
   const filteredRecords = useMemo(() => {
-    return records.filter((rec) => {
+    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
+    return dataToUse.filter((rec) => {
       const matchSearch = Object.values(rec).some((val) =>
         String(val).toLowerCase().includes(search.toLowerCase())
       );
       if (filterValue === "all") return matchSearch;
-      return matchSearch && (rec.status || rec.Status) === filterValue;
+      return matchSearch && (rec.status || rec.Status || rec["Employment Status"]) === filterValue;
     });
-  }, [records, search, filterValue]);
+  }, [records, search, filterValue, solutionType, hrData]);
 
   const uniqueStatuses = useMemo(() => {
-    return Array.from(new Set(records.map((r) => r.status || r.Status).filter(Boolean)));
-  }, [records]);
+    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
+    return Array.from(new Set(dataToUse.map((r) => r.status || r.Status || r["Employment Status"]).filter(Boolean)));
+  }, [records, solutionType, hrData]);
+
+  // HR specific summary states
+  const attendanceSummary = useMemo(() => {
+    if (solutionType !== "HR" || !hrData) return null;
+    const att = hrData.attendance;
+    const present = att.filter(a => a["Attendance Status"] === "Present" || a["Attendance Status"] === "Remote").length;
+    const late = att.filter(a => a["Attendance Status"] === "Late").length;
+    const absent = att.filter(a => a["Attendance Status"] === "Absent").length;
+    return { present, late, absent, total: att.length };
+  }, [hrData, solutionType]);
+
+  const leaveSummary = useMemo(() => {
+    if (solutionType !== "HR" || !hrData) return null;
+    const leaves = hrData.leave;
+    const approved = leaves.filter(l => l["Status"] === "Approved").length;
+    const pending = leaves.filter(l => l["Status"] === "Pending").length;
+    return { approved, pending, total: leaves.length };
+  }, [hrData, solutionType]);
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-muted/20 space-y-6">
@@ -168,7 +229,9 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
           <h2 className="text-xl font-bold text-foreground">
-            {solutionType === "CRM" ? "CRM Live Workspace" : `${solutionType} Smart Dashboard`}
+            {solutionType === "CRM" ? "CRM Live Workspace" :
+             solutionType === "HR" ? "HR Management Workspace Dashboard" :
+             `${solutionType} Smart Dashboard`}
           </h2>
           <p className="text-sm text-muted-foreground">
             Visualized analytics powered by the Smart Data Layer. Zero delay two-way synchronization active.
@@ -200,12 +263,13 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       </div>
 
       {/* Dynamic Charts Section */}
-      {records.length > 0 && (
+      {statusChartData.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Status breakdown Chart */}
           <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
             <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
-              <Layers className="h-4 w-4 text-muted-foreground" /> Workflow / Status Distribution
+              <Layers className="h-4 w-4 text-muted-foreground" />
+              {solutionType === "HR" ? "Employment Status breakdown" : "Workflow / Status Distribution"}
             </h3>
             <div className="h-64">
               <ResponsiveContainer width="100%" height="100%">
@@ -239,7 +303,7 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
                   ? "Deal Value Distribution"
                   : solutionType === "Inventory"
                   ? "Stock Level Distribution"
-                  : "Salary Allocation"}
+                  : "Department Headcount Allocation"}
               </h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -257,6 +321,47 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
               </div>
             </div>
           )}
+        </div>
+      )}
+
+      {/* HR Specific Metrics Summary Panel */}
+      {solutionType === "HR" && attendanceSummary && leaveSummary && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
+            <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" /> Attendance Summary Metrics
+            </h3>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                <div className="text-[10px] uppercase font-bold text-emerald-800">Present / Remote</div>
+                <div className="text-xl font-bold text-emerald-950 mt-1">{attendanceSummary.present}</div>
+              </div>
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                <div className="text-[10px] uppercase font-bold text-amber-800">Late Arrivals</div>
+                <div className="text-xl font-bold text-amber-950 mt-1">{attendanceSummary.late}</div>
+              </div>
+              <div className="p-3 bg-rose-50 rounded-lg border border-rose-100">
+                <div className="text-[10px] uppercase font-bold text-rose-800">Absent</div>
+                <div className="text-xl font-bold text-rose-950 mt-1">{attendanceSummary.absent}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
+            <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" /> Leave Requests Summary
+            </h3>
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                <div className="text-[10px] uppercase font-bold text-emerald-800">Approved Leave</div>
+                <div className="text-xl font-bold text-emerald-950 mt-1">{leaveSummary.approved}</div>
+              </div>
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                <div className="text-[10px] uppercase font-bold text-amber-800">Pending Requests</div>
+                <div className="text-xl font-bold text-amber-950 mt-1">{leaveSummary.pending}</div>
+              </div>
+            </div>
+          </div>
         </div>
       )}
 
@@ -303,8 +408,8 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-muted-foreground uppercase font-semibold">
-                  {records.length > 0 &&
-                    Object.keys(records[0])
+                  {filteredRecords.length > 0 &&
+                    Object.keys(filteredRecords[0])
                       .filter((k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_"))
                       .slice(0, 5)
                       .map((key) => (
@@ -318,7 +423,7 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
                 {filteredRecords.length > 0 ? (
                   filteredRecords.map((r, i) => (
                     <tr key={i} className="border-b border-border/60 hover:bg-muted/30">
-                      {Object.keys(records[0])
+                      {Object.keys(filteredRecords[0])
                         .filter((k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_"))
                         .slice(0, 5)
                         .map((key) => (

@@ -800,6 +800,7 @@ export default function SheetsEditor() {
             records={parsedRecords}
             solutionType={wb.activeSolution.type}
             meetings={wb.activeSolution.meetings}
+            allSheets={wb.sheets}
           />
         ) : (
           /* Default Spreadsheet Editor view */
