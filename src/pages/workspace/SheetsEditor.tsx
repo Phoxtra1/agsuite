@@ -119,7 +119,7 @@ export default function SheetsEditor() {
 
   // Two-way synchronization & Smart Data Layer Handlers
 
-  const handleActivateSolution = useCallback((type: "CRM" | "Task" | "HR" | "Registry" | "Project" | "Custom") => {
+  const handleActivateSolution = useCallback((type: "CRM" | "Task" | "HR" | "Registry" | "Project" | "ProjectManagement" | "Custom") => {
 
     setWb((prev) => {
       if (type === "HR") {
