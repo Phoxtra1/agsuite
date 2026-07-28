@@ -1050,12 +1050,12 @@ export default function SheetsEditor() {
           />
         ) : wb.activeSolution && activeView === "dashboard" ? (
           <DashboardEngine
-            records={parsedRecords}
-            solutionType={wb.activeSolution.type}
-            meetings={wb.activeSolution.meetings}
-            allSheets={wb.sheets}
-          />
-      
+          records={parsedRecords}
+          solutionType={wb.activeSolution.type}
+          meetings={wb.activeSolution.meetings}
+          allSheets={wb.sheets}
+         />
+         ) : (
           /* Default Spreadsheet Editor view */
           <>
             <div className="flex-1 flex flex-col overflow-hidden">
