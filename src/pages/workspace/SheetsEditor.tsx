@@ -116,7 +116,7 @@ export default function SheetsEditor() {
   }, [wbUR, persist]);
 
   // Two-way synchronization & Smart Data Layer Handlers
-  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom") => {
+  const handleActivateSolution = useCallback((type: "CRM" | "HR" | "Registry" | "Project" | "Custom" | "Tasks") => {
     setWb((prev) => {
       if (type === "HR") {
         return seedHrSolutionToWorkbook(prev);
@@ -736,7 +736,7 @@ export default function SheetsEditor() {
             >
               <Layout className="h-3.5 w-3.5" /> Intelligent Dashboard
             </button>
-            {wb.activeSolution.type === "HR" && (
+            {wb.activeSolution.type !== "CRM" && (
               <button
                 onClick={() => setActiveView("reports")}
                 className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
@@ -763,7 +763,7 @@ export default function SheetsEditor() {
               onAddRecord={handleAddRecord}
               onOpenMeetingModal={handleOpenMeetingPrefilled}
             />
-          ) : wb.activeSolution.type === "HR" ? (
+          ) : (
             <HrView
               records={parsedRecords}
               allSheets={wb.sheets}
@@ -773,22 +773,6 @@ export default function SheetsEditor() {
               onAddRecord={handleAddRecord}
               onOpenMeetingModal={handleOpenMeetingPrefilled}
             />
-          ) : (
-            <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 bg-muted/10">
-              <Presentation className="h-12 w-12 text-accent animate-pulse" />
-              <div className="max-w-md space-y-2">
-                <h3 className="text-sm font-bold text-foreground">{wb.activeSolution.type} Template Framework Active</h3>
-                <p className="text-xs text-muted-foreground">
-                  The smart schema and data structures are fully synchronized with the spreadsheet. The dedicated layout for {wb.activeSolution.type} is ready to render. Use the Intelligent Dashboard to view metrics.
-                </p>
-              </div>
-              <button
-                onClick={() => setActiveView("dashboard")}
-                className="bg-accent text-accent-foreground font-bold px-4 py-2 rounded-lg text-xs"
-              >
-                Go to {wb.activeSolution.type} Dashboard
-              </button>
-            </div>
           )
         ) : wb.activeSolution && activeView === "reports" ? (
           <ReportsView
@@ -887,11 +871,11 @@ interface SolutionDropdownProps {
 function SolutionDropdown({ activeSolution, onSelectSolution, onDeactivate }: SolutionDropdownProps) {
   const [open, setOpen] = useState(false);
   const solutionOptions = [
-    { id: "CRM", label: "CRM Solution" },
-    { id: "Inventory", label: "Inventory Management" },
+    { id: "CRM", label: "CRM" },
+    { id: "Tasks", label: "Tasks" },
     { id: "HR", label: "HR Management" },
-    { id: "Registry", label: "Registry & Archive" },
-    { id: "Project", label: "Project & Tasks" },
+    { id: "Registry", label: "Registry" },
+    { id: "Project", label: "Project Management" },
     { id: "Custom", label: "Custom Solution" }
   ];
 

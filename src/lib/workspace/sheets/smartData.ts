@@ -102,229 +102,229 @@ export const SOLUTIONS_TEMPLATES: Record<string, BusinessSolutionTemplate> = {
       "Closed"
     ]
   },
-  Inventory: {
-    id: "Inventory",
-    name: "Inventory Management",
-    description: "Track your products, stock levels, sales prices, supplier names, and reorder alerts.",
-    defaultHeaders: ["Product ID", "Product Name", "Quantity", "Unit Cost", "Retail Price", "Supplier", "Stock Alert Level"],
-    defaultData: [
-      { "Product ID": "PROD001", "Product Name": "Amineva Smart Server v1", "Quantity": 15, "Unit Cost": 1200, "Retail Price": 2000, "Supplier": "Amineva Hardware Labs", "Stock Alert Level": 5 },
-      { "Product ID": "PROD002", "Product Name": "High-Speed Fibre Transceiver", "Quantity": 3, "Unit Cost": 150, "Retail Price": 250, "Supplier": "OpticsConnect Ltd", "Stock Alert Level": 10 },
-      { "Product ID": "PROD003", "Product Name": "Ohene Gold bullion bars (10g)", "Quantity": 8, "Unit Cost": 650, "Retail Price": 750, "Supplier": "Ohene Minerals Group", "Stock Alert Level": 2 }
-    ]
-  },
-  HR: {
-    id: "HR",
-    name: "HR Management",
-    description: "Transform structured spreadsheet data into a complete Human Resource Management workspace. Track employee directory, departments, positions, attendance, leave, performance reviews, recruitment, and onboarding checklists.",
-    defaultHeaders: [
-      "Employee ID",
-      "First Name",
-      "Last Name",
-      "Full Name",
-      "Preferred Name",
-      "Gender",
-      "Date of Birth",
-      "Nationality",
-      "Phone",
-      "Email",
-      "Address",
-      "Emergency Contact",
-      "Emergency Contact Number",
-      "Employment Status",
-      "Employment Type",
-      "Hire Date",
-      "End Date",
-      "Department",
-      "Position",
-      "Manager",
-      "Office Location",
-      "Notes"
-    ],
-    defaultData: [
-      {
-        "Employee ID": "EMP001",
-        "First Name": "Emmanuel",
-        "Last Name": "Quaye",
-        "Full Name": "Emmanuel Quaye",
-        "Preferred Name": "Emma",
-        "Gender": "Male",
-        "Date of Birth": "1990-05-15",
-        "Nationality": "Ghanaian",
-        "Phone": "+233 551 222333",
-        "Email": "e.quaye@amineva.com",
-        "Address": "12 Ring Road, Accra",
-        "Emergency Contact": "Theresa Quaye",
-        "Emergency Contact Number": "+233 551 222334",
-        "Employment Status": "Active",
-        "Employment Type": "Full-Time",
-        "Hire Date": "2023-01-15",
-        "End Date": "",
-        "Department": "Engineering",
-        "Position": "Senior Software Engineer",
-        "Manager": "Ebenezer Ocloo",
-        "Office Location": "Accra HQ",
-        "Notes": "Outstanding performance in frontend architecture."
-      },
-      {
-        "Employee ID": "EMP002",
-        "First Name": "Grace",
-        "Last Name": "Mensah",
-        "Full Name": "Grace Mensah",
-        "Preferred Name": "Grace",
-        "Gender": "Female",
-        "Date of Birth": "1993-08-22",
-        "Nationality": "Ghanaian",
-        "Phone": "+233 540 111222",
-        "Email": "g.mensah@amineva.com",
-        "Address": "45 Liberation Road, Accra",
-        "Emergency Contact": "John Mensah",
-        "Emergency Contact Number": "+233 540 111223",
-        "Employment Status": "Active",
-        "Employment Type": "Full-Time",
-        "Hire Date": "2024-03-01",
-        "End Date": "",
-        "Department": "Marketing",
-        "Position": "Marketing Lead",
-        "Manager": "Ebenezer Ocloo",
-        "Office Location": "Accra HQ",
-        "Notes": "Key lead for product rebranding campaigns."
-      },
-      {
-        "Employee ID": "EMP003",
-        "First Name": "Kofi",
-        "Last Name": "Anan",
-        "Full Name": "Kofi Anan",
-        "Preferred Name": "Kofi",
-        "Gender": "Male",
-        "Date of Birth": "1995-11-02",
-        "Nationality": "Ghanaian",
-        "Phone": "+233 244 555666",
-        "Email": "k.anan@amineva.com",
-        "Address": "7 Spintex Road, Accra",
-        "Emergency Contact": "Abena Anan",
-        "Emergency Contact Number": "+233 244 555667",
-        "Employment Status": "Probation",
-        "Employment Type": "Contract",
-        "Hire Date": "2026-02-01",
-        "End Date": "2026-08-01",
-        "Department": "Engineering",
-        "Position": "QA Automation Engineer",
-        "Manager": "Emmanuel Quaye",
-        "Office Location": "Remote",
-        "Notes": "Onboarding in progress."
-      },
-      {
-        "Employee ID": "EMP004",
-        "First Name": "Amma",
-        "Last Name": "Serwaa",
-        "Full Name": "Amma Serwaa",
-        "Preferred Name": "Amma",
-        "Gender": "Female",
-        "Date of Birth": "1991-04-18",
-        "Nationality": "Ghanaian",
-        "Phone": "+233 207 987654",
-        "Email": "serwaa@amineva.com",
-        "Address": "88 Giffard Road, Cantonments",
-        "Emergency Contact": "Daniel Serwaa",
-        "Emergency Contact Number": "+233 207 987655",
-        "Employment Status": "On Leave",
-        "Employment Type": "Full-Time",
-        "Hire Date": "2022-06-10",
-        "End Date": "",
-        "Department": "People Operations",
-        "Position": "HR Officer",
-        "Manager": "Ebenezer Ocloo",
-        "Office Location": "Accra HQ",
-        "Notes": "Currently on annual leave."
-      }
-    ]
-  },
-  Registry: {
-    id: "Registry",
-    name: "Registry & Records System",
-    description: "A centralized directory for categorizing legal, financial, or operational documents and files.",
-    defaultHeaders: ["Record ID", "Title", "Category", "Filing Location", "Owner", "Filing Date", "Status"],
-    defaultData: [
-      { "Record ID": "REG2026-001", "Title": "Agyenkwa Partnership Agreement", "Category": "Legal", "Filing Location": "Cabinet A-02", "Owner": "Legal Affairs", "Filing Date": "2026-01-10", "Status": "Active" },
-      { "Record ID": "REG2026-002", "Title": "FY25 Q4 Financial Audit", "Category": "Finance", "Filing Location": "Secure Vault B", "Owner": "Audit & Risk", "Filing Date": "2026-02-14", "Status": "Archived" }
-    ]
-  },
-  Project: {
-    id: "Project",
-    name: "Project & Task Management",
-    description: "Coordinate your team's software sprints, tasks, completion status, due dates, and owners.",
+  Tasks: {
+    id: "Tasks",
+    name: "Tasks Module",
+    description: "Manage and assign team tasks, sprint cycles, priority levels, status workflows, and completion dates.",
     defaultHeaders: ["Task ID", "Task Name", "Assigned To", "Priority", "Status", "Due Date", "Estimated Hours"],
     defaultData: [
       { "Task ID": "TSK-101", "Task Name": "Integrate CRM Workspace", "Assigned To": "Jules Agent", "Priority": "High", "Status": "In Progress", "Due Date": "2026-04-12", "Estimated Hours": 16 },
       { "Task ID": "TSK-102", "Task Name": "Test Real Online Meetings", "Assigned To": "Ebenezer Ocloo", "Priority": "Medium", "Status": "To Do", "Due Date": "2026-04-19", "Estimated Hours": 8 }
     ]
+  },
+  HR: {
+    id: "HR",
+    name: "HR Management",
+    description: "Transform structured spreadsheet data into an intelligent Human Resource Management workspace, adapted automatically from column attributes.",
+    defaultHeaders: [
+      "Employee ID",
+      "Employee Name",
+      "Department",
+      "Position",
+      "Employment Type",
+      "Manager",
+      "Hire Date",
+      "Status",
+      "Office Location",
+      "Base Salary"
+    ],
+    defaultData: [
+      {
+        "Employee ID": "EMP01",
+        "Employee Name": "Emmanuel Quaye",
+        "Department": "Engineering",
+        "Position": "Senior Software Engineer",
+        "Employment Type": "Full-Time",
+        "Manager": "Ebenezer Ocloo",
+        "Hire Date": "2023-01-15",
+        "Status": "Active",
+        "Office Location": "Accra HQ",
+        "Base Salary": 4500
+      },
+      {
+        "Employee ID": "EMP02",
+        "Employee Name": "Grace Mensah",
+        "Department": "Marketing",
+        "Position": "Marketing Lead",
+        "Employment Type": "Full-Time",
+        "Manager": "Ebenezer Ocloo",
+        "Hire Date": "2024-03-01",
+        "Status": "Active",
+        "Office Location": "Accra HQ",
+        "Base Salary": 3500
+      },
+      {
+        "Employee ID": "EMP03",
+        "Employee Name": "Kofi Anan",
+        "Department": "Engineering",
+        "Position": "QA Automation Engineer",
+        "Employment Type": "Contract",
+        "Manager": "Emmanuel Quaye",
+        "Hire Date": "2026-02-01",
+        "Status": "Probation",
+        "Office Location": "Remote",
+        "Base Salary": 2800
+      }
+    ]
+  },
+  Registry: {
+    id: "Registry",
+    name: "Registry",
+    description: " Centralized directory for classifying legal, financial, property, student, or asset records.",
+    defaultHeaders: ["Record ID", "Name", "Category", "Type", "Status", "Location", "Created Date", "Notes"],
+    defaultData: [
+      { "Record ID": "REG001", "Name": "Agyenkwa Partnership Agreement", "Category": "Partners", "Type": "Legal Document", "Status": "Active", "Location": "Cabinet A-02", "Created Date": "2026-01-10", "Notes": "Partnership active" },
+      { "Record ID": "REG002", "Name": "Secure Farming Tractor v2", "Category": "Assets", "Type": "Equipment", "Status": "Active", "Location": "Kumasi Hub", "Created Date": "2026-02-14", "Notes": "Inspection due next week." }
+    ]
+  },
+  Project: {
+    id: "Project",
+    name: "Project Management",
+    description: "Track project phases, timelines, status indicators, and budget parameters.",
+    defaultHeaders: ["Project ID", "Project Name", "Manager", "Status", "Start Date", "Budget (USD)", "Progress"],
+    defaultData: [
+      { "Project ID": "PRJ-01", "Project Name": "Core Engine Migration", "Manager": "Emmanuel Quaye", "Status": "Active", "Start Date": "2026-01-01", "Budget (USD)": 85000, "Progress": "75%" }
+    ]
+  },
+  Custom: {
+    id: "Custom",
+    name: "Custom Solution",
+    description: "Generate a connected interactive workspace directly mapping any user defined fields.",
+    defaultHeaders: ["ID", "Name", "Status", "Description"],
+    defaultData: [
+      { "ID": "REC-01", "Name": "Sample Record Name", "Status": "Active", "Description": "Dynamic Custom template parsed successfully." }
+    ]
   }
 };
 
-export const HR_SUPPLEMENTARY_TEMPLATES: Record<string, { headers: string[]; data: any[] }> = {
-  Employees: {
-    headers: SOLUTIONS_TEMPLATES.HR.defaultHeaders,
-    data: SOLUTIONS_TEMPLATES.HR.defaultData
-  },
-  Departments: {
-    headers: ["Department Name", "Department Code", "Manager", "Description"],
-    data: [
-      { "Department Name": "Engineering", "Department Code": "ENG", "Manager": "Ebenezer Ocloo", "Description": "Technology development and systems engineering." },
-      { "Department Name": "Marketing", "Department Code": "MKT", "Manager": "Grace Mensah", "Description": "Growth, brand positioning, and campaigns." },
-      { "Department Name": "People Operations", "Department Code": "HR", "Manager": "Amma Serwaa", "Description": "HR development, onboarding, and operations." }
-    ]
-  },
-  Positions: {
-    headers: ["Position Title", "Department", "Reports To", "Description"],
-    data: [
-      { "Position Title": "Senior Software Engineer", "Department": "Engineering", "Reports To": "Engineering Lead", "Description": "Designs and maintains software systems." },
-      { "Position Title": "QA Automation Engineer", "Department": "Engineering", "Reports To": "Senior Software Engineer", "Description": "Automates testing suites and pipelines." },
-      { "Position Title": "Marketing Lead", "Department": "Marketing", "Reports To": "Ebenezer Ocloo", "Description": "Directs regional marketing campaigns." },
-      { "Position Title": "HR Officer", "Department": "People Operations", "Reports To": "Ebenezer Ocloo", "Description": "Coordinates employee relations and operations." }
-    ]
-  },
-  Attendance: {
-    headers: ["Employee ID", "Employee Name", "Date", "Check-In Time", "Check-Out Time", "Working Hours", "Attendance Status", "Attendance Notes"],
-    data: [
-      { "Employee ID": "EMP001", "Employee Name": "Emmanuel Quaye", "Date": "2026-04-10", "Check-In Time": "08:55 AM", "Check-Out Time": "05:05 PM", "Working Hours": 8.1, "Attendance Status": "Present", "Attendance Notes": "On time." },
-      { "Employee ID": "EMP002", "Employee Name": "Grace Mensah", "Date": "2026-04-10", "Check-In Time": "09:15 AM", "Check-Out Time": "05:00 PM", "Working Hours": 7.7, "Attendance Status": "Late", "Attendance Notes": "Heavy morning traffic." },
-      { "Employee ID": "EMP003", "Employee Name": "Kofi Anan", "Date": "2026-04-10", "Check-In Time": "09:00 AM", "Check-Out Time": "05:00 PM", "Working Hours": 8.0, "Attendance Status": "Remote", "Attendance Notes": "Work from home today." },
-      { "Employee ID": "EMP004", "Employee Name": "Amma Serwaa", "Date": "2026-04-10", "Check-In Time": "", "Check-Out Time": "", "Working Hours": 0.0, "Attendance Status": "Leave", "Attendance Notes": "Approved annual leave." }
-    ]
-  },
-  Leave: {
-    headers: ["Employee ID", "Employee Name", "Leave Type", "Start Date", "End Date", "Total Days", "Status", "Approver", "Notes"],
-    data: [
-      { "Employee ID": "EMP004", "Employee Name": "Amma Serwaa", "Leave Type": "Annual Leave", "Start Date": "2026-04-05", "End Date": "2026-04-12", "Total Days": 7, "Status": "Approved", "Approver": "Ebenezer Ocloo", "Notes": "Annual vacation." },
-      { "Employee ID": "EMP002", "Employee Name": "Grace Mensah", "Leave Type": "Sick Leave", "Start Date": "2026-03-10", "End Date": "2026-03-11", "Total Days": 1, "Status": "Approved", "Approver": "Ebenezer Ocloo", "Notes": "Medical appointment." },
-      { "Employee ID": "EMP001", "Employee Name": "Emmanuel Quaye", "Leave Type": "Study Leave", "Start Date": "2026-05-01", "End Date": "2026-05-05", "Total Days": 4, "Status": "Pending", "Approver": "Amma Serwaa", "Notes": "Tech conference and research." }
-    ]
-  },
-  Performance: {
-    headers: ["Employee ID", "Employee Name", "Review Date", "Reviewer", "Rating", "Goals", "Comments"],
-    data: [
-      { "Employee ID": "EMP001", "Employee Name": "Emmanuel Quaye", "Review Date": "2026-03-15", "Reviewer": "Ebenezer Ocloo", "Rating": 5, "Goals": "Complete system migration", "Comments": "Exemplary technical leadership." },
-      { "Employee ID": "EMP002", "Employee Name": "Grace Mensah", "Review Date": "2026-03-18", "Reviewer": "Ebenezer Ocloo", "Rating": 4, "Goals": "Expand branding footprint", "Comments": "Excellent alignment and engagement." }
-    ]
-  },
-  Recruitment: {
-    headers: ["Job Title", "Department", "Candidate Name", "Application Status", "Interview Date", "Hiring Status"],
-    data: [
-      { "Job Title": "Front-End Engineer", "Department": "Engineering", "Candidate Name": "Kwabena Boateng", "Application Status": "Interview Scheduled", "Interview Date": "2026-04-20", "Hiring Status": "Under Review" },
-      { "Job Title": "HR Coordinator", "Department": "People Operations", "Candidate Name": "Esi Mensah", "Application Status": "Applied", "Interview Date": "", "Hiring Status": "Under Review" },
-      { "Job Title": "Product Designer", "Department": "Product", "Candidate Name": "Kweku Appiah", "Application Status": "Offer Sent", "Interview Date": "2026-03-25", "Hiring Status": "Offered" }
-    ]
-  },
-  Onboarding: {
-    headers: ["Employee ID", "Employee Name", "Documents Submitted", "Orientation Completed", "Equipment Assigned", "Account Created", "Training Completed"],
-    data: [
-      { "Employee ID": "EMP003", "Employee Name": "Kofi Anan", "Documents Submitted": "Yes", "Orientation Completed": "Yes", "Equipment Assigned": "Yes", "Account Created": "Yes", "Training Completed": "No" },
-      { "Employee ID": "EMP001", "Employee Name": "Emmanuel Quaye", "Documents Submitted": "Yes", "Orientation Completed": "Yes", "Equipment Assigned": "Yes", "Account Created": "Yes", "Training Completed": "Yes" },
-      { "Employee ID": "EMP002", "Employee Name": "Grace Mensah", "Documents Submitted": "Yes", "Orientation Completed": "Yes", "Equipment Assigned": "Yes", "Account Created": "Yes", "Training Completed": "Yes" }
-    ]
+export interface SheetAnalysis {
+  hasEmployees: boolean;
+  hasDepartments: boolean;
+  hasPositions: boolean;
+  hasAttendance: boolean;
+  hasLeave: boolean;
+  hasPerformance: boolean;
+  hasRecruitment: boolean;
+  hasOnboarding: boolean;
+  hasSalary: boolean;
+  hasLocation: boolean;
+  hasOwner: boolean;
+  hasStatus: boolean;
+  hasTasks: boolean;
+  hasDates: boolean;
+  hasValue: boolean;
+
+  employeeIdCol?: string;
+  employeeNameCol?: string;
+  departmentCol?: string;
+  positionCol?: string;
+  statusCol?: string;
+  salaryCol?: string;
+  dateCol?: string;
+  locationCol?: string;
+  leaveTypeCol?: string;
+  attendanceStatusCol?: string;
+  ratingCol?: string;
+  jobTitleCol?: string;
+
+  allColumns: string[];
+  customColumns: string[];
+  detectedStatuses: string[];
+}
+
+/**
+ * AI Dynamic Analysis Engine: Inspects any sheet Page and returns a complete analysis profile
+ */
+export function analyzeSheetData(sheet: SheetPage): SheetAnalysis {
+  const headers = getSheetHeaders(sheet);
+  const records = parseSheetRows(sheet);
+
+  const profile: SheetAnalysis = {
+    hasEmployees: false,
+    hasDepartments: false,
+    hasPositions: false,
+    hasAttendance: false,
+    hasLeave: false,
+    hasPerformance: false,
+    hasRecruitment: false,
+    hasOnboarding: false,
+    hasSalary: false,
+    hasLocation: false,
+    hasOwner: false,
+    hasStatus: false,
+    hasTasks: false,
+    hasDates: false,
+    hasValue: false,
+    allColumns: headers,
+    customColumns: [],
+    detectedStatuses: []
+  };
+
+  headers.forEach((h) => {
+    const norm = h.toLowerCase().trim();
+
+    // Map column roles
+    if (norm.includes("employee id") || norm.includes("emp id")) {
+      profile.hasEmployees = true;
+      profile.employeeIdCol = h;
+    } else if (norm.includes("employee name") || norm.includes("full name") || norm.includes("staff name") || norm.includes("member name") || norm.includes("candidate name") || norm.includes("name")) {
+      profile.employeeNameCol = h;
+    } else if (norm.includes("department") || norm.includes("dept")) {
+      profile.hasDepartments = true;
+      profile.departmentCol = h;
+    } else if (norm.includes("position") || norm.includes("job title") || norm.includes("role")) {
+      profile.hasPositions = true;
+      profile.positionCol = h;
+    } else if (norm.includes("attendance") || norm.includes("check-in") || norm.includes("check-out") || norm.includes("working hours")) {
+      profile.hasAttendance = true;
+      profile.attendanceStatusCol = h;
+    } else if (norm.includes("leave")) {
+      profile.hasLeave = true;
+      profile.leaveTypeCol = h;
+    } else if (norm.includes("rating") || norm.includes("performance") || norm.includes("reviewer") || norm.includes("appraisal")) {
+      profile.hasPerformance = true;
+      profile.ratingCol = h;
+    } else if (norm.includes("application") || norm.includes("hiring status") || norm.includes("candidate")) {
+      profile.hasRecruitment = true;
+      profile.jobTitleCol = h;
+    } else if (norm.includes("onboarding") || norm.includes("orientation") || norm.includes("equipment assigned")) {
+      profile.hasOnboarding = true;
+    } else if (norm.includes("salary") || norm.includes("payroll") || norm.includes("compensation") || norm.includes("wage")) {
+      profile.hasSalary = true;
+      profile.salaryCol = h;
+    } else if (norm.includes("location") || norm.includes("office") || norm.includes("branch")) {
+      profile.hasLocation = true;
+      profile.locationCol = h;
+    } else if (norm.includes("owner") || norm.includes("manager") || norm.includes("supervisor")) {
+      profile.hasOwner = true;
+    } else if (norm.includes("status") || norm.includes("workflow") || norm.includes("progress")) {
+      profile.hasStatus = true;
+      profile.statusCol = h;
+    } else if (norm.includes("task") || norm.includes("estimated hours")) {
+      profile.hasTasks = true;
+    } else if (norm.includes("date") || norm.includes("time") || norm.includes("hired") || norm.includes("created") || norm.includes("due")) {
+      profile.hasDates = true;
+      profile.dateCol = h;
+    } else if (norm.includes("value") || norm.includes("budget") || norm.includes("cost") || norm.includes("amount") || norm.includes("$")) {
+      profile.hasValue = true;
+    } else if (h !== "") {
+      // It is a dynamic custom column!
+      profile.customColumns.push(h);
+    }
+  });
+
+  // Extract unique statuses
+  if (profile.statusCol) {
+    const statuses = new Set<string>();
+    records.forEach((r) => {
+      const sVal = r[profile.statusCol!];
+      if (sVal) statuses.add(String(sVal));
+    });
+    profile.detectedStatuses = Array.from(statuses);
   }
-};
+
+  return profile;
+}
 
 /**
  * Smart Data Layer: Profiles columns of a sheet based on their headers
@@ -400,6 +400,7 @@ export function recommendSolution(sheet: SheetPage): string | null {
   let bestScore = 0;
 
   for (const [id, template] of Object.entries(SOLUTIONS_TEMPLATES)) {
+    if (id === "Custom") continue;
     let score = 0;
     for (const h of template.defaultHeaders) {
       if (headers.some(header => header.includes(h.toLowerCase()) || h.toLowerCase().includes(header))) {
@@ -649,15 +650,8 @@ export function seedHrSolutionToWorkbook(wb: Workbook): Workbook {
     return sheet;
   }
 
-  // Generate all 8 sheets
-  getOrCreateSheet("Employees", HR_SUPPLEMENTARY_TEMPLATES.Employees.headers, HR_SUPPLEMENTARY_TEMPLATES.Employees.data);
-  getOrCreateSheet("Departments", HR_SUPPLEMENTARY_TEMPLATES.Departments.headers, HR_SUPPLEMENTARY_TEMPLATES.Departments.data);
-  getOrCreateSheet("Positions", HR_SUPPLEMENTARY_TEMPLATES.Positions.headers, HR_SUPPLEMENTARY_TEMPLATES.Positions.data);
-  getOrCreateSheet("Attendance", HR_SUPPLEMENTARY_TEMPLATES.Attendance.headers, HR_SUPPLEMENTARY_TEMPLATES.Attendance.data);
-  getOrCreateSheet("Leave", HR_SUPPLEMENTARY_TEMPLATES.Leave.headers, HR_SUPPLEMENTARY_TEMPLATES.Leave.data);
-  getOrCreateSheet("Performance", HR_SUPPLEMENTARY_TEMPLATES.Performance.headers, HR_SUPPLEMENTARY_TEMPLATES.Performance.data);
-  getOrCreateSheet("Recruitment", HR_SUPPLEMENTARY_TEMPLATES.Recruitment.headers, HR_SUPPLEMENTARY_TEMPLATES.Recruitment.data);
-  getOrCreateSheet("Onboarding", HR_SUPPLEMENTARY_TEMPLATES.Onboarding.headers, HR_SUPPLEMENTARY_TEMPLATES.Onboarding.data);
+  // Seed default data for Employee lists only (No hardcoded sections seeded statically)
+  getOrCreateSheet("Employees", SOLUTIONS_TEMPLATES.HR.defaultHeaders, SOLUTIONS_TEMPLATES.HR.defaultData);
 
   return {
     ...wb,

@@ -15,6 +15,7 @@ import {
   CheckCircle,
   AlertCircle
 } from "lucide-react";
+import { analyzeSheetData } from "@/lib/workspace/sheets/smartData";
 
 interface ReportsViewProps {
   allSheets: any[];
@@ -22,29 +23,49 @@ interface ReportsViewProps {
 }
 
 export default function ReportsView({ allSheets = [], parseRowsFn }: ReportsViewProps) {
-  const [activeReport, setActiveReport] = useState<
-    | "directory"
-    | "departments"
-    | "attendance"
-    | "leave"
-    | "performance"
-    | "recruitment"
-    | "status"
-    | "workforce"
-  >("directory");
+  const activeSheetObj = allSheets[0] || { name: "Employees", cells: {} };
+
+  const analysis = useMemo(() => {
+    return analyzeSheetData(activeSheetObj);
+  }, [activeSheetObj]);
 
   const [searchQuery, setSearchQuery] = useState("");
 
-  const REPORTS_LIST = [
-    { id: "directory", label: "Employee Directory", desc: "Detailed listing of active profiles and contacts.", icon: Users },
-    { id: "departments", label: "Department Summary", desc: "Aggregated headcounts and distributions per unit.", icon: Building2 },
-    { id: "attendance", label: "Attendance Report", desc: "Overview of punctuality, working hours, and statuses.", icon: Clock },
-    { id: "leave", label: "Leave Report", desc: "Summary of approved, pending, and annual leave trackers.", icon: Calendar },
-    { id: "performance", label: "Performance Report", desc: "Aggregated goals, reviews, and reviewer metrics.", icon: Award },
-    { id: "recruitment", label: "Recruitment Report", desc: "Hiring status pipelines and interview calendar.", icon: UserPlus },
-    { id: "status", label: "Employment Status Report", desc: "Proportion of contract, probation, and active workers.", icon: CheckCircle },
-    { id: "workforce", label: "Workforce Summary", desc: "Corporate metrics, total stats, and organizational overview.", icon: TrendingUp }
-  ] as const;
+  // Dynamically determine available report structures based on sheet analysis
+  const availableReports = useMemo(() => {
+    const list = [
+      { id: "directory", label: "Employee Directory", desc: "Detailed listing of active profiles and contacts.", icon: Users }
+    ];
+
+    if (analysis.hasDepartments) {
+      list.push({ id: "departments", label: "Department Summary", desc: "Aggregated headcounts and distributions per unit.", icon: Building2 });
+    }
+    if (analysis.hasAttendance) {
+      list.push({ id: "attendance", label: "Attendance Report", desc: "Overview of punctuality, working hours, and statuses.", icon: Clock });
+    }
+    if (analysis.hasLeave) {
+      list.push({ id: "leave", label: "Leave Report", desc: "Summary of approved, pending, and annual leave trackers.", icon: Calendar });
+    }
+    if (analysis.hasPerformance) {
+      list.push({ id: "performance", label: "Performance Report", desc: "Aggregated goals, reviews, and reviewer metrics.", icon: Award });
+    }
+    if (analysis.hasRecruitment) {
+      list.push({ id: "recruitment", label: "Recruitment Report", desc: "Hiring status pipelines and interview calendar.", icon: UserPlus });
+    }
+    if (analysis.hasStatus) {
+      list.push({ id: "status", label: "Employment Status Report", desc: "Proportion of contract, probation, and active workers.", icon: CheckCircle });
+    }
+
+    list.push({ id: "workforce", label: "Workforce Summary", desc: "Corporate metrics, total stats, and organizational overview.", icon: TrendingUp });
+
+    return list;
+  }, [analysis]);
+
+  const [activeReport, setActiveReport] = useState("directory");
+
+  const currentReport = useMemo(() => {
+    return availableReports.find((r) => r.id === activeReport) ? activeReport : "directory";
+  }, [activeReport, availableReports]);
 
   // Extract sheet rows safely
   const sheetData = useMemo(() => {
@@ -55,6 +76,11 @@ export default function ReportsView({ allSheets = [], parseRowsFn }: ReportsView
       const sheet = allSheets.find((s) => s.name === name);
       dataMap[name] = sheet ? parseRowsFn(sheet) : [];
     });
+
+    // Fallback if sheets are not separated but single sheet holds combined records
+    if (dataMap.Employees.length === 0 && allSheets[0]) {
+      dataMap.Employees = parseRowsFn(allSheets[0]);
+    }
 
     return dataMap;
   }, [allSheets, parseRowsFn]);
@@ -68,12 +94,10 @@ export default function ReportsView({ allSheets = [], parseRowsFn }: ReportsView
   const reportContent = useMemo(() => {
     const q = searchQuery.toLowerCase();
 
-    switch (activeReport) {
+    switch (currentReport) {
       case "directory": {
         const list = sheetData.Employees.filter((emp) =>
-          String(emp["Full Name"] || emp["Employee Name"] || "").toLowerCase().includes(q) ||
-          String(emp["Email"] || "").toLowerCase().includes(q) ||
-          String(emp["Department"] || "").toLowerCase().includes(q)
+          Object.values(emp).some((v) => String(v).toLowerCase().includes(q))
         );
         return (
           <div className="space-y-4">
@@ -82,31 +106,27 @@ export default function ReportsView({ allSheets = [], parseRowsFn }: ReportsView
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="bg-muted/30 border-b border-border text-muted-foreground uppercase font-bold text-[10px]">
-                    <th className="p-3 pl-5">Emp ID</th>
-                    <th className="p-3">Full Name</th>
-                    <th className="p-3">Email</th>
-                    <th className="p-3">Department</th>
-                    <th className="p-3">Position</th>
-                    <th className="p-3">Hire Date</th>
-                    <th className="p-3">Location</th>
+                    {analysis.allColumns.map((col) => (
+                      <th key={col} className="p-3 pl-5 whitespace-nowrap">
+                        {col}
+                      </th>
+                    ))}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
                   {list.length > 0 ? (
                     list.map((emp, i) => (
                       <tr key={i} className="hover:bg-muted/10 text-foreground font-medium">
-                        <td className="p-3 pl-5 font-bold text-[11px] text-muted-foreground">{emp["Employee ID"]}</td>
-                        <td className="p-3 text-foreground font-semibold">{emp["Full Name"]}</td>
-                        <td className="p-3">{emp["Email"]}</td>
-                        <td className="p-3">{emp["Department"]}</td>
-                        <td className="p-3">{emp["Position"]}</td>
-                        <td className="p-3">{emp["Hire Date"]}</td>
-                        <td className="p-3">{emp["Office Location"]}</td>
+                        {analysis.allColumns.map((col) => (
+                          <td key={col} className="p-3 pl-5 truncate max-w-[200px]">
+                            {String(emp[col] ?? "")}
+                          </td>
+                        ))}
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center text-muted-foreground italic">No matches.</td>
+                      <td colSpan={analysis.allColumns.length} className="p-8 text-center text-muted-foreground italic">No matches.</td>
                     </tr>
                   )}
                 </tbody>
@@ -118,12 +138,20 @@ export default function ReportsView({ allSheets = [], parseRowsFn }: ReportsView
 
       case "departments": {
         const counts: Record<string, number> = {};
+        const deptColName = analysis.departmentCol || "Department";
         sheetData.Employees.forEach((emp) => {
-          const d = emp["Department"] || "Unassigned";
+          const d = emp[deptColName] || "Unassigned";
           counts[d] = (counts[d] || 0) + 1;
         });
 
-        const list = sheetData.Departments.filter((dept) =>
+        const list = sheetData.Departments.length > 0 ? sheetData.Departments : Object.keys(counts).map((name) => ({
+          "Department Name": name,
+          "Department Code": name.slice(0, 3).toUpperCase(),
+          "Manager": "Unassigned",
+          "Description": "Dynamic unit"
+        }));
+
+        const filteredList = list.filter((dept) =>
           String(dept["Department Name"] || "").toLowerCase().includes(q)
         );
 
@@ -142,16 +170,16 @@ export default function ReportsView({ allSheets = [], parseRowsFn }: ReportsView
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
-                  {list.length > 0 ? (
-                    list.map((dept, i) => {
-                      const name = dept["Department Name"];
+                  {filteredList.length > 0 ? (
+                    filteredList.map((dept, i) => {
+                      const name = dept["Department Name"] || dept["department"] || "";
                       return (
                         <tr key={i} className="hover:bg-muted/10 text-foreground font-medium">
-                          <td className="p-3 pl-5 font-bold text-muted-foreground">{dept["Department Code"]}</td>
+                          <td className="p-3 pl-5 font-bold text-muted-foreground">{dept["Department Code"] || dept["code"] || "N/A"}</td>
                           <td className="p-3 text-foreground font-semibold">{name}</td>
-                          <td className="p-3 font-bold text-emerald-600">{counts[name] || 0} Employees</td>
-                          <td className="p-3">{dept["Manager"]}</td>
-                          <td className="p-3 max-w-xs truncate">{dept["Description"]}</td>
+                          <td className="p-3 font-bold text-emerald-600">{counts[name] || counts[dept["department"]] || 0} Employees</td>
+                          <td className="p-3">{dept["Manager"] || dept["manager"] || "Unassigned"}</td>
+                          <td className="p-3 max-w-xs truncate">{dept["Description"] || dept["description"] || "Dynamic department details."}</td>
                         </tr>
                       );
                     })
@@ -367,14 +395,15 @@ export default function ReportsView({ allSheets = [], parseRowsFn }: ReportsView
 
       case "status": {
         const counts: Record<string, number> = {};
+        const statusColName = analysis.statusCol || "Status";
         sheetData.Employees.forEach((emp) => {
-          const type = emp["Employment Type"] || "Full-Time";
+          const type = emp[statusColName] || "Active";
           counts[type] = (counts[type] || 0) + 1;
         });
 
         return (
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-foreground">Employment Types & Classification</h3>
+            <h3 className="text-sm font-bold text-foreground">Employment Statuses & Classification</h3>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div className="border border-border rounded-xl bg-card p-5 shadow-sm space-y-4">
                 <h4 className="text-xs font-bold text-muted-foreground uppercase">Proportions Summary</h4>
@@ -394,19 +423,15 @@ export default function ReportsView({ allSheets = [], parseRowsFn }: ReportsView
 
       case "workforce": {
         const totalEmployees = sheetData.Employees.length;
-        const totalDepartments = sheetData.Departments.length;
-        const onLeave = sheetData.Employees.filter((emp) => emp["Employment Status"] === "On Leave").length;
-        const active = sheetData.Employees.filter((emp) => emp["Employment Status"] === "Active").length;
+        const totalDepartments = sheetData.Departments.length || new Set(sheetData.Employees.map((e) => e.Department).filter(Boolean)).size;
 
         return (
           <div className="space-y-6">
-            <h3 className="text-sm font-bold text-foreground">Workforce Dashboard Summary</h3>
+            <h3 className="text-sm font-bold text-foreground">Workforce Summary Report</h3>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
               {[
                 { label: "Total Headcount", value: totalEmployees, icon: Users, color: "text-blue-500 bg-blue-50 border-blue-100" },
-                { label: "Corporate Departments", value: totalDepartments, icon: Building2, color: "text-purple-500 bg-purple-50 border-purple-100" },
-                { label: "Active Employees", value: active, icon: CheckCircle, color: "text-emerald-500 bg-emerald-50 border-emerald-100" },
-                { label: "On Leave Tracker", value: onLeave, icon: Calendar, color: "text-amber-500 bg-amber-50 border-amber-100" }
+                { label: "Total Departments", value: totalDepartments, icon: Building2, color: "text-purple-500 bg-purple-50 border-purple-100" }
               ].map((stat, i) => (
                 <div key={i} className={`p-4 border rounded-xl bg-card flex items-center gap-4 shadow-sm ${stat.color}`}>
                   <stat.icon className="h-6 w-6" />
@@ -421,7 +446,7 @@ export default function ReportsView({ allSheets = [], parseRowsFn }: ReportsView
         );
       }
     }
-  }, [activeReport, searchQuery, sheetData]);
+  }, [currentReport, searchQuery, sheetData, analysis]);
 
   return (
     <div className="flex-1 flex overflow-hidden bg-muted/10 select-none">
@@ -429,14 +454,14 @@ export default function ReportsView({ allSheets = [], parseRowsFn }: ReportsView
       <div className="w-72 bg-card border-r border-border flex flex-col flex-shrink-0">
         <div className="p-4 border-b border-border flex-shrink-0 bg-muted/15">
           <h2 className="text-xs font-bold text-foreground flex items-center gap-2">
-            <FileText className="h-4 w-4 text-accent" /> HR Reports Center
+            <FileText className="h-4 w-4 text-accent" /> Dynamic Reports Center
           </h2>
           <p className="text-[11px] text-muted-foreground mt-1">
-            Analyze, visualize, and print real-time HR operations indicators.
+            Analyze, visualize, and print real-time indicators adapted from spreadsheet schema.
           </p>
         </div>
         <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {REPORTS_LIST.map((rep) => (
+          {availableReports.map((rep) => (
             <button
               key={rep.id}
               onClick={() => {
@@ -444,14 +469,14 @@ export default function ReportsView({ allSheets = [], parseRowsFn }: ReportsView
                 setSearchQuery("");
               }}
               className={`w-full p-3 text-left rounded-lg flex items-start gap-3 transition ${
-                activeReport === rep.id
+                currentReport === rep.id
                   ? "bg-accent/15 border-l-4 border-accent"
                   : "hover:bg-muted/30"
               }`}
             >
-              <rep.icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${activeReport === rep.id ? "text-accent" : "text-muted-foreground"}`} />
+              <rep.icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${currentReport === rep.id ? "text-accent" : "text-muted-foreground"}`} />
               <div className="min-w-0">
-                <div className={`text-xs font-bold ${activeReport === rep.id ? "text-accent" : "text-foreground"}`}>
+                <div className={`text-xs font-bold ${currentReport === rep.id ? "text-accent" : "text-foreground"}`}>
                   {rep.label}
                 </div>
                 <div className="text-[10px] text-muted-foreground truncate mt-0.5">{rep.desc}</div>
@@ -470,7 +495,7 @@ export default function ReportsView({ allSheets = [], parseRowsFn }: ReportsView
             <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
               type="text"
-              placeholder="Search reports registry..."
+              placeholder="Search reports..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="w-full text-xs pl-8 pr-3 py-1.5 rounded-lg border border-border bg-background focus:outline-none"

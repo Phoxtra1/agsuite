@@ -29,10 +29,9 @@ import {
   CheckCircle2,
   Clock,
   Award,
-  UserPlus,
-  ClipboardList
+  UserPlus
 } from "lucide-react";
-import { parseSheetRows } from "@/lib/workspace/sheets/smartData";
+import { analyzeSheetData, parseSheetRows } from "@/lib/workspace/sheets/smartData";
 
 interface DashboardEngineProps {
   records: Record<string, any>[];
@@ -47,181 +46,125 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
   const [search, setSearch] = useState("");
   const [filterValue, setFilterValue] = useState("all");
 
-  // Multi-sheet data parser for HR Solutions
-  const hrData = useMemo(() => {
-    if (solutionType !== "HR" || !allSheets.length) return null;
-    const findAndParse = (name: string) => {
-      const sheet = allSheets.find((s) => s.name === name);
-      return sheet ? parseSheetRows(sheet) : [];
-    };
-    return {
-      employees: findAndParse("Employees"),
-      departments: findAndParse("Departments"),
-      attendance: findAndParse("Attendance"),
-      leave: findAndParse("Leave"),
-      performance: findAndParse("Performance"),
-      recruitment: findAndParse("Recruitment")
-    };
-  }, [allSheets, solutionType]);
+  const activeSheetObj = allSheets[0] || { name: "Sheet1", cells: {} };
 
-  // Dynamic Metrics Generation
+  // AI-powered analysis of active spreadsheet columns
+  const analysis = useMemo(() => {
+    return analyzeSheetData(activeSheetObj);
+  }, [activeSheetObj]);
+
+  // Dynamic Metrics Generation adapted to detected columns
   const metrics = useMemo(() => {
-    if (solutionType === "HR" && hrData) {
-      const emps = hrData.employees;
-      const totalEmployees = emps.length;
-      const activeEmployees = emps.filter(e => e["Employment Status"] === "Active").length;
-      const onLeave = emps.filter(e => e["Employment Status"] === "On Leave" || e["Status"] === "On Leave").length;
-      const newEmployees = emps.filter(e => {
-        const hireDate = e["Hire Date"];
-        return hireDate && hireDate.includes("2026");
-      }).length;
+    const totalCount = records.length;
+    const cards = [];
 
-      const totalDepts = hrData.departments.length || new Set(emps.map(e => e.Department).filter(Boolean)).size;
-      const openRecruitment = hrData.recruitment.filter(r => r["Hiring Status"] === "Under Review" || r["Application Status"] === "Applied" || r["Application Status"] === "Interview Scheduled").length;
-      const upcomingReviews = hrData.performance.length;
+    // 1. Core Total count card (adapted to solution name)
+    const totalLabel = solutionType === "HR" ? "Total Employees" :
+                       solutionType === "CRM" ? "Total Deals" : "Total Registered Records";
+    cards.push({ label: totalLabel, value: totalCount, icon: Users, color: "text-blue-500 bg-blue-50" });
 
-      return [
-        { label: "Total Employees", value: totalEmployees, icon: Users, color: "text-blue-500 bg-blue-50" },
-        { label: "Active Employees", value: activeEmployees, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
-        { label: "Employees on Leave", value: onLeave, icon: Calendar, color: "text-amber-500 bg-amber-50" },
-        { label: "New Employees (2026)", value: newEmployees, icon: UserPlus, color: "text-purple-500 bg-purple-50" },
-        { label: "Departments", value: totalDepts, icon: Layers, color: "text-cyan-500 bg-cyan-50" },
-        { label: "Open Recruitment", value: openRecruitment, icon: Briefcase, color: "text-rose-500 bg-rose-50" },
-        { label: "Upcoming Reviews", value: upcomingReviews, icon: Award, color: "text-indigo-500 bg-indigo-50" }
-      ];
+    // 2. Active status tracker (if Status column is present)
+    if (analysis.hasStatus) {
+      const statusColName = analysis.statusCol || "Status";
+      const activeCount = records.filter(r => String(r[statusColName]).toLowerCase() === "active").length;
+      cards.push({ label: "Active Records", value: activeCount, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" });
     }
 
-    if (!records.length) return [];
-
-    switch (solutionType) {
-      case "CRM": {
-        const uniqueOrgs = new Set(records.map((r) => r.organizationName || r.Organization).filter(Boolean));
-        const totalContacts = records.filter((r) => r.contactName || r["Contact Person"]).length;
-        const totalValue = records.reduce((sum, r) => sum + (Number(r.value || r["Value (USD)"]) || 0), 0);
-        const activePartnerships = records.filter((r) => (r.status || r["Status"]) === "Partnership Active").length;
-        const followups = records.filter((r) => (r.status || r["Status"]) === "Follow-up Required").length;
-
-        return [
-          { label: "Total Organizations", value: uniqueOrgs.size, icon: Building2, color: "text-blue-500 bg-blue-50" },
-          { label: "Total Contacts", value: totalContacts, icon: Users, color: "text-emerald-500 bg-emerald-50" },
-          { label: "Active Partnerships", value: activePartnerships, icon: CheckCircle2, color: "text-purple-500 bg-purple-50" },
-          { label: "Pipeline Value", value: `$${totalValue.toLocaleString()}`, icon: DollarSign, color: "text-amber-500 bg-amber-50" },
-          { label: "Follow-up Pending", value: followups, icon: Calendar, color: "text-rose-500 bg-rose-50" }
-        ];
-      }
-      case "Inventory": {
-        const totalItems = records.length;
-        const totalQty = records.reduce((sum, r) => sum + (Number(r.Quantity) || 0), 0);
-        const totalVal = records.reduce((sum, r) => sum + ((Number(r.Quantity) || 0) * (Number(r["Unit Cost"]) || 0)), 0);
-        const lowStock = records.filter((r) => (Number(r.Quantity) || 0) <= (Number(r["Stock Alert Level"]) || 5)).length;
-
-        return [
-          { label: "Total Products", value: totalItems, icon: Layers, color: "text-blue-500 bg-blue-50" },
-          { label: "Total Inventory Stock", value: totalQty, icon: Inbox, color: "text-purple-500 bg-purple-50" },
-          { label: "Stock Valuation", value: `$${totalVal.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" },
-          { label: "Low Stock Alerts", value: lowStock, icon: AlertTriangle, color: "text-rose-500 bg-rose-50", alert: lowStock > 0 }
-        ];
-      }
-      case "Registry": {
-        const totalRecs = records.length;
-        const activeFiles = records.filter((r) => r.Status === "Active").length;
-        const uniqueCats = new Set(records.map((r) => r.Category).filter(Boolean));
-
-        return [
-          { label: "Total Registered Records", value: totalRecs, icon: FileText, color: "text-blue-500 bg-blue-50" },
-          { label: "Active Folders", value: activeFiles, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
-          { label: "Unique Categories", value: uniqueCats.size, icon: Layers, color: "text-amber-500 bg-amber-50" }
-        ];
-      }
-      case "Project": {
-        const totalTasks = records.length;
-        const highPriority = records.filter((r) => r.Priority === "High").length;
-        const inProgress = records.filter((r) => r.Status === "In Progress").length;
-        const completed = records.filter((r) => r.Status === "Done" || r.Status === "Completed").length;
-
-        return [
-          { label: "Total Tasks", value: totalTasks, icon: Briefcase, color: "text-blue-500 bg-blue-50" },
-          { label: "In Progress", value: inProgress, icon: TrendingUp, color: "text-purple-500 bg-purple-50" },
-          { label: "High Priority", value: highPriority, icon: AlertTriangle, color: "text-rose-500 bg-rose-50" },
-          { label: "Completed Tasks", value: completed, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" }
-        ];
-      }
-      default:
-        return [{ label: "Total Row Count", value: records.length, icon: Layers, color: "text-gray-500 bg-gray-50" }];
+    // 3. Departments (if Department column is present)
+    if (analysis.hasDepartments && analysis.departmentCol) {
+      const depts = new Set(records.map(r => r[analysis.departmentCol!]).filter(Boolean));
+      cards.push({ label: "Unique Departments", value: depts.size, icon: Building2, color: "text-purple-500 bg-purple-50" });
     }
-  }, [records, solutionType, hrData]);
 
-  // Aggregate Status counts for charting
+    // 4. Payroll / Value summaries (if Salary or Value exists)
+    if (analysis.hasSalary && analysis.salaryCol) {
+      const payroll = records.reduce((sum, r) => sum + (Number(r[analysis.salaryCol!]) || 0), 0);
+      cards.push({ label: "Total Payroll (Monthly)", value: `$${payroll.toLocaleString()}`, icon: DollarSign, color: "text-cyan-500 bg-cyan-50" });
+    } else if (analysis.hasValue) {
+      const valueCol = analysis.allColumns.find(col => col.toLowerCase().includes("value") || col.toLowerCase().includes("budget") || col.toLowerCase().includes("$"));
+      if (valueCol) {
+        const totalVal = records.reduce((sum, r) => sum + (Number(r[valueCol]) || 0), 0);
+        cards.push({ label: "Total Valuation", value: `$${totalVal.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" });
+      }
+    }
+
+    // 5. Attendance & Leave trackers (only if those sections exist)
+    if (analysis.hasAttendance) {
+      const present = records.filter(r => String(r[analysis.attendanceStatusCol || "Attendance Status"]).toLowerCase() === "present").length;
+      cards.push({ label: "Present Staff Today", value: present, icon: Clock, color: "text-indigo-500 bg-indigo-50" });
+    }
+
+    if (analysis.hasLeave) {
+      const onLeave = records.filter(r => String(r[analysis.leaveTypeCol || "Leave Type"]).toLowerCase().includes("leave") || String(r["Status"]).toLowerCase() === "on leave").length;
+      cards.push({ label: "Employees on Leave", value: onLeave, icon: Calendar, color: "text-amber-500 bg-amber-50" });
+    }
+
+    // 6. Recruitment Tracker (if Recruitment data exists)
+    if (analysis.hasRecruitment) {
+      const openPositions = records.filter(r => String(r[analysis.jobTitleCol || "Application Status"]).toLowerCase() === "applied" || String(r["Hiring Status"]).toLowerCase() === "under review").length;
+      cards.push({ label: "Open Recruitments", value: openPositions, icon: UserPlus, color: "text-rose-500 bg-rose-50" });
+    }
+
+    // 7. Performance reviews tracker
+    if (analysis.hasPerformance) {
+      const reviewsCount = records.length;
+      cards.push({ label: "Reviews Completed", value: reviewsCount, icon: Award, color: "text-amber-600 bg-amber-50" });
+    }
+
+    return cards;
+  }, [records, solutionType, analysis]);
+
+  // Aggregate Status counts for charting (if status exists)
   const statusChartData = useMemo(() => {
-    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
+    if (!analysis.hasStatus) return [];
+    const statusColName = analysis.statusCol || "Status";
     const counts: Record<string, number> = {};
-    dataToUse.forEach((r) => {
-      const statusKey = r.status || r.Status || r["Employment Status"] || "Unknown";
+    records.forEach((r) => {
+      const statusKey = r[statusColName] || "Unknown";
       counts[statusKey] = (counts[statusKey] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [records, solutionType, hrData]);
+  }, [records, analysis]);
 
-  // Value/Price Distribution chart
-  const valueChartData = useMemo(() => {
-    if (solutionType === "CRM") {
-      return records
-        .map((r) => ({
-          name: (r.organizationName || r.Organization || "").slice(0, 15),
-          value: Number(r.value || r["Value (USD)"]) || 0
-        }))
-        .filter((d) => d.value > 0);
-    } else if (solutionType === "Inventory") {
-      return records.map((r) => ({
-        name: (r["Product Name"] || "").slice(0, 15),
-        value: Number(r.Quantity) || 0
-      }));
-    } else if (solutionType === "HR") {
-      const dataToUse = hrData ? hrData.employees : records;
-      const counts: Record<string, number> = {};
-      dataToUse.forEach(e => {
-        const d = e.Department || "Unassigned";
-        counts[d] = (counts[d] || 0) + 1;
-      });
-      return Object.entries(counts).map(([name, value]) => ({ name, value }));
-    }
-    return [];
-  }, [records, solutionType, hrData]);
+  // Department Allocation chart data (only if Departments exist)
+  const departmentChartData = useMemo(() => {
+    if (!analysis.hasDepartments || !analysis.departmentCol) return [];
+    const counts: Record<string, number> = {};
+    records.forEach((r) => {
+      const deptKey = r[analysis.departmentCol!] || "Unassigned";
+      counts[deptKey] = (counts[deptKey] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [records, analysis]);
+
+  // Custom Value allocation chart (dynamic custom numeric columns)
+  const salaryAllocationData = useMemo(() => {
+    if (!analysis.hasSalary || !analysis.salaryCol) return [];
+    return records
+      .map((r) => ({
+        name: String(r[analysis.employeeNameCol || "Name"] || r[analysis.employeeIdCol || "ID"] || "").slice(0, 15),
+        value: Number(r[analysis.salaryCol!]) || 0
+      }))
+      .filter((d) => d.value > 0);
+  }, [records, analysis]);
 
   // Filter list of records for summary table
   const filteredRecords = useMemo(() => {
-    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
-    return dataToUse.filter((rec) => {
+    return records.filter((rec) => {
       const matchSearch = Object.values(rec).some((val) =>
         String(val).toLowerCase().includes(search.toLowerCase())
       );
       if (filterValue === "all") return matchSearch;
-      return matchSearch && (rec.status || rec.Status || rec["Employment Status"]) === filterValue;
+      const statusColName = analysis.statusCol || "Status";
+      return matchSearch && String(rec[statusColName]) === filterValue;
     });
-  }, [records, search, filterValue, solutionType, hrData]);
+  }, [records, search, filterValue, analysis]);
 
   const uniqueStatuses = useMemo(() => {
-    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
-    return Array.from(new Set(dataToUse.map((r) => r.status || r.Status || r["Employment Status"]).filter(Boolean)));
-  }, [records, solutionType, hrData]);
-
-  // HR specific summary states
-  const attendanceSummary = useMemo(() => {
-    if (solutionType !== "HR" || !hrData) return null;
-    const att = hrData.attendance;
-    const present = att.filter(a => a["Attendance Status"] === "Present" || a["Attendance Status"] === "Remote").length;
-    const late = att.filter(a => a["Attendance Status"] === "Late").length;
-    const absent = att.filter(a => a["Attendance Status"] === "Absent").length;
-    return { present, late, absent, total: att.length };
-  }, [hrData, solutionType]);
-
-  const leaveSummary = useMemo(() => {
-    if (solutionType !== "HR" || !hrData) return null;
-    const leaves = hrData.leave;
-    const approved = leaves.filter(l => l["Status"] === "Approved").length;
-    const pending = leaves.filter(l => l["Status"] === "Pending").length;
-    return { approved, pending, total: leaves.length };
-  }, [hrData, solutionType]);
+    if (!analysis.hasStatus) return [];
+    const statusColName = analysis.statusCol || "Status";
+    return Array.from(new Set(records.map((r) => r[statusColName]).filter(Boolean)));
+  }, [records, analysis]);
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-muted/20 space-y-6">
@@ -229,16 +172,14 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
           <h2 className="text-xl font-bold text-foreground">
-            {solutionType === "CRM" ? "CRM Live Workspace" :
-             solutionType === "HR" ? "HR Management Workspace Dashboard" :
-             `${solutionType} Smart Dashboard`}
+            {solutionType === "HR" ? "HR Management Smart Dashboard" : `${solutionType} Dynamic Dashboard`}
           </h2>
           <p className="text-sm text-muted-foreground">
-            Visualized analytics powered by the Smart Data Layer. Zero delay two-way synchronization active.
+            AI-generated indicators adapted dynamically from your master spreadsheet.
           </p>
         </div>
         <div className="flex items-center gap-2 text-xs bg-emerald-500/10 text-emerald-600 font-semibold px-3 py-1.5 rounded-full border border-emerald-500/20 shadow-sm animate-pulse">
-          <TrendingUp className="h-4 w-4" /> Real-time Connection Active
+          <TrendingUp className="h-4 w-4" /> Live Sync Connection Active
         </div>
       </div>
 
@@ -247,9 +188,7 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         {metrics.map((m, idx) => (
           <div
             key={idx}
-            className={`rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition flex items-center gap-4 ${
-              m.alert ? "border-rose-300 bg-rose-50/20" : ""
-            }`}
+            className="rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition flex items-center gap-4"
           >
             <div className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${m.color}`}>
               <m.icon className="h-6 w-6" />
@@ -262,57 +201,83 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         ))}
       </div>
 
-      {/* Dynamic Charts Section */}
-      {statusChartData.length > 0 && (
+      {/* Dynamic Charts Section (Strictly hides empty/meaningless charts) */}
+      {records.length > 0 && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Status breakdown Chart */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
-              <Layers className="h-4 w-4 text-muted-foreground" />
-              {solutionType === "HR" ? "Employment Status breakdown" : "Workflow / Status Distribution"}
-            </h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={statusChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  >
-                    {statusChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Value / Numeric Breakdown Chart */}
-          {valueChartData.length > 0 && (
+          {/* 1. Status distribution (only if Status column exists) */}
+          {analysis.hasStatus && statusChartData.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
-                <TrendingUp className="h-4 w-4 text-muted-foreground" />{" "}
-                {solutionType === "CRM"
-                  ? "Deal Value Distribution"
-                  : solutionType === "Inventory"
-                  ? "Stock Level Distribution"
-                  : "Department Headcount Allocation"}
+                <Layers className="h-4 w-4 text-muted-foreground" /> Status Distribution
               </h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={valueChartData}>
+                  <PieChart>
+                    <Pie
+                      data={statusChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    >
+                      {statusChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* 2. Department distribution (only if Department column exists) */}
+          {analysis.hasDepartments && departmentChartData.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+              <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
+                <Building2 className="h-4 w-4 text-muted-foreground" /> Headcount by Department
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={departmentChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    >
+                      {departmentChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          {/* 3. Salary / Numeric allocations (only if relevant numerical exists) */}
+          {analysis.hasSalary && salaryAllocationData.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5 shadow-sm lg:col-span-2">
+              <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
+                <TrendingUp className="h-4 w-4 text-muted-foreground" /> Monthly Salary Allocation
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={salaryAllocationData}>
                     <XAxis dataKey="name" fontSize={11} tickLine={false} />
                     <YAxis fontSize={11} />
                     <Tooltip />
                     <Bar dataKey="value" fill="#0ea5e9" radius={[4, 4, 0, 0]}>
-                      {valueChartData.map((entry, index) => (
+                      {salaryAllocationData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
                       ))}
                     </Bar>
@@ -321,47 +286,6 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
               </div>
             </div>
           )}
-        </div>
-      )}
-
-      {/* HR Specific Metrics Summary Panel */}
-      {solutionType === "HR" && attendanceSummary && leaveSummary && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
-            <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
-              <Clock className="h-4 w-4 text-muted-foreground" /> Attendance Summary Metrics
-            </h3>
-            <div className="grid grid-cols-3 gap-4 text-center">
-              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                <div className="text-[10px] uppercase font-bold text-emerald-800">Present / Remote</div>
-                <div className="text-xl font-bold text-emerald-950 mt-1">{attendanceSummary.present}</div>
-              </div>
-              <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
-                <div className="text-[10px] uppercase font-bold text-amber-800">Late Arrivals</div>
-                <div className="text-xl font-bold text-amber-950 mt-1">{attendanceSummary.late}</div>
-              </div>
-              <div className="p-3 bg-rose-50 rounded-lg border border-rose-100">
-                <div className="text-[10px] uppercase font-bold text-rose-800">Absent</div>
-                <div className="text-xl font-bold text-rose-950 mt-1">{attendanceSummary.absent}</div>
-              </div>
-            </div>
-          </div>
-
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
-            <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
-              <Calendar className="h-4 w-4 text-muted-foreground" /> Leave Requests Summary
-            </h3>
-            <div className="grid grid-cols-2 gap-4 text-center">
-              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
-                <div className="text-[10px] uppercase font-bold text-emerald-800">Approved Leave</div>
-                <div className="text-xl font-bold text-emerald-950 mt-1">{leaveSummary.approved}</div>
-              </div>
-              <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
-                <div className="text-[10px] uppercase font-bold text-amber-800">Pending Requests</div>
-                <div className="text-xl font-bold text-amber-950 mt-1">{leaveSummary.pending}</div>
-              </div>
-            </div>
-          </div>
         </div>
       )}
 
@@ -408,31 +332,24 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-muted-foreground uppercase font-semibold">
-                  {filteredRecords.length > 0 &&
-                    Object.keys(filteredRecords[0])
-                      .filter((k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_"))
-                      .slice(0, 5)
-                      .map((key) => (
-                        <th key={key} className="p-3">
-                          {key}
-                        </th>
-                      ))}
+                  {analysis.allColumns.slice(0, 5).map((key) => (
+                    <th key={key} className="p-3">
+                      {key}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {filteredRecords.length > 0 ? (
                   filteredRecords.map((r, i) => (
                     <tr key={i} className="border-b border-border/60 hover:bg-muted/30">
-                      {Object.keys(filteredRecords[0])
-                        .filter((k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_"))
-                        .slice(0, 5)
-                        .map((key) => (
-                          <td key={key} className="p-3 text-foreground font-medium">
-                            {key.toLowerCase().includes("value") || key.toLowerCase().includes("salary")
-                              ? `$${(Number(r[key]) || 0).toLocaleString()}`
-                              : String(r[key] ?? "")}
-                          </td>
-                        ))}
+                      {analysis.allColumns.slice(0, 5).map((key) => (
+                        <td key={key} className="p-3 text-foreground font-medium truncate max-w-[150px]">
+                          {key.toLowerCase().includes("salary") || key.toLowerCase().includes("value")
+                            ? `$${(Number(r[key]) || 0).toLocaleString()}`
+                            : String(r[key] ?? "")}
+                        </td>
+                      ))}
                     </tr>
                   ))
                 ) : (
