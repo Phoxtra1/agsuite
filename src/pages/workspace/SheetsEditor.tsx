@@ -118,9 +118,11 @@ export default function SheetsEditor() {
   }, [wbUR, persist]);
 
   // Two-way synchronization & Smart Data Layer Handlers
-
-  const handleActivateSolution = useCallback((type: "CRM" | "Task" | "HR" | "Registry" | "Project" | "ProjectManagement" | "Custom") => {
-
+<<<<<<< HEAD
+  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom" | "Tasks") => {
+=======
+  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "ProjectManagement" | "Custom") => {
+>>>>>>> origin/project-management-v1-14857969931671137028
     setWb((prev) => {
       if (type === "HR") {
         return seedHrSolutionToWorkbook(prev);
@@ -1025,7 +1027,7 @@ export default function SheetsEditor() {
               hrEmployees={projectManagementData.hrEmployees}
               registryRecords={projectManagementData.registryRecords}
             />
-            
+
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 bg-muted/10">
               <Presentation className="h-12 w-12 text-accent animate-pulse" />
@@ -1045,19 +1047,30 @@ export default function SheetsEditor() {
           )
         ) : wb.activeSolution && activeView === "reports" ? (
           <ReportsView
+            records={parsedRecords}
+            solutionType={wb.activeSolution.type}
             allSheets={wb.sheets}
             parseRowsFn={parseSheetRows}
           />
         ) : wb.activeSolution && activeView === "dashboard" ? (
           <DashboardEngine
-          records={parsedRecords}
-          solutionType={wb.activeSolution.type}
-          meetings={wb.activeSolution.meetings}
-          allSheets={wb.sheets}
-         />
-         ) : (
+            records={parsedRecords}
+            solutionType={wb.activeSolution.type}
+            meetings={wb.activeSolution.meetings}
+            allSheets={wb.sheets}
+          />
+        ) : wb.activeSolution && activeView === "reports" ? (
+<<<<<<< HEAD
+          <ReportsView records={parsedRecords} />
+=======
+          <ReportsView
+            records={parsedRecords}
+            solutionType={wb.activeSolution.type}
+          />
+>>>>>>> origin/jules-10842899696782935597-81a00e2f
+        ) : (
+          /* Default Spreadsheet Editor view */
           <>
-            {/* Default Spreadsheet Editor view */}
             <div className="flex-1 flex flex-col overflow-hidden">
               <SheetGrid
                 sheet={activeSheet}
@@ -1155,8 +1168,8 @@ function SolutionDropdown({ activeSolution, onSelectSolution, onDeactivate }: So
       <button
         onClick={() => setOpen((v) => !v)}
         className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition ${activeSolution
-            ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm animate-pulse"
-            : "bg-accent text-accent-foreground hover:bg-accent/90"
+          ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm animate-pulse"
+          : "bg-accent text-accent-foreground hover:bg-accent/90"
           }`}
       >
         <Sparkles className="h-3.5 w-3.5" />
