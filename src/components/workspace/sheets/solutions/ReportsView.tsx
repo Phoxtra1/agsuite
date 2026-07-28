@@ -20,7 +20,14 @@ import {
   Search,
   Filter,
   CheckCircle,
-  AlertCircle
+  AlertCircle,
+  MapPin,
+  Activity,
+  Database,
+  Tag,
+  Shield,
+  Check,
+  Info
 } from "lucide-react";
 import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, Tooltip, Cell, PieChart, Pie } from "recharts";
 
@@ -74,24 +81,45 @@ function TasksReportsView({ records }: { records: Record<string, any>[] }) {
         isOverdue = dueD < today;
       }
 
-          return {
-                  taskName,
-                  status,
-                  priority,
-                  assignedTo,
-                  dueDate,
-                  startDate,
-                  progress,
-                  department,
-                  team,
-                  category,
-                  isOverdue
-                  };
+      return {
+        taskName,
+        status,
+        priority,
+        assignedTo,
+        dueDate,
+        startDate,
+        progress,
+        department,
+        team,
+        category,
+        isOverdue
+=======
+  FileText,
+  TrendingUp,
+  MapPin,
+  Calendar,
+  Activity,
+  Sparkles,
+  Download,
+  Printer,
+  ChevronRight,
+  Filter,
+  Check,
+  Search,
+  Database,
+  BarChart,
+  Tag,
+  Clock,
+  Shield,
+  Info
+} from "lucide-react";
 
-                 });
-                 }, [records]);
+interface ReportsViewProps {
+  records: Record<string, any>[];
+  solutionType: string;
+}
 
-
+export default function ReportsView({ records = [], solutionType }: ReportsViewProps) {
   const [activeReport, setActiveReport] = useState<"summary" | "category" | "status" | "location" | "activity" | "custom">("summary");
 
   // Custom report builder state
@@ -107,11 +135,11 @@ function TasksReportsView({ records }: { records: Record<string, any>[] }) {
   }, [records]);
 
   // Set default selected fields for custom report on first render or header load
-  useEffect(() => {
-  if (customSelectedFields.length === 0 && allHeaders.length > 0) {
-    setCustomSelectedFields(allHeaders.slice(0, 5));
-  }
-}, [allHeaders]);
+  useMemo(() => {
+    if (customSelectedFields.length === 0 && allHeaders.length > 0) {
+      setCustomSelectedFields(allHeaders.slice(0, 5));
+    }
+  }, [allHeaders]);
 
   const toggleCustomField = (field: string) => {
     if (customSelectedFields.includes(field)) {
@@ -368,151 +396,150 @@ function TasksReportsView({ records }: { records: Record<string, any>[] }) {
                     <td className="p-3 text-center font-bold text-emerald-600">{user.completed}</td>
                     <td className="p-3 text-center">
                       <span className="font-bold text-accent">{user.avgProgress}%</span>
-
-    // Filtered records for the Custom Report table
+=======
+  // Filtered records for the Custom Report table
   const customReportRecords = useMemo(() => {
     return records.filter((rec) => {
       if (!customFilterText.trim()) return true;
-      const query = customFilterText.toLowerCase();
+                      const query = customFilterText.toLowerCase();
       return Object.values(rec).some((val) =>
-        String(val).toLowerCase().includes(query)
-      );
+                      String(val).toLowerCase().includes(query)
+                      );
     });
   }, [records, customFilterText]);
 
   // Simulations
   const handleExportCSV = () => {
     const headers = activeReport === "custom" ? customSelectedFields : allHeaders;
-    const rows = activeReport === "custom" ? customReportRecords : records;
+                      const rows = activeReport === "custom" ? customReportRecords : records;
 
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += headers.join(",") + "\n";
+                      let csvContent = "data:text/csv;charset=utf-8,";
+                      csvContent += headers.join(",") + "\n";
 
     rows.forEach((r) => {
       const row = headers.map((h) => `"${String(r[h] ?? "").replace(/"/g, '""')}"`);
-      csvContent += row.join(",") + "\n";
+                      csvContent += row.join(",") + "\n";
     });
 
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute("download", `Amineva_${solutionType}_${activeReport}_Report.csv`);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+                      const encodedUri = encodeURI(csvContent);
+                      const link = document.createElement("a");
+                      link.setAttribute("href", encodedUri);
+                      link.setAttribute("download", `Amineva_${solutionType}_${activeReport}_Report.csv`);
+                      document.body.appendChild(link);
+                      link.click();
+                      document.body.removeChild(link);
   };
 
   const handlePrint = () => {
-    window.print();
+                        window.print();
   };
 
-  return (
-    <div className="flex-1 overflow-y-auto p-6 bg-muted/20 space-y-6 text-xs">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border pb-4 gap-4 flex-shrink-0">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">
-            {solutionType} Analysis & Reports Hub
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            High-fidelity document audit trails, category metrics, and customized report builders.
-          </p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg font-bold hover:bg-muted text-foreground shadow-sm"
-          >
-            <Download className="h-4 w-4 text-accent" /> Export Report CSV
-          </button>
-          <button
-            onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg font-bold hover:bg-muted text-foreground shadow-sm"
-          >
-            <Printer className="h-4 w-4 text-muted-foreground" /> Print / Save PDF
-          </button>
-        </div>
-      </div>
+                      return (
+                      <div className="flex-1 overflow-y-auto p-6 bg-muted/20 space-y-6 text-xs">
+                        {/* Page Header */}
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border pb-4 gap-4 flex-shrink-0">
+                          <div>
+                            <h2 className="text-xl font-bold text-foreground">
+                              {solutionType} Analysis & Reports Hub
+                            </h2>
+                            <p className="text-sm text-muted-foreground">
+                              High-fidelity document audit trails, category metrics, and customized report builders.
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <button
+                              onClick={handleExportCSV}
+                              className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg font-bold hover:bg-muted text-foreground shadow-sm"
+                            >
+                              <Download className="h-4 w-4 text-accent" /> Export Report CSV
+                            </button>
+                            <button
+                              onClick={handlePrint}
+                              className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg font-bold hover:bg-muted text-foreground shadow-sm"
+                            >
+                              <Printer className="h-4 w-4 text-muted-foreground" /> Print / Save PDF
+                            </button>
+                          </div>
+                        </div>
 
-      {/* Report Selection Tabs */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 bg-card p-1.5 border border-border rounded-xl">
-        {[
-          { id: "summary", label: "Registry Summary", icon: BarChart },
-          { id: "category", label: "Category Report", icon: Tag },
-          { id: "status", label: "Status Report", icon: Shield },
-          { id: "location", label: "Location Report", icon: MapPin },
-          { id: "activity", label: "Activity Trail", icon: Activity },
-          { id: "custom", label: "Custom Builder", icon: Sparkles }
-        ].map((tab) => (
-          <button
-            key={tab.id}
-            onClick={() => setActiveReport(tab.id as any)}
-            className={`flex items-center justify-center gap-2 py-2 rounded-lg font-semibold transition ${
-              activeReport === tab.id
-                ? "bg-accent text-accent-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            <tab.icon className="h-3.5 w-3.5" />
-            <span>{tab.label}</span>
-          </button>
-        ))}
-      </div>
+                        {/* Report Selection Tabs */}
+                        <div className="grid grid-cols-2 md:grid-cols-6 gap-2 bg-card p-1.5 border border-border rounded-xl">
+                          {[
+                            { id: "summary", label: "Registry Summary", icon: BarChart },
+                            { id: "category", label: "Category Report", icon: Tag },
+                            { id: "status", label: "Status Report", icon: Shield },
+                            { id: "location", label: "Location Report", icon: MapPin },
+                            { id: "activity", label: "Activity Trail", icon: Activity },
+                            { id: "custom", label: "Custom Builder", icon: Sparkles }
+                          ].map((tab) => (
+                            <button
+                              key={tab.id}
+                              onClick={() => setActiveReport(tab.id as any)}
+                              className={`flex items-center justify-center gap-2 py-2 rounded-lg font-semibold transition ${activeReport === tab.id
+                                ? "bg-accent text-accent-foreground shadow-sm"
+                                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                                }`}
+                            >
+                              <tab.icon className="h-3.5 w-3.5" />
+                              <span>{tab.label}</span>
+                            </button>
+                          ))}
+                        </div>
 
-      {/* REPORT CONTENT AREA */}
+                        {/* REPORT CONTENT AREA */}
 
-      {/* 1. SUMMARY REPORT */}
-      {activeReport === "summary" && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Records</span>
-              <div className="text-3xl font-extrabold text-foreground">{summaryData.total}</div>
-              <p className="text-[11px] text-muted-foreground pt-1">All multi-category records synchronized in workspace.</p>
-            </div>
-            <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Active Folders</span>
-              <div className="text-3xl font-extrabold text-emerald-600">{summaryData.active}</div>
-              <p className="text-[11px] text-muted-foreground pt-1">Current operational & verified records.</p>
-            </div>
-            <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Categories & Locations</span>
-              <div className="text-3xl font-extrabold text-purple-600">
-                {summaryData.categoriesCount} <span className="text-sm font-semibold text-muted-foreground">cats</span> / {summaryData.locationsCount} <span className="text-sm font-semibold text-muted-foreground">locs</span>
-              </div>
-              <p className="text-[11px] text-muted-foreground pt-1">Dynamically mapped sectors and geological hubs.</p>
-            </div>
-          </div>
+                        {/* 1. SUMMARY REPORT */}
+                        {activeReport === "summary" && (
+                          <div className="space-y-6">
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                              <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Records</span>
+                                <div className="text-3xl font-extrabold text-foreground">{summaryData.total}</div>
+                                <p className="text-[11px] text-muted-foreground pt-1">All multi-category records synchronized in workspace.</p>
+                              </div>
+                              <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Active Folders</span>
+                                <div className="text-3xl font-extrabold text-emerald-600">{summaryData.active}</div>
+                                <p className="text-[11px] text-muted-foreground pt-1">Current operational & verified records.</p>
+                              </div>
+                              <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Categories & Locations</span>
+                                <div className="text-3xl font-extrabold text-purple-600">
+                                  {summaryData.categoriesCount} <span className="text-sm font-semibold text-muted-foreground">cats</span> / {summaryData.locationsCount} <span className="text-sm font-semibold text-muted-foreground">locs</span>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground pt-1">Dynamically mapped sectors and geological hubs.</p>
+                              </div>
+                            </div>
 
-          <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-            <h3 className="font-bold text-sm text-foreground mb-3 flex items-center gap-2">
-              <Database className="h-4 w-4 text-accent" /> Registry Master Statistics
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center divide-y md:divide-y-0 md:divide-x divide-border">
-              <div className="py-2">
-                <span className="text-[10px] text-muted-foreground uppercase font-bold">Active Percentage</span>
-                <span className="block text-xl font-bold text-foreground mt-1">
-                  {summaryData.total > 0 ? Math.round((summaryData.active / summaryData.total) * 100) : 0}%
-                </span>
-              </div>
-              <div className="py-2">
-                <span className="text-[10px] text-muted-foreground uppercase font-bold">Pending Approval</span>
-                <span className="block text-xl font-bold text-amber-500 mt-1">{summaryData.pending}</span>
-              </div>
-              <div className="py-2">
-                <span className="text-[10px] text-muted-foreground uppercase font-bold">Archived Index</span>
-                <span className="block text-xl font-bold text-muted-foreground mt-1">{summaryData.archived}</span>
-              </div>
-              <div className="py-2">
-                <span className="text-[10px] text-muted-foreground uppercase font-bold">Sync Reliability</span>
-                <span className="block text-xl font-bold text-emerald-600 mt-1 flex items-center justify-center gap-1">
-                  <Check className="h-4 w-4" /> 100% Correct
-                </span>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+                            <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
+                              <h3 className="font-bold text-sm text-foreground mb-3 flex items-center gap-2">
+                                <Database className="h-4 w-4 text-accent" /> Registry Master Statistics
+                              </h3>
+                              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center divide-y md:divide-y-0 md:divide-x divide-border">
+                                <div className="py-2">
+                                  <span className="text-[10px] text-muted-foreground uppercase font-bold">Active Percentage</span>
+                                  <span className="block text-xl font-bold text-foreground mt-1">
+                                    {summaryData.total > 0 ? Math.round((summaryData.active / summaryData.total) * 100) : 0}%
+                                  </span>
+                                </div>
+                                <div className="py-2">
+                                  <span className="text-[10px] text-muted-foreground uppercase font-bold">Pending Approval</span>
+                                  <span className="block text-xl font-bold text-amber-500 mt-1">{summaryData.pending}</span>
+                                </div>
+                                <div className="py-2">
+                                  <span className="text-[10px] text-muted-foreground uppercase font-bold">Archived Index</span>
+                                  <span className="block text-xl font-bold text-muted-foreground mt-1">{summaryData.archived}</span>
+                                </div>
+                                <div className="py-2">
+                                  <span className="text-[10px] text-muted-foreground uppercase font-bold">Sync Reliability</span>
+                                  <span className="block text-xl font-bold text-emerald-600 mt-1 flex items-center justify-center gap-1">
+                                    <Check className="h-4 w-4" /> 100% Correct
+                                  </span>
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
 
       {/* 2. CATEGORY BREAKDOWN REPORT */}
       {activeReport === "category" && (
@@ -545,46 +572,49 @@ function TasksReportsView({ records }: { records: Record<string, any>[] }) {
                     <td className="p-3 text-muted-foreground">{cat.archived}</td>
                     <td className="p-3 font-bold text-foreground">
                       {cat.count > 0 ? Math.round((cat.active / cat.count) * 100) : 0}%
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+>>>>>>> origin/jules-10842899696782935597-81a00e2f
+                    </td >
+                  </tr >
+                ))
+}
+              </tbody >
+            </table >
+          </div >
+        </div >
+<<<<<<< HEAD
+
+  <div className="bg-card rounded-xl border border-border p-5 shadow-sm flex flex-col">
+    <h3 className="font-bold text-sm text-foreground flex items-center gap-2 mb-4">
+      <AlertTriangle className="h-4 w-4 text-rose-500" /> Critical Overdue Deadlines
+    </h3>
+    <div className="overflow-y-auto max-h-[250px] space-y-2 text-xs pr-1">
+      {overdueTasks.map((t) => (
+        <div
+          key={t.taskName}
+          className="p-3 rounded-lg border border-rose-200 bg-rose-50/30 flex items-center justify-between"
+        >
+          <div>
+            <div className="font-bold text-rose-950 leading-snug">{t.taskName}</div>
+            <div className="text-rose-700/80 font-medium text-[11px] mt-1">
+              Assigned: {t.assignedTo} &bull; Dept: {t.department}
+            </div>
+          </div>
+          <div className="text-right">
+            <span className="bg-rose-100 text-rose-700 text-[10px] font-extrabold px-2 py-0.5 rounded border border-rose-300">
+              Overdue: {t.dueDate}
+            </span>
           </div>
         </div>
-                    
-        <div className="bg-card rounded-xl border border-border p-5 shadow-sm flex flex-col">
-          <h3 className="font-bold text-sm text-foreground flex items-center gap-2 mb-4">
-            <AlertTriangle className="h-4 w-4 text-rose-500" /> Critical Overdue Deadlines
-          </h3>
-          <div className="overflow-y-auto max-h-[250px] space-y-2 text-xs pr-1">
-            {overdueTasks.map((t) => (
-              <div
-                key={t.taskName}
-                className="p-3 rounded-lg border border-rose-200 bg-rose-50/30 flex items-center justify-between"
-              >
-                <div>
-                  <div className="font-bold text-rose-950 leading-snug">{t.taskName}</div>
-                  <div className="text-rose-700/80 font-medium text-[11px] mt-1">
-                    Assigned: {t.assignedTo} &bull; Dept: {t.department}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="bg-rose-100 text-rose-700 text-[10px] font-extrabold px-2 py-0.5 rounded border border-rose-300">
-                    Overdue: {t.dueDate}
-                  </span>
-                </div>
-              </div>
-            ))}
-            {overdueTasks.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground italic">
-                Awesome! There are no overdue tasks in this solution database.
-              </div>
-            )}
-          </div>
+      ))}
+      {overdueTasks.length === 0 && (
+        <div className="text-center py-12 text-muted-foreground italic">
+          Awesome! There are no overdue tasks in this solution database.
         </div>
-      </div>
+      )}
     </div>
+  </div>
+      </div >
+    </div >
   );
 }
 
@@ -773,10 +803,9 @@ function HrReportsView({
                         <td className="p-3">{att["Check-Out Time"] || "-"}</td>
                         <td className="p-3 font-bold">{att["Working Hours"]} hrs</td>
                         <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            att["Attendance Status"] === "Present" ? "bg-emerald-50 text-emerald-700" :
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${att["Attendance Status"] === "Present" ? "bg-emerald-50 text-emerald-700" :
                             att["Attendance Status"] === "Late" ? "bg-rose-50 text-rose-700" : "bg-muted text-muted-foreground"
-                          }`}>
+                            }`}>
                             {att["Attendance Status"]}
                           </span>
                         </td>
@@ -827,9 +856,8 @@ function HrReportsView({
                         <td className="p-3 font-bold">{l["Total Days"]} days</td>
                         <td className="p-3">{l["Approver"]}</td>
                         <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            l["Status"] === "Approved" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                          }`}>
+                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${l["Status"] === "Approved" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
+                            }`}>
                             {l["Status"]}
                           </span>
                         </td>
@@ -1015,11 +1043,10 @@ function HrReportsView({
                 setActiveReport(rep.id);
                 setSearchQuery("");
               }}
-              className={`w-full p-3 text-left rounded-lg flex items-start gap-3 transition ${
-                activeReport === rep.id
-                  ? "bg-accent/15 border-l-4 border-accent"
-                  : "hover:bg-muted/30"
-              }`}
+              className={`w-full p-3 text-left rounded-lg flex items-start gap-3 transition ${activeReport === rep.id
+                ? "bg-accent/15 border-l-4 border-accent"
+                : "hover:bg-muted/30"
+                }`}
             >
               <rep.icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${activeReport === rep.id ? "text-accent" : "text-muted-foreground"}`} />
               <div className="min-w-0">
@@ -1066,9 +1093,10 @@ function HrReportsView({
           {reportContent}
         </div>
       </div>
+=======
       )}
 
-      {/* 3. STATUS REPORT */}
+                          {/* 3. STATUS REPORT */}
       {activeReport === "status" && (
         <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
@@ -1090,13 +1118,12 @@ function HrReportsView({
                 {statusBreakdown.map((st, i) => (
                   <tr key={i} className="border-b border-border/60 hover:bg-muted/10">
                     <td className="p-3">
-                      <span className={`px-2.5 py-0.5 rounded font-bold uppercase text-[9px] border ${
-                        st.name.toLowerCase() === "active"
-                          ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                          : st.name.toLowerCase() === "pending"
+                      <span className={`px-2.5 py-0.5 rounded font-bold uppercase text-[9px] border ${st.name.toLowerCase() === "active"
+                        ? "bg-emerald-50 text-emerald-600 border-emerald-200"
+                        : st.name.toLowerCase() === "pending"
                           ? "bg-amber-50 text-amber-600 border-amber-200"
                           : "bg-muted text-muted-foreground border-border"
-                      }`}>
+                        }`}>
                         {st.name}
                       </span>
                     </td>
@@ -1216,11 +1243,10 @@ function HrReportsView({
                     <button
                       key={header}
                       onClick={() => toggleCustomField(header)}
-                      className={`w-full flex items-center justify-between p-2 rounded-lg border text-left transition text-[11px] ${
-                        isChecked
-                          ? "border-accent bg-accent/5 font-bold text-accent"
-                          : "border-border bg-card hover:bg-muted/50 text-foreground"
-                      }`}
+                      className={`w-full flex items-center justify-between p-2 rounded-lg border text-left transition text-[11px] ${isChecked
+                        ? "border-accent bg-accent/5 font-bold text-accent"
+                        : "border-border bg-card hover:bg-muted/50 text-foreground"
+                        }`}
                     >
                       <span className="truncate">{header}</span>
                       {isChecked && <Check className="h-3.5 w-3.5 text-accent flex-shrink-0" />}
@@ -1274,6 +1300,7 @@ function HrReportsView({
           </div>
         </div>
       )}
+>>>>>>> origin/jules-10842899696782935597-81a00e2f
     </div>
   );
 }

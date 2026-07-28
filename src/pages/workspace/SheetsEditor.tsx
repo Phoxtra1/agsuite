@@ -118,11 +118,7 @@ export default function SheetsEditor() {
   }, [wbUR, persist]);
 
   // Two-way synchronization & Smart Data Layer Handlers
-<<<<<<< HEAD
-  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom" | "Tasks") => {
-=======
-  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "ProjectManagement" | "Custom") => {
->>>>>>> origin/project-management-v1-14857969931671137028
+  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "ProjectManagement" | "Custom" | "Tasks") => {
     setWb((prev) => {
       if (type === "HR") {
         return seedHrSolutionToWorkbook(prev);
@@ -1060,8 +1056,10 @@ export default function SheetsEditor() {
             allSheets={wb.sheets}
           />
         ) : (
-          /* Default Spreadsheet Editor view */
           <>
+
+          /* Default Spreadsheet Editor view */
+
             <div className="flex-1 flex flex-col overflow-hidden">
               <SheetGrid
                 sheet={activeSheet}
@@ -1122,16 +1120,18 @@ export default function SheetsEditor() {
         saving={saving}
       />
 
-      {showChartDialog && (
-        <ChartDialog
-          sheet={activeSheet}
-          engine={engineRef.current}
-          defaultRange={defaultChartRange}
-          onCancel={() => setShowChartDialog(false)}
-          onInsert={insertChart}
-        />
-      )}
-    </div>
+      {
+        showChartDialog && (
+          <ChartDialog
+            sheet={activeSheet}
+            engine={engineRef.current}
+            defaultRange={defaultChartRange}
+            onCancel={() => setShowChartDialog(false)}
+            onInsert={insertChart}
+          />
+        )
+      }
+    </div >
   );
 }
 
