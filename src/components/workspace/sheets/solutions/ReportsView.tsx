@@ -1,6 +1,5 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
-<<<<<<< HEAD
   TrendingUp,
   CheckCircle2,
   Clock,
@@ -75,45 +74,24 @@ function TasksReportsView({ records }: { records: Record<string, any>[] }) {
         isOverdue = dueD < today;
       }
 
-      return {
-        taskName,
-        status,
-        priority,
-        assignedTo,
-        dueDate,
-        startDate,
-        progress,
-        department,
-        team,
-        category,
-        isOverdue
-=======
-  FileText,
-  TrendingUp,
-  MapPin,
-  Calendar,
-  Activity,
-  Sparkles,
-  Download,
-  Printer,
-  ChevronRight,
-  Filter,
-  Check,
-  Search,
-  Database,
-  BarChart,
-  Tag,
-  Clock,
-  Shield,
-  Info
-} from "lucide-react";
+          return {
+                  taskName,
+                  status,
+                  priority,
+                  assignedTo,
+                  dueDate,
+                  startDate,
+                  progress,
+                  department,
+                  team,
+                  category,
+                  isOverdue
+                  };
 
-interface ReportsViewProps {
-  records: Record<string, any>[];
-  solutionType: string;
-}
+                 });
+                 }, [records]);
 
-export default function ReportsView({ records = [], solutionType }: ReportsViewProps) {
+
   const [activeReport, setActiveReport] = useState<"summary" | "category" | "status" | "location" | "activity" | "custom">("summary");
 
   // Custom report builder state
@@ -129,11 +107,11 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
   }, [records]);
 
   // Set default selected fields for custom report on first render or header load
-  useMemo(() => {
-    if (customSelectedFields.length === 0 && allHeaders.length > 0) {
-      setCustomSelectedFields(allHeaders.slice(0, 5));
-    }
-  }, [allHeaders]);
+  useEffect(() => {
+  if (customSelectedFields.length === 0 && allHeaders.length > 0) {
+    setCustomSelectedFields(allHeaders.slice(0, 5));
+  }
+}, [allHeaders]);
 
   const toggleCustomField = (field: string) => {
     if (customSelectedFields.includes(field)) {
@@ -222,12 +200,10 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
         recordName: r.Name || `REG-${r.rowIndex}`,
         action: `Record updated/synchronized with sheet cells`,
         status: r.Status || r.status || "Active"
->>>>>>> origin/jules-10842899696782935597-81a00e2f
       };
     });
   }, [records]);
 
-<<<<<<< HEAD
   const totalTasks = parsedTasks.length;
   const completedTasks = parsedTasks.filter((t) => t.status === "Completed").length;
   const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
@@ -392,8 +368,8 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
                     <td className="p-3 text-center font-bold text-emerald-600">{user.completed}</td>
                     <td className="p-3 text-center">
                       <span className="font-bold text-accent">{user.avgProgress}%</span>
-=======
-  // Filtered records for the Custom Report table
+
+    // Filtered records for the Custom Report table
   const customReportRecords = useMemo(() => {
     return records.filter((rec) => {
       if (!customFilterText.trim()) return true;
@@ -569,7 +545,6 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
                     <td className="p-3 text-muted-foreground">{cat.archived}</td>
                     <td className="p-3 font-bold text-foreground">
                       {cat.count > 0 ? Math.round((cat.active / cat.count) * 100) : 0}%
->>>>>>> origin/jules-10842899696782935597-81a00e2f
                     </td>
                   </tr>
                 ))}
@@ -577,8 +552,7 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
             </table>
           </div>
         </div>
-<<<<<<< HEAD
-
+                    
         <div className="bg-card rounded-xl border border-border p-5 shadow-sm flex flex-col">
           <h3 className="font-bold text-sm text-foreground flex items-center gap-2 mb-4">
             <AlertTriangle className="h-4 w-4 text-rose-500" /> Critical Overdue Deadlines
@@ -1092,7 +1066,6 @@ function HrReportsView({
           {reportContent}
         </div>
       </div>
-=======
       )}
 
       {/* 3. STATUS REPORT */}
@@ -1301,7 +1274,6 @@ function HrReportsView({
           </div>
         </div>
       )}
->>>>>>> origin/jules-10842899696782935597-81a00e2f
     </div>
   );
 }
