@@ -118,11 +118,7 @@ export default function SheetsEditor() {
   }, [wbUR, persist]);
 
   // Two-way synchronization & Smart Data Layer Handlers
-<<<<<<< HEAD
-  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom" | "Tasks") => {
-=======
-  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "ProjectManagement" | "Custom") => {
->>>>>>> origin/project-management-v1-14857969931671137028
+  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "ProjectManagement" | "Custom" | "Tasks") => {
     setWb((prev) => {
       if (type === "HR") {
         return seedHrSolutionToWorkbook(prev);
