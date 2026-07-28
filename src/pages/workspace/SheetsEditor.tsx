@@ -118,7 +118,7 @@ export default function SheetsEditor() {
   }, [wbUR, persist]);
 
   // Two-way synchronization & Smart Data Layer Handlers
-<<<<<<< HEAD
+
   const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom" | "Tasks") => {
 =======
   const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "ProjectManagement" | "Custom") => {
@@ -357,7 +357,7 @@ export default function SheetsEditor() {
       arg = `${cellId(n.r1, n.c1)}:${cellId(n.r2, n.c2)}`;
     }
     const formula = fn === "IF" ? `=IF(${arg}>0,"Yes","No")` :
-                    fn === "VLOOKUP" ? `=VLOOKUP(A1, ${arg}, 2, FALSE)` : `=${fn}(${arg})`;
+      fn === "VLOOKUP" ? `=VLOOKUP(A1, ${arg}, 2, FALSE)` : `=${fn}(${arg})`;
     const outRow = n.r1 === n.r2 && n.c1 === n.c2 ? n.r1 : n.r2 + 1;
     setCell(cellId(outRow, n.c1), formula);
     setSelection({ r1: outRow, c1: n.c1, r2: outRow, c2: n.c1 });
@@ -381,7 +381,7 @@ export default function SheetsEditor() {
       for (let c = n.c1; c <= n.c2; c++) row.push(String(activeSheet.cells[cellId(r, c)] ?? ""));
       rows.push(row.join("\t"));
     }
-    navigator.clipboard?.writeText(rows.join("\n")).catch(() => {});
+    navigator.clipboard?.writeText(rows.join("\n")).catch(() => { });
   }, [selection, activeSheet]);
 
   const doPaste = useCallback(async () => {
@@ -870,9 +870,9 @@ export default function SheetsEditor() {
             className="text-sm font-semibold text-foreground bg-transparent border-0 outline-none focus:bg-muted/50 rounded px-2 py-0.5 min-w-[180px] truncate"
           />
           <div className="flex items-center gap-2 px-2 text-[11px] text-muted-foreground">
-            {saving === "saving" ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin"/> Saving…</span> :
-             saving === "saved" ? <span className="flex items-center gap-1 text-emerald-600"><CloudUpload className="h-3 w-3"/> Saved</span> :
-             null}
+            {saving === "saving" ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Saving…</span> :
+              saving === "saved" ? <span className="flex items-center gap-1 text-emerald-600"><CloudUpload className="h-3 w-3" /> Saved</span> :
+                null}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -944,33 +944,29 @@ export default function SheetsEditor() {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setActiveView("spreadsheet")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                activeView === "spreadsheet" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${activeView === "spreadsheet" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+                }`}
             >
               <Table2 className="h-3.5 w-3.5" /> Spreadsheet View
             </button>
             <button
               onClick={() => setActiveView("solution")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                activeView === "solution" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${activeView === "solution" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+                }`}
             >
               <Presentation className="h-3.5 w-3.5" /> {wb.activeSolution.type === "Tasks" ? "Tasks View" : `${wb.activeSolution.type} Connected Workspace`}
             </button>
             <button
               onClick={() => setActiveView("dashboard")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                activeView === "dashboard" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${activeView === "dashboard" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+                }`}
             >
               <Layout className="h-3.5 w-3.5" /> Dashboard View
             </button>
             <button
               onClick={() => setActiveView("reports")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                activeView === "reports" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${activeView === "reports" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+                }`}
             >
               <Layout className="h-3.5 w-3.5" /> Reports View
             </button>
@@ -1063,9 +1059,7 @@ export default function SheetsEditor() {
             allSheets={wb.sheets}
           />
         ) : wb.activeSolution && activeView === "reports" ? (
-<<<<<<< HEAD
-          <ReportsView records={parsedRecords} />
-=======
+
           <ReportsView
             records={parsedRecords}
             solutionType={wb.activeSolution.type}
@@ -1161,12 +1155,8 @@ function SolutionDropdown({ activeSolution, onSelectSolution, onDeactivate }: So
     { id: "Inventory", label: "Inventory Management" },
     { id: "HR", label: "HR Management" },
     { id: "Registry", label: "Registry & Archive" },
-<<<<<<< HEAD
-    { id: "Project", label: "Project & Sprints" },
-=======
     { id: "Project", label: "Project & Tasks" },
     { id: "ProjectManagement", label: "Project Management System" },
->>>>>>> origin/project-management-v1-14857969931671137028
     { id: "Custom", label: "Custom Solution" }
   ];
 
@@ -1174,11 +1164,10 @@ function SolutionDropdown({ activeSolution, onSelectSolution, onDeactivate }: So
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition ${
-          activeSolution
+        className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition ${activeSolution
             ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm animate-pulse"
             : "bg-accent text-accent-foreground hover:bg-accent/90"
-        }`}
+          }`}
       >
         <Sparkles className="h-3.5 w-3.5" />
         {activeSolution ? `Active: ${activeSolution.type}` : "Create Solution"}
