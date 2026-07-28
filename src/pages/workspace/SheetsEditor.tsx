@@ -1056,8 +1056,8 @@ export default function SheetsEditor() {
           allSheets={wb.sheets}
          />
          ) : (
-          /* Default Spreadsheet Editor view */
           <>
+            {/* Default Spreadsheet Editor view */}
             <div className="flex-1 flex flex-col overflow-hidden">
               <SheetGrid
                 sheet={activeSheet}
