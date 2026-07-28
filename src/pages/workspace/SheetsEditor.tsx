@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   getSheet, updateSheet, EMPTY_WORKBOOK, cellId, parseCell, parseMergeRange,
@@ -1059,15 +1059,6 @@ export default function SheetsEditor() {
             meetings={wb.activeSolution.meetings}
             allSheets={wb.sheets}
           />
-        ) : wb.activeSolution && activeView === "reports" ? (
-<<<<<<< HEAD
-          <ReportsView records={parsedRecords} />
-=======
-          <ReportsView
-            records={parsedRecords}
-            solutionType={wb.activeSolution.type}
-          />
->>>>>>> origin/jules-10842899696782935597-81a00e2f
         ) : (
           /* Default Spreadsheet Editor view */
           <>
