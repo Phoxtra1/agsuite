@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   getSheet, updateSheet, EMPTY_WORKBOOK, cellId, parseCell, parseMergeRange,
   insertRow, deleteRow, insertCol, deleteCol,
-  type WorkspaceSheet, type Workbook, type SheetPage, type CellFormat, flattenWorkbookText,
+  type WorkspaceSheet, type Workbook, type SheetPage, type CellFormat, type SheetChart, flattenWorkbookText,
 } from "@/lib/workspace/sheets/documents";
 import { buildEngine, type EngineHandle } from "@/lib/workspace/sheets/engine";
 import { SheetGrid, type Selection } from "@/components/workspace/sheets/SheetGrid";
@@ -17,7 +17,6 @@ import { exportCSV, exportJSON, exportXLSX, importXLSX } from "@/components/work
 import { useUndoRedo } from "@/components/workspace/sheets/hooks/useUndoRedo";
 import { ArrowLeft, ChevronLeft, ChevronDown, CloudUpload, Download, Loader2, Share2, Upload, Sparkles, AlertCircle, Layout, Table2, Presentation, BarChart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import type { SheetChart } from "@/lib/workspace/sheets/documents";
 
 // Smart Business Solution Imports
 import {
