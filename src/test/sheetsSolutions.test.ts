@@ -163,4 +163,86 @@ describe("Amineva Sheets Smart Business Solution tests", () => {
     expect(updated.cells[cellId(2, 1)]).toBe("Kofi Mensah");
     expect(updated.cells[cellId(2, 4)]).toBe("Proposal Sent");
   });
+
+  it("should correctly recommend the Tasks business solution template based on column headers", () => {
+    const sheetWithTaskHeaders: SheetPage = {
+      name: "Team Tasks",
+      cells: {
+        [cellId(0, 0)]: "Task Name",
+        [cellId(0, 1)]: "Assigned To",
+        [cellId(0, 2)]: "Department",
+        [cellId(0, 3)]: "Priority",
+        [cellId(0, 4)]: "Status",
+        [cellId(0, 5)]: "Due Date",
+        [cellId(0, 6)]: "Progress (%)"
+      }
+    };
+
+    const rec = recommendSolution(sheetWithTaskHeaders);
+    expect(rec).toBe("Tasks");
+  });
+
+  it("should seed the Tasks template structures and default records correctly", () => {
+    const blankSheet: SheetPage = { name: "Sheet1", cells: {} };
+
+    // Seed Tasks Solution
+    const seeded = seedSolutionToSheet(blankSheet, "Tasks");
+    expect(seeded.cells[cellId(0, 0)]).toBe("Task ID");
+    expect(seeded.cells[cellId(0, 1)]).toBe("Task Name");
+    expect(seeded.cells[cellId(0, 4)]).toBe("Assigned To");
+    expect(seeded.cells[cellId(0, 9)]).toBe("Status");
+
+    // Check first default row values
+    expect(seeded.cells[cellId(1, 0)]).toBe("TSK-001");
+    expect(seeded.cells[cellId(1, 1)]).toBe("Prepare Partnership Proposal");
+    expect(seeded.cells[cellId(1, 4)]).toBe("Jules Agent");
+    expect(seeded.cells[cellId(1, 9)]).toBe("In Progress");
+  });
+
+  it("should seed Registry template with core fields and demo records correctly", () => {
+    const blankSheet: SheetPage = { name: "Sheet2", cells: {} };
+
+    // Seed Registry Solution
+    const seeded = seedSolutionToSheet(blankSheet, "Registry");
+    expect(seeded.cells[cellId(0, 0)]).toBe("Record ID");
+    expect(seeded.cells[cellId(0, 1)]).toBe("Name");
+    expect(seeded.cells[cellId(0, 2)]).toBe("Category");
+    expect(seeded.cells[cellId(0, 4)]).toBe("Status");
+
+    // Check first default row values for versatile farmers registry
+    expect(seeded.cells[cellId(1, 0)]).toBe("REG-001");
+    expect(seeded.cells[cellId(1, 1)]).toBe("Kofi Mensah");
+    expect(seeded.cells[cellId(1, 2)]).toBe("Farmers");
+    expect(seeded.cells[cellId(1, 4)]).toBe("Active");
+  });
+
+  it("should parse dynamic spreadsheet custom columns as dynamic fields", () => {
+    const sheet: SheetPage = {
+      name: "Dynamic Registry",
+      cells: {
+        [cellId(0, 0)]: "Record ID",
+        [cellId(0, 1)]: "Name",
+        [cellId(0, 2)]: "Category",
+        [cellId(0, 3)]: "Status",
+        [cellId(0, 4)]: "Farm Size",
+        [cellId(0, 5)]: "GPS Coordinates",
+
+        // Row 1
+        [cellId(1, 0)]: "REG-201",
+        [cellId(1, 1)]: "Ebenezer Ocloo",
+        [cellId(1, 2)]: "Farmers",
+        [cellId(1, 3)]: "Active",
+        [cellId(1, 4)]: "50 Acres",
+        [cellId(1, 5)]: "5.6037° N, 0.1870° W"
+      }
+    };
+
+    const parsed = parseSheetRows(sheet);
+    expect(parsed).toHaveLength(1);
+    expect(parsed[0]["Record ID"]).toBe("REG-201");
+    expect(parsed[0].Name).toBe("Ebenezer Ocloo");
+    expect(parsed[0].Category).toBe("Farmers");
+    expect(parsed[0]["Farm Size"]).toBe("50 Acres");
+    expect(parsed[0]["GPS Coordinates"]).toBe("5.6037° N, 0.1870° W");
+  });
 });
