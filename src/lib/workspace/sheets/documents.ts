@@ -113,7 +113,7 @@ function seedDefaultSheets(): WorkspaceSheet[] {
               A1: "Quarter", B1: "Revenue ($)", C1: "Growth (%)",
               A2: "Q1 2026", B2: 125000, C2: "15%",
               A3: "Q2 2026", B3: 180000, C3: "44%",
-              A4: "Q3 2026", B4: 240000, C3: "33%",
+              A4: "Q3 2026", B4: 240000, C4: "33%",
             },
             colWidths: { 0: 160, 1: 160, 2: 140 },
           }

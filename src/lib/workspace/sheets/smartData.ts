@@ -263,6 +263,139 @@ export function seedSolutionToSheet(sheet: SheetPage, templateId: string): Sheet
 }
 
 /**
+ * Intelligent analyzer that scans a sheet's headers and column profiles to formulate
+ * a dynamic custom solution config based entirely on their actual columns.
+ */
+export function analyzeSheetDataForCustomSolution(sheet: SheetPage) {
+  const headers = getSheetHeaders(sheet).filter(Boolean);
+  const profiles = profileColumns(sheet);
+
+  // If no columns are found, return a default blank starter template framework
+  if (headers.length === 0) {
+    return {
+      solutionName: "My Connected Workspace",
+      solutionType: "operations",
+      headers: ["ID", "Title", "Status", "Date Created"],
+      forms: ["ID", "Title", "Status", "Date Created"],
+      metrics: [
+        { label: "Total Rows", formula: "COUNT", column: "ID" }
+      ],
+      charts: [
+        { title: "Status Breakdown", type: "pie", xKey: "Status", yKey: "ID" }
+      ],
+      automations: [
+        { trigger: "On Status Change", action: "Notify Workspace Team", enabled: true }
+      ],
+      statusCol: "Status",
+      dateCol: "Date Created",
+      primaryCol: "Title"
+    };
+  }
+
+  // Find status column
+  const statusProfile = profiles.find(p => p.type === "status") ||
+    profiles.find(p => ["status", "stage", "state", "classification", "phase"].some(k => p.header.toLowerCase().includes(k)));
+  const statusCol = statusProfile ? statusProfile.header : headers[Math.min(2, headers.length - 1)];
+
+  // Find date column
+  const dateProfile = profiles.find(p => p.type === "date") ||
+    profiles.find(p => ["date", "time", "schedule", "deadline", "due", "period"].some(k => p.header.toLowerCase().includes(k)));
+  const dateCol = dateProfile ? dateProfile.header : undefined;
+
+  // Find numeric/currency columns
+  const numericProfiles = profiles.filter(p => p.type === "number" || p.type === "currency" || ["amount", "value", "cost", "salary", "price"].some(k => p.header.toLowerCase().includes(k)));
+  const currencyCol = profiles.find(p => p.type === "currency")?.header;
+
+  // Primary label column
+  const primaryCol = headers[1] || headers[0];
+
+  // Infer Solution Type from headers keywords
+  let solutionType = "operations";
+  let solutionName = "My Business Operations Suite";
+  const headerKeys = headers.map(h => h.toLowerCase());
+
+  if (headerKeys.some(h => ["account", "expense", "income", "revenue", "ledger", "tax"].some(k => h.includes(k)))) {
+    solutionType = "accounting";
+    solutionName = "Data-Driven Ledger System";
+  } else if (headerKeys.some(h => ["audit", "finding", "checklist", "recommendation"].some(k => h.includes(k)))) {
+    solutionType = "audit";
+    solutionName = "Dynamic Audit & Findings Registry";
+  } else if (headerKeys.some(h => ["compliance", "regulation", "policy", "requirement"].some(k => h.includes(k)))) {
+    solutionType = "compliance";
+    solutionName = "Intelligent Compliance Manager";
+  } else if (headerKeys.some(h => ["member", "subscription", "fee", "join"].some(k => h.includes(k)))) {
+    solutionType = "operations";
+    solutionName = "Membership Management Suite";
+  } else if (headerKeys.some(h => ["asset", "hardware", "device", "inventory"].some(k => h.includes(k)))) {
+    solutionType = "operations";
+    solutionName = "Asset & Inventory Directory";
+  }
+
+  // Generate dynamic, data-driven KPI Metrics
+  const metrics: any[] = [];
+  if (numericProfiles.length > 0) {
+    const numCol = numericProfiles[0].header;
+    metrics.push({
+      label: `Total ${numCol}`,
+      formula: "SUM",
+      column: numCol,
+      prefix: currencyCol || numCol.toLowerCase().includes("cost") || numCol.toLowerCase().includes("value") || numCol.toLowerCase().includes("amount") ? "$" : ""
+    });
+    metrics.push({
+      label: `Average ${numCol}`,
+      formula: "AVG",
+      column: numCol,
+      prefix: currencyCol || numCol.toLowerCase().includes("cost") || numCol.toLowerCase().includes("value") || numCol.toLowerCase().includes("amount") ? "$" : ""
+    });
+  }
+  metrics.push({
+    label: `Total Registered Records`,
+    formula: "COUNT",
+    column: headers[0]
+  });
+
+  // Generate dynamic Charts
+  const charts: any[] = [];
+  if (statusCol) {
+    charts.push({
+      title: `${statusCol} Distribution`,
+      type: "pie",
+      xKey: statusCol,
+      yKey: numericProfiles[0]?.header || headers[0]
+    });
+  }
+  if (numericProfiles.length > 0 && primaryCol) {
+    charts.push({
+      title: `${numericProfiles[0].header} by ${primaryCol}`,
+      type: "bar",
+      xKey: primaryCol,
+      yKey: numericProfiles[0].header
+    });
+  }
+
+  // Automations
+  const automations = [
+    { trigger: `On Status updates for ${statusCol}`, action: "Log Audit Trail Activity", enabled: true }
+  ];
+  if (dateCol) {
+    automations.push({ trigger: `3 Days Before ${dateCol}`, action: "Trigger Alert Notification", enabled: true });
+  }
+
+  return {
+    solutionName,
+    solutionType,
+    headers,
+    forms: [...headers],
+    metrics,
+    charts,
+    automations,
+    statusCol,
+    dateCol,
+    primaryCol: primaryCol || headers[0]
+  };
+}
+
+/**
  * Parse rows into structured, strongly typed records
  */
 export function parseSheetRows(sheet: SheetPage): Record<string, any>[] {
