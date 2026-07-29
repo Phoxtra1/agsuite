@@ -11,7 +11,8 @@ import {
   Pie,
   Cell,
   LineChart,
-  Line
+  Line,
+  CartesianGrid
 } from "recharts";
 import {
   Users,
@@ -31,7 +32,7 @@ import {
 
 interface DashboardEngineProps {
   records: Record<string, any>[];
-  solutionType: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom";
+  solutionType: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "ProjectManagement" | "Custom";
   meetings?: any[];
 }
 
@@ -40,6 +41,11 @@ const COLORS = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899"
 export default function DashboardEngine({ records = [], solutionType, meetings = [] }: DashboardEngineProps) {
   const [search, setSearch] = useState("");
   const [filterValue, setFilterValue] = useState("all");
+
+  const columns = useMemo(() => {
+    if (!records.length) return [];
+    return Object.keys(records[0]).filter(k => k !== "rowIndex" && !k.startsWith("_"));
+  }, [records]);
 
   // Dynamic Metrics Generation
   const metrics = useMemo(() => {
@@ -96,33 +102,45 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
           { label: "Unique Categories", value: uniqueCats.size, icon: Layers, color: "text-amber-500 bg-amber-50" }
         ];
       }
-      case "Project": {
-        const totalTasks = records.length;
-        const highPriority = records.filter((r) => r.Priority === "High").length;
-        const inProgress = records.filter((r) => r.Status === "In Progress").length;
-        const completed = records.filter((r) => r.Status === "Done" || r.Status === "Completed").length;
+      case "Project":
+      case "ProjectManagement": {
+        // Dynamic detection of Project Columns
+        const totalProj = records.length;
+        const budgetCol = columns.find(c => c.toLowerCase().includes("budget") || c.toLowerCase().includes("cost") || c.toLowerCase().includes("value"));
+        const progressCol = columns.find(c => c.toLowerCase().includes("progress") || c.toLowerCase().includes("percent") || c.toLowerCase().includes("%") || c.toLowerCase().includes("complete"));
+        const statusCol = columns.find(c => c.toLowerCase().includes("status") || c.toLowerCase().includes("stage"));
 
-        return [
-          { label: "Total Tasks", value: totalTasks, icon: Briefcase, color: "text-blue-500 bg-blue-50" },
-          { label: "In Progress", value: inProgress, icon: TrendingUp, color: "text-purple-500 bg-purple-50" },
-          { label: "High Priority", value: highPriority, icon: AlertTriangle, color: "text-rose-500 bg-rose-50" },
-          { label: "Completed Tasks", value: completed, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" }
+        const accumulatedBudget = budgetCol ? records.reduce((sum, r) => sum + (Number(r[budgetCol]) || 0), 0) : 0;
+        const completedCount = statusCol ? records.filter(r => String(r[statusCol]).toLowerCase() === "completed" || String(r[statusCol]).toLowerCase() === "active").length : 0;
+
+        const results = [
+          { label: "Total Project Records", value: totalProj, icon: Briefcase, color: "text-blue-500 bg-blue-50" }
         ];
+        if (budgetCol) {
+          results.push({ label: "Allocated Budgets", value: `$${accumulatedBudget.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" });
+        }
+        if (statusCol) {
+          results.push({ label: "Ongoing/Completed", value: completedCount, icon: CheckCircle2, color: "text-purple-500 bg-purple-50" });
+        }
+        return results;
       }
       default:
         return [{ label: "Total Row Count", value: records.length, icon: Layers, color: "text-gray-500 bg-gray-50" }];
     }
-  }, [records, solutionType]);
+  }, [records, solutionType, columns]);
 
   // Aggregate Status counts for charting
   const statusChartData = useMemo(() => {
+    const statusCol = columns.find(c => c.toLowerCase().includes("status") || c.toLowerCase().includes("stage"));
+    if (!statusCol) return [];
+
     const counts: Record<string, number> = {};
     records.forEach((r) => {
-      const statusKey = r.status || r.Status || "Unknown";
+      const statusKey = String(r[statusCol] || "Unknown");
       counts[statusKey] = (counts[statusKey] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [records]);
+  }, [records, columns]);
 
   // Value/Price Distribution chart
   const valueChartData = useMemo(() => {
@@ -143,9 +161,18 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         name: (r["Full Name"] || "").slice(0, 15),
         value: Number(r["Base Salary"]) || 0
       }));
+    } else if (solutionType === "Project" || solutionType === "ProjectManagement") {
+      const budgetCol = columns.find(c => c.toLowerCase().includes("budget") || c.toLowerCase().includes("cost") || c.toLowerCase().includes("value"));
+      const nameCol = columns.find(c => c.toLowerCase().includes("name") || c.toLowerCase().includes("title") || c.toLowerCase().includes("id")) || columns[0];
+      if (budgetCol && nameCol) {
+        return records.map(r => ({
+          name: String(r[nameCol] || "").slice(0, 15),
+          value: Number(r[budgetCol]) || 0
+        })).filter(d => d.value > 0);
+      }
     }
     return [];
-  }, [records, solutionType]);
+  }, [records, solutionType, columns]);
 
   // Filter list of records for summary table
   const filteredRecords = useMemo(() => {
@@ -154,13 +181,17 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         String(val).toLowerCase().includes(search.toLowerCase())
       );
       if (filterValue === "all") return matchSearch;
-      return matchSearch && (rec.status || rec.Status) === filterValue;
+      const statusCol = columns.find(c => c.toLowerCase().includes("status") || c.toLowerCase().includes("stage"));
+      if (!statusCol) return matchSearch;
+      return matchSearch && rec[statusCol] === filterValue;
     });
-  }, [records, search, filterValue]);
+  }, [records, search, filterValue, columns]);
 
   const uniqueStatuses = useMemo(() => {
-    return Array.from(new Set(records.map((r) => r.status || r.Status).filter(Boolean)));
-  }, [records]);
+    const statusCol = columns.find(c => c.toLowerCase().includes("status") || c.toLowerCase().includes("stage"));
+    if (!statusCol) return [];
+    return Array.from(new Set(records.map((r) => r[statusCol]).filter(Boolean)));
+  }, [records, columns]);
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-muted/20 space-y-6">
@@ -180,55 +211,61 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       </div>
 
       {/* Dynamic Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {metrics.map((m, idx) => (
-          <div
-            key={idx}
-            className={`rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition flex items-center gap-4 ${
-              m.alert ? "border-rose-300 bg-rose-50/20" : ""
-            }`}
-          >
-            <div className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${m.color}`}>
-              <m.icon className="h-6 w-6" />
+      {metrics.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {metrics.map((m, idx) => (
+            <div
+              key={idx}
+              className={`rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition flex items-center gap-4`}
+            >
+              <div className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${m.color}`}>
+                <m.icon className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{m.label}</div>
+                <div className="text-2xl font-bold text-foreground mt-1">{m.value}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{m.label}</div>
-              <div className="text-2xl font-bold text-foreground mt-1">{m.value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center p-8 bg-card rounded-xl border border-border italic text-xs text-muted-foreground">
+          No metrics could be dynamically parsed from your spreadsheet data. Complete and enrich columns to unlock insights.
+        </div>
+      )}
 
       {/* Dynamic Charts Section */}
-      {records.length > 0 && (
+      {records.length > 0 && (statusChartData.length > 0 || valueChartData.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Status breakdown Chart */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
-              <Layers className="h-4 w-4 text-muted-foreground" /> Workflow / Status Distribution
-            </h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={statusChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  >
-                    {statusChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+          {statusChartData.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+              <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
+                <Layers className="h-4 w-4 text-muted-foreground" /> Workflow / Status Distribution
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    >
+                      {statusChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Value / Numeric Breakdown Chart */}
           {valueChartData.length > 0 && (
@@ -244,6 +281,7 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={valueChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" fontSize={11} tickLine={false} />
                     <YAxis fontSize={11} />
                     <Tooltip />
@@ -303,31 +341,24 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-muted-foreground uppercase font-semibold">
-                  {records.length > 0 &&
-                    Object.keys(records[0])
-                      .filter((k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_"))
-                      .slice(0, 5)
-                      .map((key) => (
-                        <th key={key} className="p-3">
-                          {key}
-                        </th>
-                      ))}
+                  {columns.slice(0, 5).map((key) => (
+                    <th key={key} className="p-3">
+                      {key}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {filteredRecords.length > 0 ? (
                   filteredRecords.map((r, i) => (
                     <tr key={i} className="border-b border-border/60 hover:bg-muted/30">
-                      {Object.keys(records[0])
-                        .filter((k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_"))
-                        .slice(0, 5)
-                        .map((key) => (
-                          <td key={key} className="p-3 text-foreground font-medium">
-                            {key.toLowerCase().includes("value") || key.toLowerCase().includes("salary")
-                              ? `$${(Number(r[key]) || 0).toLocaleString()}`
-                              : String(r[key] ?? "")}
-                          </td>
-                        ))}
+                      {columns.slice(0, 5).map((key) => (
+                        <td key={key} className="p-3 text-foreground font-medium">
+                          {key.toLowerCase().includes("value") || key.toLowerCase().includes("salary") || key.toLowerCase().includes("budget")
+                            ? `$${(Number(r[key]) || 0).toLocaleString()}`
+                            : String(r[key] ?? "")}
+                        </td>
+                      ))}
                     </tr>
                   ))
                 ) : (

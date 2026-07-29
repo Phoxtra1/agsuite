@@ -118,30 +118,11 @@ export default function SheetsEditor() {
     setWb((prev) => {
       let updatedSheets = [...prev.sheets];
 
-      if (type === "ProjectManagement") {
-        // Multi-tab workspace auto-seeding
-        const projectTemplates = ["ProjectManagement", "ProjectTasks", "ProjectMilestones", "ProjectTeams"];
-        const names = ["Projects", "Tasks", "Milestones", "Teams"];
-
-        names.forEach((name, i) => {
-          const tId = projectTemplates[i];
-          const foundIdx = updatedSheets.findIndex(s => s.name === name);
-          const sheetPage = foundIdx !== -1 ? updatedSheets[foundIdx] : { name, cells: {} };
-          const seeded = seedSolutionToSheet(sheetPage, tId);
-
-          if (foundIdx !== -1) {
-            updatedSheets[foundIdx] = seeded;
-          } else {
-            updatedSheets.push(seeded);
-          }
-        });
-      } else {
-        const activeSheetObj = updatedSheets[activeSheetIdx] || updatedSheets[0];
-        const hasNoData = Object.keys(activeSheetObj.cells).length === 0;
-        if (hasNoData) {
-          const seeded = seedSolutionToSheet(activeSheetObj, type);
-          updatedSheets = updatedSheets.map((s, idx) => idx === activeSheetIdx ? seeded : s);
-        }
+      const activeSheetObj = updatedSheets[activeSheetIdx] || updatedSheets[0];
+      const hasNoData = Object.keys(activeSheetObj.cells).length === 0;
+      if (hasNoData) {
+        const seeded = seedSolutionToSheet(activeSheetObj, type);
+        updatedSheets = updatedSheets.map((s, idx) => idx === activeSheetIdx ? seeded : s);
       }
 
       return {
@@ -261,7 +242,7 @@ export default function SheetsEditor() {
 
   // Support multi-tab parsing for Project Management View
   const projectManagementData = useMemo(() => {
-    const projectsSheet = wb.sheets.find(s => s.name === "Projects");
+    const projectsSheet = wb.sheets.find(s => s.name === "Projects") || activeSheet;
     const tasksSheet = wb.sheets.find(s => s.name === "Tasks");
     const milestonesSheet = wb.sheets.find(s => s.name === "Milestones");
     const teamsSheet = wb.sheets.find(s => s.name === "Teams");
@@ -280,7 +261,7 @@ export default function SheetsEditor() {
       hrEmployees: hrSheet ? parseSheetRows(hrSheet) : [],
       registryRecords: registrySheet ? parseSheetRows(registrySheet) : []
     };
-  }, [wb.sheets, engineTick]);
+  }, [wb.sheets, activeSheet, engineTick]);
 
   const recommendedSolutionId = useMemo(() => {
     if (wb.activeSolution) return null;
@@ -820,18 +801,16 @@ export default function SheetsEditor() {
             />
           ) : wb.activeSolution.type === "ProjectManagement" ? (
             <ProjectManagementView
-              projects={projectManagementData.projects}
-              tasks={projectManagementData.tasks}
-              milestones={projectManagementData.milestones}
-              teams={projectManagementData.teams}
-              onUpdateRecord={handleUpdateSheetRecordByName}
-              onAddRecord={handleAddSheetRecordByName}
+              records={projectManagementData.projects}
+              sheetName={activeSheet.name}
+              workbook={wb}
+              onUpdateRecord={(rowIndex, field, value) => handleUpdateRecord(rowIndex, field, value)}
+              onAddRecord={(record) => handleAddRecord(record)}
+              onUpdateRecordByName={handleUpdateSheetRecordByName}
+              onAddRecordByName={handleAddSheetRecordByName}
               onOpenMeetingModal={handleOpenMeetingPrefilled}
               onScheduleEvent={(prefilled) => handleOpenMeetingPrefilled(prefilled)}
               onNotifyTeam={(message) => toast({ title: "Team Notification Sent", description: message })}
-              crmRecords={projectManagementData.crmRecords}
-              hrEmployees={projectManagementData.hrEmployees}
-              registryRecords={projectManagementData.registryRecords}
             />
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 bg-muted/10">
