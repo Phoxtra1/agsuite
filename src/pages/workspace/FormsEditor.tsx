@@ -247,7 +247,7 @@ export default function FormsEditor() {
   async function generateFormFromAIPrompt() {
     if (!aiPrompt.trim() || !form) return;
     setAiGenerating(true);
-    toast({ title: "Odeneho AI analyzing prompt...", description: "Synthesizing custom layout blocks." });
+    toast({ title: "Dipa AI analyzing prompt...", description: "Synthesizing custom layout blocks." });
 
     // Mock AI response with specialized schema generation
     setTimeout(() => {
@@ -259,7 +259,7 @@ export default function FormsEditor() {
       const normalized = aiPrompt.toLowerCase();
       if (normalized.includes("scholar") || normalized.includes("admission") || normalized.includes("university")) {
         title = "Merit Scholarship and Grant Application";
-        description = "Apply for the Odeneho Excellence and Agricultural Leadership Grant program. High-school transcript required.";
+        description = "Apply for the Dipa Excellence and Agricultural Leadership Grant program. High-school transcript required.";
         primaryColor = "#10B981";
         questions = [
           { id: "ai-1", type: "rich_text", title: "Amineva Academic Registry", description: "This application will take approximately 8 minutes to complete.", required: false },
@@ -276,7 +276,7 @@ export default function FormsEditor() {
         primaryColor = "#2563EB";
         questions = [
           { id: "ai-1", type: "rating_star", title: "Rate your general onboarding walkthrough speed", required: true },
-          { id: "ai-2", type: "rating_emoji", title: "How satisfied are you with overall Odeneho AI automation tools?", required: true },
+          { id: "ai-2", type: "rating_emoji", title: "How satisfied are you with overall Dipa AI automation tools?", required: true },
           { id: "ai-3", type: "linear_scale", title: "Likelihood of recommending Amineva Workspace to business partners", required: true, validation: { min: 0, max: 10 } },
           { id: "ai-4", type: "multiple_choice", title: "Which module did your team deploy first?", options: ["Amineva Docs", "Amineva Sheets", "Amineva Slides", "Amineva Forms"], required: true },
           { id: "ai-5", type: "long_answer", title: "Explain any custom integrations or webhook triggers your tech stack requires", required: false },
@@ -310,7 +310,7 @@ export default function FormsEditor() {
       setAiGenerating(false);
       setAiPrompt("");
       toast({
-        title: "Odeneho AI completed generation!",
+        title: "Dipa AI completed generation!",
         description: `Successfully built "${title}" with custom validation and skip rules.`,
       });
     }, 2000);
@@ -478,7 +478,7 @@ export default function FormsEditor() {
                 className={`py-3 border-b-2 font-medium ${
                   sidebarTab === "ai" ? "border-fuchsia-500 text-fuchsia-600" : "border-transparent text-muted-foreground hover:text-foreground"
                 }`}
-                title="Odeneho AI Prompter"
+                title="Dipa AI Prompter"
               >
                 <Sparkles className="h-4 w-4 mx-auto mb-0.5" /> AI
               </button>
@@ -612,10 +612,10 @@ export default function FormsEditor() {
                 <div className="space-y-3">
                   <div className="flex items-center gap-1.5">
                     <Sparkles className="h-4 w-4 text-fuchsia-500" />
-                    <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Odeneho AI Assistant</h3>
+                    <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">Dipa AI Assistant</h3>
                   </div>
                   <p className="text-[11px] text-muted-foreground leading-relaxed">
-                    Input a description of the form, and Odeneho AI will generate custom fields, validation rules, and themes instantly.
+                    Input a description of the form, and Dipa AI will generate custom fields, validation rules, and themes instantly.
                   </p>
                   <textarea
                     rows={4}

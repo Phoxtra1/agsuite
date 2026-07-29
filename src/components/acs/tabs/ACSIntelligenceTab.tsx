@@ -28,7 +28,7 @@ const PLATFORMS = [
   { value: 'agstock', label: 'AGStock' },
   { value: 'agis', label: 'AGIS' },
   { value: 'aminevaops', label: 'AminevaOps' },
-  { value: 'odeneho', label: 'Odeneho' },
+  { value: 'dipa', label: 'Dipa' },
 ];
 
 interface Props {

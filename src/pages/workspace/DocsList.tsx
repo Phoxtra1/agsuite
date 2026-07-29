@@ -52,7 +52,7 @@ export default function DocsList() {
       <div className="flex items-end justify-between mb-6 gap-4">
         <div>
           <h1 className="text-2xl font-bold text-foreground">Amineva Docs</h1>
-          <p className="text-sm text-muted-foreground">Professional document workspace with intelligence and Odeneho assistance.</p>
+          <p className="text-sm text-muted-foreground">Professional document workspace with intelligence and Dipa assistance.</p>
         </div>
         <button onClick={onCreate} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground font-medium hover:bg-accent/90">
           <Plus className="h-4 w-4" /> New Document

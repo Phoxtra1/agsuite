@@ -25,7 +25,7 @@ const sectorFocus = [
 ];
 
 const platformEcosystem = [
-  { icon: Sparkles, title: "Odeneho AI", role: "Intelligent companion for research, writing, planning, knowledge systems, and storytelling." },
+  { icon: Sparkles, title: "Dipa AI", role: "Intelligent companion for research, writing, planning, knowledge systems, and storytelling." },
   { icon: CloudSun, title: "Agyenkwa", role: "Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, and operational risk." },
   { icon: BarChart3, title: "Nyansa", role: "AI-backed inventory, commerce, and operational management infrastructure for smart business systems." },
   { icon: ShieldCheck, title: "Nkɔsoɔ", role: "Strategic assessment, field inspection, verification, and documentation infrastructure." },

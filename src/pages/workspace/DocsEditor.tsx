@@ -133,7 +133,7 @@ export default function DocsEditor() {
         const { action: a, label } = payload || {};
         const sel = editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, " ");
         const text = sel || editor.getText();
-        toast({ title: `${label}…`, description: "Odeneho is working." });
+        toast({ title: `${label}…`, description: "Dipa is working." });
         const { data, error } = await supabase.functions.invoke("docs-intelligence", { body: { action: a, text } });
         if (error) throw error;
         const result = (data as any)?.result || (data as any)?.text;

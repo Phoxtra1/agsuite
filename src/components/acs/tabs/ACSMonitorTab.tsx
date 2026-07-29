@@ -12,14 +12,14 @@ import { ACSEventTable } from '../ACSEventTable';
 import { ACSSyncPanel } from '../ACSSyncPanel';
 import { ACSExport } from '../ACSExport';
 
-const SOURCES = ['agstock', 'agis', 'amniva', 'agroclimate', 'aminevaops', 'odeneho'] as const;
+const SOURCES = ['agstock', 'agis', 'amniva', 'agroclimate', 'aminevaops', 'dipa'] as const;
 const SOURCE_LABELS: Record<string, string> = {
   agstock: 'AGStock',
   agis: 'AGIS',
   amniva: 'ABI',
   agroclimate: 'AgroClimate',
   aminevaops: 'AminevaOps',
-  odeneho: 'Odeneho',
+  dipa: 'Dipa',
 };
 const PAGE_SIZE = 10;
 

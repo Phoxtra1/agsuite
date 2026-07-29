@@ -16,7 +16,7 @@ import { AppAuthGate } from "@/components/auth/AppAuthGate";
 const Landing = lazy(() => import("./pages/landing/Landing"));
 const HomePage = lazy(() => import("./pages/HomePage"));
 const AboutUs = lazy(() => import("./pages/landing/AboutUs"));
-const OdenehoAIPage = lazy(() => import("./pages/landing/OdenehoAIPage"));
+const DipaAIPage = lazy(() => import("./pages/landing/DipaAIPage"));
 const AGStockPage = lazy(() => import("./pages/landing/AGStockPage"));
 const AGISPage = lazy(() => import("./pages/landing/AGISPage"));
 const AmnivaPage = lazy(() => import("./pages/landing/AmnivaPage"));
@@ -209,7 +209,7 @@ function AppRoutes() {
         <Route path="/" element={<Landing />}>
           <Route index element={<PublicHome />} />
           <Route path="about-us" element={<AboutUs />} />
-          <Route path="apps/odeneho-ai" element={<OdenehoAIPage />} />
+          <Route path="apps/dipa-ai" element={<DipaAIPage />} />
           <Route path="/apps/agstock" element={<AGStockPage />} />
           <Route path="/apps/agroclimate" element={<AgroClimatePage />} />
           <Route path="/apps/adesua" element={<AdesuaPage />} />

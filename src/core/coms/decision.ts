@@ -1,6 +1,6 @@
 // src/core/coms/decision.ts
 
-import { OdenehoResponse } from "./odeneho";
+import { DipaResponse } from "./dipa";
 
 export type CommsAction = "auto-reply" | "escalate";
 
@@ -10,7 +10,7 @@ export interface DecisionResult {
 }
 
 export function decideAction(
-  response: OdenehoResponse
+  response: DipaResponse
 ): DecisionResult {
   if (response.confidence >= 0.75) {
     return {

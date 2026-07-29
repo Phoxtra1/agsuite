@@ -1158,16 +1158,16 @@ function ReviewTab({
           <div className="font-semibold">{wordsCount} words</div>
           <div className="text-[10px] text-muted-foreground">{charCount} chars</div>
         </div>
-        <Btn icon={CheckCircle} title="Odeneho Spelling Check" onClick={() => onAction("ai", { action: "spelling", label: "Spelling" })} />
-        <Btn icon={Sparkles} title="Odeneho Grammar Check" onClick={() => onAction("ai", { action: "grammar", label: "Grammar" })} />
+        <Btn icon={CheckCircle} title="Dipa Spelling Check" onClick={() => onAction("ai", { action: "spelling", label: "Spelling" })} />
+        <Btn icon={Sparkles} title="Dipa Grammar Check" onClick={() => onAction("ai", { action: "grammar", label: "Grammar" })} />
       </Group>
       <Group label="Language">
-        <DropBtn label="Odeneho Translate" icon={Languages} width="w-56">
+        <DropBtn label="Dipa Translate" icon={Languages} width="w-56">
           {(close) => (
             <div className="max-h-80 overflow-auto">
               {AMINEVA_LANGUAGES.map((l) => (
                 <MenuItem key={l.code} label={l.label} onClick={() => {
-                  onAction("ai", { action: "translate", label: "Odeneho Translate", target: l.code, targetLabel: l.label });
+                  onAction("ai", { action: "translate", label: "Dipa Translate", target: l.code, targetLabel: l.label });
                   close();
                 }} />
               ))}
@@ -1268,7 +1268,7 @@ function ToolsTab({ onAction }: { onAction: (a: string, p?: any) => void }) {
   return (
     <>
       <Group label="Amineva Tools">
-        <Btn icon={Sparkles} title="Odeneho Tools" onClick={() => onAction("tools:amineva")} />
+        <Btn icon={Sparkles} title="Dipa Tools" onClick={() => onAction("tools:amineva")} />
         <Btn icon={Calculator} title="Quick calc" onClick={() => onAction("tools:calc")} />
         <Btn icon={Building2} title="Workspace tools" onClick={() => onAction("tools:workspace")} />
       </Group>

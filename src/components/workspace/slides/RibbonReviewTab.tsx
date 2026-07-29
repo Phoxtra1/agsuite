@@ -21,11 +21,11 @@ export function RibbonReviewTab({
     // Collect slide text
     const textEls = currentSlide.elements.filter((e) => e.kind === "text" && e.text);
     if (textEls.length === 0) {
-      window.alert("Odeneho Spell Checker: Slide is empty. No text elements detected.");
+      window.alert("Dipa Spell Checker: Slide is empty. No text elements detected.");
       return;
     }
     // Simulation
-    window.alert("Odeneho Spell Checker: Check completed successfully. 0 spelling errors found in your slide deck.");
+    window.alert("Dipa Spell Checker: Check completed successfully. 0 spelling errors found in your slide deck.");
   };
 
   const handleAccessibilityCheck = () => {
@@ -76,9 +76,9 @@ export function RibbonReviewTab({
           <button
             onClick={handleSpellCheck}
             className="px-2.5 py-1.5 border border-border bg-background hover:bg-muted transition text-foreground rounded text-xs h-7 flex items-center gap-1.5 font-semibold"
-            title="Run Odeneho spelling check on slide text content"
+            title="Run Dipa spelling check on slide text content"
           >
-            <CheckCircle className="h-3.5 w-3.5 text-emerald-500 animate-pulse" /> Odeneho Spelling
+            <CheckCircle className="h-3.5 w-3.5 text-emerald-500 animate-pulse" /> Dipa Spelling
           </button>
         </div>
         <span className="text-[10px] text-muted-foreground uppercase tracking-wide font-medium">Proofing</span>
