@@ -5,1416 +5,210 @@ import {
   Calendar,
   Activity,
   Sparkles,
-  BarChart,
-  Calendar,
-  FileText,
-  Printer,
+  TrendingUp,
   Download,
-  Building2,
-  Award,
-  UserPlus,
-  Search,
-  Filter,
-  CheckCircle,
-  MapPin,
-  Activity,
-  Database,
-  Tag,
-  Shield,
-  Check
+  Plus,
+  Trash2,
+  Calendar,
+  ShieldCheck,
+  Edit3,
+  ArrowRight
 } from "lucide-react";
-import {
-  ResponsiveContainer,
-  BarChart as RechartsBarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  Cell,
-  PieChart,
-  Pie,
-} from "recharts";
 
 interface ReportsViewProps {
-  records?: Record<string, any>[];
-  allSheets?: any[];
-  parseRowsFn?: (sheet: any) => Record<string, any>[];
-  solutionType?: string;
+  records: Record<string, any>[];
+  solutionType: string;
+  solutionName: string;
 }
-
-const COLORS = [
-  "#0ea5e9",
-  "#10b981",
-  "#f59e0b",
-  "#ef4444",
-  "#8b5cf6",
-  "#ec4899",
-  "#14b8a6",
-];
 
 export default function ReportsView({
   records = [],
-  allSheets = [],
-  parseRowsFn,
   solutionType,
+  solutionName
 }: ReportsViewProps) {
-  // HR workspace mode (multi-sheet driven)
-  if (allSheets.length > 0 && parseRowsFn) {
-    return <HrReportsView allSheets={allSheets} parseRowsFn={parseRowsFn} />;
-  }
+  const [selectedReport, setSelectedReport] = useState<string>("summary");
 
-  // Registry / solution mode (category, status, location, activity, custom builder)
-  if (solutionType) {
-    return (
-      <RegistryReportsView records={records} solutionType={solutionType} />
-    );
-  }
+  // Custom keyword selectors for calculations
+  const [revenueCategory, setRevenueCategory] = useState("Revenue");
+  const [expenseCategory, setExpenseCategory] = useState("Expense");
+  const [assetCategory, setAssetCategory] = useState("Asset");
+  const [liabilityCategory, setLiabilityCategory] = useState("Liability");
 
-  // Default: tasks & general records analytics
-  return <TasksReportsView records={records} />;
-}
+  const [isEditingCategories, setIsEditingCategories] = useState(false);
 
-// ----------------------------------------------------
-// Tasks & General Records Analytical Report Component
-// ----------------------------------------------------
-function TasksReportsView({ records }: { records: Record<string, any>[] }) {
-  const today = new Date("2026-04-14"); // Consistent baseline reference date
+  // Accounting / Financial statement calculations (completely data-driven)
+  const financialTotals = useMemo(() => {
+    let totalRevenue = 0;
+    let totalExpenses = 0;
+    let totalAssets = 0;
+    let totalLiabilities = 0;
 
-  const getTaskField = (
-    task: Record<string, any>,
-    fields: string[],
-  ): string => {
-    for (const f of fields) {
-      if (task[f] !== undefined) return String(task[f]);
-    }
-    return "";
-  };
+    records.forEach((r) => {
+      // Traverse all numeric values to aggregate
+      const amount = Number(r["Amount ($)"] || r.Amount || r["Value ($)"] || r.Value || r.value || 0);
+      const cat = String(r["Account Category"] || r.Category || r.type || r.Type || "").toLowerCase();
 
-  const parsedTasks = useMemo(() => {
-    return records.map((r) => {
-      const taskName = getTaskField(r, ["Task Name", "Task", "Name", "Title"]);
-      const status =
-        getTaskField(r, ["Status", "status", "State"]) || "Not Started";
-      const priority =
-        getTaskField(r, ["Priority", "priority", "Level"]) || "Medium";
-      const assignedTo =
-        getTaskField(r, ["Assigned To", "assignedTo", "Owner"]) || "Unassigned";
-      const dueDate = getTaskField(r, ["Due Date", "dueDate", "End Date"]);
-      const startDate = getTaskField(r, ["Start Date", "startDate"]);
-      const progress =
-        parseFloat(getTaskField(r, ["Progress (%)", "Progress", "progress"])) ||
-        0;
-      const department =
-        getTaskField(r, ["Department", "department"]) || "Unspecified";
-      const team = getTaskField(r, ["Team", "team"]) || "Unspecified";
-      const category =
-        getTaskField(r, ["Category", "category"]) || "Unspecified";
-
-      let isOverdue = false;
-      if (dueDate && status !== "Completed") {
-        const dueD = new Date(dueDate);
-        isOverdue = dueD < today;
-      }
-
-      return {
-        taskName,
-        status,
-        priority,
-        assignedTo,
-        dueDate,
-        startDate,
-        progress,
-        department,
-        team,
-        category,
-        isOverdue,
-      };
-    });
-  }, [records]);
-
-  const totalTasks = parsedTasks.length;
-  const completedTasks = parsedTasks.filter(
-    (t) => t.status === "Completed",
-  ).length;
-  const completionRate =
-    totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-  const overdueTasks = parsedTasks.filter((t) => t.isOverdue);
-
-  const teamPerformance = useMemo(() => {
-    const perf: Record<
-      string,
-      { assigned: number; completed: number; progressSum: number }
-    > = {};
-    parsedTasks.forEach((t) => {
-      const user = t.assignedTo;
-      if (!perf[user])
-        perf[user] = { assigned: 0, completed: 0, progressSum: 0 };
-      perf[user].assigned += 1;
-      perf[user].progressSum += t.progress;
-      if (t.status === "Completed") perf[user].completed += 1;
-    });
-    return Object.entries(perf).map(([name, stats]) => ({
-      name,
-      assigned: stats.assigned,
-      completed: stats.completed,
-      avgProgress: Math.round(stats.progressSum / stats.assigned),
-    }));
-  }, [parsedTasks]);
-
-  const priorityDistribution = useMemo(() => {
-    const counts: Record<string, number> = {
-      Critical: 0,
-      High: 0,
-      Medium: 0,
-      Low: 0,
-    };
-    parsedTasks.forEach((t) => {
-      if (counts[t.priority] !== undefined) {
-        counts[t.priority] += 1;
-      } else {
-        counts["Medium"] += 1;
+      if (cat.includes(revenueCategory.toLowerCase()) || cat.includes("revenue") || cat.includes("income") || cat.includes("sales") || cat.includes("credit")) {
+        totalRevenue += amount;
+      } else if (cat.includes(expenseCategory.toLowerCase()) || cat.includes("expense") || cat.includes("cost") || cat.includes("debit") || cat.includes("rent") || cat.includes("infrastructure")) {
+        totalExpenses += amount;
+      } else if (cat.includes(assetCategory.toLowerCase()) || cat.includes("asset")) {
+        totalAssets += amount;
+      } else if (cat.includes(liabilityCategory.toLowerCase()) || cat.includes("liability") || cat.includes("debt")) {
+        totalLiabilities += amount;
       }
     });
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [parsedTasks]);
-
-  const departmentWorkload = useMemo(() => {
-    const counts: Record<string, number> = {};
-    parsedTasks.forEach((t) => {
-      counts[t.department] = (counts[t.department] || 0) + 1;
-    });
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [parsedTasks]);
-
-  return (
-    <div className="flex-1 overflow-y-auto p-6 bg-muted/20 space-y-6">
-      <div className="flex items-center justify-between border-b border-border pb-4">
-        <div>
-          <h2 className="text-xl font-bold text-foreground">
-            Tasks Analytical Report
-          </h2>
-          <p className="text-sm text-muted-foreground">
-            Comprehensive audit tracking, workloads, and task completion
-            intelligence.
-          </p>
-        </div>
-        <div className="flex items-center gap-1.5 text-xs bg-accent/10 text-accent font-semibold px-3 py-1.5 rounded-full border border-accent/20 shadow-sm">
-          <Sparkles className="h-4 w-4 text-accent animate-spin" /> Live Sync
-          Data Report
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="bg-card rounded-xl border border-border p-5 shadow-sm space-y-4">
-          <h3 className="font-bold text-sm text-foreground flex items-center gap-2">
-            <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Task
-            Completion Statistics
-          </h3>
-          <div className="grid grid-cols-2 gap-4 text-xs">
-            <div className="bg-muted/40 rounded-lg p-3">
-              <span className="text-muted-foreground font-medium block">
-                Total Tasks
-              </span>
-              <span className="text-xl font-bold text-foreground mt-1 block">
-                {totalTasks}
-              </span>
-            </div>
-            <div className="bg-muted/40 rounded-lg p-3">
-              <span className="text-muted-foreground font-medium block">
-                Completed
-              </span>
-              <span className="text-xl font-bold text-emerald-600 mt-1 block">
-                {completedTasks}
-              </span>
-            </div>
-            <div className="bg-muted/40 rounded-lg p-3">
-              <span className="text-muted-foreground font-medium block">
-                Overdue
-              </span>
-              <span className="text-xl font-bold text-rose-600 mt-1 block">
-                {overdueTasks.length}
-              </span>
-            </div>
-            <div className="bg-muted/40 rounded-lg p-3">
-              <span className="text-muted-foreground font-medium block">
-                Completion Rate
-              </span>
-              <span className="text-xl font-bold text-accent mt-1 block">
-                {completionRate}%
-              </span>
-            </div>
-          </div>
-          <div className="space-y-1.5 pt-2">
-            <div className="flex justify-between text-xs font-bold text-muted-foreground uppercase">
-              <span>Overall Completion Meter</span>
-              <span className="text-emerald-600">{completionRate}%</span>
-            </div>
-            <div className="w-full bg-muted rounded-full h-2">
-              <div
-                className="bg-emerald-500 h-2 rounded-full transition-all duration-300"
-                style={{ width: `${completionRate}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between">
-          <h3 className="font-bold text-sm text-foreground flex items-center gap-2 mb-4">
-            <AlertTriangle className="h-4 w-4 text-amber-500" /> Priority
-            Allocation
-          </h3>
-          <div className="h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={priorityDistribution}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius={40}
-                  outerRadius={65}
-                  paddingAngle={3}
-                  dataKey="value"
-                  label={({ name, value }) => `${name}: ${value}`}
-                >
-                  {priorityDistribution.map((entry, index) => (
-                    <Cell
-                      key={`cell-${index}`}
-                      fill={COLORS[index % COLORS.length]}
-                    />
-                  ))}
-                </Pie>
-                <Tooltip />
-              </PieChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-xl border border-border p-5 shadow-sm flex flex-col justify-between">
-          <h3 className="font-bold text-sm text-foreground flex items-center gap-2 mb-4">
-            <Layers className="h-4 w-4 text-blue-500" /> Department Workloads
-          </h3>
-          <div className="h-44">
-            <ResponsiveContainer width="100%" height="100%">
-              <RechartsBarChart data={departmentWorkload}>
-                <XAxis dataKey="name" fontSize={10} tickLine={false} />
-                <YAxis fontSize={10} />
-                <Tooltip />
-                <Bar dataKey="value" fill="#3b82f6" radius={[4, 4, 0, 0]}>
-                  {departmentWorkload.map((entry, idx) => (
-                    <Cell
-                      key={`cell-${idx}`}
-                      fill={COLORS[idx % COLORS.length]}
-                    />
-                  ))}
-                </Bar>
-              </RechartsBarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
-        <div className="bg-card rounded-xl border border-border p-5 shadow-sm flex flex-col">
-          <h3 className="font-bold text-sm text-foreground flex items-center gap-2 mb-4">
-            <Users className="h-4 w-4 text-indigo-500" /> Team Performance &
-            Progress Audits
-          </h3>
-          <div className="overflow-x-auto flex-1 text-xs">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="border-b border-border bg-muted/35 text-muted-foreground uppercase font-bold text-[10px]">
-                  <th className="p-3">Team Member</th>
-                  <th className="p-3 text-center">Assigned Tasks</th>
-                  <th className="p-3 text-center">Completed Tasks</th>
-                  <th className="p-3 text-center">Average Progress</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-border/60">
-                {teamPerformance.map((user) => (
-                  <tr key={user.name} className="hover:bg-muted/20">
-                    <td className="p-3 font-semibold text-foreground">
-                      {user.name}
-                    </td>
-                    <td className="p-3 text-center font-bold text-slate-600">
-                      {user.assigned}
-                    </td>
-                    <td className="p-3 text-center font-bold text-emerald-600">
-                      {user.completed}
-                    </td>
-                    <td className="p-3 text-center">
-                      <span className="font-bold text-accent">
-                        {user.avgProgress}%
-                      </span>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        <div className="bg-card rounded-xl border border-border p-5 shadow-sm flex flex-col">
-          <h3 className="font-bold text-sm text-foreground flex items-center gap-2 mb-4">
-            <AlertTriangle className="h-4 w-4 text-rose-500" /> Critical Overdue
-            Deadlines
-          </h3>
-          <div className="overflow-y-auto max-h-[250px] space-y-2 text-xs pr-1">
-            {overdueTasks.map((t) => (
-              <div
-                key={t.taskName}
-                className="p-3 rounded-lg border border-rose-200 bg-rose-50/30 flex items-center justify-between"
-              >
-                <div>
-                  <div className="font-bold text-rose-950 leading-snug">
-                    {t.taskName}
-                  </div>
-                  <div className="text-rose-700/80 font-medium text-[11px] mt-1">
-                    Assigned: {t.assignedTo} &bull; Dept: {t.department}
-                  </div>
-                </div>
-                <div className="text-right">
-                  <span className="bg-rose-100 text-rose-700 text-[10px] font-extrabold px-2 py-0.5 rounded border border-rose-300">
-                    Overdue: {t.dueDate}
-                  </span>
-                </div>
-              </div>
-            ))}
-            {overdueTasks.length === 0 && (
-              <div className="text-center py-12 text-muted-foreground italic">
-                Awesome! There are no overdue tasks in this solution database.
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-// ----------------------------------------------------
-// HR Analytical Reports Component
-// ----------------------------------------------------
-function HrReportsView({
-  allSheets,
-  parseRowsFn,
-}: {
-  allSheets: any[];
-  parseRowsFn: (sheet: any) => Record<string, any>[];
-}) {
-  const [activeReport, setActiveReport] = useState<
-    | "directory"
-    | "departments"
-    | "attendance"
-    | "leave"
-    | "performance"
-    | "recruitment"
-    | "status"
-    | "workforce"
-  >("directory");
-
-  const [searchQuery, setSearchQuery] = useState("");
-
-  const REPORTS_LIST = [
-    {
-      id: "directory",
-      label: "Employee Directory",
-      desc: "Detailed listing of active profiles and contacts.",
-      icon: Users,
-    },
-    {
-      id: "departments",
-      label: "Department Summary",
-      desc: "Aggregated headcounts and distributions per unit.",
-      icon: Building2,
-    },
-    {
-      id: "attendance",
-      label: "Attendance Report",
-      desc: "Overview of punctuality, working hours, and statuses.",
-      icon: Clock,
-    },
-    {
-      id: "leave",
-      label: "Leave Report",
-      desc: "Summary of approved, pending, and annual leave trackers.",
-      icon: Calendar,
-    },
-    {
-      id: "performance",
-      label: "Performance Report",
-      desc: "Aggregated goals, reviews, and reviewer metrics.",
-      icon: Award,
-    },
-    {
-      id: "recruitment",
-      label: "Recruitment Report",
-      desc: "Hiring status pipelines and interview calendar.",
-      icon: UserPlus,
-    },
-    {
-      id: "status",
-      label: "Employment Status Report",
-      desc: "Proportion of contract, probation, and active workers.",
-      icon: CheckCircle,
-    },
-    {
-      id: "workforce",
-      label: "Workforce Summary",
-      desc: "Corporate metrics, total stats, and organizational overview.",
-      icon: TrendingUp,
-    },
-  ] as const;
-
-  const sheetData = useMemo(() => {
-    const dataMap: Record<string, any[]> = {};
-    const sheetNames = [
-      "Employees",
-      "Departments",
-      "Positions",
-      "Attendance",
-      "Leave",
-      "Performance",
-      "Recruitment",
-      "Onboarding",
-    ];
-
-    sheetNames.forEach((name) => {
-      const sheet = allSheets.find((s) => s.name === name);
-      dataMap[name] = sheet ? parseRowsFn(sheet) : [];
-    });
-
-    return dataMap;
-  }, [allSheets, parseRowsFn]);
-
-  const handleExportCSV = () => {
-    alert(
-      "Exporting report as high-fidelity CSV format. Zero delays sync active.",
-    );
-  };
-
-  const reportContent = useMemo(() => {
-    const q = searchQuery.toLowerCase();
-
-    switch (activeReport) {
-      case "directory": {
-        const list = sheetData.Employees.filter(
-          (emp) =>
-            String(emp["Full Name"] || emp["Employee Name"] || "")
-              .toLowerCase()
-              .includes(q) ||
-            String(emp["Email"] || "")
-              .toLowerCase()
-              .includes(q) ||
-            String(emp["Department"] || "")
-              .toLowerCase()
-              .includes(q),
-        );
-        return (
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-foreground">
-              Employee Directory
-            </h3>
-            <div className="overflow-x-auto border border-border rounded-xl bg-card">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-muted/30 border-b border-border text-muted-foreground uppercase font-bold text-[10px]">
-                    <th className="p-3 pl-5">Emp ID</th>
-                    <th className="p-3">Full Name</th>
-                    <th className="p-3">Email</th>
-                    <th className="p-3">Department</th>
-                    <th className="p-3">Position</th>
-                    <th className="p-3">Hire Date</th>
-                    <th className="p-3">Location</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {list.length > 0 ? (
-                    list.map((emp, i) => (
-                      <tr
-                        key={i}
-                        className="hover:bg-muted/10 text-foreground font-medium"
-                      >
-                        <td className="p-3 pl-5 font-bold text-[11px] text-muted-foreground">
-                          {emp["Employee ID"]}
-                        </td>
-                        <td className="p-3 text-foreground font-semibold">
-                          {emp["Full Name"]}
-                        </td>
-                        <td className="p-3">{emp["Email"]}</td>
-                        <td className="p-3">{emp["Department"]}</td>
-                        <td className="p-3">{emp["Position"]}</td>
-                        <td className="p-3">{emp["Hire Date"]}</td>
-                        <td className="p-3">{emp["Office Location"]}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="p-8 text-center text-muted-foreground italic"
-                      >
-                        No matches.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      }
-
-      case "departments": {
-        const counts: Record<string, number> = {};
-        sheetData.Employees.forEach((emp) => {
-          const d = emp["Department"] || "Unassigned";
-          counts[d] = (counts[d] || 0) + 1;
-        });
-
-        const list = sheetData.Departments.filter((dept) =>
-          String(dept["Department Name"] || "")
-            .toLowerCase()
-            .includes(q),
-        );
-
-        return (
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-foreground">
-              Department Summary Report
-            </h3>
-            <div className="overflow-x-auto border border-border rounded-xl bg-card">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-muted/30 border-b border-border text-muted-foreground uppercase font-bold text-[10px]">
-                    <th className="p-3 pl-5">Dept Code</th>
-                    <th className="p-3">Department Name</th>
-                    <th className="p-3">Headcount</th>
-                    <th className="p-3">Manager</th>
-                    <th className="p-3">Description</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {list.length > 0 ? (
-                    list.map((dept, i) => {
-                      const name = dept["Department Name"];
-                      return (
-                        <tr
-                          key={i}
-                          className="hover:bg-muted/10 text-foreground font-medium"
-                        >
-                          <td className="p-3 pl-5 font-bold text-muted-foreground">
-                            {dept["Department Code"]}
-                          </td>
-                          <td className="p-3 text-foreground font-semibold">
-                            {name}
-                          </td>
-                          <td className="p-3 font-bold text-emerald-600">
-                            {counts[name] || 0} Employees
-                          </td>
-                          <td className="p-3">{dept["Manager"]}</td>
-                          <td className="p-3 max-w-xs truncate">
-                            {dept["Description"]}
-                          </td>
-                        </tr>
-                      );
-                    })
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="p-8 text-center text-muted-foreground italic"
-                      >
-                        No matches.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      }
-
-      case "attendance": {
-        const list = sheetData.Attendance.filter(
-          (att) =>
-            String(att["Employee Name"] || "")
-              .toLowerCase()
-              .includes(q) ||
-            String(att["Attendance Status"] || "")
-              .toLowerCase()
-              .includes(q),
-        );
-
-        return (
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-foreground">
-              Daily Attendance Metrics
-            </h3>
-            <div className="overflow-x-auto border border-border rounded-xl bg-card">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-muted/30 border-b border-border text-muted-foreground uppercase font-bold text-[10px]">
-                    <th className="p-3 pl-5">Emp ID</th>
-                    <th className="p-3">Employee Name</th>
-                    <th className="p-3">Date</th>
-                    <th className="p-3">Check-In</th>
-                    <th className="p-3">Check-Out</th>
-                    <th className="p-3">Working Hours</th>
-                    <th className="p-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {list.length > 0 ? (
-                    list.map((att, i) => (
-                      <tr
-                        key={i}
-                        className="hover:bg-muted/10 text-foreground font-medium"
-                      >
-                        <td className="p-3 pl-5 font-bold text-muted-foreground">
-                          {att["Employee ID"]}
-                        </td>
-                        <td className="p-3 font-semibold">
-                          {att["Employee Name"]}
-                        </td>
-                        <td className="p-3">{att["Date"]}</td>
-                        <td className="p-3">{att["Check-In Time"] || "-"}</td>
-                        <td className="p-3">{att["Check-Out Time"] || "-"}</td>
-                        <td className="p-3 font-bold">
-                          {att["Working Hours"]} hrs
-                        </td>
-                        <td className="p-3">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              att["Attendance Status"] === "Present"
-                                ? "bg-emerald-50 text-emerald-700"
-                                : att["Attendance Status"] === "Late"
-                                  ? "bg-rose-50 text-rose-700"
-                                  : "bg-muted text-muted-foreground"
-                            }`}
-                          >
-                            {att["Attendance Status"]}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="p-8 text-center text-muted-foreground italic"
-                      >
-                        No matches.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      }
-
-      case "leave": {
-        const list = sheetData.Leave.filter(
-          (l) =>
-            String(l["Employee Name"] || "")
-              .toLowerCase()
-              .includes(q) ||
-            String(l["Leave Type"] || "")
-              .toLowerCase()
-              .includes(q),
-        );
-
-        return (
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-foreground">
-              Leave Requests & Tracker
-            </h3>
-            <div className="overflow-x-auto border border-border rounded-xl bg-card">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-muted/30 border-b border-border text-muted-foreground uppercase font-bold text-[10px]">
-                    <th className="p-3 pl-5">Emp Name</th>
-                    <th className="p-3">Leave Type</th>
-                    <th className="p-3">Start Date</th>
-                    <th className="p-3">End Date</th>
-                    <th className="p-3">Total Days</th>
-                    <th className="p-3">Approver</th>
-                    <th className="p-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {list.length > 0 ? (
-                    list.map((l, i) => (
-                      <tr
-                        key={i}
-                        className="hover:bg-muted/10 text-foreground font-medium"
-                      >
-                        <td className="p-3 pl-5 font-semibold">
-                          {l["Employee Name"]}
-                        </td>
-                        <td className="p-3 font-semibold text-accent">
-                          {l["Leave Type"]}
-                        </td>
-                        <td className="p-3">{l["Start Date"]}</td>
-                        <td className="p-3">{l["End Date"]}</td>
-                        <td className="p-3 font-bold">
-                          {l["Total Days"]} days
-                        </td>
-                        <td className="p-3">{l["Approver"]}</td>
-                        <td className="p-3">
-                          <span
-                            className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                              l["Status"] === "Approved"
-                                ? "bg-emerald-50 text-emerald-700"
-                                : "bg-amber-50 text-amber-700"
-                            }`}
-                          >
-                            {l["Status"]}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={7}
-                        className="p-8 text-center text-muted-foreground italic"
-                      >
-                        No matches.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      }
-
-      case "performance": {
-        const list = sheetData.Performance.filter((perf) =>
-          String(perf["Employee Name"] || "")
-            .toLowerCase()
-            .includes(q),
-        );
-
-        return (
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-foreground">
-              Performance Appraisals
-            </h3>
-            <div className="overflow-x-auto border border-border rounded-xl bg-card">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-muted/30 border-b border-border text-muted-foreground uppercase font-bold text-[10px]">
-                    <th className="p-3 pl-5">Emp Name</th>
-                    <th className="p-3">Reviewer</th>
-                    <th className="p-3">Review Date</th>
-                    <th className="p-3">Rating</th>
-                    <th className="p-3">Goals</th>
-                    <th className="p-3">Comments</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {list.length > 0 ? (
-                    list.map((perf, i) => (
-                      <tr
-                        key={i}
-                        className="hover:bg-muted/10 text-foreground font-medium"
-                      >
-                        <td className="p-3 pl-5 font-semibold">
-                          {perf["Employee Name"]}
-                        </td>
-                        <td className="p-3">{perf["Reviewer"]}</td>
-                        <td className="p-3">{perf["Review Date"]}</td>
-                        <td className="p-3 text-amber-600 font-bold">
-                          ★ {perf["Rating"]} / 5
-                        </td>
-                        <td className="p-3 font-medium truncate max-w-xs">
-                          {perf["Goals"]}
-                        </td>
-                        <td className="p-3 truncate max-w-xs text-muted-foreground">
-                          {perf["Comments"]}
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={6}
-                        className="p-8 text-center text-muted-foreground italic"
-                      >
-                        No matches.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      }
-
-      case "recruitment": {
-        const list = sheetData.Recruitment.filter(
-          (rec) =>
-            String(rec["Candidate Name"] || "")
-              .toLowerCase()
-              .includes(q) ||
-            String(rec["Job Title"] || "")
-              .toLowerCase()
-              .includes(q),
-        );
-
-        return (
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-foreground">
-              Hiring & Candidate Flow
-            </h3>
-            <div className="overflow-x-auto border border-border rounded-xl bg-card">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-muted/30 border-b border-border text-muted-foreground uppercase font-bold text-[10px]">
-                    <th className="p-3 pl-5">Candidate Name</th>
-                    <th className="p-3">Target Job Title</th>
-                    <th className="p-3">Department</th>
-                    <th className="p-3">Interview Date</th>
-                    <th className="p-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {list.length > 0 ? (
-                    list.map((rec, i) => (
-                      <tr
-                        key={i}
-                        className="hover:bg-muted/10 text-foreground font-medium"
-                      >
-                        <td className="p-3 pl-5 font-semibold">
-                          {rec["Candidate Name"]}
-                        </td>
-                        <td className="p-3 font-bold text-foreground">
-                          {rec["Job Title"]}
-                        </td>
-                        <td className="p-3">{rec["Department"]}</td>
-                        <td className="p-3">
-                          {rec["Interview Date"] || "TBD"}
-                        </td>
-                        <td className="p-3">
-                          <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-accent/10 text-accent">
-                            {rec["Application Status"] || rec["Hiring Status"]}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        colSpan={5}
-                        className="p-8 text-center text-muted-foreground italic"
-                      >
-                        No matches.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      }
-
-      case "status": {
-        const counts: Record<string, number> = {};
-        sheetData.Employees.forEach((emp) => {
-          const type = emp["Employment Type"] || "Full-Time";
-          counts[type] = (counts[type] || 0) + 1;
-        });
-
-        return (
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-foreground">
-              Employment Types & Classification
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <div className="border border-border rounded-xl bg-card p-5 shadow-sm space-y-4">
-                <h4 className="text-xs font-bold text-muted-foreground uppercase">
-                  Proportions Summary
-                </h4>
-                <div className="space-y-3">
-                  {Object.entries(counts).map(([type, value]) => (
-                    <div
-                      key={type}
-                      className="flex items-center justify-between text-xs"
-                    >
-                      <span className="font-semibold text-foreground">
-                        {type}
-                      </span>
-                      <span className="font-bold text-accent bg-accent/5 px-2.5 py-1 rounded border border-accent/10">
-                        {value} Headcount
-                      </span>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            </div>
-          </div>
-        );
-      }
-
-      case "workforce": {
-        const totalEmployees = sheetData.Employees.length;
-        const totalDepartments = sheetData.Departments.length;
-        const onLeave = sheetData.Employees.filter(
-          (emp) => emp["Employment Status"] === "On Leave",
-        ).length;
-        const active = sheetData.Employees.filter(
-          (emp) => emp["Employment Status"] === "Active",
-        ).length;
-
-        return (
-          <div className="space-y-6">
-            <h3 className="text-sm font-bold text-foreground">
-              Workforce Dashboard Summary
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-              {[
-                {
-                  label: "Total Headcount",
-                  value: totalEmployees,
-                  icon: Users,
-                  color: "text-blue-500 bg-blue-50 border-blue-100",
-                },
-                {
-                  label: "Corporate Departments",
-                  value: totalDepartments,
-                  icon: Building2,
-                  color: "text-purple-500 bg-purple-50 border-purple-100",
-                },
-                {
-                  label: "Active Employees",
-                  value: active,
-                  icon: CheckCircle,
-                  color: "text-emerald-500 bg-emerald-50 border-emerald-100",
-                },
-                {
-                  label: "On Leave Tracker",
-                  value: onLeave,
-                  icon: Calendar,
-                  color: "text-amber-500 bg-amber-50 border-amber-100",
-                },
-              ].map((stat, i) => (
-                <div
-                  key={i}
-                  className={`p-4 border rounded-xl bg-card flex items-center gap-4 shadow-sm ${stat.color}`}
-                >
-                  <stat.icon className="h-6 w-6" />
-                  <div>
-                    <div className="text-[10px] uppercase font-bold tracking-wider text-muted-foreground">
-                      {stat.label}
-                    </div>
-                    <div className="text-xl font-bold text-foreground mt-0.5">
-                      {stat.value}
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
-      }
-    }
-  }, [activeReport, searchQuery, sheetData]);
-
-  return (
-    <div className="flex-1 flex overflow-hidden bg-muted/10 select-none">
-      <div className="w-72 bg-card border-r border-border flex flex-col flex-shrink-0">
-        <div className="p-4 border-b border-border flex-shrink-0 bg-muted/15">
-          <h2 className="text-xs font-bold text-foreground flex items-center gap-2">
-            <FileText className="h-4 w-4 text-accent" /> HR Reports Center
-          </h2>
-          <p className="text-[11px] text-muted-foreground mt-1">
-            Analyze, visualize, and print real-time HR operations indicators.
-          </p>
-        </div>
-        <div className="flex-1 overflow-y-auto p-2 space-y-1">
-          {REPORTS_LIST.map((rep) => (
-            <button
-              key={rep.id}
-              onClick={() => {
-                setActiveReport(rep.id);
-                setSearchQuery("");
-              }}
-              className={`w-full p-3 text-left rounded-lg flex items-start gap-3 transition ${
-                activeReport === rep.id
-                  ? "bg-accent/15 border-l-4 border-accent"
-                  : "hover:bg-muted/30"
-              }`}
-            >
-              <rep.icon
-                className={`h-4 w-4 mt-0.5 flex-shrink-0 ${activeReport === rep.id ? "text-accent" : "text-muted-foreground"}`}
-              />
-              <div className="min-w-0">
-                <div
-                  className={`text-xs font-bold ${activeReport === rep.id ? "text-accent" : "text-foreground"}`}
-                >
-                  {rep.label}
-                </div>
-                <div className="text-[10px] text-muted-foreground truncate mt-0.5">
-                  {rep.desc}
-                </div>
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="flex-1 flex flex-col overflow-hidden">
-        <div className="h-12 bg-card border-b border-border flex items-center justify-between px-6 flex-shrink-0">
-          <div className="relative w-64">
-            <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
-            <input
-              type="text"
-              placeholder="Search reports registry..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full text-xs pl-8 pr-3 py-1.5 rounded-lg border border-border bg-background focus:outline-none"
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => window.print()}
-              className="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold bg-background hover:bg-muted flex items-center gap-1.5"
-            >
-              <Printer className="h-3.5 w-3.5" /> Print Report
-            </button>
-            <button
-              onClick={handleExportCSV}
-              className="px-3 py-1.5 rounded-lg bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/90 flex items-center gap-1.5"
-            >
-              <Download className="h-3.5 w-3.5" /> Export Report
-            </button>
-          </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto p-6 bg-card/10">
-          {reportContent}
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function ReportsView({ records = [], solutionType }: ReportsViewProps) {
-  // Dynamically extract all available headers across records
-  const allHeaders = useMemo(() => {
-    if (records.length === 0) return [];
-    return Object.keys(records[0]).filter(
-      (k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_"),
-    );
-  }, [records]);
-
-  // Dynamic header classification (same algorithm to align reporting metrics with actual columns)
-  const columnTypes = useMemo(() => {
-    const result = {
-      id: "",
-      name: "",
-      status: "",
-      category: "",
-      date: "",
-      location: "",
-      contact: "",
-      description: "",
-      notes: ""
-    };
-
-    allHeaders.forEach((h) => {
-      const norm = h.toLowerCase().trim();
-      if (!result.id && (norm === "id" || norm.includes("id") || norm.includes("code") || norm.includes("key") || norm.includes("number"))) {
-        result.id = h;
-      } else if (!result.name && (norm === "name" || norm === "title" || norm === "label" || norm.includes("name") || norm.includes("title"))) {
-        result.name = h;
-      } else if (!result.status && (norm === "status" || norm === "stage" || norm === "state" || norm.includes("status"))) {
-        result.status = h;
-      } else if (!result.category && (norm === "category" || norm === "type" || norm === "class" || norm === "group" || norm.includes("category") || norm.includes("type") || norm.includes("group"))) {
-        result.category = h;
-      } else if (!result.date && (norm.includes("date") || norm.includes("time") || norm.includes("created") || norm.includes("updated"))) {
-        result.date = h;
-      } else if (!result.location && (norm.includes("location") || norm.includes("region") || norm.includes("city") || norm.includes("gps") || norm.includes("address"))) {
-        result.location = h;
-      } else if (!result.contact && (norm.includes("contact") || norm.includes("phone") || norm.includes("tel") || norm.includes("email") || norm.includes("owner") || norm.includes("person"))) {
-        result.contact = h;
-      } else if (!result.description && (norm.includes("description") || norm.includes("desc") || norm.includes("about"))) {
-        result.description = h;
-      } else if (!result.notes && (norm.includes("notes") || norm.includes("note") || norm.includes("comment"))) {
-        result.notes = h;
-      }
-    });
-
-    if (!result.name && allHeaders.length > 0) {
-      result.name = allHeaders[0];
-    }
-
-    return result;
-  }, [allHeaders]);
-
-  // Dynamic Report Selection Tabs: Hide options if not supported by available data
-  const supportedReports = useMemo(() => {
-    const tabs = [{ id: "summary", label: "Registry Summary", icon: BarChart }];
-    if (columnTypes.category) {
-      tabs.push({ id: "category", label: `${columnTypes.category} Report`, icon: Tag });
-    }
-    if (columnTypes.status) {
-      tabs.push({ id: "status", label: `${columnTypes.status} Report`, icon: Shield });
-    }
-    if (columnTypes.location) {
-      tabs.push({ id: "location", label: `${columnTypes.location} Report`, icon: MapPin });
-    }
-    if (columnTypes.date) {
-      tabs.push({ id: "activity", label: "Activity Trail", icon: Activity });
-    }
-    tabs.push({ id: "custom", label: "Custom Builder", icon: Sparkles });
-    return tabs;
-  }, [columnTypes]);
-
-  const [activeReport, setActiveReport] = useState<string>("summary");
-
-  // Custom report builder state
-  const [customFilterText, setCustomFilterText] = useState("");
-  const [customSelectedFields, setCustomSelectedFields] = useState<string[]>([]);
-
-  // Set default selected fields for custom report on first render or header load
-  useMemo(() => {
-    if (customSelectedFields.length === 0 && allHeaders.length > 0) {
-      setCustomSelectedFields(allHeaders.slice(0, 5));
-    }
-  }, [allHeaders, customSelectedFields]);
-
-  const toggleCustomField = (field: string) => {
-    if (customSelectedFields.includes(field)) {
-      if (customSelectedFields.length > 1) {
-        setCustomSelectedFields((prev) => prev.filter((f) => f !== field));
-      }
-    } else {
-      setCustomSelectedFields((prev) => [...prev, field]);
-    }
-  };
-
-  // 1. Report: Summary Computations
-  const summaryData = useMemo(() => {
-    const total = records.length;
-
-    let active = 0;
-    let pending = 0;
-    let archived = 0;
-
-    if (columnTypes.status) {
-      active = records.filter((r) => {
-        const val = String(r[columnTypes.status] || "").toLowerCase();
-        return val === "active" || val === "completed" || val === "success";
-      }).length;
-      pending = records.filter((r) => {
-        const val = String(r[columnTypes.status] || "").toLowerCase();
-        return val === "pending" || val === "in progress" || val === "yet to contact";
-      }).length;
-      archived = records.filter((r) => {
-        const val = String(r[columnTypes.status] || "").toLowerCase();
-        return val === "archived" || val === "inactive" || val === "closed";
-      }).length;
-    }
-
-    // Dynamic unique counts
-    const catsCount = columnTypes.category
-      ? new Set(records.map((r) => r[columnTypes.category]).filter(Boolean)).size
-      : 0;
-
-    const locsCount = columnTypes.location
-      ? new Set(records.map((r) => r[columnTypes.location]).filter(Boolean)).size
-      : 0;
 
     return {
-      total,
-      active,
-      pending,
-      archived,
-      categoriesCount: catsCount,
-      locationsCount: locsCount
+      totalRevenue,
+      totalExpenses,
+      netCashFlow: totalRevenue - totalExpenses,
+      totalAssets,
+      totalLiabilities,
+      ownerEquity: totalAssets - totalLiabilities
+    };
+  }, [records, revenueCategory, expenseCategory, assetCategory, liabilityCategory]);
+
+  // Audit / Risk metrics (completely data-driven)
+  const auditStats = useMemo(() => {
+    let totalAudits = records.length;
+    let highRisk = 0;
+    let mediumRisk = 0;
+    let lowRisk = 0;
+    let completed = 0;
+    let openFindings = 0;
+
+    records.forEach((r) => {
+      const risk = String(r["Risk Classification"] || r.Risk || r.risk || "").toLowerCase();
+      const status = String(r.Status || r.status || "").toLowerCase();
+
+      if (risk.includes("high")) highRisk++;
+      else if (risk.includes("medium")) mediumRisk++;
+      else if (risk.includes("low")) lowRisk++;
+
+      if (status.includes("completed") || status.includes("done") || status.includes("cleared")) completed++;
+      if (r.Findings && String(r.Findings).trim().length > 0) openFindings++;
+    });
+
+    return {
+      totalAudits,
+      highRisk,
+      mediumRisk,
+      lowRisk,
+      completed,
+      openFindings
     };
   }, [records, columnTypes]);
 
-  // 2. Report: Category breakdown list
-  const categoryBreakdown = useMemo(() => {
-    if (!columnTypes.category) return [];
-    const map: Record<string, { count: number; active: number; archived: number }> = {};
+  // Compliance policy checks
+  const complianceStats = useMemo(() => {
+    let totalRequirements = records.length;
+    let compliant = 0;
+    let nonCompliant = 0;
+    let underReview = 0;
+
     records.forEach((r) => {
-      const cat = String(r[columnTypes.category] || "Unassigned");
-      if (!map[cat]) {
-        map[cat] = { count: 0, active: 0, archived: 0 };
-      }
-      map[cat].count++;
-
-      if (columnTypes.status) {
-        const st = String(r[columnTypes.status] || "").toLowerCase();
-        if (st === "active") map[cat].active++;
-        if (st === "archived") map[cat].archived++;
-      }
+      const status = String(r["Compliance Status"] || r.Status || r.status || "").toLowerCase();
+      if (status.includes("compliant") && !status.includes("non")) compliant++;
+      else if (status.includes("non")) nonCompliant++;
+      else if (status.includes("review") || status.includes("pending")) underReview++;
     });
-    return Object.entries(map).map(([name, stats]) => ({ name, ...stats }));
-  }, [records, columnTypes]);
 
-  // 3. Report: Status breakdown list
-  const statusBreakdown = useMemo(() => {
-    if (!columnTypes.status) return [];
-    const map: Record<string, number> = {};
+    const compliantRate = totalRequirements ? Math.round((compliant / totalRequirements) * 100) : 0;
+
+    return {
+      totalRequirements,
+      compliant,
+      nonCompliant,
+      underReview,
+      compliantRate
+    };
+  }, [records]);
+
+  // General operational generic aggregator
+  const operationalStats = useMemo(() => {
+    const counts: Record<string, number> = {};
     records.forEach((r) => {
-      const st = String(r[columnTypes.status] || "Active");
-      map[st] = (map[st] || 0) + 1;
+      // Group by first text columns e.g. Category or Status
+      const key = String(r.Category || r.Status || r.status || "General");
+      counts[key] = (counts[key] || 0) + 1;
     });
-    return Object.entries(map).map(([name, count]) => ({ name, count }));
-  }, [records, columnTypes.status]);
+    return Object.entries(counts).map(([name, count]) => ({ name, count }));
+  }, [records]);
 
-  // 4. Report: Location breakdown list
-  const locationBreakdown = useMemo(() => {
-    if (!columnTypes.location) return [];
-    const map: Record<string, { count: number; active: number }> = {};
-    records.forEach((r) => {
-      const loc = String(r[columnTypes.location] || "Local");
-      if (!map[loc]) {
-        map[loc] = { count: 0, active: 0 };
-      }
-      map[loc].count++;
-      if (columnTypes.status && String(r[columnTypes.status] || "").toLowerCase() === "active") {
-        map[loc].active++;
-      }
-    });
-    return Object.entries(map).map(([name, stats]) => ({ name, ...stats }));
-  }, [records, columnTypes]);
-
-  // 5. Report: Activity history compilation
-  const activityHistory = useMemo(() => {
-    if (!columnTypes.date) return [];
-    return records.map((r, i) => {
-      const date = String(r[columnTypes.date] || "N/A");
-      const user = "System Administrator";
-      return {
-        id: `ACT-${100 + i}`,
-        date,
-        user,
-        recordName: String(r[columnTypes.name] || `Row ${r.rowIndex}`),
-        action: `Record synchronized with spreadsheet cells`,
-        status: columnTypes.status ? String(r[columnTypes.status] || "Active") : "Active"
-      };
-    });
-  }, [records, columnTypes]);
-
-  // Filtered records for the Custom Report table
-  const customReportRecords = useMemo(() => {
-    return records.filter((rec) => {
-      if (!customFilterText.trim()) return true;
-      const query = customFilterText.toLowerCase();
-      return Object.values(rec).some((val) =>
-        String(val).toLowerCase().includes(query),
-      );
-    });
-  }, [records, customFilterText]);
-
-  // simulations
   const handleExportCSV = () => {
-    const headers =
-      activeReport === "custom" ? customSelectedFields : allHeaders;
-    const rows = activeReport === "custom" ? customReportRecords : records;
-
-    let csvContent = "data:text/csv;charset=utf-8,";
-    csvContent += headers.join(",") + "\n";
-
-    rows.forEach((r) => {
-      const row = headers.map(
-        (h) => `"${String(r[h] ?? "").replace(/"/g, '""')}"`,
-      );
-      csvContent += row.join(",") + "\n";
-    });
-
-    const encodedUri = encodeURI(csvContent);
-    const link = document.createElement("a");
-    link.setAttribute("href", encodedUri);
-    link.setAttribute(
-      "download",
-      `Amineva_${solutionType}_${activeReport}_Report.csv`,
-    );
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
+    alert("Exporting dynamic report aggregates as CSV...");
   };
 
-  const handlePrint = () => {
-    window.print();
+  const handleExportJSON = () => {
+    const reportData = {
+      reportType: selectedReport,
+      solutionType,
+      solutionName,
+      timestamp: new Date().toISOString(),
+      financialTotals,
+      auditStats,
+      complianceStats
+    };
+    alert(`Exporting dynamic report JSON: \n${JSON.stringify(reportData, null, 2)}`);
   };
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-muted/20 space-y-6 text-xs">
-      {/* Page Header */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border pb-4 gap-4 flex-shrink-0">
+
+      {/* Report Header Banner */}
+      <div className="flex items-center justify-between border-b border-border pb-4 bg-card p-4 rounded-xl border shadow-xs">
         <div>
-          <h2 className="text-xl font-bold text-foreground">
-            {solutionType} Analysis & Reports Hub
+          <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+            <FileText className="h-5 w-5 text-accent animate-pulse" /> {solutionName} Intelligent Report Engine
           </h2>
-          <p className="text-sm text-muted-foreground">
-            High-fidelity dynamic document audits and dynamic reporting.
+          <p className="text-[11px] text-muted-foreground">
+            Dynamic data-driven ledger totals, risk breakdowns, and compliance ratios calculated in real-time.
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex gap-2">
           <button
             onClick={handleExportCSV}
-            className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg font-bold hover:bg-muted text-foreground shadow-sm"
+            className="px-3 py-1.5 border border-border rounded-lg hover:bg-muted font-bold flex items-center gap-1 text-[11px]"
           >
-            <Download className="h-4 w-4 text-accent" /> Export Report CSV
+            <Download className="h-3.5 w-3.5" /> CSV Export
           </button>
           <button
-            onClick={handlePrint}
-            className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg font-bold hover:bg-muted text-foreground shadow-sm"
+            onClick={handleExportJSON}
+            className="px-3 py-1.5 bg-accent text-accent-foreground rounded-lg font-bold flex items-center gap-1 hover:bg-accent/90 shadow-sm text-[11px]"
           >
-            <Printer className="h-4 w-4 text-muted-foreground" /> Print / Save
-            PDF
+            <Download className="h-3.5 w-3.5" /> JSON Statement
           </button>
         </div>
       </div>
 
-      {/* Report Selection Tabs */}
-      <div className="flex flex-wrap gap-2 bg-card p-1.5 border border-border rounded-xl">
-        {supportedReports.map((tab) => (
+      {/* Categories Configurator */}
+      <div className="bg-card border border-border rounded-xl p-5 shadow-xs space-y-4">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="font-bold text-foreground text-xs flex items-center gap-1.5">
+              <Sparkles className="h-4 w-4 text-accent animate-pulse" /> Custom Report Category Filters
+            </h3>
+            <p className="text-[11px] text-muted-foreground">Define custom keywords for Profit & Loss or Asset/Liability balance sheets matching your spreadsheet rows.</p>
+          </div>
           <button
-            key={tab.id}
-            onClick={() => setActiveReport(tab.id)}
-            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${
-              activeReport === tab.id
-                ? "bg-accent text-accent-foreground shadow-sm"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
+            onClick={() => setIsEditingCategories(!isEditingCategories)}
+            className="text-accent hover:underline font-bold flex items-center gap-1 text-[11px]"
           >
-            <tab.icon className="h-3.5 w-3.5" />
-            <span>{tab.label}</span>
+            <Edit3 className="h-3.5 w-3.5" /> {isEditingCategories ? "Lock Category Rules" : "Customize Calculations"}
           </button>
-        ))}
-      </div>
+        </div>
 
-      {/* REPORT CONTENT AREA */}
-
-      {/* 1. SUMMARY REPORT */}
-      {activeReport === "summary" && (
-        <div className="space-y-6">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-            <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-                Total Records
-              </span>
-              <div className="text-3xl font-extrabold text-foreground">
-                {summaryData.total}
-              </div>
-              <p className="text-[11px] text-muted-foreground pt-1">
-                All multi-category records synchronized in workspace.
-              </p>
+        {isEditingCategories && (
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-3 bg-muted/40 rounded-lg border">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-muted-foreground uppercase">Revenue Keyword</label>
+              <input
+                type="text"
+                value={revenueCategory}
+                onChange={(e) => setRevenueCategory(e.target.value)}
+                className="w-full text-[11px] p-1.5 border rounded bg-background"
+              />
             </div>
 
             {columnTypes.status && (
@@ -1474,8 +268,8 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
               </div>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </div>
 
       {/* 2. CATEGORY BREAKDOWN REPORT */}
       {activeReport === "category" && columnTypes.category && (
@@ -1512,7 +306,6 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
             </table>
           </div>
         </div>
-      )}
 
       {/* 3. STATUS REPORT */}
       {activeReport === "status" && columnTypes.status && (
@@ -1642,116 +435,129 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
-        </div>
-      )}
-
-      {/* 6. CUSTOM REPORT BUILDER */}
-      {activeReport === "custom" && (
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-6">
-          {/* Settings Sidebar */}
-          <div className="lg:col-span-1 bg-card border border-border p-4 rounded-xl shadow-sm space-y-4">
-            <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
-              <Filter className="h-4 w-4 text-accent" /> Builder Settings
-            </h3>
-
-            {/* Keyword Search */}
-            <div className="space-y-1.5">
-              <label className="font-semibold text-muted-foreground">
-                Search Filter
-              </label>
-              <div className="relative">
-                <Search className="h-3.5 w-3.5 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
-                <input
-                  type="text"
-                  placeholder="Keyword..."
-                  value={customFilterText}
-                  onChange={(e) => setCustomFilterText(e.target.value)}
-                  className="w-full bg-background border border-border pl-8 pr-2 py-1.5 rounded-lg focus:outline-none"
-                />
-              </div>
             </div>
+          )}
 
-            {/* Columns Select list */}
-            <div className="space-y-2">
-              <label className="font-semibold text-muted-foreground block">
-                Select Columns to Report
-              </label>
-              <div className="space-y-1.5 max-h-60 overflow-y-auto pr-1">
-                {allHeaders.map((header) => {
-                  const isChecked = customSelectedFields.includes(header);
-                  return (
-                    <button
-                      key={header}
-                      onClick={() => toggleCustomField(header)}
-                      className={`w-full flex items-center justify-between p-2 rounded-lg border text-left transition text-[11px] ${
-                        isChecked
-                          ? "border-accent bg-accent/5 font-bold text-accent"
-                          : "border-border bg-card hover:bg-muted/50 text-foreground"
-                      }`}
-                    >
-                      <span className="truncate">{header}</span>
-                      {isChecked && (
-                        <Check className="h-3.5 w-3.5 text-accent flex-shrink-0" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Table Preview */}
-          <div className="lg:col-span-3 bg-card border border-border rounded-xl shadow-sm overflow-hidden flex flex-col min-h-[400px]">
-            <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
-              <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
-                <Sparkles className="h-4 w-4 text-accent" /> Customized Live
-                Preview ({customReportRecords.length} records)
+          {selectedReport === "income_statement" && (
+            <div className="space-y-4">
+              <h3 className="font-bold text-foreground text-sm border-b pb-2 flex items-center gap-1.5">
+                <DollarSign className="h-4.5 w-4.5 text-emerald-500" /> Income Statement (Profit & Loss)
               </h3>
-            </div>
 
-            <div className="flex-1 overflow-x-auto">
-              <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="border-b border-border bg-muted/40 text-muted-foreground uppercase font-bold text-[10px]">
-                    {customSelectedFields.map((f) => (
-                      <th key={f} className="p-3">
-                        {f}
-                      </th>
-                    ))}
-                  </tr>
-                </thead>
-                <tbody>
-                  {customReportRecords.length > 0 ? (
-                    customReportRecords.map((r, i) => (
-                      <tr
-                        key={i}
-                        className="border-b border-border/60 hover:bg-muted/10 text-foreground font-medium"
-                      >
-                        {customSelectedFields.map((f) => (
-                          <td key={f} className="p-3 truncate max-w-[180px]">
-                            {String(r[f] ?? "—")}
-                          </td>
-                        ))}
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td
-                        className="p-8 text-center text-muted-foreground"
-                        colSpan={customSelectedFields.length}
-                      >
-                        No records matched your search settings.
-                      </td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
+              <div className="space-y-3 font-semibold">
+                <div className="flex justify-between border-b py-2 bg-muted/20 px-2.5 rounded">
+                  <span className="font-bold text-foreground uppercase text-[10px]">{revenueCategory} (Total Income)</span>
+                  <span className="text-emerald-600 font-extrabold">${financialTotals.totalRevenue.toLocaleString()}</span>
+                </div>
+                <div className="flex justify-between border-b py-2 bg-muted/20 px-2.5 rounded">
+                  <span className="font-bold text-foreground uppercase text-[10px]">{expenseCategory} (Total Expenses)</span>
+                  <span className="text-rose-500 font-extrabold">(${financialTotals.totalExpenses.toLocaleString()})</span>
+                </div>
+                <div className="flex justify-between border-b py-3 px-2.5 rounded bg-accent/5">
+                  <span className="font-black text-foreground uppercase">Net Profit Margin</span>
+                  <span className={`font-black ${financialTotals.netCashFlow >= 0 ? "text-emerald-600" : "text-rose-600"}`}>
+                    ${financialTotals.netCashFlow.toLocaleString()}
+                  </span>
+                </div>
+              </div>
             </div>
-          </div>
+          )}
+
+          {selectedReport === "balance_sheet" && (
+            <div className="space-y-4">
+              <h3 className="font-bold text-foreground text-sm border-b pb-2 flex items-center gap-1.5">
+                <Layers className="h-4.5 w-4.5 text-blue-500" /> Balance Sheet Summary
+              </h3>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="p-4 border rounded-lg bg-muted/20 space-y-2">
+                  <span className="font-bold text-foreground uppercase text-[10px]">{assetCategory} Assets</span>
+                  <div className="text-lg font-bold text-blue-600">${financialTotals.totalAssets.toLocaleString()}</div>
+                </div>
+                <div className="p-4 border rounded-lg bg-muted/20 space-y-2">
+                  <span className="font-bold text-foreground uppercase text-[10px]">{liabilityCategory} Liabilities</span>
+                  <div className="text-lg font-bold text-rose-500">${financialTotals.totalLiabilities.toLocaleString()}</div>
+                </div>
+              </div>
+
+              <div className="flex justify-between border-t border-border pt-4 bg-accent/5 p-3 rounded font-semibold">
+                <span className="font-black text-foreground uppercase">Net Worth (Owner's Equity)</span>
+                <span className="font-black text-emerald-600">${financialTotals.ownerEquity.toLocaleString()}</span>
+              </div>
+            </div>
+          )}
+
+          {selectedReport === "audit_findings" && (
+            <div className="space-y-4">
+              <h3 className="font-bold text-foreground text-sm border-b pb-2 flex items-center gap-1.5">
+                <Briefcase className="h-4.5 w-4.5 text-amber-500" /> Audit Risks Checklist
+              </h3>
+
+              <div className="grid grid-cols-3 gap-3 text-center">
+                <div className="p-3 bg-rose-50 border border-rose-100 rounded-lg">
+                  <div className="text-rose-600 font-bold uppercase text-[9px]">High Risk Findings</div>
+                  <div className="text-xl font-bold mt-1 text-rose-700">{auditStats.highRisk}</div>
+                </div>
+                <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg">
+                  <div className="text-amber-600 font-bold uppercase text-[9px]">Medium Risk</div>
+                  <div className="text-xl font-bold mt-1 text-amber-700">{auditStats.mediumRisk}</div>
+                </div>
+                <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
+                  <div className="text-emerald-600 font-bold uppercase text-[9px]">Completed reviews</div>
+                  <div className="text-xl font-bold mt-1 text-emerald-700">{auditStats.completed}</div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {selectedReport === "compliance_status" && (
+            <div className="space-y-4">
+              <h3 className="font-bold text-foreground text-sm border-b pb-2 flex items-center gap-1.5">
+                <ShieldCheck className="h-4.5 w-4.5 text-emerald-500" /> Regulatory Compliance Ratings
+              </h3>
+
+              <div className="p-4 rounded-xl border border-border flex items-center justify-between">
+                <div>
+                  <span className="text-[10px] font-bold uppercase text-muted-foreground">Compliance Rating</span>
+                  <div className="text-2xl font-bold mt-1 text-emerald-600">{complianceStats.compliantRate}% Compliant</div>
+                </div>
+                <div className="h-10 w-32 bg-muted rounded-full overflow-hidden border">
+                  <div className="bg-emerald-500 h-full transition-all" style={{ width: `${complianceStats.compliantRate}%` }} />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-semibold text-muted-foreground uppercase">
+                <div className="p-2.5 border rounded">Compliant: <span className="text-emerald-600 font-extrabold">{complianceStats.compliant}</span></div>
+                <div className="p-2.5 border rounded">Non-Compliant: <span className="text-rose-600 font-extrabold">{complianceStats.nonCompliant}</span></div>
+                <div className="p-2.5 border rounded">Under Review: <span className="text-amber-600 font-extrabold">{complianceStats.underReview}</span></div>
+              </div>
+            </div>
+          )}
+
+          {selectedReport === "operations_activity" && (
+            <div className="space-y-4">
+              <h3 className="font-bold text-foreground text-sm border-b pb-2 flex items-center gap-1.5">
+                <Layers className="h-4.5 w-4.5 text-purple-500" /> Operations Category Breakdown
+              </h3>
+
+              <div className="space-y-2">
+                {operationalStats.map((item, i) => (
+                  <div key={i} className="flex justify-between border-b py-2 px-1">
+                    <span className="font-bold text-foreground">{item.name}</span>
+                    <span className="text-accent font-bold">{item.count} Rows</span>
+                  </div>
+                ))}
+                {operationalStats.length === 0 && (
+                  <div className="text-center text-muted-foreground py-6">
+                    No categorical data found in spreadsheet.
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
         </div>
-      )}
+      </div>
     </div>
   );
 }
