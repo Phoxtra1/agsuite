@@ -113,7 +113,7 @@ function seedDefaultSheets(): WorkspaceSheet[] {
               A1: "Quarter", B1: "Revenue ($)", C1: "Growth (%)",
               A2: "Q1 2026", B2: 125000, C2: "15%",
               A3: "Q2 2026", B3: 180000, C3: "44%",
-              A4: "Q3 2026", B4: 240000, C3: "33%",
+              A4: "Q3 2026", B4: 240000, C4: "33%",
             },
             colWidths: { 0: 160, 1: 160, 2: 140 },
           }
@@ -289,6 +289,27 @@ export function parseCell(id: string): { row: number; col: number } | null {
   const m = id.match(/^([A-Z]+)(\d+)$/);
   if (!m) return null;
   return { col: letterToCol(m[1]), row: parseInt(m[2], 10) - 1 };
+}
+
+export interface MergeRange {
+  r1: number;
+  c1: number;
+  r2: number;
+  c2: number;
+}
+
+export function parseMergeRange(rangeStr: string): MergeRange | null {
+  const parts = rangeStr.split(":");
+  if (parts.length !== 2) return null;
+  const p1 = parseCell(parts[0]);
+  const p2 = parseCell(parts[1]);
+  if (!p1 || !p2) return null;
+  return {
+    r1: Math.min(p1.row, p2.row),
+    c1: Math.min(p1.col, p2.col),
+    r2: Math.max(p1.row, p2.row),
+    c2: Math.max(p1.col, p2.col),
+  };
 }
 
 /* ---------- Structural ops that shift cells + formats ---------- */

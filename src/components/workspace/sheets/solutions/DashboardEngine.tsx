@@ -28,16 +28,18 @@ import {
   Archive,
   Info
 } from "lucide-react";
+import { parseSheetRows } from "@/lib/workspace/sheets/smartData";
 
 interface DashboardEngineProps {
   records: Record<string, any>[];
-  solutionType: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom";
+  solutionType: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom" | "Tasks";
   meetings?: any[];
+  allSheets?: any[];
 }
 
 const COLORS = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"];
 
-export default function DashboardEngine({ records = [], solutionType, meetings = [] }: DashboardEngineProps) {
+export default function DashboardEngine({ records = [], solutionType, meetings = [], allSheets = [] }: DashboardEngineProps) {
   const [search, setSearch] = useState("");
   const [filterValue, setFilterValue] = useState("all");
 
@@ -244,9 +246,17 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         value: Number(r.Quantity) || 0
       }));
     } else if (solutionType === "HR") {
+      const dataToUse = hrData ? hrData.employees : records;
+      const counts: Record<string, number> = {};
+      dataToUse.forEach(e => {
+        const d = e.Department || "Unassigned";
+        counts[d] = (counts[d] || 0) + 1;
+      });
+      return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    } else if (solutionType === "Tasks") {
       return records.map((r) => ({
-        name: (r["Full Name"] || "").slice(0, 15),
-        value: Number(r["Base Salary"]) || 0
+        name: (r["Task Name"] || r.taskName || "").slice(0, 15),
+        value: Number(r["Progress (%)"] || r.progress) || 0
       }));
     } else if (solutionType === "Registry" || solutionType === "Custom") {
       // Group records by Category to show Category Distribution
@@ -266,7 +276,8 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
 
   // Filter list of records for summary table
   const filteredRecords = useMemo(() => {
-    return records.filter((rec) => {
+    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
+    return dataToUse.filter((rec) => {
       const matchSearch = Object.values(rec).some((val) =>
         String(val).toLowerCase().includes(search.toLowerCase())
       );
@@ -290,7 +301,9 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
           <h2 className="text-xl font-bold text-foreground">
-            {solutionType === "CRM" ? "CRM Live Workspace" : `${solutionType} Smart Dashboard`}
+            {solutionType === "CRM" ? "CRM Live Workspace" :
+             solutionType === "HR" ? "HR Management Workspace Dashboard" :
+             `${solutionType} Smart Dashboard`}
           </h2>
           <p className="text-sm text-muted-foreground">
             Visualized analytics powered by the Smart Data Layer. Zero delay two-way synchronization active.
@@ -386,6 +399,47 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         </div>
       )}
 
+      {/* HR Specific Metrics Summary Panel */}
+      {solutionType === "HR" && attendanceSummary && leaveSummary && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
+            <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+              <Clock className="h-4 w-4 text-muted-foreground" /> Attendance Summary Metrics
+            </h3>
+            <div className="grid grid-cols-3 gap-4 text-center">
+              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                <div className="text-[10px] uppercase font-bold text-emerald-800">Present / Remote</div>
+                <div className="text-xl font-bold text-emerald-950 mt-1">{attendanceSummary.present}</div>
+              </div>
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                <div className="text-[10px] uppercase font-bold text-amber-800">Late Arrivals</div>
+                <div className="text-xl font-bold text-amber-950 mt-1">{attendanceSummary.late}</div>
+              </div>
+              <div className="p-3 bg-rose-50 rounded-lg border border-rose-100">
+                <div className="text-[10px] uppercase font-bold text-rose-800">Absent</div>
+                <div className="text-xl font-bold text-rose-950 mt-1">{attendanceSummary.absent}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="rounded-xl border border-border bg-card p-5 shadow-sm space-y-4">
+            <h3 className="font-semibold text-foreground text-sm flex items-center gap-2">
+              <Calendar className="h-4 w-4 text-muted-foreground" /> Leave Requests Summary
+            </h3>
+            <div className="grid grid-cols-2 gap-4 text-center">
+              <div className="p-3 bg-emerald-50 rounded-lg border border-emerald-100">
+                <div className="text-[10px] uppercase font-bold text-emerald-800">Approved Leave</div>
+                <div className="text-xl font-bold text-emerald-950 mt-1">{leaveSummary.approved}</div>
+              </div>
+              <div className="p-3 bg-amber-50 rounded-lg border border-amber-100">
+                <div className="text-[10px] uppercase font-bold text-amber-800">Pending Requests</div>
+                <div className="text-xl font-bold text-amber-950 mt-1">{leaveSummary.pending}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Live Table + Feed Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
         {/* Filterable Summary List */}
@@ -429,8 +483,8 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
             <table className="w-full text-left text-xs border-collapse">
               <thead>
                 <tr className="border-b border-border bg-muted/40 text-muted-foreground uppercase font-semibold">
-                  {records.length > 0 &&
-                    Object.keys(records[0])
+                  {filteredRecords.length > 0 &&
+                    Object.keys(filteredRecords[0])
                       .filter((k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_"))
                       .slice(0, 5)
                       .map((key) => (
@@ -444,7 +498,7 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
                 {filteredRecords.length > 0 ? (
                   filteredRecords.map((r, i) => (
                     <tr key={i} className="border-b border-border/60 hover:bg-muted/30">
-                      {Object.keys(records[0])
+                      {Object.keys(filteredRecords[0])
                         .filter((k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_"))
                         .slice(0, 5)
                         .map((key) => (

@@ -19,6 +19,143 @@ export interface BusinessSolutionTemplate {
 }
 
 export const SOLUTIONS_TEMPLATES: Record<string, BusinessSolutionTemplate> = {
+  Tasks: {
+    id: "Tasks",
+    name: "Tasks & Project Management",
+    description: "Track team tasks, deadlines, statuses, and categories with integrated collaboration tools.",
+    defaultHeaders: [
+      "Task ID",
+      "Task Name",
+      "Description",
+      "Category",
+      "Assigned To",
+      "Assigned By",
+      "Department",
+      "Team",
+      "Priority",
+      "Status",
+      "Start Date",
+      "Due Date",
+      "Completion Date",
+      "Estimated Duration",
+      "Actual Duration",
+      "Progress (%)",
+      "Tags",
+      "Notes"
+    ],
+    defaultData: [
+      {
+        "Task ID": "TSK-001",
+        "Task Name": "Prepare Partnership Proposal",
+        "Description": "Create the draft funding proposal for JICA and share with the team.",
+        "Category": "Projects",
+        "Assigned To": "Jules Agent",
+        "Assigned By": "Ebenezer Ocloo",
+        "Department": "Projects",
+        "Team": "Development Team",
+        "Priority": "Critical",
+        "Status": "In Progress",
+        "Start Date": "2026-04-10",
+        "Due Date": "2026-04-16",
+        "Completion Date": "",
+        "Estimated Duration": 16,
+        "Actual Duration": 8,
+        "Progress (%)": 50,
+        "Tags": "proposal,funding,jica",
+        "Notes": "Linked with JICA CRM Record. Highly critical for funding."
+      },
+      {
+        "Task ID": "TSK-002",
+        "Task Name": "Q1 Financial Audit Support",
+        "Description": "Compile financial records and receipts for the external audit team.",
+        "Category": "Finance",
+        "Assigned To": "Ebenezer Ocloo",
+        "Assigned By": "Kofi Mensah",
+        "Department": "Finance",
+        "Team": "Operations",
+        "Priority": "High",
+        "Status": "Planned",
+        "Start Date": "2026-04-12",
+        "Due Date": "2026-04-20",
+        "Completion Date": "",
+        "Estimated Duration": 24,
+        "Actual Duration": 0,
+        "Progress (%)": 0,
+        "Tags": "audit,finance",
+        "Notes": "Needs approval from Finance head."
+      },
+      {
+        "Task ID": "TSK-003",
+        "Task Name": "Design Brand Guidelines Update",
+        "Description": "Revise and update brand assets, typography, and color palettes.",
+        "Category": "Marketing",
+        "Assigned To": "Ama Serwaa",
+        "Assigned By": "Ebenezer Ocloo",
+        "Department": "Marketing",
+        "Team": "Creative",
+        "Priority": "Medium",
+        "Status": "Not Started",
+        "Start Date": "2026-04-15",
+        "Due Date": "2026-04-25",
+        "Completion Date": "",
+        "Estimated Duration": 12,
+        "Actual Duration": 0,
+        "Progress (%)": 0,
+        "Tags": "branding,assets",
+        "Notes": ""
+      },
+      {
+        "Task ID": "TSK-004",
+        "Task Name": "Launch Employee Self-Service Portal",
+        "Description": "Deploy and test the online portal for leave requests and payslips.",
+        "Category": "Human Resources",
+        "Assigned To": "Grace Mensah",
+        "Assigned By": "Ebenezer Ocloo",
+        "Department": "Human Resources",
+        "Team": "HR",
+        "Priority": "High",
+        "Status": "Under Review",
+        "Start Date": "2026-04-05",
+        "Due Date": "2026-04-14",
+        "Completion Date": "",
+        "Estimated Duration": 40,
+        "Actual Duration": 38,
+        "Progress (%)": 90,
+        "Tags": "hr,portal",
+        "Notes": "Awaiting final review from Ebenezer."
+      },
+      {
+        "Task ID": "TSK-005",
+        "Task Name": "Configure IT Server Security Patch",
+        "Description": "Apply critical system patches to production servers.",
+        "Category": "IT",
+        "Assigned To": "Emmanuel Quaye",
+        "Assigned By": "Ebenezer Ocloo",
+        "Department": "IT",
+        "Team": "Infrastructure",
+        "Priority": "Critical",
+        "Status": "Completed",
+        "Start Date": "2026-04-01",
+        "Due Date": "2026-04-05",
+        "Completion Date": "2026-04-04",
+        "Estimated Duration": 6,
+        "Actual Duration": 5,
+        "Progress (%)": 100,
+        "Tags": "security,server",
+        "Notes": "Successfully deployed and tested."
+      }
+    ],
+    statuses: [
+      "Not Started",
+      "Planned",
+      "In Progress",
+      "Waiting",
+      "Blocked",
+      "Under Review",
+      "Completed",
+      "Cancelled"
+    ]
+  },
   CRM: {
     id: "CRM",
     name: "CRM (Customer Relationship Management)",
@@ -115,12 +252,129 @@ export const SOLUTIONS_TEMPLATES: Record<string, BusinessSolutionTemplate> = {
   },
   HR: {
     id: "HR",
-    name: "HR & Employee Management",
-    description: "Organize employee profiles, departments, base salary, hiring date, and attendance records.",
-    defaultHeaders: ["Employee ID", "Full Name", "Department", "Email", "Phone", "Base Salary", "Hiring Date"],
+    name: "HR Management",
+    description: "Transform structured spreadsheet data into a complete Human Resource Management workspace. Track employee directory, departments, positions, attendance, leave, performance reviews, recruitment, and onboarding checklists.",
+    defaultHeaders: [
+      "Employee ID",
+      "First Name",
+      "Last Name",
+      "Full Name",
+      "Preferred Name",
+      "Gender",
+      "Date of Birth",
+      "Nationality",
+      "Phone",
+      "Email",
+      "Address",
+      "Emergency Contact",
+      "Emergency Contact Number",
+      "Employment Status",
+      "Employment Type",
+      "Hire Date",
+      "End Date",
+      "Department",
+      "Position",
+      "Manager",
+      "Office Location",
+      "Notes"
+    ],
     defaultData: [
-      { "Employee ID": "EMP01", "Full Name": "Emmanuel Quaye", "Department": "Engineering", "Email": "e.quaye@amineva.com", "Phone": "+233 551 222333", "Base Salary": 4500, "Hiring Date": "2023-01-15" },
-      { "Employee ID": "EMP02", "Full Name": "Grace Mensah", "Department": "Marketing", "Email": "g.mensah@amineva.com", "Phone": "+233 540 111222", "Base Salary": 3500, "Hiring Date": "2024-03-01" }
+      {
+        "Employee ID": "EMP001",
+        "First Name": "Emmanuel",
+        "Last Name": "Quaye",
+        "Full Name": "Emmanuel Quaye",
+        "Preferred Name": "Emma",
+        "Gender": "Male",
+        "Date of Birth": "1990-05-15",
+        "Nationality": "Ghanaian",
+        "Phone": "+233 551 222333",
+        "Email": "e.quaye@amineva.com",
+        "Address": "12 Ring Road, Accra",
+        "Emergency Contact": "Theresa Quaye",
+        "Emergency Contact Number": "+233 551 222334",
+        "Employment Status": "Active",
+        "Employment Type": "Full-Time",
+        "Hire Date": "2023-01-15",
+        "End Date": "",
+        "Department": "Engineering",
+        "Position": "Senior Software Engineer",
+        "Manager": "Ebenezer Ocloo",
+        "Office Location": "Accra HQ",
+        "Notes": "Outstanding performance in frontend architecture."
+      },
+      {
+        "Employee ID": "EMP002",
+        "First Name": "Grace",
+        "Last Name": "Mensah",
+        "Full Name": "Grace Mensah",
+        "Preferred Name": "Grace",
+        "Gender": "Female",
+        "Date of Birth": "1993-08-22",
+        "Nationality": "Ghanaian",
+        "Phone": "+233 540 111222",
+        "Email": "g.mensah@amineva.com",
+        "Address": "45 Liberation Road, Accra",
+        "Emergency Contact": "John Mensah",
+        "Emergency Contact Number": "+233 540 111223",
+        "Employment Status": "Active",
+        "Employment Type": "Full-Time",
+        "Hire Date": "2024-03-01",
+        "End Date": "",
+        "Department": "Marketing",
+        "Position": "Marketing Lead",
+        "Manager": "Ebenezer Ocloo",
+        "Office Location": "Accra HQ",
+        "Notes": "Key lead for product rebranding campaigns."
+      },
+      {
+        "Employee ID": "EMP003",
+        "First Name": "Kofi",
+        "Last Name": "Anan",
+        "Full Name": "Kofi Anan",
+        "Preferred Name": "Kofi",
+        "Gender": "Male",
+        "Date of Birth": "1995-11-02",
+        "Nationality": "Ghanaian",
+        "Phone": "+233 244 555666",
+        "Email": "k.anan@amineva.com",
+        "Address": "7 Spintex Road, Accra",
+        "Emergency Contact": "Abena Anan",
+        "Emergency Contact Number": "+233 244 555667",
+        "Employment Status": "Probation",
+        "Employment Type": "Contract",
+        "Hire Date": "2026-02-01",
+        "End Date": "2026-08-01",
+        "Department": "Engineering",
+        "Position": "QA Automation Engineer",
+        "Manager": "Emmanuel Quaye",
+        "Office Location": "Remote",
+        "Notes": "Onboarding in progress."
+      },
+      {
+        "Employee ID": "EMP004",
+        "First Name": "Amma",
+        "Last Name": "Serwaa",
+        "Full Name": "Amma Serwaa",
+        "Preferred Name": "Amma",
+        "Gender": "Female",
+        "Date of Birth": "1991-04-18",
+        "Nationality": "Ghanaian",
+        "Phone": "+233 207 987654",
+        "Email": "serwaa@amineva.com",
+        "Address": "88 Giffard Road, Cantonments",
+        "Emergency Contact": "Daniel Serwaa",
+        "Emergency Contact Number": "+233 207 987655",
+        "Employment Status": "On Leave",
+        "Employment Type": "Full-Time",
+        "Hire Date": "2022-06-10",
+        "End Date": "",
+        "Department": "People Operations",
+        "Position": "HR Officer",
+        "Manager": "Ebenezer Ocloo",
+        "Office Location": "Accra HQ",
+        "Notes": "Currently on annual leave."
+      }
     ]
   },
   Registry: {
@@ -216,6 +470,153 @@ export const SOLUTIONS_TEMPLATES: Record<string, BusinessSolutionTemplate> = {
       { "Task ID": "TSK-101", "Task Name": "Integrate CRM Workspace", "Assigned To": "Jules Agent", "Priority": "High", "Status": "In Progress", "Due Date": "2026-04-12", "Estimated Hours": 16 },
       { "Task ID": "TSK-102", "Task Name": "Test Real Online Meetings", "Assigned To": "Ebenezer Ocloo", "Priority": "Medium", "Status": "To Do", "Due Date": "2026-04-19", "Estimated Hours": 8 }
     ]
+  },
+  ProjectManagement: {
+    id: "ProjectManagement",
+    name: "Project Management System",
+    description: "Manage end-to-end planning, milestones, task execution, and team assignments.",
+    defaultHeaders: [
+      "Project ID", "Project Name", "Description", "Project Type", "Project Owner", "Project Manager",
+      "Department", "Team", "Start Date", "End Date", "Status", "Priority", "Progress (%)", "Budget", "Location", "Notes"
+    ],
+    defaultData: [
+      {
+        "Project ID": "PRJ-001",
+        "Project Name": "Agyenkwa Climate Initiative",
+        "Description": "Implementing localized green and agro-climate resilient agricultural practices.",
+        "Project Type": "NGO Project",
+        "Project Owner": "JICA",
+        "Project Manager": "Emmanuel Quaye",
+        "Department": "Engineering",
+        "Team": "Climate Response Squad",
+        "Start Date": "2026-04-01",
+        "End Date": "2026-08-31",
+        "Status": "Active",
+        "Priority": "Critical",
+        "Progress (%)": 35,
+        "Budget": 250000,
+        "Location": "Eastern Region",
+        "Notes": "Partnering with West African Agro Services."
+      },
+      {
+        "Project ID": "PRJ-002",
+        "Project Name": "Digital Land Registry Portal",
+        "Description": "Building a GIS-backed secure property and title verification engine.",
+        "Project Type": "Government Project",
+        "Project Owner": "Ministry of Lands",
+        "Project Manager": "Grace Mensah",
+        "Department": "Product",
+        "Team": "Registry Builders",
+        "Start Date": "2026-05-10",
+        "End Date": "2026-12-15",
+        "Status": "Planning",
+        "Priority": "High",
+        "Progress (%)": 10,
+        "Budget": 450000,
+        "Location": "Greater Accra",
+        "Notes": "To be integrated with the Farmer Registry."
+      }
+    ],
+    statuses: ["Planning", "Not Started", "Active", "On Hold", "Under Review", "Completed", "Cancelled"]
+  },
+  ProjectTasks: {
+    id: "ProjectTasks",
+    name: "Project Tasks Execution",
+    description: "Granular tasks assigned to individuals linked back to Projects.",
+    defaultHeaders: ["Task ID", "Project ID", "Task Name", "Assigned To", "Priority", "Status", "Due Date", "Estimated Hours"],
+    defaultData: [
+      { "Task ID": "TSK-001", "Project ID": "PRJ-001", "Task Name": "Contact Partners", "Assigned To": "Emmanuel Quaye", "Priority": "High", "Status": "Completed", "Due Date": "2026-04-10", "Estimated Hours": 8 },
+      { "Task ID": "TSK-002", "Project ID": "PRJ-001", "Task Name": "Prepare Proposal", "Assigned To": "Grace Mensah", "Priority": "Critical", "Status": "In Progress", "Due Date": "2026-04-20", "Estimated Hours": 16 },
+      { "Task ID": "TSK-003", "Project ID": "PRJ-001", "Task Name": "Conduct Field Survey", "Assigned To": "Emmanuel Quaye", "Priority": "High", "Status": "To Do", "Due Date": "2026-05-15", "Estimated Hours": 24 },
+      { "Task ID": "TSK-004", "Project ID": "PRJ-001", "Task Name": "Submit Report", "Assigned To": "Emmanuel Quaye", "Priority": "Medium", "Status": "To Do", "Due Date": "2026-05-30", "Estimated Hours": 12 },
+      { "Task ID": "TSK-005", "Project ID": "PRJ-002", "Task Name": "Database Schema Setup", "Assigned To": "Grace Mensah", "Priority": "High", "Status": "In Progress", "Due Date": "2026-05-20", "Estimated Hours": 10 }
+    ]
+  },
+  ProjectMilestones: {
+    id: "ProjectMilestones",
+    name: "Project Milestones",
+    description: "Key milestones of progress indicating major project stages.",
+    defaultHeaders: ["Milestone ID", "Project ID", "Milestone Name", "Description", "Due Date", "Status", "Completion Percentage"],
+    defaultData: [
+      { "Milestone ID": "MS-001", "Project ID": "PRJ-001", "Milestone Name": "Phase 1 Complete", "Description": "Partner mobilization and initialization parameters established.", "Due Date": "2026-04-25", "Status": "In Progress", "Completion Percentage": 60 },
+      { "Milestone ID": "MS-002", "Project ID": "PRJ-001", "Milestone Name": "Research Completed", "Description": "All agricultural field data parsed and evaluated.", "Due Date": "2026-06-30", "Status": "Not Started", "Completion Percentage": 0 },
+      { "Milestone ID": "MS-003", "Project ID": "PRJ-001", "Milestone Name": "Launch Completed", "Description": "Full deployment of clean climate mechanisms across sites.", "Due Date": "2026-08-15", "Status": "Not Started", "Completion Percentage": 0 },
+      { "Milestone ID": "MS-004", "Project ID": "PRJ-002", "Milestone Name": "MVP Prototype Launch", "Description": "First public functional system live demo.", "Due Date": "2026-07-01", "Status": "In Progress", "Completion Percentage": 20 }
+    ]
+  },
+  ProjectTeams: {
+    id: "ProjectTeams",
+    name: "Project Teams Directory",
+    description: "Project teams mapping list of team names and corporate divisions.",
+    defaultHeaders: ["Team ID", "Team Name", "Manager", "Department", "Members"],
+    defaultData: [
+      { "Team ID": "TM-01", "Team Name": "Climate Response Squad", "Manager": "Emmanuel Quaye", "Department": "Engineering", "Members": "e.quaye@amineva.com, g.mensah@amineva.com" },
+      { "Team ID": "TM-02", "Team Name": "Registry Builders", "Manager": "Grace Mensah", "Department": "Product", "Members": "g.mensah@amineva.com" }
+    ]
+  }
+};
+
+export const HR_SUPPLEMENTARY_TEMPLATES: Record<string, { headers: string[]; data: any[] }> = {
+  Employees: {
+    headers: SOLUTIONS_TEMPLATES.HR.defaultHeaders,
+    data: SOLUTIONS_TEMPLATES.HR.defaultData
+  },
+  Departments: {
+    headers: ["Department Name", "Department Code", "Manager", "Description"],
+    data: [
+      { "Department Name": "Engineering", "Department Code": "ENG", "Manager": "Ebenezer Ocloo", "Description": "Technology development and systems engineering." },
+      { "Department Name": "Marketing", "Department Code": "MKT", "Manager": "Grace Mensah", "Description": "Growth, brand positioning, and campaigns." },
+      { "Department Name": "People Operations", "Department Code": "HR", "Manager": "Amma Serwaa", "Description": "HR development, onboarding, and operations." }
+    ]
+  },
+  Positions: {
+    headers: ["Position Title", "Department", "Reports To", "Description"],
+    data: [
+      { "Position Title": "Senior Software Engineer", "Department": "Engineering", "Reports To": "Engineering Lead", "Description": "Designs and maintains software systems." },
+      { "Position Title": "QA Automation Engineer", "Department": "Engineering", "Reports To": "Senior Software Engineer", "Description": "Automates testing suites and pipelines." },
+      { "Position Title": "Marketing Lead", "Department": "Marketing", "Reports To": "Ebenezer Ocloo", "Description": "Directs regional marketing campaigns." },
+      { "Position Title": "HR Officer", "Department": "People Operations", "Reports To": "Ebenezer Ocloo", "Description": "Coordinates employee relations and operations." }
+    ]
+  },
+  Attendance: {
+    headers: ["Employee ID", "Employee Name", "Date", "Check-In Time", "Check-Out Time", "Working Hours", "Attendance Status", "Attendance Notes"],
+    data: [
+      { "Employee ID": "EMP001", "Employee Name": "Emmanuel Quaye", "Date": "2026-04-10", "Check-In Time": "08:55 AM", "Check-Out Time": "05:05 PM", "Working Hours": 8.1, "Attendance Status": "Present", "Attendance Notes": "On time." },
+      { "Employee ID": "EMP002", "Employee Name": "Grace Mensah", "Date": "2026-04-10", "Check-In Time": "09:15 AM", "Check-Out Time": "05:00 PM", "Working Hours": 7.7, "Attendance Status": "Late", "Attendance Notes": "Heavy morning traffic." },
+      { "Employee ID": "EMP003", "Employee Name": "Kofi Anan", "Date": "2026-04-10", "Check-In Time": "09:00 AM", "Check-Out Time": "05:00 PM", "Working Hours": 8.0, "Attendance Status": "Remote", "Attendance Notes": "Work from home today." },
+      { "Employee ID": "EMP004", "Employee Name": "Amma Serwaa", "Date": "2026-04-10", "Check-In Time": "", "Check-Out Time": "", "Working Hours": 0.0, "Attendance Status": "Leave", "Attendance Notes": "Approved annual leave." }
+    ]
+  },
+  Leave: {
+    headers: ["Employee ID", "Employee Name", "Leave Type", "Start Date", "End Date", "Total Days", "Status", "Approver", "Notes"],
+    data: [
+      { "Employee ID": "EMP004", "Employee Name": "Amma Serwaa", "Leave Type": "Annual Leave", "Start Date": "2026-04-05", "End Date": "2026-04-12", "Total Days": 7, "Status": "Approved", "Approver": "Ebenezer Ocloo", "Notes": "Annual vacation." },
+      { "Employee ID": "EMP002", "Employee Name": "Grace Mensah", "Leave Type": "Sick Leave", "Start Date": "2026-03-10", "End Date": "2026-03-11", "Total Days": 1, "Status": "Approved", "Approver": "Ebenezer Ocloo", "Notes": "Medical appointment." },
+      { "Employee ID": "EMP001", "Employee Name": "Emmanuel Quaye", "Leave Type": "Study Leave", "Start Date": "2026-05-01", "End Date": "2026-05-05", "Total Days": 4, "Status": "Pending", "Approver": "Amma Serwaa", "Notes": "Tech conference and research." }
+    ]
+  },
+  Performance: {
+    headers: ["Employee ID", "Employee Name", "Review Date", "Reviewer", "Rating", "Goals", "Comments"],
+    data: [
+      { "Employee ID": "EMP001", "Employee Name": "Emmanuel Quaye", "Review Date": "2026-03-15", "Reviewer": "Ebenezer Ocloo", "Rating": 5, "Goals": "Complete system migration", "Comments": "Exemplary technical leadership." },
+      { "Employee ID": "EMP002", "Employee Name": "Grace Mensah", "Review Date": "2026-03-18", "Reviewer": "Ebenezer Ocloo", "Rating": 4, "Goals": "Expand branding footprint", "Comments": "Excellent alignment and engagement." }
+    ]
+  },
+  Recruitment: {
+    headers: ["Job Title", "Department", "Candidate Name", "Application Status", "Interview Date", "Hiring Status"],
+    data: [
+      { "Job Title": "Front-End Engineer", "Department": "Engineering", "Candidate Name": "Kwabena Boateng", "Application Status": "Interview Scheduled", "Interview Date": "2026-04-20", "Hiring Status": "Under Review" },
+      { "Job Title": "HR Coordinator", "Department": "People Operations", "Candidate Name": "Esi Mensah", "Application Status": "Applied", "Interview Date": "", "Hiring Status": "Under Review" },
+      { "Job Title": "Product Designer", "Department": "Product", "Candidate Name": "Kweku Appiah", "Application Status": "Offer Sent", "Interview Date": "2026-03-25", "Hiring Status": "Offered" }
+    ]
+  },
+  Onboarding: {
+    headers: ["Employee ID", "Employee Name", "Documents Submitted", "Orientation Completed", "Equipment Assigned", "Account Created", "Training Completed"],
+    data: [
+      { "Employee ID": "EMP003", "Employee Name": "Kofi Anan", "Documents Submitted": "Yes", "Orientation Completed": "Yes", "Equipment Assigned": "Yes", "Account Created": "Yes", "Training Completed": "No" },
+      { "Employee ID": "EMP001", "Employee Name": "Emmanuel Quaye", "Documents Submitted": "Yes", "Orientation Completed": "Yes", "Equipment Assigned": "Yes", "Account Created": "Yes", "Training Completed": "Yes" },
+      { "Employee ID": "EMP002", "Employee Name": "Grace Mensah", "Documents Submitted": "Yes", "Orientation Completed": "Yes", "Equipment Assigned": "Yes", "Account Created": "Yes", "Training Completed": "Yes" }
+    ]
   }
 };
 
@@ -306,6 +707,13 @@ export function recommendSolution(sheet: SheetPage): string | null {
     }
   }
 
+  // Fallback match: if headers contain "Employee ID" or "Employee Name", recommend HR
+  if (!bestMatch) {
+    if (headers.some(h => h.includes("employee") || h.includes("department") || h.includes("position"))) {
+      return "HR";
+    }
+  }
+
   return bestMatch;
 }
 
@@ -384,7 +792,7 @@ export function parseSheetRows(sheet: SheetPage): Record<string, any>[] {
       if (!rec.organizationName) rec.organizationName = rec[headers[0]] || "";
       if (!rec.contactName) rec.contactName = rec[headers[1]] || rec.contactName || "";
       if (!rec.email) rec.email = rec[headers[2]] || "";
-      if (!rec.status) rec.status = rec["Status"] || "Yet to Contact";
+      if (!rec.status) rec.status = rec["Status"] || rec["Employment Status"] || rec["Attendance Status"] || rec["Application Status"] || "Active";
 
       records.push(rec);
       emptyRowsCount = 0;
@@ -411,7 +819,7 @@ export function updateSheetRecord(
   const profiles = profileColumns(sheet);
 
   // Try to find the exact column by matching the header name directly
-  let colIdx = headers.findIndex(h => h === field);
+  let colIdx = headers.findIndex(h => h.toLowerCase() === field.toLowerCase());
 
   // If not found directly, find by profile types (e.g. if field = 'status', find column profiled as 'status')
   if (colIdx === -1) {
@@ -463,6 +871,12 @@ export function addSheetRecord(sheet: SheetPage, record: Record<string, any>): S
     // Find matching key in record
     let val = record[header];
 
+    if (val === undefined) {
+      // try case insensitive
+      const foundKey = Object.keys(record).find(k => k.toLowerCase() === header.toLowerCase());
+      if (foundKey) val = record[foundKey];
+    }
+
     // Profile type check if header key is missing
     if (val === undefined) {
       const profiles = profileColumns(sheet);
@@ -484,4 +898,110 @@ export function addSheetRecord(sheet: SheetPage, record: Record<string, any>): S
     ...sheet,
     cells
   };
+}
+
+/**
+ * Seeding HR Management: Automatically seeds all 8 sheets in the workbook in correct order
+ */
+export function seedHrSolutionToWorkbook(wb: Workbook): Workbook {
+  const sheets = [...wb.sheets];
+
+  // Helper to find or create sheet by name
+  function getOrCreateSheet(name: string, headers: string[], defaultData: any[]): SheetPage {
+    let sheetIdx = sheets.findIndex((s) => s.name === name);
+    let sheet: SheetPage;
+
+    if (sheetIdx === -1) {
+      // If first sheet is default and empty, we can rename/re-use it!
+      const activeSheetObj = sheets[wb.activeSheet ?? 0] || sheets[0];
+      const hasNoData = Object.keys(activeSheetObj.cells).length === 0;
+      if (hasNoData && activeSheetObj.name === "Sheet1") {
+        activeSheetObj.name = name;
+        sheet = activeSheetObj;
+      } else {
+        sheet = { name, cells: {} };
+        sheets.push(sheet);
+      }
+    } else {
+      sheet = sheets[sheetIdx];
+    }
+
+    // Seed if empty
+    if (Object.keys(sheet.cells).length === 0) {
+      // Seed headers
+      headers.forEach((header, colIdx) => {
+        sheet.cells[cellId(0, colIdx)] = header;
+      });
+      // Seed defaultData
+      defaultData.forEach((row, rowIdx) => {
+        headers.forEach((header, colIdx) => {
+          sheet.cells[cellId(rowIdx + 1, colIdx)] = row[header] ?? "";
+        });
+      });
+    }
+
+    return sheet;
+  }
+
+  // Generate all 8 sheets
+  getOrCreateSheet("Employees", HR_SUPPLEMENTARY_TEMPLATES.Employees.headers, HR_SUPPLEMENTARY_TEMPLATES.Employees.data);
+  getOrCreateSheet("Departments", HR_SUPPLEMENTARY_TEMPLATES.Departments.headers, HR_SUPPLEMENTARY_TEMPLATES.Departments.data);
+  getOrCreateSheet("Positions", HR_SUPPLEMENTARY_TEMPLATES.Positions.headers, HR_SUPPLEMENTARY_TEMPLATES.Positions.data);
+  getOrCreateSheet("Attendance", HR_SUPPLEMENTARY_TEMPLATES.Attendance.headers, HR_SUPPLEMENTARY_TEMPLATES.Attendance.data);
+  getOrCreateSheet("Leave", HR_SUPPLEMENTARY_TEMPLATES.Leave.headers, HR_SUPPLEMENTARY_TEMPLATES.Leave.data);
+  getOrCreateSheet("Performance", HR_SUPPLEMENTARY_TEMPLATES.Performance.headers, HR_SUPPLEMENTARY_TEMPLATES.Performance.data);
+  getOrCreateSheet("Recruitment", HR_SUPPLEMENTARY_TEMPLATES.Recruitment.headers, HR_SUPPLEMENTARY_TEMPLATES.Recruitment.data);
+  getOrCreateSheet("Onboarding", HR_SUPPLEMENTARY_TEMPLATES.Onboarding.headers, HR_SUPPLEMENTARY_TEMPLATES.Onboarding.data);
+
+  return {
+    ...wb,
+    sheets,
+    activeSolution: {
+      type: "HR",
+      meetings: wb.activeSolution?.meetings || []
+    }
+  };
+}
+
+/**
+ * Helper Parsers for individual HR sheets to feed the UI
+ */
+export function parseHrEmployees(wb: Workbook): Record<string, any>[] {
+  const sheet = wb.sheets.find(s => s.name === "Employees") || wb.sheets[wb.activeSheet ?? 0] || wb.sheets[0];
+  return parseSheetRows(sheet);
+}
+
+export function parseHrDepartments(wb: Workbook): Record<string, any>[] {
+  const sheet = wb.sheets.find(s => s.name === "Departments");
+  return sheet ? parseSheetRows(sheet) : [];
+}
+
+export function parseHrPositions(wb: Workbook): Record<string, any>[] {
+  const sheet = wb.sheets.find(s => s.name === "Positions");
+  return sheet ? parseSheetRows(sheet) : [];
+}
+
+export function parseHrAttendance(wb: Workbook): Record<string, any>[] {
+  const sheet = wb.sheets.find(s => s.name === "Attendance");
+  return sheet ? parseSheetRows(sheet) : [];
+}
+
+export function parseHrLeave(wb: Workbook): Record<string, any>[] {
+  const sheet = wb.sheets.find(s => s.name === "Leave");
+  return sheet ? parseSheetRows(sheet) : [];
+}
+
+export function parseHrPerformance(wb: Workbook): Record<string, any>[] {
+  const sheet = wb.sheets.find(s => s.name === "Performance");
+  return sheet ? parseSheetRows(sheet) : [];
+}
+
+export function parseHrRecruitment(wb: Workbook): Record<string, any>[] {
+  const sheet = wb.sheets.find(s => s.name === "Recruitment");
+  return sheet ? parseSheetRows(sheet) : [];
+}
+
+export function parseHrOnboarding(wb: Workbook): Record<string, any>[] {
+  const sheet = wb.sheets.find(s => s.name === "Onboarding");
+  return sheet ? parseSheetRows(sheet) : [];
 }
