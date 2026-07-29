@@ -1,9 +1,9 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import {
-  getSheet, updateSheet, EMPTY_WORKBOOK, cellId, parseCell,
+  getSheet, updateSheet, EMPTY_WORKBOOK, cellId, parseCell, parseMergeRange,
   insertRow, deleteRow, insertCol, deleteCol,
-  type WorkspaceSheet, type Workbook, type SheetPage, type CellFormat, flattenWorkbookText,
+  type WorkspaceSheet, type Workbook, type SheetPage, type CellFormat, type SheetChart, flattenWorkbookText,
 } from "@/lib/workspace/sheets/documents";
 import { buildEngine, type EngineHandle } from "@/lib/workspace/sheets/engine";
 import { SheetGrid, type Selection } from "@/components/workspace/sheets/SheetGrid";
@@ -15,9 +15,8 @@ import { AnalysisPanel } from "@/components/workspace/sheets/AnalysisPanel";
 import { ChartDialog } from "@/components/workspace/sheets/ChartDialog";
 import { exportCSV, exportJSON, exportXLSX, importXLSX } from "@/components/workspace/sheets/exporters";
 import { useUndoRedo } from "@/components/workspace/sheets/hooks/useUndoRedo";
-import { ArrowLeft, ChevronLeft, ChevronDown, CloudUpload, Download, Loader2, Share2, Upload, Sparkles, AlertCircle, Layout, Table2, Presentation } from "lucide-react";
+import { ArrowLeft, ChevronLeft, ChevronDown, CloudUpload, Download, Loader2, Share2, Upload, Sparkles, AlertCircle, Layout, Table2, Presentation, BarChart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import type { SheetChart } from "@/lib/workspace/sheets/documents";
 
 // Smart Business Solution Imports
 import {
@@ -26,12 +25,18 @@ import {
   parseSheetRows,
   updateSheetRecord,
   addSheetRecord,
-  SOLUTIONS_TEMPLATES
+  SOLUTIONS_TEMPLATES,
+  seedHrSolutionToWorkbook
 } from "@/lib/workspace/sheets/smartData";
 import CrmView from "@/components/workspace/sheets/solutions/CrmView";
+import TasksView from "@/components/workspace/sheets/solutions/TasksView";
+import HrView from "@/components/workspace/sheets/solutions/HrView";
+import RegistryView from "@/components/workspace/sheets/solutions/RegistryView";
 import DashboardEngine from "@/components/workspace/sheets/solutions/DashboardEngine";
+import ReportsView from "@/components/workspace/sheets/solutions/ReportsView";
 import CollaborateMenu from "@/components/workspace/sheets/solutions/CollaborateMenu";
 import MeetingModal from "@/components/workspace/sheets/solutions/MeetingModal";
+import ProjectManagementView from "@/components/workspace/sheets/solutions/ProjectManagementView";
 
 export default function SheetsEditor() {
   const { id } = useParams();
@@ -57,7 +62,7 @@ export default function SheetsEditor() {
   const [showChartDialog, setShowChartDialog] = useState(false);
 
   // Business Solution Workspace states
-  const [activeView, setActiveView] = useState<"spreadsheet" | "solution" | "dashboard">("spreadsheet");
+  const [activeView, setActiveView] = useState<"spreadsheet" | "solution" | "dashboard" | "reports">("spreadsheet");
   const [isMeetingModalOpen, setIsMeetingModalOpen] = useState(false);
   const [meetingPrefilled, setMeetingPrefilled] = useState<{ title: string; participants: string } | null>(null);
 
@@ -85,8 +90,7 @@ export default function SheetsEditor() {
     engineRef.current = buildEngine(wb);
     setEngineTick((t) => t + 1);
     return () => { engineRef.current?.destroy(); engineRef.current = null; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [wb.sheets.length, wb.sheets.map((s) => s.name).join("|")]);
+  }, [wb]);
 
   const activeSheet = wb.sheets[activeSheetIdx] ?? wb.sheets[0];
 
@@ -113,16 +117,38 @@ export default function SheetsEditor() {
   }, [wbUR, persist]);
 
   // Two-way synchronization & Smart Data Layer Handlers
-  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom") => {
+  const handleActivateSolution = useCallback((type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "ProjectManagement" | "Custom" | "Tasks") => {
     setWb((prev) => {
-      let updatedSheets = [...prev.sheets];
-      const activeSheetObj = updatedSheets[activeSheetIdx] || updatedSheets[0];
+      if (type === "HR") {
+        return seedHrSolutionToWorkbook(prev);
+      }
 
-      // If the sheet has no data rows, automatically seed the template's standard columns and records
-      const hasNoData = Object.keys(activeSheetObj.cells).length === 0;
-      if (hasNoData) {
-        const seeded = seedSolutionToSheet(activeSheetObj, type);
-        updatedSheets = updatedSheets.map((s, idx) => idx === activeSheetIdx ? seeded : s);
+      let updatedSheets = [...prev.sheets];
+
+      if (type === "ProjectManagement") {
+        // Multi-tab workspace auto-seeding
+        const projectTemplates = ["ProjectManagement", "ProjectTasks", "ProjectMilestones", "ProjectTeams"];
+        const names = ["Projects", "Tasks", "Milestones", "Teams"];
+
+        names.forEach((name, i) => {
+          const tId = projectTemplates[i];
+          const foundIdx = updatedSheets.findIndex(s => s.name === name);
+          const sheetPage = foundIdx !== -1 ? updatedSheets[foundIdx] : { name, cells: {} };
+          const seeded = seedSolutionToSheet(sheetPage, tId);
+
+          if (foundIdx !== -1) {
+            updatedSheets[foundIdx] = seeded;
+          } else {
+            updatedSheets.push(seeded);
+          }
+        });
+      } else {
+        const activeSheetObj = updatedSheets[activeSheetIdx] || updatedSheets[0];
+        const hasNoData = Object.keys(activeSheetObj.cells).length === 0;
+        if (hasNoData) {
+          const seeded = seedSolutionToSheet(activeSheetObj, type);
+          updatedSheets = updatedSheets.map((s, idx) => idx === activeSheetIdx ? seeded : s);
+        }
       }
 
       return {
@@ -167,6 +193,19 @@ export default function SheetsEditor() {
     setEngineTick((t) => t + 1);
   }, [activeSheetIdx, setWb]);
 
+  const handleUpdateSheetRecordByName = useCallback((sheetName: string, rowIndex: number, field: string, value: any) => {
+    setWb((prev) => {
+      const sIdx = prev.sheets.findIndex(s => s.name === sheetName);
+      if (sIdx === -1) return prev;
+      const updatedSheet = updateSheetRecord(prev.sheets[sIdx], rowIndex, field, value);
+      return {
+        ...prev,
+        sheets: prev.sheets.map((s, idx) => idx === sIdx ? updatedSheet : s)
+      };
+    });
+    setEngineTick((t) => t + 1);
+  }, [setWb]);
+
   const handleAddRecord = useCallback((record: Record<string, any>) => {
     setWb((prev) => {
       const activeSheetObj = prev.sheets[activeSheetIdx];
@@ -182,6 +221,23 @@ export default function SheetsEditor() {
       description: "The new record was added to the sheet. Two-way synchronization is active."
     });
   }, [activeSheetIdx, setWb]);
+
+  const handleAddSheetRecordByName = useCallback((sheetName: string, record: Record<string, any>) => {
+    setWb((prev) => {
+      const sIdx = prev.sheets.findIndex(s => s.name === sheetName);
+      if (sIdx === -1) return prev;
+      const updatedSheet = addSheetRecord(prev.sheets[sIdx], record);
+      return {
+        ...prev,
+        sheets: prev.sheets.map((s, idx) => idx === sIdx ? updatedSheet : s)
+      };
+    });
+    setEngineTick((t) => t + 1);
+    toast({
+      title: "Record Added Successfully",
+      description: `The new record was added to the ${sheetName} sheet. Two-way synchronization is active.`
+    });
+  }, [setWb]);
 
   const handleScheduleMeeting = useCallback((meeting: any) => {
     setWb((prev) => {
@@ -209,6 +265,29 @@ export default function SheetsEditor() {
   const parsedRecords = useMemo(() => {
     return parseSheetRows(activeSheet);
   }, [activeSheet, engineTick]);
+
+  // Support multi-tab parsing for Project Management View
+  const projectManagementData = useMemo(() => {
+    const projectsSheet = wb.sheets.find(s => s.name === "Projects");
+    const tasksSheet = wb.sheets.find(s => s.name === "Tasks");
+    const milestonesSheet = wb.sheets.find(s => s.name === "Milestones");
+    const teamsSheet = wb.sheets.find(s => s.name === "Teams");
+
+    // Optional workspace directories to cross-reference
+    const crmSheet = wb.sheets.find(s => s.name === "CRM" || s.name === "Sheet1");
+    const hrSheet = wb.sheets.find(s => s.name === "HR" || s.name === "Employees");
+    const registrySheet = wb.sheets.find(s => s.name === "Registry");
+
+    return {
+      projects: projectsSheet ? parseSheetRows(projectsSheet) : [],
+      tasks: tasksSheet ? parseSheetRows(tasksSheet) : [],
+      milestones: milestonesSheet ? parseSheetRows(milestonesSheet) : [],
+      teams: teamsSheet ? parseSheetRows(teamsSheet) : [],
+      crmRecords: crmSheet ? parseSheetRows(crmSheet) : [],
+      hrEmployees: hrSheet ? parseSheetRows(hrSheet) : [],
+      registryRecords: registrySheet ? parseSheetRows(registrySheet) : []
+    };
+  }, [wb.sheets, engineTick]);
 
   const recommendedSolutionId = useMemo(() => {
     if (wb.activeSolution) return null;
@@ -273,7 +352,7 @@ export default function SheetsEditor() {
       arg = `${cellId(n.r1, n.c1)}:${cellId(n.r2, n.c2)}`;
     }
     const formula = fn === "IF" ? `=IF(${arg}>0,"Yes","No")` :
-                    fn === "VLOOKUP" ? `=VLOOKUP(A1, ${arg}, 2, FALSE)` : `=${fn}(${arg})`;
+      fn === "VLOOKUP" ? `=VLOOKUP(A1, ${arg}, 2, FALSE)` : `=${fn}(${arg})`;
     const outRow = n.r1 === n.r2 && n.c1 === n.c2 ? n.r1 : n.r2 + 1;
     setCell(cellId(outRow, n.c1), formula);
     setSelection({ r1: outRow, c1: n.c1, r2: outRow, c2: n.c1 });
@@ -297,10 +376,50 @@ export default function SheetsEditor() {
       for (let c = n.c1; c <= n.c2; c++) row.push(String(activeSheet.cells[cellId(r, c)] ?? ""));
       rows.push(row.join("\t"));
     }
-    navigator.clipboard?.writeText(rows.join("\n")).catch(() => {});
+    navigator.clipboard?.writeText(rows.join("\n")).catch(() => { });
   }, [selection, activeSheet]);
 
-  const doPaste = useCallback(() => {
+  const doPaste = useCallback(async () => {
+    // 1. Try to read from native system clipboard first
+    try {
+      const text = await navigator.clipboard?.readText();
+      if (text) {
+        // Parse tab-separated values (tsv)
+        const rows = text.split(/\r?\n/).map((row) => row.split("\t"));
+        // Only parse if we have valid cells
+        if (rows.length > 0 && (rows.length > 1 || rows[0].length > 1 || rows[0][0] !== "")) {
+          const dst = norm(selection);
+          mutateActive((s) => {
+            const cells = { ...s.cells };
+            for (let r = 0; r < rows.length; r++) {
+              for (let c = 0; c < rows[r].length; c++) {
+                const targetRow = dst.r1 + r;
+                const targetCol = dst.c1 + c;
+                // Don't paste beyond grid bounds
+                if (targetRow >= 200 || targetCol >= 26) continue;
+
+                const targetId = cellId(targetRow, targetCol);
+                const val = rows[r][c];
+                if (val === "") {
+                  delete cells[targetId];
+                } else if (!isNaN(Number(val)) && val.trim() !== "") {
+                  cells[targetId] = Number(val);
+                } else {
+                  cells[targetId] = val;
+                }
+              }
+            }
+            return { ...s, cells };
+          });
+          toast({ title: "Pasted from system clipboard" });
+          return;
+        }
+      }
+    } catch (err) {
+      console.warn("Could not read native clipboard, falling back to local clipboard", err);
+    }
+
+    // 2. Fallback to local clipboard (with formats)
     if (!clipboard) return;
     const dst = norm(selection);
     const src = clipboard.range;
@@ -325,6 +444,37 @@ export default function SheetsEditor() {
       return { ...s, cells, formats };
     });
     if (clipboard.cut) { setClipboard(null); setCopiedRange(null); }
+    toast({ title: "Pasted from local clipboard" });
+  }, [clipboard, selection, mutateActive]);
+
+  const doPasteSpecial = useCallback((mode: "values" | "formats") => {
+    if (!clipboard) {
+      toast({ title: "Clipboard is empty", description: "Copy or cut cells first before pasting." });
+      return;
+    }
+    const dst = norm(selection);
+    const src = clipboard.range;
+    const dr = dst.r1 - src.r1, dc = dst.c1 - src.c1;
+    mutateActive((s) => {
+      const cells = { ...s.cells };
+      const formats = { ...(s.formats ?? {}) };
+
+      if (mode === "values") {
+        for (const [k, v] of Object.entries(clipboard.cells)) {
+          const p = parseCell(k)!;
+          const nid = cellId(p.row + dr, p.col + dc);
+          cells[nid] = v;
+        }
+      } else if (mode === "formats") {
+        for (const [k, v] of Object.entries(clipboard.formats)) {
+          const p = parseCell(k)!;
+          const nid = cellId(p.row + dr, p.col + dc);
+          formats[nid] = v;
+        }
+      }
+      return { ...s, cells, formats };
+    });
+    toast({ title: `Pasted special: ${mode}` });
   }, [clipboard, selection, mutateActive]);
 
   // Structural ops
@@ -350,6 +500,89 @@ export default function SheetsEditor() {
     insertLeft: () => mutateActive((s) => insertCol(s, norm(selection).c1)),
     insertRight: () => mutateActive((s) => insertCol(s, norm(selection).c2 + 1)),
     delete: () => { const n = norm(selection); mutateActive((s) => deleteCol(s, n.c1, n.c2 - n.c1 + 1)); },
+  };
+
+  const handleMergeCells = (type: "block" | "horizontal" | "vertical") => {
+    const n = norm(selection);
+    if (n.r1 === n.r2 && n.c1 === n.c2) return; // single cell can't be merged
+
+    mutateActive((s) => {
+      let currentMerges = [...(s.merges ?? [])];
+      // First, remove any existing merges that intersect with this selection to avoid conflicts
+      currentMerges = currentMerges.filter((m) => {
+        const parsed = parseMergeRange(m);
+        if (!parsed) return false;
+        // Check intersection
+        return !(
+          parsed.r2 >= n.r1 &&
+          parsed.r1 <= n.r2 &&
+          parsed.c2 >= n.c1 &&
+          parsed.c1 <= n.c2
+        );
+      });
+
+      if (type === "block") {
+        const range = `${cellId(n.r1, n.c1)}:${cellId(n.r2, n.c2)}`;
+        currentMerges.push(range);
+      } else if (type === "horizontal") {
+        for (let r = n.r1; r <= n.r2; r++) {
+          const range = `${cellId(r, n.c1)}:${cellId(r, n.c2)}`;
+          currentMerges.push(range);
+        }
+      } else if (type === "vertical") {
+        for (let c = n.c1; c <= n.c2; c++) {
+          const range = `${cellId(n.r1, c)}:${cellId(n.r2, c)}`;
+          currentMerges.push(range);
+        }
+      }
+
+      // Also let's clear values of other cells in the merge range so only the primary cell's value remains, like Excel/Sheets
+      const cells = { ...s.cells };
+      // Keep only top-left value of each new merge range
+      if (type === "block") {
+        for (let r = n.r1; r <= n.r2; r++) {
+          for (let c = n.c1; c <= n.c2; c++) {
+            if (r === n.r1 && c === n.c1) continue;
+            delete cells[cellId(r, c)];
+          }
+        }
+      } else if (type === "horizontal") {
+        for (let r = n.r1; r <= n.r2; r++) {
+          for (let c = n.c1 + 1; c <= n.c2; c++) {
+            delete cells[cellId(r, c)];
+          }
+        }
+      } else if (type === "vertical") {
+        for (let c = n.c1; c <= n.c2; c++) {
+          for (let r = n.r1 + 1; r <= n.r2; r++) {
+            delete cells[cellId(r, c)];
+          }
+        }
+      }
+
+      return { ...s, merges: currentMerges, cells };
+    });
+    toast({ title: "Cells merged successfully" });
+  };
+
+  const handleUnmergeCells = () => {
+    const n = norm(selection);
+    mutateActive((s) => {
+      let currentMerges = [...(s.merges ?? [])];
+      currentMerges = currentMerges.filter((m) => {
+        const parsed = parseMergeRange(m);
+        if (!parsed) return false;
+        // Keep merges that DO NOT intersect with the selection
+        return !(
+          parsed.r2 >= n.r1 &&
+          parsed.r1 <= n.r2 &&
+          parsed.c2 >= n.c1 &&
+          parsed.c1 <= n.c2
+        );
+      });
+      return { ...s, merges: currentMerges };
+    });
+    toast({ title: "Cells unmerged successfully" });
   };
 
   const ribbon: RibbonActions = {
@@ -383,11 +616,7 @@ export default function SheetsEditor() {
           return { ...s, formats };
         });
       },
-      mergeCells: () => {
-        const n = norm(selection);
-        const range = `${cellId(n.r1, n.c1)}:${cellId(n.r2, n.c2)}`;
-        mutateActive((s) => ({ ...s, merges: [...(s.merges ?? []), range] }));
-      },
+      mergeCells: () => handleMergeCells("block"),
     },
     data: {
       sortAsc: () => sortSelection(true), sortDesc: () => sortSelection(false),
@@ -527,13 +756,16 @@ export default function SheetsEditor() {
   const contextActions = {
     cell: {
       cut: () => doCopy(true), copy: () => doCopy(false), paste: doPaste,
-      pasteSpecial: () => toast({ title: "Paste special", description: "Values / formulas / formats — coming next turn." }),
+      pasteValuesOnly: () => doPasteSpecial("values"),
+      pasteFormatsOnly: () => doPasteSpecial("formats"),
       insertRowAbove: rowOps.insertAbove, insertRowBelow: rowOps.insertBelow,
       insertColLeft: colOps.insertLeft, insertColRight: colOps.insertRight,
       deleteRow: rowOps.delete, deleteCol: colOps.delete,
       clearContents: ribbon.cells.clearContents, clearFormat: ribbon.cells.clearFormat,
-      mergeCells: ribbon.cells.mergeCells,
-      splitCells: () => mutateActive((s) => ({ ...s, merges: [] })),
+      mergeCells: () => handleMergeCells("block"),
+      mergeHorizontal: () => handleMergeCells("horizontal"),
+      mergeVertical: () => handleMergeCells("vertical"),
+      splitCells: handleUnmergeCells,
       addComment: () => toast({ title: "Comments coming soon" }),
       insertLink: ribbon.insert.link,
       conditionalFormat: () => toast({ title: "Conditional formatting coming soon" }),
@@ -633,9 +865,9 @@ export default function SheetsEditor() {
             className="text-sm font-semibold text-foreground bg-transparent border-0 outline-none focus:bg-muted/50 rounded px-2 py-0.5 min-w-[180px] truncate"
           />
           <div className="flex items-center gap-2 px-2 text-[11px] text-muted-foreground">
-            {saving === "saving" ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin"/> Saving…</span> :
-             saving === "saved" ? <span className="flex items-center gap-1 text-emerald-600"><CloudUpload className="h-3 w-3"/> Saved</span> :
-             null}
+            {saving === "saving" ? <span className="flex items-center gap-1"><Loader2 className="h-3 w-3 animate-spin" /> Saving…</span> :
+              saving === "saved" ? <span className="flex items-center gap-1 text-emerald-600"><CloudUpload className="h-3 w-3" /> Saved</span> :
+                null}
           </div>
         </div>
         <div className="flex items-center gap-2">
@@ -707,27 +939,31 @@ export default function SheetsEditor() {
           <div className="flex items-center gap-1.5">
             <button
               onClick={() => setActiveView("spreadsheet")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                activeView === "spreadsheet" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${activeView === "spreadsheet" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+                }`}
             >
-              <Table2 className="h-3.5 w-3.5" /> Spreadsheet Grid
+              <Table2 className="h-3.5 w-3.5" /> Spreadsheet View
             </button>
             <button
               onClick={() => setActiveView("solution")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                activeView === "solution" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${activeView === "solution" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+                }`}
             >
-              <Presentation className="h-3.5 w-3.5" /> {wb.activeSolution.type} Connected Workspace
+              <Presentation className="h-3.5 w-3.5" /> {wb.activeSolution.type === "Tasks" ? "Tasks View" : `${wb.activeSolution.type} Connected Workspace`}
             </button>
             <button
               onClick={() => setActiveView("dashboard")}
-              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${
-                activeView === "dashboard" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
-              }`}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${activeView === "dashboard" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+                }`}
             >
-              <Layout className="h-3.5 w-3.5" /> Intelligent Dashboard
+              <Layout className="h-3.5 w-3.5" /> Dashboard View
+            </button>
+            <button
+              onClick={() => setActiveView("reports")}
+              className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${activeView === "reports" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
+                }`}
+            >
+              <Layout className="h-3.5 w-3.5" /> Reports View
             </button>
           </div>
           <div className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 shadow-sm">
@@ -746,6 +982,47 @@ export default function SheetsEditor() {
               onAddRecord={handleAddRecord}
               onOpenMeetingModal={handleOpenMeetingPrefilled}
             />
+          ) : wb.activeSolution.type === "Registry" ? (
+            <RegistryView
+              records={parsedRecords}
+              onUpdateRecord={handleUpdateRecord}
+              onAddRecord={handleAddRecord}
+              onOpenMeetingModal={handleOpenMeetingPrefilled}
+            />
+          ) : wb.activeSolution.type === "Tasks" ? (
+            <TasksView
+              records={parsedRecords}
+              onUpdateRecord={handleUpdateRecord}
+              onAddRecord={handleAddRecord}
+              onOpenMeetingModal={handleOpenMeetingPrefilled}
+              meetings={wb.activeSolution.meetings || []}
+            />
+          ) : wb.activeSolution.type === "HR" ? (
+            <HrView
+              records={parsedRecords}
+              allSheets={wb.sheets}
+              activeSheetIdx={activeSheetIdx}
+              onSelectSheet={(idx) => setActiveSheetIdx(idx)}
+              onUpdateRecord={handleUpdateRecord}
+              onAddRecord={handleAddRecord}
+              onOpenMeetingModal={handleOpenMeetingPrefilled}
+            />
+          ) : (wb.activeSolution.type === "ProjectManagement" || wb.activeSolution.type === "Project") ? (
+            <ProjectManagementView
+              projects={projectManagementData.projects}
+              tasks={projectManagementData.tasks}
+              milestones={projectManagementData.milestones}
+              teams={projectManagementData.teams}
+              onUpdateRecord={handleUpdateSheetRecordByName}
+              onAddRecord={handleAddSheetRecordByName}
+              onOpenMeetingModal={handleOpenMeetingPrefilled}
+              onScheduleEvent={(prefilled) => handleOpenMeetingPrefilled(prefilled)}
+              onNotifyTeam={(message) => toast({ title: "Team Notification Sent", description: message })}
+              crmRecords={projectManagementData.crmRecords}
+              hrEmployees={projectManagementData.hrEmployees}
+              registryRecords={projectManagementData.registryRecords}
+            />
+
           ) : (
             <div className="flex-1 flex flex-col items-center justify-center p-8 text-center space-y-4 bg-muted/10">
               <Presentation className="h-12 w-12 text-accent animate-pulse" />
@@ -763,15 +1040,25 @@ export default function SheetsEditor() {
               </button>
             </div>
           )
+        ) : wb.activeSolution && activeView === "reports" ? (
+          <ReportsView
+            records={parsedRecords}
+            solutionType={wb.activeSolution.type}
+            allSheets={wb.sheets}
+            parseRowsFn={parseSheetRows}
+          />
         ) : wb.activeSolution && activeView === "dashboard" ? (
           <DashboardEngine
             records={parsedRecords}
             solutionType={wb.activeSolution.type}
             meetings={wb.activeSolution.meetings}
+            allSheets={wb.sheets}
           />
         ) : (
-          /* Default Spreadsheet Editor view */
           <>
+
+          /* Default Spreadsheet Editor view */
+
             <div className="flex-1 flex flex-col overflow-hidden">
               <SheetGrid
                 sheet={activeSheet}
@@ -832,16 +1119,18 @@ export default function SheetsEditor() {
         saving={saving}
       />
 
-      {showChartDialog && (
-        <ChartDialog
-          sheet={activeSheet}
-          engine={engineRef.current}
-          defaultRange={defaultChartRange}
-          onCancel={() => setShowChartDialog(false)}
-          onInsert={insertChart}
-        />
-      )}
-    </div>
+      {
+        showChartDialog && (
+          <ChartDialog
+            sheet={activeSheet}
+            engine={engineRef.current}
+            defaultRange={defaultChartRange}
+            onCancel={() => setShowChartDialog(false)}
+            onInsert={insertChart}
+          />
+        )
+      }
+    </div >
   );
 }
 
@@ -854,11 +1143,13 @@ interface SolutionDropdownProps {
 function SolutionDropdown({ activeSolution, onSelectSolution, onDeactivate }: SolutionDropdownProps) {
   const [open, setOpen] = useState(false);
   const solutionOptions = [
+    { id: "Tasks", label: "Tasks & Projects" },
     { id: "CRM", label: "CRM Solution" },
     { id: "Inventory", label: "Inventory Management" },
     { id: "HR", label: "HR Management" },
     { id: "Registry", label: "Registry & Archive" },
     { id: "Project", label: "Project & Tasks" },
+    { id: "ProjectManagement", label: "Project Management System" },
     { id: "Custom", label: "Custom Solution" }
   ];
 
@@ -866,11 +1157,10 @@ function SolutionDropdown({ activeSolution, onSelectSolution, onDeactivate }: So
     <div className="relative">
       <button
         onClick={() => setOpen((v) => !v)}
-        className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition ${
-          activeSolution
-            ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm animate-pulse"
-            : "bg-accent text-accent-foreground hover:bg-accent/90"
-        }`}
+        className={`px-3 py-1.5 rounded-md text-xs font-semibold flex items-center gap-1.5 transition ${activeSolution
+          ? "bg-emerald-500 text-white hover:bg-emerald-600 shadow-sm animate-pulse"
+          : "bg-accent text-accent-foreground hover:bg-accent/90"
+          }`}
       >
         <Sparkles className="h-3.5 w-3.5" />
         {activeSolution ? `Active: ${activeSolution.type}` : "Create Solution"}
