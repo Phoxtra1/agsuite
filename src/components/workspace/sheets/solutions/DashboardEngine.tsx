@@ -28,11 +28,8 @@ import {
   Filter,
   Search,
   CheckCircle2,
-  Clock,
-  Award,
-  UserPlus,
-  ClipboardList,
-  Archive
+  Archive,
+  Info
 } from "lucide-react";
 import { parseSheetRows } from "@/lib/workspace/sheets/smartData";
 
@@ -63,125 +60,124 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       const sheet = allSheets.find((s) => s.name === name);
       return sheet ? parseSheetRows(sheet) : [];
     };
-    return {
-      employees: findAndParse("Employees"),
-      departments: findAndParse("Departments"),
-      attendance: findAndParse("Attendance"),
-      leave: findAndParse("Leave"),
-      performance: findAndParse("Performance"),
-      recruitment: findAndParse("Recruitment")
-    };
-  }, [allSheets, solutionType]);
 
-  // Dynamic Metrics Generation
+    allHeaders.forEach((h) => {
+      const norm = h.toLowerCase().trim();
+      if (!result.id && (norm === "id" || norm.includes("id") || norm.includes("code") || norm.includes("key") || norm.includes("number"))) {
+        result.id = h;
+      } else if (!result.name && (norm === "name" || norm === "title" || norm === "label" || norm.includes("name") || norm.includes("title"))) {
+        result.name = h;
+      } else if (!result.status && (norm === "status" || norm === "stage" || norm === "state" || norm.includes("status"))) {
+        result.status = h;
+      } else if (!result.category && (norm === "category" || norm === "type" || norm === "class" || norm === "group" || norm.includes("category") || norm.includes("type") || norm.includes("group"))) {
+        result.category = h;
+      } else if (!result.date && (norm.includes("date") || norm.includes("time") || norm.includes("created") || norm.includes("updated"))) {
+        result.date = h;
+      }
+
+      // Classify numeric value columns (e.g. quantity, costs, value, hours, salary)
+      if (norm.includes("quantity") || norm.includes("qty") || norm.includes("value") || norm.includes("usd") || norm.includes("price") || norm.includes("cost") || norm.includes("salary") || norm.includes("hours") || norm.includes("amount")) {
+        result.numeric.push(h);
+      }
+    });
+
+    if (!result.name && allHeaders.length > 0) {
+      result.name = allHeaders[0];
+    }
+
+    return result;
+  }, [allHeaders]);
+
+  // Dynamic KPI Card Metrics Generation: Generate 3-5 non-empty relevant KPIs from available data
   const metrics = useMemo(() => {
-    if (solutionType === "HR" && hrData) {
-      const emps = hrData.employees;
-      const totalEmployees = emps.length;
-      const activeEmployees = emps.filter(e => e["Employment Status"] === "Active").length;
-      const onLeave = emps.filter(e => e["Employment Status"] === "On Leave" || e["Status"] === "On Leave").length;
-      const newEmployees = emps.filter(e => {
-        const hireDate = e["Hire Date"];
-        return hireDate && hireDate.includes("2026");
-      }).length;
+    if (!records.length) return [];
 
-      const totalDepts = hrData.departments.length || new Set(emps.map(e => e.Department).filter(Boolean)).size;
-      const openRecruitment = hrData.recruitment.filter(r => r["Hiring Status"] === "Under Review" || r["Application Status"] === "Applied" || r["Application Status"] === "Interview Scheduled").length;
-      const upcomingReviews = hrData.performance.length;
+    // Common global KPI: Total Row Count
+    const baseMetrics = [
+      { label: "Total Records", value: records.length, icon: FileText, color: "text-blue-500 bg-blue-50" }
+    ];
+
+    if (solutionType === "CRM") {
+      const uniqueOrgs = new Set(records.map((r) => r.organizationName || r.Organization).filter(Boolean));
+      const totalContacts = records.filter((r) => r.contactName || r["Contact Person"]).length;
+      const totalValue = records.reduce((sum, r) => sum + (Number(r.value || r["Value (USD)"]) || 0), 0);
+      const activePartnerships = records.filter((r) => (r.status || r["Status"]) === "Partnership Active").length;
+      const followups = records.filter((r) => (r.status || r["Status"]) === "Follow-up Required").length;
 
       return [
-        { label: "Total Employees", value: totalEmployees, icon: Users, color: "text-blue-500 bg-blue-50" },
-        { label: "Active Employees", value: activeEmployees, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
-        { label: "Employees on Leave", value: onLeave, icon: Calendar, color: "text-amber-500 bg-amber-50" },
-        { label: "New Employees (2026)", value: newEmployees, icon: UserPlus, color: "text-purple-500 bg-purple-50" },
-        { label: "Departments", value: totalDepts, icon: Layers, color: "text-cyan-500 bg-cyan-50" },
-        { label: "Open Recruitment", value: openRecruitment, icon: Briefcase, color: "text-rose-500 bg-rose-50" },
-        { label: "Upcoming Reviews", value: upcomingReviews, icon: Award, color: "text-indigo-500 bg-indigo-50" }
+        { label: "Total Organizations", value: uniqueOrgs.size, icon: Building2, color: "text-blue-500 bg-blue-50" },
+        { label: "Total Contacts", value: totalContacts, icon: Users, color: "text-emerald-500 bg-emerald-50" },
+        { label: "Active Partnerships", value: activePartnerships, icon: CheckCircle2, color: "text-purple-500 bg-purple-50" },
+        { label: "Pipeline Value", value: `$${totalValue.toLocaleString()}`, icon: DollarSign, color: "text-amber-500 bg-amber-50" },
+        { label: "Follow-up Pending", value: followups, icon: Calendar, color: "text-rose-500 bg-rose-50" }
       ];
     }
 
-    if (!records.length) return [];
+    if (solutionType === "Inventory") {
+      const totalItems = records.length;
+      const totalQty = records.reduce((sum, r) => sum + (Number(r.Quantity) || 0), 0);
+      const totalVal = records.reduce((sum, r) => sum + ((Number(r.Quantity) || 0) * (Number(r["Unit Cost"]) || 0)), 0);
+      const lowStock = records.filter((r) => (Number(r.Quantity) || 0) <= (Number(r["Stock Alert Level"]) || 5)).length;
 
-    switch (solutionType) {
-      case "CRM": {
-        const uniqueOrgs = new Set(records.map((r) => r.organizationName || r.Organization).filter(Boolean));
-        const totalContacts = records.filter((r) => r.contactName || r["Contact Person"]).length;
-        const totalValue = records.reduce((sum, r) => sum + (Number(r.value || r["Value (USD)"]) || 0), 0);
-        const activePartnerships = records.filter((r) => (r.status || r["Status"]) === "Partnership Active").length;
-        const followups = records.filter((r) => (r.status || r["Status"]) === "Follow-up Required").length;
+      return [
+        { label: "Total Products", value: totalItems, icon: Layers, color: "text-blue-500 bg-blue-50" },
+        { label: "Total Inventory Stock", value: totalQty, icon: Inbox, color: "text-purple-500 bg-purple-50" },
+        { label: "Stock Valuation", value: `$${totalVal.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" },
+        { label: "Low Stock Alerts", value: lowStock, icon: AlertTriangle, color: "text-rose-500 bg-rose-50", alert: lowStock > 0 }
+      ];
+    }
 
-        return [
-          { label: "Total Organizations", value: uniqueOrgs.size, icon: Building2, color: "text-blue-500 bg-blue-50" },
-          { label: "Total Contacts", value: totalContacts, icon: Users, color: "text-emerald-500 bg-emerald-50" },
-          { label: "Active Partnerships", value: activePartnerships, icon: CheckCircle2, color: "text-purple-500 bg-purple-50" },
-          { label: "Pipeline Value", value: `$${totalValue.toLocaleString()}`, icon: DollarSign, color: "text-amber-500 bg-amber-50" },
-          { label: "Follow-up Pending", value: followups, icon: Calendar, color: "text-rose-500 bg-rose-50" }
-        ];
+    if (solutionType === "HR") {
+      const totalEmp = records.length;
+      const uniqueDept = new Set(records.map((r) => r.Department).filter(Boolean));
+      const payroll = records.reduce((sum, r) => sum + (Number(r["Base Salary"]) || 0), 0);
+
+      return [
+        { label: "Total Employees", value: totalEmp, icon: Users, color: "text-blue-500 bg-blue-50" },
+        { label: "Departments", value: uniqueDept.size, icon: Layers, color: "text-purple-500 bg-purple-50" },
+        { label: "Monthly Payroll", value: `$${payroll.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" }
+      ];
+    }
+
+    if (solutionType === "Project") {
+      const totalTasks = records.length;
+      const highPriority = records.filter((r) => r.Priority === "High").length;
+      const inProgress = records.filter((r) => r.Status === "In Progress").length;
+      const completed = records.filter((r) => r.Status === "Done" || r.Status === "Completed").length;
+
+      return [
+        { label: "Total Tasks", value: totalTasks, icon: Briefcase, color: "text-blue-500 bg-blue-50" },
+        { label: "In Progress", value: inProgress, icon: TrendingUp, color: "text-purple-500 bg-purple-50" },
+        { label: "High Priority", value: highPriority, icon: AlertTriangle, color: "text-rose-500 bg-rose-50" },
+        { label: "Completed Tasks", value: completed, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" }
+      ];
+    }
+
+    // Dynamic Registry Dashboards: Extract KPI indicators completely based on parsed columns
+    if (solutionType === "Registry" || solutionType === "Custom") {
+      // 1. Categories Metric
+      if (columnTypes.category) {
+        const uniqueCats = new Set(records.map((r) => String(r[columnTypes.category] || "")).filter(Boolean));
+        const categoryLabel = columnTypes.category.toLowerCase().endsWith("y")
+          ? `${columnTypes.category.slice(0, -1)}ies`
+          : `${columnTypes.category}s`;
+        baseMetrics.push({
+          label: `Unique ${categoryLabel}`,
+          value: uniqueCats.size,
+          icon: Layers,
+          color: "text-purple-500 bg-purple-50"
+        });
       }
-      case "Inventory": {
-        const totalItems = records.length;
-        const totalQty = records.reduce((sum, r) => sum + (Number(r.Quantity) || 0), 0);
-        const totalVal = records.reduce((sum, r) => sum + ((Number(r.Quantity) || 0) * (Number(r["Unit Cost"]) || 0)), 0);
-        const lowStock = records.filter((r) => (Number(r.Quantity) || 0) <= (Number(r["Stock Alert Level"]) || 5)).length;
 
-        return [
-          { label: "Total Products", value: totalItems, icon: Layers, color: "text-blue-500 bg-blue-50" },
-          { label: "Total Inventory Stock", value: totalQty, icon: Inbox, color: "text-purple-500 bg-purple-50" },
-          { label: "Stock Valuation", value: `$${totalVal.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" },
-          { label: "Low Stock Alerts", value: lowStock, icon: AlertTriangle, color: "text-rose-500 bg-rose-50", alert: lowStock > 0 }
-        ];
-      }
-      case "Registry": {
-        const totalRecs = records.length;
-        const activeFiles = records.filter((r) => String(r.Status || r.status).toLowerCase() === "active").length;
-        const archivedFiles = records.filter((r) => String(r.Status || r.status).toLowerCase() === "archived").length;
-
-        // Count "New Records" created in the last 30 days (mocking check based on "Created Date" 2026 values in our default set)
-        const newFiles = records.filter((r) => {
-          const date = String(r["Created Date"] || r.createdDate || "");
-          return date.includes("2026-03") || date.includes("2026-04");
-        }).length;
-
-        const uniqueCats = new Set(records.map((r) => r.Category || r.category).filter(Boolean));
-
-        return [
-          { label: "Total Records", value: totalRecs, icon: FileText, color: "text-blue-500 bg-blue-50" },
-          { label: "Active Records", value: activeFiles, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
-          { label: "New Records (30d)", value: newFiles, icon: TrendingUp, color: "text-amber-500 bg-amber-50" },
-          { label: "Archived Records", value: archivedFiles, icon: Archive, color: "text-rose-500 bg-rose-50" },
-          { label: "Unique Categories", value: uniqueCats.size, icon: Layers, color: "text-purple-500 bg-purple-50" }
-        ];
-      }
-      case "Tasks": {
-        const totalTasks = records.length;
-        const completedTasks = records.filter((r) => (r.Status || r.status || "") === "Completed").length;
-        const pendingTasks = totalTasks - completedTasks;
-
-        // Overdue tasks calculation
-        const today = new Date("2026-04-14"); // Reference baseline date
-        const overdueTasks = records.filter((r) => {
-          const dueStr = r["Due Date"] || r.dueDate || "";
-          if (!dueStr) return false;
-          const dueDate = new Date(dueStr);
-          const status = r["Status"] || r.status || "Not Started";
-          return dueDate < today && status !== "Completed";
-        }).length;
-
-        const highPriority = records.filter((r) => {
-          const p = r["Priority"] || r.priority || "";
-          return p === "High" || p === "Critical";
-        }).length;
-
-        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-        return [
-          { label: "Total Tasks", value: totalTasks, icon: Briefcase, color: "text-blue-500 bg-blue-50" },
-          { label: "Completed Tasks", value: completedTasks, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
-          { label: "Pending Tasks", value: pendingTasks, icon: Clock, color: "text-purple-500 bg-purple-50" },
-          { label: "Overdue Tasks", value: overdueTasks, icon: AlertTriangle, color: "text-rose-500 bg-rose-50", alert: overdueTasks > 0 },
-          { label: "High/Critical Priority", value: highPriority, icon: AlertTriangle, color: "text-amber-500 bg-amber-50" },
-          { label: "Completion Rate", value: `${completionRate}%`, icon: TrendingUp, color: "text-emerald-500 bg-emerald-50" }
-        ];
+      // 2. Status Metric
+      if (columnTypes.status) {
+        const uniqueStats = new Set(records.map((r) => String(r[columnTypes.status] || "")).filter(Boolean));
+        baseMetrics.push({
+          label: `Distinct Status Stages`,
+          value: uniqueStats.size,
+          icon: CheckCircle2,
+          color: "text-emerald-500 bg-emerald-50"
+        });
       }
       case "Project":
       case "ProjectManagement": {
@@ -205,21 +201,34 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         }
         return results;
       }
-      default:
-        return [{ label: "Total Row Count", value: records.length, icon: Layers, color: "text-gray-500 bg-gray-50" }];
     }
-  }, [records, solutionType, hrData]);
 
-  // Aggregate Status counts for charting
+    return baseMetrics;
+  }, [records, solutionType, columnTypes, allHeaders]);
+
+  // Aggregate Status counts for charting (only if status column is present)
   const statusChartData = useMemo(() => {
-    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
-    const counts: Record<string, number> = {};
-    dataToUse.forEach((r) => {
-      const statusKey = r.status || r.Status || r["Employment Status"] || "Unknown";
-      counts[statusKey] = (counts[statusKey] || 0) + 1;
-    });
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [records, solutionType, hrData]);
+    if (solutionType === "CRM") {
+      const counts: Record<string, number> = {};
+      records.forEach((r) => {
+        const statusKey = r.status || r.Status || "Unknown";
+        counts[statusKey] = (counts[statusKey] || 0) + 1;
+      });
+      return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    }
+
+    if (solutionType === "Registry" || solutionType === "Custom") {
+      if (!columnTypes.status) return [];
+      const counts: Record<string, number> = {};
+      records.forEach((r) => {
+        const statusKey = String(r[columnTypes.status] || "Unassigned");
+        counts[statusKey] = (counts[statusKey] || 0) + 1;
+      });
+      return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    }
+
+    return [];
+  }, [records, solutionType, columnTypes.status]);
 
   // Value/Price Distribution chart
   const valueChartData = useMemo(() => {
@@ -248,11 +257,12 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         name: (r["Task Name"] || r.taskName || "").slice(0, 15),
         value: Number(r["Progress (%)"] || r.progress) || 0
       }));
-    } else if (solutionType === "Registry") {
+    } else if (solutionType === "Registry" || solutionType === "Custom") {
       // Group records by Category to show Category Distribution
+      if (!columnTypes.category) return [];
       const counts: Record<string, number> = {};
       records.forEach((r) => {
-        const cat = r.Category || r.category || "Unassigned";
+        const cat = String(r[columnTypes.category] || "Unassigned");
         counts[cat] = (counts[cat] || 0) + 1;
       });
       return Object.entries(counts).map(([name, value]) => ({
@@ -270,7 +280,7 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       }
     }
     return [];
-  }, [records, solutionType, hrData]);
+  }, [records, solutionType, columnTypes.category]);
 
   // Filter list of records for summary table
   const filteredRecords = useMemo(() => {
@@ -280,32 +290,18 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         String(val).toLowerCase().includes(search.toLowerCase())
       );
       if (filterValue === "all") return matchSearch;
-      return matchSearch && (rec.status || rec.Status || rec["Employment Status"]) === filterValue;
+
+      const statusField = solutionType === "CRM" ? "status" : columnTypes.status;
+      if (!statusField) return matchSearch;
+      return matchSearch && String(rec[statusField] || "") === filterValue;
     });
-  }, [records, search, filterValue, solutionType, hrData]);
+  }, [records, search, filterValue, solutionType, columnTypes.status]);
 
   const uniqueStatuses = useMemo(() => {
-    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
-    return Array.from(new Set(dataToUse.map((r) => r.status || r.Status || r["Employment Status"]).filter(Boolean)));
-  }, [records, solutionType, hrData]);
-
-  // HR specific summary states
-  const attendanceSummary = useMemo(() => {
-    if (solutionType !== "HR" || !hrData) return null;
-    const att = hrData.attendance;
-    const present = att.filter(a => a["Attendance Status"] === "Present" || a["Attendance Status"] === "Remote").length;
-    const late = att.filter(a => a["Attendance Status"] === "Late").length;
-    const absent = att.filter(a => a["Attendance Status"] === "Absent").length;
-    return { present, late, absent, total: att.length };
-  }, [hrData, solutionType]);
-
-  const leaveSummary = useMemo(() => {
-    if (solutionType !== "HR" || !hrData) return null;
-    const leaves = hrData.leave;
-    const approved = leaves.filter(l => l["Status"] === "Approved").length;
-    const pending = leaves.filter(l => l["Status"] === "Pending").length;
-    return { approved, pending, total: leaves.length };
-  }, [hrData, solutionType]);
+    const statusField = solutionType === "CRM" ? "Status" : columnTypes.status;
+    if (!statusField) return [];
+    return Array.from(new Set(records.map((r) => r[statusField]).filter(Boolean)));
+  }, [records, solutionType, columnTypes.status]);
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-muted/20 space-y-6">
@@ -351,38 +347,39 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       )}
 
       {/* Dynamic Charts Section */}
-      {statusChartData.length > 0 && (
+      {records.length > 0 && (statusChartData.length > 0 || valueChartData.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Status breakdown Chart */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
-              <Layers className="h-4 w-4 text-muted-foreground" />
-              {solutionType === "HR" ? "Employment Status breakdown" : "Workflow / Status Distribution"}
-            </h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={statusChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  >
-                    {statusChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+          {/* Status breakdown Chart (Rendered only if status data is available) */}
+          {statusChartData.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+              <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
+                <Layers className="h-4 w-4 text-muted-foreground" /> Workflow / Status Distribution
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    >
+                      {statusChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           )}
 
-          {/* Value / Numeric Breakdown Chart */}
+          {/* Value / Numeric / Category Breakdown Chart (Rendered only if category/value data exists) */}
           {valueChartData.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
@@ -391,11 +388,9 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
                   ? "Deal Value Distribution"
                   : solutionType === "Inventory"
                   ? "Stock Level Distribution"
-                  : solutionType === "Registry"
-                  ? "Category Distribution"
-                  : solutionType === "Tasks"
-                  ? "Task Progress Distribution"
-                  : "Department Headcount Allocation"}
+                  : solutionType === "Registry" || solutionType === "Custom"
+                  ? `${columnTypes.category || "Category"} Distribution`
+                  : "Salary Allocation"}
               </h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -482,7 +477,7 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
                   <select
                     value={filterValue}
                     onChange={(e) => setFilterValue(e.target.value)}
-                    className="text-xs pl-2.5 pr-8 py-1.5 rounded-lg border border-border bg-background focus:outline-none appearance-none"
+                    className="text-xs pl-2.5 pr-8 py-1.5 rounded-lg border border-border bg-background focus:outline-none appearance-none cursor-pointer"
                   >
                     <option value="all">All Statuses</option>
                     {uniqueStatuses.map((st) => (

@@ -219,7 +219,7 @@ export function RibbonInsertTab({ onAddElement, themeAccent }: RibbonInsertTabPr
       fill: "#e2e8f0",
       stroke: "#cbd5e1",
       strokeWidth: 2,
-      text: "Embedded Web View Frame (Odeneho Workspace API)",
+      text: "Embedded Web View Frame (Dipa Workspace API)",
       color: "#475569",
       fontSize: 24,
       embeddedCode: `<iframe src="https://www.amineva.com" width="100%" height="100%"></iframe>`

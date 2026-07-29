@@ -83,7 +83,7 @@ function detectPlatformFromRoute(path: string): string | null {
   if (path.includes("/agstock")) return "agstock";
   if (path.includes("/agis")) return "agis";
   if (path.includes("/agroclimate")) return "agroclimate";
-  if (path.includes("/odeneho")) return "odeneho";
+  if (path.includes("/Dipa")) return "Dipa";
   return null;
 }
 

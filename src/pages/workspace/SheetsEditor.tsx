@@ -12,6 +12,7 @@ import { FormulaBar } from "@/components/workspace/sheets/FormulaBar";
 import { SheetTabs } from "@/components/workspace/sheets/SheetTabs";
 import { StatusBar } from "@/components/workspace/sheets/StatusBar";
 import { AnalysisPanel } from "@/components/workspace/sheets/AnalysisPanel";
+import { LeftSheetPanel } from "@/components/workspace/sheets/LeftSheetPanel";
 import { ChartDialog } from "@/components/workspace/sheets/ChartDialog";
 import { exportCSV, exportJSON, exportXLSX, importXLSX } from "@/components/workspace/sheets/exporters";
 import { useUndoRedo } from "@/components/workspace/sheets/hooks/useUndoRedo";
@@ -48,6 +49,7 @@ export default function SheetsEditor() {
   const [selection, setSelection] = useState<Selection>({ r1: 0, c1: 0, r2: 0, c2: 0 });
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const engineRef = useRef<EngineHandle | null>(null);
   const [engineTick, setEngineTick] = useState(0);
@@ -954,6 +956,13 @@ export default function SheetsEditor() {
       )}
 
       <div className="flex-1 flex overflow-hidden">
+        {/* Native Spreadsheet Leftside Panel */}
+        <LeftSheetPanel
+          collapsed={leftCollapsed}
+          onToggleCollapsed={() => setLeftCollapsed((v) => !v)}
+          currentId={id}
+        />
+
         {/* Conditional Workspace View Switching */}
         {wb.activeSolution && activeView === "solution" ? (
           wb.activeSolution.type === "CRM" ? (

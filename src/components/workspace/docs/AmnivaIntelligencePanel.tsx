@@ -56,12 +56,12 @@ export function AmnivaIntelligencePanel({
         <button
           onClick={onToggleCollapsed}
           className="h-8 w-8 rounded-md hover:bg-muted flex items-center justify-center text-muted-foreground"
-          title="Expand Odeneho"
+          title="Expand Dipa"
         >
           <ChevronLeft className="h-4 w-4" />
         </button>
         <div className="rotate-180 [writing-mode:vertical-rl] text-[11px] font-semibold tracking-wider text-muted-foreground mt-2">
-          ODENEHO
+          Dipa
         </div>
         <Sparkles className="h-4 w-4 text-accent mt-2" />
       </aside>
@@ -113,7 +113,7 @@ export function AmnivaIntelligencePanel({
       <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-accent" />
-          <h2 className="text-sm font-semibold tracking-tight text-foreground">Odeneho</h2>
+          <h2 className="text-sm font-semibold tracking-tight text-foreground">Dipa</h2>
         </div>
         <button
           onClick={onToggleCollapsed}
@@ -133,7 +133,7 @@ export function AmnivaIntelligencePanel({
               tab === t ? "border-accent text-foreground bg-accent/5" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t === "intelligence" ? "Odeneho" : t === "classification" ? "Tags" : t}
+            {t === "intelligence" ? "Dipa" : t === "classification" ? "Tags" : t}
           </button>
         ))}
       </div>
@@ -142,7 +142,7 @@ export function AmnivaIntelligencePanel({
         {tab === "intelligence" && (
           <div className="space-y-3">
             <p className="text-xs text-muted-foreground leading-relaxed">
-              Select text or use the whole document. Odeneho is ready to assist you.
+              Select text or use the whole document. Dipa is ready to assist you.
             </p>
             <div className="grid gap-1.5">
               {ACTIONS.map((a) => (
