@@ -121,6 +121,11 @@ export default function DocsEditor() {
 
   async function handleAction(action: string, payload?: any) {
     if (!editor) return;
+    if (action === "dipa:legal") {
+      setRightCollapsed(false);
+      toast({ title: "Dipa Legal Panel Activated", description: "Analyzing document legal structure and precedents." });
+      return;
+    }
     if (action === "toast") { toast({ title: payload?.title || "" }); return; }
     if (action === "track:toggle") { setTrackChanges((v) => !v); toast({ title: trackChanges ? "Track changes off" : "Track changes on" }); return; }
     if (action === "comment:add") {
