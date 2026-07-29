@@ -28,7 +28,7 @@ export function RibbonToolsTab({
 
   const handleRewriteText = (action: "improve" | "shorten" | "expand") => {
     if (!selectedElement || selectedElement.kind !== "text" || !selectedElement.text) {
-      window.alert("Odeneho AI Tools: Please select a text box element first.");
+      window.alert("Dipa AI Tools: Please select a text box element first.");
       return;
     }
 
@@ -40,7 +40,7 @@ export function RibbonToolsTab({
     } else if (action === "shorten") {
       newText = text.length > 20 ? text.substring(0, text.length / 2) + "..." : text;
     } else if (action === "expand") {
-      newText = `${text}\n\nAdditional elaboration provided automatically by Odeneho Smart Engine. This detailed guide adds context, metrics, and actionable workflows.`;
+      newText = `${text}\n\nAdditional elaboration provided automatically by Dipa Smart Engine. This detailed guide adds context, metrics, and actionable workflows.`;
     }
 
     onUpdateElement({ text: newText });
@@ -48,7 +48,7 @@ export function RibbonToolsTab({
 
   const handleTranslateText = () => {
     if (!selectedElement || selectedElement.kind !== "text" || !selectedElement.text) {
-      window.alert("Odeneho AI Tools: Please select a text box element first.");
+      window.alert("Dipa AI Tools: Please select a text box element first.");
       return;
     }
 
@@ -56,11 +56,11 @@ export function RibbonToolsTab({
     setTimeout(() => {
       let translation = selectedElement.text || "";
       if (targetLang === "fr") {
-        translation = `[FR] ${selectedElement.text} - Traduit par Odeneho AI`;
+        translation = `[FR] ${selectedElement.text} - Traduit par Dipa AI`;
       } else if (targetLang === "es") {
-        translation = `[ES] ${selectedElement.text} - Traducido por Odeneho AI`;
+        translation = `[ES] ${selectedElement.text} - Traducido por Dipa AI`;
       } else if (targetLang === "de") {
-        translation = `[DE] ${selectedElement.text} - Übersetzt von Odeneho AI`;
+        translation = `[DE] ${selectedElement.text} - Übersetzt von Dipa AI`;
       }
       onUpdateElement({ text: translation });
       setTranslateBusy(false);
@@ -99,7 +99,7 @@ export function RibbonToolsTab({
 
   return (
     <div className="flex items-center gap-4 text-card-foreground select-none overflow-x-auto w-full py-1">
-      {/* Group: Odeneho Prompt-based Presentation */}
+      {/* Group: Dipa Prompt-based Presentation */}
       <div className="flex flex-col items-center border-r border-border pr-3 h-full justify-between">
         <div className="flex items-center gap-2 mb-1 h-7">
           <input
@@ -117,7 +117,7 @@ export function RibbonToolsTab({
             <Sparkles className="h-3.5 w-3.5" /> {aiBusy ? "Building..." : "Build Presentation"}
           </button>
         </div>
-        <span className="text-[10px] text-accent font-bold uppercase tracking-wide flex items-center gap-0.5"><Sparkles className="h-3 w-3" /> Odeneho AI Generator</span>
+        <span className="text-[10px] text-accent font-bold uppercase tracking-wide flex items-center gap-0.5"><Sparkles className="h-3 w-3" /> Dipa AI Generator</span>
       </div>
 
       {/* Group: AI Quick Writing Helpers */}
@@ -184,7 +184,7 @@ export function RibbonToolsTab({
           <button
             onClick={handleSuggestedTemplates}
             className="px-2 py-1 border border-border bg-background hover:bg-muted text-foreground rounded text-[11px] h-7 flex items-center gap-1 font-semibold"
-            title="Inject an Odeneho Smart Diagram Roadmap"
+            title="Inject an Dipa Smart Diagram Roadmap"
           >
             <Layers className="h-3.5 w-3.5 text-amber-500" /> Suggest Layout
           </button>

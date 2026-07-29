@@ -370,13 +370,13 @@ export const FORM_TEMPLATES: Array<Partial<FormDocument> & { id: string; categor
         id: "q-q2",
         type: "checkboxes",
         title: "What represents the branding/AI name used across the Amineva Workspace?",
-        options: ["Amineva AI", "Odeneho AI", "Amineva Intelligence", "Odeneho"],
+        options: ["Amineva AI", "Dipa AI", "Amineva Intelligence", "Dipa"],
         required: true,
         points: 5,
-        correctAnswer: ["Odeneho AI", "Odeneho"],
+        correctAnswer: ["Dipa AI", "Dipa"],
         feedback: {
-          correct: "Correct! Odeneho is the exclusive branding for all AI companion services.",
-          incorrect: "Remember, we exclusively brand our smart intelligence as 'Odeneho'.",
+          correct: "Correct! Dipa is the exclusive branding for all AI companion services.",
+          incorrect: "Remember, we exclusively brand our smart intelligence as 'Dipa'.",
         },
       },
       {

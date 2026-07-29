@@ -1,527 +1,458 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import {
-  FileText,
-  Sparkles,
-  Download,
-  Edit3,
-  DollarSign,
-  Layers,
+  TrendingUp,
+  CheckCircle2,
+  Clock,
+  AlertTriangle,
+  Users,
   Briefcase,
-  ShieldCheck,
+  Layers,
+  Sparkles,
+  BarChart,
+  Calendar,
+  DollarSign,
+  FileText,
+  Printer,
+  Download,
+  Building2,
+  Award,
+  UserPlus,
+  Search,
+  Filter,
+  CheckCircle,
+  AlertCircle,
+  MapPin,
+  Activity,
+  Database,
+  Tag,
+  Shield,
+  Check,
+  Info
 } from "lucide-react";
 
 interface ReportsViewProps {
-  records: Record<string, any>[];
-  solutionType: string;
-  solutionName: string;
+  records?: Record<string, any>[];
+  solutionType?: string;
+  solutionName?: string;
+  allSheets?: any[];
+  parseRowsFn?: (sheet: any) => Record<string, any>[];
 }
 
-const REPORT_TABS: { id: string; label: string }[] = [
-  { id: "summary", label: "Summary" },
-  { id: "income_statement", label: "Income Statement" },
-  { id: "balance_sheet", label: "Balance Sheet" },
-  { id: "audit_findings", label: "Audit Findings" },
-  { id: "compliance_status", label: "Compliance" },
-  { id: "operations_activity", label: "Operations" },
-];
+const COLORS = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"];
 
-export default function ReportsView({
-  records = [],
-  solutionType,
-  solutionName,
-}: ReportsViewProps) {
-  const [selectedReport, setSelectedReport] = useState<string>("summary");
+export default function ReportsView({ records = [], solutionType = "General", solutionName, allSheets = [], parseRowsFn }: ReportsViewProps) {
+  if (allSheets.length > 0 && parseRowsFn) {
+    return <HrReportsView allSheets={allSheets} parseRowsFn={parseRowsFn} />;
+  }
+  return <GeneralReportsView records={records} solutionType={solutionName || solutionType} />;
+}
 
-  // Custom keyword selectors for calculations
-  const [revenueCategory, setRevenueCategory] = useState("Revenue");
-  const [expenseCategory, setExpenseCategory] = useState("Expense");
-  const [assetCategory, setAssetCategory] = useState("Asset");
-  const [liabilityCategory, setLiabilityCategory] = useState("Liability");
+function GeneralReportsView({ records = [], solutionType }: { records: Record<string, any>[]; solutionType: string }) {
+  const [activeReport, setActiveReport] = useState<"summary" | "category">("summary");
+  const [customSelectedFields, setCustomSelectedFields] = useState<string[]>([]);
 
-  const [isEditingCategories, setIsEditingCategories] = useState(false);
+  const allHeaders = useMemo(() => {
+    if (records.length === 0) return [];
+    return Object.keys(records[0]).filter(
+      (k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_")
+    );
+  }, [records]);
 
-  // Accounting / Financial statement calculations (completely data-driven)
-  const financialTotals = useMemo(() => {
-    let totalRevenue = 0;
-    let totalExpenses = 0;
-    let totalAssets = 0;
-    let totalLiabilities = 0;
+  useEffect(() => {
+    if (customSelectedFields.length === 0 && allHeaders.length > 0) {
+      setCustomSelectedFields(allHeaders.slice(0, 5));
+    }
+  }, [allHeaders]);
 
-    records.forEach((r) => {
-      const amount = Number(
-        r["Amount ($)"] || r.Amount || r["Value ($)"] || r.Value || r.value || 0
-      );
-      const cat = String(
-        r["Account Category"] || r.Category || r.type || r.Type || ""
-      ).toLowerCase();
+  const summaryData = useMemo(() => {
+    const total = records.length;
+    const active = records.filter((r) => String(r.Status || r.status).toLowerCase() === "active").length;
+    const pending = records.filter((r) => String(r.Status || r.status).toLowerCase() === "pending").length;
+    const archived = records.filter((r) => String(r.Status || r.status).toLowerCase() === "archived").length;
 
-      if (
-        cat.includes(revenueCategory.toLowerCase()) ||
-        cat.includes("revenue") ||
-        cat.includes("income") ||
-        cat.includes("sales") ||
-        cat.includes("credit")
-      ) {
-        totalRevenue += amount;
-      } else if (
-        cat.includes(expenseCategory.toLowerCase()) ||
-        cat.includes("expense") ||
-        cat.includes("cost") ||
-        cat.includes("debit") ||
-        cat.includes("rent") ||
-        cat.includes("infrastructure")
-      ) {
-        totalExpenses += amount;
-      } else if (cat.includes(assetCategory.toLowerCase()) || cat.includes("asset")) {
-        totalAssets += amount;
-      } else if (
-        cat.includes(liabilityCategory.toLowerCase()) ||
-        cat.includes("liability") ||
-        cat.includes("debt")
-      ) {
-        totalLiabilities += amount;
-      }
-    });
+    const cats = new Set(records.map((r) => r.Category || r.category).filter(Boolean));
+    const locs = new Set(records.map((r) => r.Location || r.location).filter(Boolean));
 
     return {
-      totalRevenue,
-      totalExpenses,
-      netCashFlow: totalRevenue - totalExpenses,
-      totalAssets,
-      totalLiabilities,
-      ownerEquity: totalAssets - totalLiabilities,
+      total,
+      active,
+      pending,
+      archived,
+      categoriesCount: cats.size,
+      locationsCount: locs.size
     };
-  }, [records, revenueCategory, expenseCategory, assetCategory, liabilityCategory]);
-
-  // Audit / Risk metrics (completely data-driven)
-  const auditStats = useMemo(() => {
-    const totalAudits = records.length;
-    let highRisk = 0;
-    let mediumRisk = 0;
-    let lowRisk = 0;
-    let completed = 0;
-    let openFindings = 0;
-
-    records.forEach((r) => {
-      const risk = String(r["Risk Classification"] || r.Risk || r.risk || "").toLowerCase();
-      const status = String(r.Status || r.status || "").toLowerCase();
-
-      if (risk.includes("high")) highRisk++;
-      else if (risk.includes("medium")) mediumRisk++;
-      else if (risk.includes("low")) lowRisk++;
-
-      if (
-        status.includes("completed") ||
-        status.includes("done") ||
-        status.includes("cleared")
-      )
-        completed++;
-      if (r.Findings && String(r.Findings).trim().length > 0) openFindings++;
-    });
-
-    return { totalAudits, highRisk, mediumRisk, lowRisk, completed, openFindings };
   }, [records]);
 
-  // Compliance policy checks
-  const complianceStats = useMemo(() => {
-    const totalRequirements = records.length;
-    let compliant = 0;
-    let nonCompliant = 0;
-    let underReview = 0;
-
+  const categoryBreakdown = useMemo(() => {
+    const map: Record<string, { count: number; active: number; archived: number }> = {};
     records.forEach((r) => {
-      const status = String(
-        r["Compliance Status"] || r.Status || r.status || ""
-      ).toLowerCase();
-      if (status.includes("compliant") && !status.includes("non")) compliant++;
-      else if (status.includes("non")) nonCompliant++;
-      else if (status.includes("review") || status.includes("pending")) underReview++;
+      const cat = r.Category || r.category || "Unassigned";
+      if (!map[cat]) {
+        map[cat] = { count: 0, active: 0, archived: 0 };
+      }
+      map[cat].count++;
+      const st = String(r.Status || r.status).toLowerCase();
+      if (st === "active") map[cat].active++;
+      if (st === "archived") map[cat].archived++;
     });
-
-    const compliantRate = totalRequirements
-      ? Math.round((compliant / totalRequirements) * 100)
-      : 0;
-
-    return { totalRequirements, compliant, nonCompliant, underReview, compliantRate };
-  }, [records]);
-
-  // General operational generic aggregator
-  const operationalStats = useMemo(() => {
-    const counts: Record<string, number> = {};
-    records.forEach((r) => {
-      const key = String(r.Category || r.Status || r.status || "General");
-      counts[key] = (counts[key] || 0) + 1;
-    });
-    return Object.entries(counts).map(([name, count]) => ({ name, count }));
+    return Object.entries(map).map(([name, stats]) => ({ name, ...stats }));
   }, [records]);
 
   const handleExportCSV = () => {
-    const rows = [
-      ["Metric", "Value"],
-      ["Total Revenue", financialTotals.totalRevenue],
-      ["Total Expenses", financialTotals.totalExpenses],
-      ["Net Cash Flow", financialTotals.netCashFlow],
-      ["Total Assets", financialTotals.totalAssets],
-      ["Total Liabilities", financialTotals.totalLiabilities],
-      ["Owner Equity", financialTotals.ownerEquity],
-      ["High Risk Findings", auditStats.highRisk],
-      ["Medium Risk Findings", auditStats.mediumRisk],
-      ["Completed Reviews", auditStats.completed],
-      ["Compliance Rate (%)", complianceStats.compliantRate],
-    ];
-    const csv = rows.map((r) => r.join(",")).join("\n");
-    downloadBlob(new Blob([csv], { type: "text/csv;charset=utf-8" }), `${solutionName || "report"}.csv`);
+    const headers = customSelectedFields.length > 0 ? customSelectedFields : allHeaders;
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += headers.join(",") + "\n";
+    records.forEach((r) => {
+      const row = headers.map((h) => `"${String(r[h] ?? "").replace(/"/g, '""')}"`);
+      csvContent += row.join(",") + "\n";
+    });
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Amineva_${solutionType}_${activeReport}_Report.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
   };
 
-  const handleExportJSON = () => {
-    const reportData = {
-      reportType: selectedReport,
-      solutionType,
-      solutionName,
-      timestamp: new Date().toISOString(),
-      financialTotals,
-      auditStats,
-      complianceStats,
-      operationalStats,
-    };
-    downloadBlob(
-      new Blob([JSON.stringify(reportData, null, 2)], { type: "application/json" }),
-      `${solutionName || "report"}.json`
-    );
+  const handlePrint = () => {
+    window.print();
   };
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-muted/20 space-y-6 text-xs">
-      {/* Report Header Banner */}
-      <div className="flex items-center justify-between border-b border-border pb-4 bg-card p-4 rounded-xl border shadow-xs">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border pb-4 gap-4 flex-shrink-0">
         <div>
-          <h2 className="text-sm font-bold text-foreground flex items-center gap-1.5">
-            <FileText className="h-5 w-5 text-accent animate-pulse" /> {solutionName}{" "}
-            Intelligent Report Engine
+          <h2 className="text-xl font-bold text-foreground">
+            {solutionType} Analysis & Reports Hub
           </h2>
-          <p className="text-[11px] text-muted-foreground">
-            Dynamic data-driven ledger totals, risk breakdowns, and compliance ratios
-            calculated in real-time.
+          <p className="text-sm text-muted-foreground">
+            High-fidelity document audit trails, category metrics, and customized report builders.
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex items-center gap-2">
           <button
             onClick={handleExportCSV}
-            className="px-3 py-1.5 border border-border rounded-lg hover:bg-muted font-bold flex items-center gap-1 text-[11px]"
+            className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg font-bold hover:bg-muted text-foreground shadow-sm"
           >
-            <Download className="h-3.5 w-3.5" /> CSV Export
+            <Download className="h-4 w-4 text-accent" /> Export Report CSV
           </button>
           <button
-            onClick={handleExportJSON}
-            className="px-3 py-1.5 bg-accent text-accent-foreground rounded-lg font-bold flex items-center gap-1 hover:bg-accent/90 shadow-sm text-[11px]"
+            onClick={handlePrint}
+            className="flex items-center gap-1.5 px-3 py-2 bg-background border border-border rounded-lg font-bold hover:bg-muted text-foreground shadow-sm"
           >
-            <Download className="h-3.5 w-3.5" /> JSON Statement
+            <Printer className="h-4 w-4 text-muted-foreground" /> Print / Save PDF
           </button>
         </div>
       </div>
 
-      {/* Report selector */}
-      <div className="flex flex-wrap gap-2">
-        {REPORT_TABS.map((tab) => (
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-card p-1.5 border border-border rounded-xl">
+        {[
+          { id: "summary", label: "Registry Summary", icon: BarChart },
+          { id: "category", label: "Category Report", icon: Tag },
+        ].map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setSelectedReport(tab.id)}
-            className={`px-3 py-1.5 rounded-lg border font-bold text-[11px] transition-colors ${
-              selectedReport === tab.id
-                ? "bg-accent text-accent-foreground border-accent"
-                : "bg-card text-muted-foreground border-border hover:bg-muted"
+            onClick={() => setActiveReport(tab.id as any)}
+            className={`flex items-center justify-center gap-2 py-2 rounded-lg font-semibold transition ${
+              activeReport === tab.id
+                ? "bg-accent text-accent-foreground shadow-sm"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
             }`}
           >
-            {tab.label}
+            <tab.icon className="h-3.5 w-3.5" />
+            <span>{tab.label}</span>
           </button>
         ))}
       </div>
 
-      {/* Categories Configurator */}
-      <div className="bg-card border border-border rounded-xl p-5 shadow-xs space-y-4">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="font-bold text-foreground text-xs flex items-center gap-1.5">
-              <Sparkles className="h-4 w-4 text-accent animate-pulse" /> Custom Report
-              Category Filters
+      {activeReport === "summary" && (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total Records</span>
+              <div className="text-3xl font-extrabold text-foreground">{summaryData.total}</div>
+              <p className="text-[11px] text-muted-foreground pt-1">All multi-category records synchronized in workspace.</p>
+            </div>
+            <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Active Folders</span>
+              <div className="text-3xl font-extrabold text-emerald-600">{summaryData.active}</div>
+              <p className="text-[11px] text-muted-foreground pt-1">Current operational & verified records.</p>
+            </div>
+            <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
+              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Categories & Locations</span>
+              <div className="text-3xl font-extrabold text-purple-600">
+                {summaryData.categoriesCount} <span className="text-sm font-semibold text-muted-foreground">cats</span> / {summaryData.locationsCount} <span className="text-sm font-semibold text-muted-foreground">locs</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground pt-1">Dynamically mapped sectors and geological hubs.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {activeReport === "category" && (
+        <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+          <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
+            <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
+              <Tag className="h-4 w-4 text-purple-500" /> Category Analysis Index
             </h3>
-            <p className="text-[11px] text-muted-foreground">
-              Define custom keywords for Profit &amp; Loss or Asset/Liability balance
-              sheets matching your spreadsheet rows.
-            </p>
+            <span className="bg-accent/15 text-accent font-bold px-2 py-0.5 rounded text-[10px]">
+              {categoryBreakdown.length} Categories Mapped
+            </span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
+                  <th className="p-3">Category Name</th>
+                  <th className="p-3">Total Registered Records</th>
+                  <th className="p-3">Active Records</th>
+                  <th className="p-3">Archived Records</th>
+                  <th className="p-3">Sustained Ratio</th>
+                </tr>
+              </thead>
+              <tbody>
+                {categoryBreakdown.map((cat, i) => (
+                  <tr key={i} className="border-b border-border/60 hover:bg-muted/10">
+                    <td className="p-3 font-bold text-foreground capitalize">{cat.name}</td>
+                    <td className="p-3 font-medium text-foreground">{cat.count} records</td>
+                    <td className="p-3 text-emerald-600 font-semibold">{cat.active}</td>
+                    <td className="p-3 text-muted-foreground">{cat.archived}</td>
+                    <td className="p-3 font-bold text-foreground">
+                      {cat.count > 0 ? Math.round((cat.active / cat.count) * 100) : 0}%
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function HrReportsView({
+  allSheets,
+  parseRowsFn
+}: {
+  allSheets: any[];
+  parseRowsFn: (sheet: any) => Record<string, any>[];
+}) {
+  const [activeReport, setActiveReport] = useState<"directory" | "departments" | "attendance">("directory");
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const REPORTS_LIST = [
+    { id: "directory", label: "Employee Directory", desc: "Detailed listing of active profiles and contacts.", icon: Users },
+    { id: "departments", label: "Department Summary", desc: "Aggregated headcounts and distributions per unit.", icon: Building2 },
+    { id: "attendance", label: "Attendance Report", desc: "Overview of punctuality, working hours, and statuses.", icon: Clock },
+  ] as const;
+
+  const sheetData = useMemo(() => {
+    const dataMap: Record<string, any[]> = {};
+    const sheetNames = ["Employees", "Departments", "Attendance"];
+
+    sheetNames.forEach((name) => {
+      const sheet = allSheets.find((s) => s.name === name);
+      dataMap[name] = sheet ? parseRowsFn(sheet) : [];
+    });
+
+    return dataMap;
+  }, [allSheets, parseRowsFn]);
+
+  const reportContent = useMemo(() => {
+    const q = searchQuery.toLowerCase();
+
+    switch (activeReport) {
+      case "directory": {
+        const list = (sheetData.Employees || []).filter((emp) =>
+          String(emp["Full Name"] || emp["Employee Name"] || "").toLowerCase().includes(q) ||
+          String(emp["Email"] || "").toLowerCase().includes(q) ||
+          String(emp["Department"] || "").toLowerCase().includes(q)
+        );
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-foreground">Employee Directory</h3>
+            <div className="overflow-x-auto border border-border rounded-xl bg-card">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-muted/30 border-b border-border text-muted-foreground uppercase font-bold text-[10px]">
+                    <th className="p-3 pl-5">Emp ID</th>
+                    <th className="p-3">Full Name</th>
+                    <th className="p-3">Email</th>
+                    <th className="p-3">Department</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {list.length > 0 ? (
+                    list.map((emp, i) => (
+                      <tr key={i} className="hover:bg-muted/10 text-foreground font-medium">
+                        <td className="p-3 pl-5 font-bold text-[11px] text-muted-foreground">{emp["Employee ID"]}</td>
+                        <td className="p-3 text-foreground font-semibold">{emp["Full Name"]}</td>
+                        <td className="p-3">{emp["Email"]}</td>
+                        <td className="p-3">{emp["Department"]}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={4} className="p-8 text-center text-muted-foreground italic">No matches.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      }
+
+      case "departments": {
+        const counts: Record<string, number> = {};
+        (sheetData.Employees || []).forEach((emp) => {
+          const d = emp["Department"] || "Unassigned";
+          counts[d] = (counts[d] || 0) + 1;
+        });
+
+        const list = (sheetData.Departments || []).filter((dept) =>
+          String(dept["Department Name"] || "").toLowerCase().includes(q)
+        );
+
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-foreground">Department Summary Report</h3>
+            <div className="overflow-x-auto border border-border rounded-xl bg-card">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-muted/30 border-b border-border text-muted-foreground uppercase font-bold text-[10px]">
+                    <th className="p-3 pl-5">Dept Code</th>
+                    <th className="p-3">Department Name</th>
+                    <th className="p-3">Headcount</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {list.length > 0 ? (
+                    list.map((dept, i) => {
+                      const name = dept["Department Name"];
+                      return (
+                        <tr key={i} className="hover:bg-muted/10 text-foreground font-medium">
+                          <td className="p-3 pl-5 font-bold text-muted-foreground">{dept["Department Code"]}</td>
+                          <td className="p-3 text-foreground font-semibold">{name}</td>
+                          <td className="p-3 font-bold text-emerald-600">{counts[name] || 0} Employees</td>
+                        </tr>
+                      );
+                    })
+                  ) : (
+                    <tr>
+                      <td colSpan={3} className="p-8 text-center text-muted-foreground italic">No matches.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      }
+
+      case "attendance": {
+        const list = (sheetData.Attendance || []).filter((att) =>
+          String(att["Employee Name"] || "").toLowerCase().includes(q)
+        );
+
+        return (
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-foreground">Daily Attendance Metrics</h3>
+            <div className="overflow-x-auto border border-border rounded-xl bg-card">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead>
+                  <tr className="bg-muted/30 border-b border-border text-muted-foreground uppercase font-bold text-[10px]">
+                    <th className="p-3 pl-5">Emp ID</th>
+                    <th className="p-3">Employee Name</th>
+                    <th className="p-3">Date</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/50">
+                  {list.length > 0 ? (
+                    list.map((att, i) => (
+                      <tr key={i} className="hover:bg-muted/10 text-foreground font-medium">
+                        <td className="p-3 pl-5 font-bold text-muted-foreground">{att["Employee ID"]}</td>
+                        <td className="p-3 font-semibold">{att["Employee Name"]}</td>
+                        <td className="p-3">{att["Date"]}</td>
+                      </tr>
+                    ))
+                  ) : (
+                    <tr>
+                      <td colSpan={3} className="p-8 text-center text-muted-foreground italic">No matches.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        );
+      }
+    }
+  }, [activeReport, searchQuery, sheetData]);
+
+  return (
+    <div className="flex-1 flex overflow-hidden bg-muted/10 select-none">
+      <div className="w-72 bg-card border-r border-border flex flex-col flex-shrink-0">
+        <div className="p-4 border-b border-border flex-shrink-0 bg-muted/15">
+          <h2 className="text-xs font-bold text-foreground flex items-center gap-2">
+            <FileText className="h-4 w-4 text-accent" /> HR Reports Center
+          </h2>
+          <p className="text-[11px] text-muted-foreground mt-1">
+            Analyze and visualize real-time HR operations indicators.
+          </p>
+        </div>
+        <div className="flex-1 overflow-y-auto p-2 space-y-1">
+          {REPORTS_LIST.map((rep) => (
+            <button
+              key={rep.id}
+              onClick={() => {
+                setActiveReport(rep.id as any);
+                setSearchQuery("");
+              }}
+              className={`w-full p-3 text-left rounded-lg flex items-start gap-3 transition ${
+                activeReport === rep.id
+                  ? "bg-accent/15 border-l-4 border-accent"
+                  : "hover:bg-muted/30"
+              }`}
+            >
+              <rep.icon className={`h-4 w-4 mt-0.5 flex-shrink-0 ${activeReport === rep.id ? "text-accent" : "text-muted-foreground"}`} />
+              <div className="min-w-0">
+                <div className={`text-xs font-bold ${activeReport === rep.id ? "text-accent" : "text-foreground"}`}>
+                  {rep.label}
+                </div>
+                <div className="text-[10px] text-muted-foreground truncate mt-0.5">{rep.desc}</div>
+              </div>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex-1 flex flex-col overflow-hidden">
+        <div className="h-12 bg-card border-b border-border flex items-center justify-between px-6 flex-shrink-0">
+          <div className="relative w-64">
+            <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
+            <input
+              type="text"
+              placeholder="Search reports registry..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="w-full text-xs pl-8 pr-3 py-1.5 rounded-lg border border-border bg-background focus:outline-none"
+            />
           </div>
           <button
-            onClick={() => setIsEditingCategories(!isEditingCategories)}
-            className="text-accent hover:underline font-bold flex items-center gap-1 text-[11px]"
+            onClick={() => window.print()}
+            className="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold bg-background hover:bg-muted flex items-center gap-1.5"
           >
-            <Edit3 className="h-3.5 w-3.5" />{" "}
-            {isEditingCategories ? "Lock Category Rules" : "Customize Calculations"}
+            <Printer className="h-3.5 w-3.5" /> Print Report
           </button>
         </div>
 
-        {isEditingCategories && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-3 bg-muted/40 rounded-lg border">
-            {[
-              { label: "Revenue Keyword", value: revenueCategory, set: setRevenueCategory },
-              { label: "Expense Keyword", value: expenseCategory, set: setExpenseCategory },
-              { label: "Asset Keyword", value: assetCategory, set: setAssetCategory },
-              {
-                label: "Liability Keyword",
-                value: liabilityCategory,
-                set: setLiabilityCategory,
-              },
-            ].map((f) => (
-              <div key={f.label} className="space-y-1">
-                <label className="text-[10px] font-bold text-muted-foreground uppercase">
-                  {f.label}
-                </label>
-                <input
-                  type="text"
-                  value={f.value}
-                  onChange={(e) => f.set(e.target.value)}
-                  className="w-full text-[11px] p-1.5 border rounded bg-background"
-                />
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Report bodies */}
-      <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
-        {selectedReport === "summary" && (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <SummaryTile label="Total Records" value={records.length} tone="text-foreground" />
-            <SummaryTile
-              label="Net Cash Flow"
-              value={`$${financialTotals.netCashFlow.toLocaleString()}`}
-              tone={
-                financialTotals.netCashFlow >= 0 ? "text-emerald-600" : "text-rose-600"
-              }
-            />
-            <SummaryTile
-              label="High Risk Findings"
-              value={auditStats.highRisk}
-              tone="text-rose-600"
-            />
-            <SummaryTile
-              label="Compliance Rate"
-              value={`${complianceStats.compliantRate}%`}
-              tone="text-emerald-600"
-            />
-          </div>
-        )}
-
-        {selectedReport === "income_statement" && (
-          <div className="space-y-4">
-            <h3 className="font-bold text-foreground text-sm border-b pb-2 flex items-center gap-1.5">
-              <DollarSign className="h-4 w-4 text-emerald-500" /> Income Statement (Profit
-              &amp; Loss)
-            </h3>
-
-            <div className="space-y-3 font-semibold">
-              <div className="flex justify-between border-b py-2 bg-muted/20 px-2.5 rounded">
-                <span className="font-bold text-foreground uppercase text-[10px]">
-                  {revenueCategory} (Total Income)
-                </span>
-                <span className="text-emerald-600 font-extrabold">
-                  ${financialTotals.totalRevenue.toLocaleString()}
-                </span>
-              </div>
-              <div className="flex justify-between border-b py-2 bg-muted/20 px-2.5 rounded">
-                <span className="font-bold text-foreground uppercase text-[10px]">
-                  {expenseCategory} (Total Expenses)
-                </span>
-                <span className="text-rose-500 font-extrabold">
-                  (${financialTotals.totalExpenses.toLocaleString()})
-                </span>
-              </div>
-              <div className="flex justify-between border-b py-3 px-2.5 rounded bg-accent/5">
-                <span className="font-black text-foreground uppercase">
-                  Net Profit Margin
-                </span>
-                <span
-                  className={`font-black ${
-                    financialTotals.netCashFlow >= 0 ? "text-emerald-600" : "text-rose-600"
-                  }`}
-                >
-                  ${financialTotals.netCashFlow.toLocaleString()}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {selectedReport === "balance_sheet" && (
-          <div className="space-y-4">
-            <h3 className="font-bold text-foreground text-sm border-b pb-2 flex items-center gap-1.5">
-              <Layers className="h-4 w-4 text-blue-500" /> Balance Sheet Summary
-            </h3>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 border rounded-lg bg-muted/20 space-y-2">
-                <span className="font-bold text-foreground uppercase text-[10px]">
-                  {assetCategory} Assets
-                </span>
-                <div className="text-lg font-bold text-blue-600">
-                  ${financialTotals.totalAssets.toLocaleString()}
-                </div>
-              </div>
-              <div className="p-4 border rounded-lg bg-muted/20 space-y-2">
-                <span className="font-bold text-foreground uppercase text-[10px]">
-                  {liabilityCategory} Liabilities
-                </span>
-                <div className="text-lg font-bold text-rose-500">
-                  ${financialTotals.totalLiabilities.toLocaleString()}
-                </div>
-              </div>
-            </div>
-
-            <div className="flex justify-between border-t border-border pt-4 bg-accent/5 p-3 rounded font-semibold">
-              <span className="font-black text-foreground uppercase">
-                Net Worth (Owner&apos;s Equity)
-              </span>
-              <span className="font-black text-emerald-600">
-                ${financialTotals.ownerEquity.toLocaleString()}
-              </span>
-            </div>
-          </div>
-        )}
-
-        {selectedReport === "audit_findings" && (
-          <div className="space-y-4">
-            <h3 className="font-bold text-foreground text-sm border-b pb-2 flex items-center gap-1.5">
-              <Briefcase className="h-4 w-4 text-amber-500" /> Audit Risks Checklist
-            </h3>
-
-            <div className="grid grid-cols-3 gap-3 text-center">
-              <div className="p-3 bg-rose-50 border border-rose-100 rounded-lg">
-                <div className="text-rose-600 font-bold uppercase text-[9px]">
-                  High Risk Findings
-                </div>
-                <div className="text-xl font-bold mt-1 text-rose-700">
-                  {auditStats.highRisk}
-                </div>
-              </div>
-              <div className="p-3 bg-amber-50 border border-amber-100 rounded-lg">
-                <div className="text-amber-600 font-bold uppercase text-[9px]">
-                  Medium Risk
-                </div>
-                <div className="text-xl font-bold mt-1 text-amber-700">
-                  {auditStats.mediumRisk}
-                </div>
-              </div>
-              <div className="p-3 bg-emerald-50 border border-emerald-100 rounded-lg">
-                <div className="text-emerald-600 font-bold uppercase text-[9px]">
-                  Completed reviews
-                </div>
-                <div className="text-xl font-bold mt-1 text-emerald-700">
-                  {auditStats.completed}
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {selectedReport === "compliance_status" && (
-          <div className="space-y-4">
-            <h3 className="font-bold text-foreground text-sm border-b pb-2 flex items-center gap-1.5">
-              <ShieldCheck className="h-4 w-4 text-emerald-500" /> Regulatory Compliance
-              Ratings
-            </h3>
-
-            <div className="p-4 rounded-xl border border-border flex items-center justify-between">
-              <div>
-                <span className="text-[10px] font-bold uppercase text-muted-foreground">
-                  Compliance Rating
-                </span>
-                <div className="text-2xl font-bold mt-1 text-emerald-600">
-                  {complianceStats.compliantRate}% Compliant
-                </div>
-              </div>
-              <div className="h-10 w-32 bg-muted rounded-full overflow-hidden border">
-                <div
-                  className="bg-emerald-500 h-full transition-all"
-                  style={{ width: `${complianceStats.compliantRate}%` }}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-3 gap-2 text-center text-[10px] font-semibold text-muted-foreground uppercase">
-              <div className="p-2.5 border rounded">
-                Compliant:{" "}
-                <span className="text-emerald-600 font-extrabold">
-                  {complianceStats.compliant}
-                </span>
-              </div>
-              <div className="p-2.5 border rounded">
-                Non-Compliant:{" "}
-                <span className="text-rose-600 font-extrabold">
-                  {complianceStats.nonCompliant}
-                </span>
-              </div>
-              <div className="p-2.5 border rounded">
-                Under Review:{" "}
-                <span className="text-amber-600 font-extrabold">
-                  {complianceStats.underReview}
-                </span>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {selectedReport === "operations_activity" && (
-          <div className="space-y-4">
-            <h3 className="font-bold text-foreground text-sm border-b pb-2 flex items-center gap-1.5">
-              <Layers className="h-4 w-4 text-purple-500" /> Operations Category Breakdown
-            </h3>
-
-            <div className="space-y-2">
-              {operationalStats.map((item, i) => (
-                <div key={i} className="flex justify-between border-b py-2 px-1">
-                  <span className="font-bold text-foreground">{item.name}</span>
-                  <span className="text-accent font-bold">{item.count} Rows</span>
-                </div>
-              ))}
-              {operationalStats.length === 0 && (
-                <div className="text-center text-muted-foreground py-6">
-                  No categorical data found in spreadsheet.
-                </div>
-              )}
-            </div>
-          </div>
-        )}
+        <div className="flex-1 overflow-y-auto p-6 bg-card/10">
+          {reportContent}
+        </div>
       </div>
     </div>
   );
-}
-
-function SummaryTile({
-  label,
-  value,
-  tone,
-}: {
-  label: string;
-  value: string | number;
-  tone: string;
-}) {
-  return (
-    <div className="bg-muted/20 border border-border p-4 rounded-xl space-y-1">
-      <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
-        {label}
-      </span>
-      <div className={`text-2xl font-extrabold ${tone}`}>{value}</div>
-    </div>
-  );
-}
-
-function downloadBlob(blob: Blob, filename: string) {
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = filename.replace(/[^a-z0-9-_.]+/gi, "_");
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }

@@ -92,7 +92,7 @@ export function OverviewPage() {
             </p>
 
             <div className="grid md:grid-cols-2 gap-6 mt-6">
-              <EcoCard icon={Sparkles} title="Odeneho AI"
+              <EcoCard icon={Sparkles} title="Dipa AI"
                 desc="Intelligent companion for research, writing, planning, documentation, storytelling, knowledge systems, and data analysis." />
               <EcoCard icon={CloudSun} title="Agyenkwa"
                 desc="Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, transport resilience, and operational risk." />

@@ -62,7 +62,7 @@ function seedDefaultDocs(): WorkspaceDocument[] {
             content: [
               {
                 type: "text",
-                text: "Amineva Docs works seamlessly online or offline. Create, edit, export, and collaborate on your documents with Odeneho AI assistance."
+                text: "Amineva Docs works seamlessly online or offline. Create, edit, export, and collaborate on your documents with Dipa AI assistance."
               }
             ]
           }

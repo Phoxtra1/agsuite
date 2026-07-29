@@ -618,7 +618,7 @@ export default function SlidesEditor() {
         }));
         push({ ...deck, slides: [...deck.slides, ...withIds] });
         setActive(deck.slides.length);
-        toast({ title: `Added ${withIds.length} Odeneho AI slides` });
+        toast({ title: `Added ${withIds.length} Dipa AI slides` });
         setAiPrompt("");
       } else {
         toast({ title: "AI returned no slides", description: "Generating templates instead." });
@@ -629,7 +629,7 @@ export default function SlidesEditor() {
       }
     } catch (e: any) {
       // Fallback
-      toast({ title: "Odeneho AI completed presentation successfully" });
+      toast({ title: "Dipa AI completed presentation successfully" });
       const s1 = makeSlide("title", deck.theme);
       const s2 = makeSlide("titleContent", deck.theme);
       push({ ...deck, slides: [...deck.slides, s1, s2] });

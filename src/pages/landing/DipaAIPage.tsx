@@ -11,7 +11,7 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.08, duration: 0.5 } }),
 };
 
-const OdenehoAIPage: FC = () => {
+const DipaAIPage: FC = () => {
   const capabilities = [
     { icon: Search, title: "Research & Analysis", desc: "Deep, source-grounded research across domains with citation-ready synthesis and comparative analysis." },
     { icon: BarChart3, title: "Data Insights", desc: "Turn raw datasets into clear narratives — patterns, correlations, and forecasts you can act on." },
@@ -47,14 +47,14 @@ const OdenehoAIPage: FC = () => {
               <Brain className="h-4 w-4" /> Intelligent AI Companion
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6">
-              Meet Odeneho AI.<br />
+              Meet Dipa AI.<br />
               <span className="text-accent">Knowledge, Reimagined.</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto mb-8">
               An intelligent AI companion for research, writing, planning, documentation, storytelling, knowledge systems, and data analysis — rooted in African knowledge and built for the world.
             </p>
             <a href="#capabilities" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg">
-              Explore Odeneho <ArrowRight className="h-5 w-5" />
+              Explore Dipa <ArrowRight className="h-5 w-5" />
             </a>
           </motion.div>
         </div>
@@ -62,7 +62,7 @@ const OdenehoAIPage: FC = () => {
 
       <section className="max-w-7xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
-          <span className="text-sm font-semibold text-accent uppercase tracking-wider">The Odeneho Mind</span>
+          <span className="text-sm font-semibold text-accent uppercase tracking-wider">The Dipa Mind</span>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Six Pillars of Intelligence</h2>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -80,7 +80,7 @@ const OdenehoAIPage: FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
             <span className="text-sm font-semibold text-accent uppercase tracking-wider">Capabilities</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">What Odeneho AI Does</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">What Dipa AI Does</h2>
             <p className="text-muted-foreground max-w-2xl mx-auto mt-3">
               From deep research to creative narration — one companion across the full spectrum of knowledge work.
             </p>
@@ -104,8 +104,8 @@ const OdenehoAIPage: FC = () => {
         </div>
         <div className="grid md:grid-cols-3 gap-8">
           {[
-            { step: "01", title: "Ask Anything", desc: "Pose a question, brief, or creative prompt — in any voice or language Odeneho understands.", icon: Search },
-            { step: "02", title: "Explore Deeply", desc: "Odeneho researches, synthesizes, and connects ideas across data, history, and culture.", icon: Brain },
+            { step: "01", title: "Ask Anything", desc: "Pose a question, brief, or creative prompt — in any voice or language Dipa understands.", icon: Search },
+            { step: "02", title: "Explore Deeply", desc: "Dipa researches, synthesizes, and connects ideas across data, history, and culture.", icon: Brain },
             { step: "03", title: "Create & Share", desc: "Receive structured, narrated, or written outputs ready for publication, planning, or performance.", icon: Sparkles },
           ].map((s, i) => (
             <motion.div key={s.step} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="relative p-8 rounded-2xl border border-border bg-card">
@@ -121,7 +121,7 @@ const OdenehoAIPage: FC = () => {
       <section className="bg-secondary py-20 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground">Why Odeneho AI?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">Why Dipa AI?</h2>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             {[
@@ -144,9 +144,9 @@ const OdenehoAIPage: FC = () => {
 
       <section className="py-20 px-6 bg-gradient-to-r from-primary to-primary/90 text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Begin Your Journey with Odeneho</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Begin Your Journey with Dipa</h2>
           <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-            Join thinkers, creators, and researchers using Odeneho AI to explore knowledge, craft stories, and shape the future.
+            Join thinkers, creators, and researchers using Dipa AI to explore knowledge, craft stories, and shape the future.
           </p>
           <a href="#capabilities" className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg">
             Get Started <ArrowRight className="h-5 w-5" />
@@ -157,4 +157,4 @@ const OdenehoAIPage: FC = () => {
   );
 };
 
-export default OdenehoAIPage;
+export default DipaAIPage;

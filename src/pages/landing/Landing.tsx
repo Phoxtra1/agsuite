@@ -5,7 +5,7 @@ import { ChevronDown, Menu, X } from "lucide-react";
 import amvLogo from "@/assets/amv_global_logo.png";
 
 const apps: Array<{ label: string; to: string; external?: boolean }> = [
-  { label: "Odeneho AI", to: "/apps/odeneho-ai" },
+  { label: "Dipa AI", to: "/apps/dipa-ai" },
   { label: "Nyansa", to: "/apps/agstock" },
   { label: "Agyenkwa", to: "/apps/agroclimate" },
   { label: "Adesua", to: "/apps/adesua" },
