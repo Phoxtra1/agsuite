@@ -3,27 +3,19 @@ import {
   GitBranch,
   Calendar as CalendarIcon,
   Clock,
-  Layers,
   Search,
   Plus,
   ArrowRight,
   User,
   CheckCircle2,
   AlertTriangle,
-  Play,
-  Briefcase,
   SlidersHorizontal,
   BellRing,
   Bookmark,
   Users,
-  FolderKanban,
-  FileSpreadsheet,
-  FileText,
   Building2,
-  Trash2,
   MessageSquare,
   Sparkles,
-  RefreshCcw,
   Zap
 } from "lucide-react";
 
@@ -35,7 +27,6 @@ interface TasksViewProps {
   meetings?: any[];
 }
 
-// Comments store in state for each task
 interface TaskComment {
   id: string;
   author: string;
@@ -50,10 +41,8 @@ export default function TasksView({
   onOpenMeetingModal,
   meetings = []
 }: TasksViewProps) {
-  const [activeTab, setActiveTab] = useState<"kanban" | "calendar" | "timeline" | "list">("kanban");
   const [search, setSearch] = useState("");
   const [selectedTaskIndex, setSelectedTaskIndex] = useState<number | null>(null);
-  const [isEditing, setIsEditing] = useState(false);
 
   // Filters state
   const [filterAssigned, setFilterAssigned] = useState("All");
@@ -88,18 +77,94 @@ export default function TasksView({
     ]
   });
 
-  // Future expansion settings (Toggles)
-  const [recurringEnabled, setRecurringEnabled] = useState(false);
-  const [timeTrackingEnabled, setTimeTrackingEnabled] = useState(false);
-  const [subtasksEnabled, setSubtasksEnabled] = useState(false);
+  // Dynamic analysis of spreadsheet headers
+  const sheetAnalysis = useMemo(() => {
+    const headers = records.length > 0 ? Object.keys(records[0]).filter(k => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_")) : [];
+    const lower = headers.map(h => h.toLowerCase().trim());
 
-  const KANBAN_COLUMNS = [
-    "Not Started",
-    "In Progress",
-    "Waiting",
-    "Under Review",
-    "Completed"
-  ];
+    // Find the exact header names matching capabilities
+    const findHeader = (matches: string[]) => {
+      return headers.find(h => matches.some(m => h.toLowerCase().trim() === m || h.toLowerCase().trim().includes(m))) || null;
+    };
+
+    const taskNameHeader = findHeader(["task name", "task", "name", "title"]) || headers[1] || headers[0] || "Task Name";
+    const statusHeader = findHeader(["status", "state", "pipeline"]);
+    const priorityHeader = findHeader(["priority", "level", "urgency"]);
+    const assignedHeader = findHeader(["assigned to", "assignee", "owner", "assigned"]);
+    const startDateHeader = findHeader(["start date", "starts"]);
+    const dueDateHeader = findHeader(["due date", "deadline", "ends", "end date"]);
+    const progressHeader = findHeader(["progress", "progress (%)", "completion"]);
+    const categoryHeader = findHeader(["category", "type"]);
+    const departmentHeader = findHeader(["department", "dept"]);
+    const teamHeader = findHeader(["team"]);
+    const descHeader = findHeader(["description", "desc"]);
+    const notesHeader = findHeader(["notes", "note"]);
+    const taskIdHeader = findHeader(["task id", "id"]);
+    const completionHeader = findHeader(["completion date", "completed on"]);
+    const estDurationHeader = findHeader(["estimated duration", "estimated hours", "est hours"]);
+    const actDurationHeader = findHeader(["actual duration", "actual hours"]);
+    const tagsHeader = findHeader(["tags", "tag"]);
+
+    return {
+      headers,
+      taskNameHeader,
+      statusHeader,
+      priorityHeader,
+      assignedHeader,
+      startDateHeader,
+      dueDateHeader,
+      progressHeader,
+      categoryHeader,
+      departmentHeader,
+      teamHeader,
+      descHeader,
+      notesHeader,
+      taskIdHeader,
+      completionHeader,
+      estDurationHeader,
+      actDurationHeader,
+      tagsHeader,
+
+      // Capabilities flags
+      hasStatus: !!statusHeader,
+      hasPriority: !!priorityHeader,
+      hasAssigned: !!assignedHeader,
+      hasDates: !!dueDateHeader || !!startDateHeader,
+      hasProgress: !!progressHeader,
+      hasCategory: !!categoryHeader,
+      hasDepartment: !!departmentHeader,
+      hasTeam: !!teamHeader,
+      hasDescription: !!descHeader,
+      hasNotes: !!notesHeader,
+      hasTaskId: !!taskIdHeader,
+      hasTags: !!tagsHeader
+    };
+  }, [records]);
+
+  // Available Sub-tabs inside Tasks View generated dynamically based on capabilities
+  const availableTabs = useMemo(() => {
+    const tabs: { id: "kanban" | "calendar" | "timeline" | "list"; label: string; icon: any }[] = [];
+    if (sheetAnalysis.hasStatus) {
+      tabs.push({ id: "kanban", label: "Kanban Board", icon: GitBranch });
+    }
+    if (sheetAnalysis.hasDates) {
+      tabs.push({ id: "calendar", label: "Calendar View", icon: CalendarIcon });
+      tabs.push({ id: "timeline", label: "Timeline View", icon: Clock });
+    }
+    tabs.push({ id: "list", label: "Task List & Filters", icon: SlidersHorizontal });
+    return tabs;
+  }, [sheetAnalysis]);
+
+  // Set default active sub-tab depending on what's available
+  const [activeTab, setActiveTab] = useState<"kanban" | "calendar" | "timeline" | "list">("list");
+
+  // Update activeTab if the current one is no longer available in the tabs list
+  const resolvedTab = useMemo(() => {
+    if (availableTabs.some(t => t.id === activeTab)) {
+      return activeTab;
+    }
+    return availableTabs[0]?.id || "list";
+  }, [activeTab, availableTabs]);
 
   const PRIORITIES = ["Low", "Medium", "High", "Critical"];
 
@@ -116,72 +181,63 @@ export default function TasksView({
 
   // Helper: check if task is overdue
   const isOverdue = (task: Record<string, any>) => {
-    const dueStr = task["Due Date"] || task.dueDate || "";
+    if (!sheetAnalysis.dueDateHeader) return false;
+    const dueStr = task[sheetAnalysis.dueDateHeader] || "";
     if (!dueStr) return false;
     const dueDate = new Date(dueStr);
-    const today = new Date("2026-04-14"); // Baseline reference date for project consistency
-    const status = task["Status"] || task.status || "Not Started";
+    const today = new Date("2026-04-14"); // Baseline reference date for consistency
+    const status = sheetAnalysis.statusHeader ? task[sheetAnalysis.statusHeader] : "Not Started";
     return dueDate < today && status !== "Completed";
   };
 
-  // Helper: map internal fields safely
-  const getTaskField = (task: Record<string, any>, fields: string[]): string => {
-    for (const f of fields) {
-      if (task[f] !== undefined) return String(task[f]);
-    }
-    return "";
-  };
-
-  // Extract unique users, teams, and departments for filter dropdowns
+  // Map unique dropdown filter values dynamically
   const uniqueUsers = useMemo(() => {
+    if (!sheetAnalysis.assignedHeader) return [];
     const users = new Set<string>();
     records.forEach((r) => {
-      const u = r["Assigned To"] || r.assignedTo;
-      if (u) users.add(u);
+      const u = r[sheetAnalysis.assignedHeader!];
+      if (u) users.add(String(u));
     });
     return Array.from(users);
-  }, [records]);
+  }, [records, sheetAnalysis.assignedHeader]);
 
-  const uniqueTeams = useMemo(() => {
-    const teams = new Set<string>();
+  const uniqueCategories = useMemo(() => {
+    if (!sheetAnalysis.categoryHeader) return [];
+    const cats = new Set<string>();
     records.forEach((r) => {
-      const t = r["Team"] || r.team;
-      if (t) teams.add(t);
+      const c = r[sheetAnalysis.categoryHeader!];
+      if (c) cats.add(String(c));
     });
-    return Array.from(teams);
-  }, [records]);
+    return Array.from(cats);
+  }, [records, sheetAnalysis.categoryHeader]);
 
   const uniqueDepartments = useMemo(() => {
+    if (!sheetAnalysis.departmentHeader) return [];
     const depts = new Set<string>();
     records.forEach((r) => {
-      const d = r["Department"] || r.department;
-      if (d) depts.add(d);
+      const d = r[sheetAnalysis.departmentHeader!];
+      if (d) depts.add(String(d));
     });
     return Array.from(depts);
-  }, [records]);
+  }, [records, sheetAnalysis.departmentHeader]);
 
-  // Main task parsing & sorting
+  // Main task parsing
   const preparedTasks = useMemo(() => {
     return records.map((r) => {
-      const taskName = getTaskField(r, ["Task Name", "Task", "Name", "Title"]);
-      const status = getTaskField(r, ["Status", "status", "State"]);
-      const priority = getTaskField(r, ["Priority", "priority", "Level"]);
-      const assignedTo = getTaskField(r, ["Assigned To", "assignedTo", "Owner"]);
-      const dueDate = getTaskField(r, ["Due Date", "dueDate", "End Date"]);
-      const startDate = getTaskField(r, ["Start Date", "startDate"]);
-      const progressStr = getTaskField(r, ["Progress (%)", "Progress", "progress"]);
-      const progress = parseFloat(progressStr) || 0;
-      const category = getTaskField(r, ["Category", "category"]);
-      const department = getTaskField(r, ["Department", "department"]);
-      const team = getTaskField(r, ["Team", "team"]);
-      const tags = getTaskField(r, ["Tags", "tags"]);
-      const description = getTaskField(r, ["Description", "description"]);
-      const assignedBy = getTaskField(r, ["Assigned By", "assignedBy"]);
-      const taskId = getTaskField(r, ["Task ID", "taskId", "ID", "Id"]);
-      const notes = getTaskField(r, ["Notes", "notes"]);
-      const completionDate = getTaskField(r, ["Completion Date", "completionDate"]);
-      const estimatedDuration = parseFloat(getTaskField(r, ["Estimated Duration", "estimatedDuration"])) || 0;
-      const actualDuration = parseFloat(getTaskField(r, ["Actual Duration", "actualDuration"])) || 0;
+      const taskName = String(r[sheetAnalysis.taskNameHeader] || "");
+      const status = sheetAnalysis.statusHeader ? String(r[sheetAnalysis.statusHeader] || "Not Started") : "";
+      const priority = sheetAnalysis.priorityHeader ? String(r[sheetAnalysis.priorityHeader] || "Medium") : "";
+      const assignedTo = sheetAnalysis.assignedHeader ? String(r[sheetAnalysis.assignedHeader] || "Unassigned") : "";
+      const dueDate = sheetAnalysis.dueDateHeader ? String(r[sheetAnalysis.dueDateHeader] || "") : "";
+      const startDate = sheetAnalysis.startDateHeader ? String(r[sheetAnalysis.startDateHeader] || "") : "";
+      const progress = sheetAnalysis.progressHeader ? (parseFloat(r[sheetAnalysis.progressHeader]) || 0) : 0;
+      const category = sheetAnalysis.categoryHeader ? String(r[sheetAnalysis.categoryHeader] || "Projects") : "";
+      const department = sheetAnalysis.departmentHeader ? String(r[sheetAnalysis.departmentHeader] || "") : "";
+      const team = sheetAnalysis.teamHeader ? String(r[sheetAnalysis.teamHeader] || "") : "";
+      const tags = sheetAnalysis.tagsHeader ? String(r[sheetAnalysis.tagsHeader] || "") : "";
+      const description = sheetAnalysis.descHeader ? String(r[sheetAnalysis.descHeader] || "") : "";
+      const notes = sheetAnalysis.notesHeader ? String(r[sheetAnalysis.notesHeader] || "") : "";
+      const taskId = sheetAnalysis.taskIdHeader ? String(r[sheetAnalysis.taskIdHeader] || "") : "";
 
       return {
         ...r,
@@ -197,18 +253,14 @@ export default function TasksView({
         team,
         tags,
         description,
-        assignedBy,
-        taskId,
         notes,
-        completionDate,
-        estimatedDuration,
-        actualDuration,
-        _isOverdue: isOverdue({ ...r, Status: status, "Due Date": dueDate })
+        taskId,
+        _isOverdue: isOverdue(r)
       };
     });
-  }, [records]);
+  }, [records, sheetAnalysis]);
 
-  // Apply filters and lists sub-view filter
+  // Apply search and filters
   const filteredTasks = useMemo(() => {
     return preparedTasks.filter((t) => {
       // 1. Text Search
@@ -221,10 +273,10 @@ export default function TasksView({
 
       if (!matchSearch) return false;
 
-      // 2. Main list sub-views (My, Team, Overdue, Completed)
-      if (listSubView === "my" && t.assignedTo !== "Jules Agent") return false;
+      // 2. Sub view filters (My Tasks etc)
+      if (listSubView === "my" && sheetAnalysis.hasAssigned && t.assignedTo !== "Jules Agent") return false;
       if (listSubView === "team" && !t.team) return false;
-      if (listSubView === "completed" && t.status !== "Completed") return false;
+      if (listSubView === "completed" && sheetAnalysis.hasStatus && t.status !== "Completed") return false;
       if (listSubView === "overdue" && !t._isOverdue) return false;
 
       // 3. Dropdown filters
@@ -236,9 +288,10 @@ export default function TasksView({
 
       return true;
     });
-  }, [preparedTasks, search, listSubView, filterAssigned, filterPriority, filterStatus, filterCategory, filterDepartment]);
+  }, [preparedTasks, search, listSubView, filterAssigned, filterPriority, filterStatus, filterCategory, filterDepartment, sheetAnalysis]);
 
-  // Kanban tasks grouping
+  // Kanban groups
+  const KANBAN_COLUMNS = ["Not Started", "In Progress", "Waiting", "Under Review", "Completed"];
   const kanbanGroups = useMemo(() => {
     const groups: Record<string, typeof filteredTasks> = {};
     KANBAN_COLUMNS.forEach((col) => {
@@ -246,7 +299,6 @@ export default function TasksView({
     });
     filteredTasks.forEach((t) => {
       let matchedCol = t.status || "Not Started";
-      // Normalize statuses to match Columns
       if (matchedCol === "Planned") matchedCol = "Not Started";
       if (matchedCol === "Blocked" || matchedCol === "Waiting") matchedCol = "Waiting";
       if (matchedCol === "Under Review") matchedCol = "Under Review";
@@ -261,32 +313,21 @@ export default function TasksView({
     return groups;
   }, [filteredTasks]);
 
-  // Task selection details
   const selectedTask = useMemo(() => {
     if (selectedTaskIndex === null) return null;
     return preparedTasks.find((t) => t.rowIndex === selectedTaskIndex) || null;
   }, [preparedTasks, selectedTaskIndex]);
 
-  // Move task via button click (simulating Kanban drag and drop)
   const handleMoveTaskStatus = (rowIndex: number, nextStatus: string) => {
-    onUpdateRecord(rowIndex, "Status", nextStatus);
-    // Log Activity
-    const dateStr = new Date().toISOString().slice(0, 16).replace("T", " ");
-    setActivityHistory((prev) => ({
-      ...prev,
-      [rowIndex]: [
-        ...(prev[rowIndex] || []),
-        `Status updated to ${nextStatus} via Kanban interface [${dateStr}]`
-      ]
-    }));
-    // Auto-update Progress (%) if completed
-    if (nextStatus === "Completed") {
-      onUpdateRecord(rowIndex, "Progress (%)", 100);
-      onUpdateRecord(rowIndex, "Completion Date", "2026-04-14");
+    if (sheetAnalysis.statusHeader) {
+      onUpdateRecord(rowIndex, sheetAnalysis.statusHeader, nextStatus);
+    }
+    // Auto progress update if completed
+    if (nextStatus === "Completed" && sheetAnalysis.progressHeader) {
+      onUpdateRecord(rowIndex, sheetAnalysis.progressHeader, 100);
     }
   };
 
-  // Add Comment
   const handleAddComment = (e: React.FormEvent, rowIndex: number) => {
     e.preventDefault();
     if (!newCommentText.trim()) return;
@@ -303,51 +344,38 @@ export default function TasksView({
     setNewCommentText("");
   };
 
-  // Add a fully customized new task
   const handleAddNewTask = () => {
     const nextIdNum = records.length + 1;
-    const defaultNew = {
-      "Task ID": `TSK-00${nextIdNum}`,
-      "Task Name": "New Task Name",
-      Description: "Add a brief description here...",
-      Category: "Projects",
-      "Assigned To": "Jules Agent",
-      "Assigned By": "Ebenezer Ocloo",
-      Department: "Projects",
-      Team: "Development Team",
-      Priority: "Medium",
-      Status: "Not Started",
-      "Start Date": "2026-04-14",
-      "Due Date": "2026-04-21",
-      "Completion Date": "",
-      "Estimated Duration": 8,
-      "Actual Duration": 0,
-      "Progress (%)": 0,
-      Tags: "new,tasks",
-      Notes: ""
-    };
+    const defaultNew: Record<string, any> = {};
+    sheetAnalysis.headers.forEach(h => {
+      defaultNew[h] = "";
+    });
+
+    // Populate key headers with mock defaults if available
+    defaultNew[sheetAnalysis.taskNameHeader] = "New Task Name";
+    if (sheetAnalysis.statusHeader) defaultNew[sheetAnalysis.statusHeader] = "Not Started";
+    if (sheetAnalysis.priorityHeader) defaultNew[sheetAnalysis.priorityHeader] = "Medium";
+    if (sheetAnalysis.assignedHeader) defaultNew[sheetAnalysis.assignedHeader] = "Jules Agent";
+    if (sheetAnalysis.taskIdHeader) defaultNew[sheetAnalysis.taskIdHeader] = `TSK-00${nextIdNum}`;
+    if (sheetAnalysis.progressHeader) defaultNew[sheetAnalysis.progressHeader] = 0;
+
     onAddRecord(defaultNew);
   };
 
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-muted/10">
-      {/* Task Module Sub-Header */}
+      {/* Sub-Header Tabs */}
       <div className="h-12 bg-card border-b border-border flex items-center justify-between px-6 flex-shrink-0 z-10 shadow-sm">
         <div className="flex items-center gap-1.5">
-          {[
-            { id: "kanban", label: "Kanban Board", icon: GitBranch },
-            { id: "calendar", label: "Calendar View", icon: CalendarIcon },
-            { id: "timeline", label: "Timeline View", icon: Clock },
-            { id: "list", label: "Task List & Filters", icon: SlidersHorizontal }
-          ].map((t) => (
+          {availableTabs.map((t) => (
             <button
               key={t.id}
               onClick={() => {
-                setActiveTab(t.id as any);
+                setActiveTab(t.id);
                 setSelectedTaskIndex(null);
               }}
               className={`flex items-center gap-2 px-3 h-8 rounded-lg text-xs font-semibold transition ${
-                activeTab === t.id
+                resolvedTab === t.id
                   ? "bg-accent/10 text-accent"
                   : "text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
@@ -358,7 +386,7 @@ export default function TasksView({
           ))}
         </div>
 
-        {/* Global directory search */}
+        {/* Global Directory Search */}
         <div className="relative w-64">
           <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
           <input
@@ -371,71 +399,82 @@ export default function TasksView({
         </div>
       </div>
 
-      {/* Advanced Filter Bar for List and General views */}
+      {/* Advanced dynamic filters based on sheet columns */}
       <div className="bg-card border-b border-border/60 px-6 py-2.5 flex flex-wrap items-center justify-between gap-3 flex-shrink-0 text-xs">
         <div className="flex flex-wrap items-center gap-2">
-          {/* List Sub Views */}
+          {/* List Sub views */}
           <div className="flex items-center rounded-lg border border-border bg-muted/50 p-0.5 mr-2">
-            {[
-              { id: "all", label: "All Tasks" },
-              { id: "my", label: "My Tasks" },
-              { id: "team", label: "Team Tasks" },
-              { id: "completed", label: "Completed" },
-              { id: "overdue", label: "Overdue" }
-            ].map((sub) => (
+            <button
+              onClick={() => setListSubView("all")}
+              className={`px-2.5 py-1 rounded text-[10px] font-semibold transition ${listSubView === "all" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+            >
+              All Tasks
+            </button>
+            {sheetAnalysis.hasAssigned && (
               <button
-                key={sub.id}
-                onClick={() => setListSubView(sub.id as any)}
-                className={`px-2.5 py-1 rounded text-[10px] font-semibold transition ${
-                  listSubView === sub.id
-                    ? "bg-card text-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
+                onClick={() => setListSubView("my")}
+                className={`px-2.5 py-1 rounded text-[10px] font-semibold transition ${listSubView === "my" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
               >
-                {sub.label}
+                My Tasks
               </button>
-            ))}
+            )}
+            {sheetAnalysis.hasStatus && (
+              <button
+                onClick={() => setListSubView("completed")}
+                className={`px-2.5 py-1 rounded text-[10px] font-semibold transition ${listSubView === "completed" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+              >
+                Completed
+              </button>
+            )}
+            {sheetAnalysis.hasDates && (
+              <button
+                onClick={() => setListSubView("overdue")}
+                className={`px-2.5 py-1 rounded text-[10px] font-semibold transition ${listSubView === "overdue" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+              >
+                Overdue
+              </button>
+            )}
           </div>
 
-          {/* Quick Dropdowns */}
-          <select
-            value={filterAssigned}
-            onChange={(e) => setFilterAssigned(e.target.value)}
-            className="border border-border rounded-md px-2 py-1 bg-background text-[11px] focus:outline-none"
-          >
-            <option value="All">Assigned: All</option>
-            {uniqueUsers.map((u) => (
-              <option key={u} value={u}>
-                {u}
-              </option>
-            ))}
-          </select>
+          {/* Render filters dynamically only if headers exist in sheet columns */}
+          {sheetAnalysis.hasAssigned && (
+            <select
+              value={filterAssigned}
+              onChange={(e) => setFilterAssigned(e.target.value)}
+              className="border border-border rounded-md px-2 py-1 bg-background text-[11px] focus:outline-none"
+            >
+              <option value="All">Assigned: All</option>
+              {uniqueUsers.map((u) => (
+                <option key={u} value={u}>{u}</option>
+              ))}
+            </select>
+          )}
 
-          <select
-            value={filterPriority}
-            onChange={(e) => setFilterPriority(e.target.value)}
-            className="border border-border rounded-md px-2 py-1 bg-background text-[11px] focus:outline-none"
-          >
-            <option value="All">Priority: All</option>
-            {PRIORITIES.map((p) => (
-              <option key={p} value={p}>
-                {p}
-              </option>
-            ))}
-          </select>
+          {sheetAnalysis.hasPriority && (
+            <select
+              value={filterPriority}
+              onChange={(e) => setFilterPriority(e.target.value)}
+              className="border border-border rounded-md px-2 py-1 bg-background text-[11px] focus:outline-none"
+            >
+              <option value="All">Priority: All</option>
+              {PRIORITIES.map((p) => (
+                <option key={p} value={p}>{p}</option>
+              ))}
+            </select>
+          )}
 
-          <select
-            value={filterCategory}
-            onChange={(e) => setFilterCategory(e.target.value)}
-            className="border border-border rounded-md px-2 py-1 bg-background text-[11px] focus:outline-none"
-          >
-            <option value="All">Category: All</option>
-            {CATEGORIES.map((c) => (
-              <option key={c} value={c}>
-                {c}
-              </option>
-            ))}
-          </select>
+          {sheetAnalysis.hasCategory && (
+            <select
+              value={filterCategory}
+              onChange={(e) => setFilterCategory(e.target.value)}
+              className="border border-border rounded-md px-2 py-1 bg-background text-[11px] focus:outline-none"
+            >
+              <option value="All">Category: All</option>
+              {uniqueCategories.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          )}
         </div>
 
         <button
@@ -446,10 +485,10 @@ export default function TasksView({
         </button>
       </div>
 
-      {/* Main Task view templates */}
+      {/* Main Views Container */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Kanban Board View */}
-        {activeTab === "kanban" && (
+        {/* Kanban Board tab */}
+        {resolvedTab === "kanban" && sheetAnalysis.hasStatus && (
           <div className="flex-1 overflow-x-auto p-6 flex gap-4 items-start select-none">
             {KANBAN_COLUMNS.map((col) => (
               <div
@@ -482,56 +521,56 @@ export default function TasksView({
                   {kanbanGroups[col]?.map((task) => (
                     <div
                       key={task.rowIndex}
-                      onClick={() => {
-                        setSelectedTaskIndex(task.rowIndex);
-                        setIsEditing(false);
-                      }}
+                      onClick={() => setSelectedTaskIndex(task.rowIndex)}
                       className="p-3 rounded-lg border border-border bg-card shadow-sm hover:border-accent/40 cursor-pointer transition space-y-2"
                     >
                       <div className="flex items-center justify-between gap-1">
                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">
-                          {task.taskId || "TSK-TASK"}
+                          {task.taskId || `ROW-${task.rowIndex}`}
                         </span>
-                        <span
-                          className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
-                            task.priority === "Critical"
-                              ? "bg-rose-100 text-rose-700 border border-rose-200"
-                              : task.priority === "High"
-                              ? "bg-amber-100 text-amber-700 border border-amber-200"
-                              : "bg-blue-100 text-blue-700 border border-blue-200"
-                          }`}
-                        >
-                          {task.priority || "Medium"}
-                        </span>
+                        {sheetAnalysis.hasPriority && (
+                          <span
+                            className={`text-[9px] px-1.5 py-0.5 rounded font-bold uppercase tracking-wider ${
+                              task.priority === "Critical"
+                                ? "bg-rose-100 text-rose-700 border border-rose-200"
+                                : task.priority === "High"
+                                ? "bg-amber-100 text-amber-700 border border-amber-200"
+                                : "bg-blue-100 text-blue-700 border border-blue-200"
+                            }`}
+                          >
+                            {task.priority || "Medium"}
+                          </span>
+                        )}
                       </div>
                       <div className="font-semibold text-xs text-foreground line-clamp-2">
                         {task.taskName}
                       </div>
-                      {task.description && (
+                      {sheetAnalysis.hasDescription && task.description && (
                         <p className="text-[11px] text-muted-foreground line-clamp-2">{task.description}</p>
                       )}
-                      <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                        <User className="h-3 w-3" />
-                        <span className="truncate">{task.assignedTo || "Unassigned"}</span>
-                      </div>
+                      {sheetAnalysis.hasAssigned && (
+                        <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                          <User className="h-3 w-3" />
+                          <span className="truncate">{task.assignedTo || "Unassigned"}</span>
+                        </div>
+                      )}
 
                       {/* Progress bar */}
-                      <div className="space-y-1 pt-1">
-                        <div className="flex justify-between text-[9px] text-muted-foreground font-medium">
-                          <span>Progress</span>
-                          <span>{task.progress}%</span>
+                      {sheetAnalysis.hasProgress && (
+                        <div className="space-y-1 pt-1">
+                          <div className="flex justify-between text-[9px] text-muted-foreground font-medium">
+                            <span>Progress</span>
+                            <span>{task.progress}%</span>
+                          </div>
+                          <div className="w-full bg-muted rounded-full h-1">
+                            <div className="bg-accent h-1 rounded-full" style={{ width: `${task.progress}%` }} />
+                          </div>
                         </div>
-                        <div className="w-full bg-muted rounded-full h-1">
-                          <div
-                            className="bg-accent h-1 rounded-full"
-                            style={{ width: `${task.progress}%` }}
-                          />
-                        </div>
-                      </div>
+                      )}
 
                       <div className="flex items-center justify-between pt-2 border-t border-border/40 mt-1">
                         <span className="text-[10px] font-semibold text-slate-500">
-                          Due: {task.dueDate || "No Date"}
+                          {sheetAnalysis.dueDateHeader ? `Due: ${task.dueDate}` : ""}
                         </span>
                         <div className="flex items-center gap-1">
                           <button
@@ -543,7 +582,6 @@ export default function TasksView({
                               }
                             }}
                             className="h-5 w-5 rounded bg-muted hover:bg-accent/15 hover:text-accent flex items-center justify-center text-muted-foreground transition"
-                            title="Move status forward"
                           >
                             <ArrowRight className="h-3 w-3" />
                           </button>
@@ -562,36 +600,26 @@ export default function TasksView({
           </div>
         )}
 
-        {/* Calendar View */}
-        {activeTab === "calendar" && (
+        {/* Calendar View tab */}
+        {resolvedTab === "calendar" && sheetAnalysis.hasDates && (
           <div className="flex-1 p-6 flex flex-col overflow-hidden space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-foreground">Interactive Tasks Scheduler</h3>
-              <p className="text-xs text-muted-foreground">Tasks are grouped by Start Date and Due Date deadlines.</p>
-            </div>
             <div className="flex-1 grid grid-cols-1 md:grid-cols-3 gap-6 overflow-hidden">
-              {/* Calendar Grid - Simple Interactive Month layout */}
               <div className="md:col-span-2 border border-border bg-card rounded-xl p-4 flex flex-col justify-between">
                 <div className="flex items-center justify-between border-b border-border pb-2 mb-2">
                   <span className="font-bold text-xs text-accent">April 2026</span>
-                  <span className="text-[10px] text-muted-foreground uppercase font-bold">Standard Calendar Mode</span>
                 </div>
                 <div className="grid grid-cols-7 gap-1 text-center font-semibold text-[10px] text-muted-foreground mb-1">
                   {["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"].map((day) => (
-                    <div key={day} className="py-1">
-                      {day}
-                    </div>
+                    <div key={day} className="py-1">{day}</div>
                   ))}
                 </div>
                 <div className="grid grid-cols-7 gap-1 flex-1">
-                  {/* Mock April 2026 starts on Wednesday */}
                   {Array.from({ length: 3 }).map((_, i) => (
                     <div key={`empty-${i}`} className="bg-muted/10 rounded p-1 min-h-[50px]" />
                   ))}
                   {Array.from({ length: 30 }).map((_, idx) => {
                     const dayNum = idx + 1;
                     const dateStr = `2026-04-${dayNum.toString().padStart(2, "0")}`;
-                    // Filter tasks on this date
                     const startTasks = preparedTasks.filter((t) => t.startDate === dateStr);
                     const dueTasks = preparedTasks.filter((t) => t.dueDate === dateStr);
 
@@ -608,8 +636,7 @@ export default function TasksView({
                             <div
                               key={t.rowIndex}
                               onClick={() => setSelectedTaskIndex(t.rowIndex)}
-                              className="bg-blue-100 text-blue-800 text-[8px] font-bold px-1 py-0.5 rounded truncate cursor-pointer hover:bg-blue-200"
-                              title={`Starts: ${t.taskName}`}
+                              className="bg-blue-100 text-blue-800 text-[8px] font-bold px-1 py-0.5 rounded truncate cursor-pointer"
                             >
                               ▶ {t.taskName}
                             </div>
@@ -618,8 +645,7 @@ export default function TasksView({
                             <div
                               key={t.rowIndex}
                               onClick={() => setSelectedTaskIndex(t.rowIndex)}
-                              className="bg-rose-100 text-rose-800 text-[8px] font-bold px-1 py-0.5 rounded truncate cursor-pointer hover:bg-rose-200"
-                              title={`Due: ${t.taskName}`}
+                              className="bg-rose-100 text-rose-800 text-[8px] font-bold px-1 py-0.5 rounded truncate cursor-pointer"
                             >
                               ⏳ {t.taskName}
                             </div>
@@ -631,21 +657,21 @@ export default function TasksView({
                 </div>
               </div>
 
-              {/* Deadline & Scheduled Meetings summary list */}
+              {/* Deadline listing */}
               <div className="border border-border bg-card rounded-xl p-4 flex flex-col overflow-y-auto space-y-4">
                 <div>
                   <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5 mb-2 border-b border-border pb-1.5">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Upcoming Activities
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500" /> Upcoming Deadlines
                   </h4>
                   <div className="space-y-2">
                     {filteredTasks.slice(0, 4).map((task) => (
                       <div
                         key={task.rowIndex}
                         onClick={() => setSelectedTaskIndex(task.rowIndex)}
-                        className="p-2.5 rounded-lg border border-border bg-muted/20 hover:border-accent/40 cursor-pointer transition text-[11px] space-y-1"
+                        className="p-2.5 rounded-lg border border-border bg-muted/20 hover:border-accent/40 cursor-pointer transition text-[11px]"
                       >
                         <div className="font-semibold text-foreground truncate">{task.taskName}</div>
-                        <div className="text-muted-foreground flex items-center justify-between">
+                        <div className="text-muted-foreground flex justify-between mt-1">
                           <span>Starts: {task.startDate || "N/A"}</span>
                           <span className="font-bold text-rose-600">Due: {task.dueDate || "N/A"}</span>
                         </div>
@@ -654,74 +680,42 @@ export default function TasksView({
                   </div>
                 </div>
 
-                {/* Calendar Online meetings integration */}
-                <div>
-                  <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5 mb-2 border-b border-border pb-1.5">
-                    <CalendarIcon className="h-4 w-4 text-accent" /> Scheduled Task Meetings
-                  </h4>
-                  <div className="space-y-2">
-                    {meetings.length > 0 ? (
-                      meetings.map((m) => (
-                        <div key={m.id} className="p-2.5 rounded-lg border border-border/80 bg-muted/10 text-[11px] space-y-1">
-                          <div className="font-semibold text-foreground">{m.title}</div>
-                          <div className="text-muted-foreground flex justify-between">
-                            <span>{m.date}</span>
-                            <span className="text-accent font-semibold">{m.provider}</span>
-                          </div>
-                          <a
-                            href={m.meetingLink}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="text-[10px] text-accent font-bold hover:underline block pt-1"
-                          >
-                            Launch Meeting Link →
-                          </a>
+                {meetings.length > 0 && (
+                  <div>
+                    <h4 className="font-bold text-xs text-foreground flex items-center gap-1.5 mb-2 border-b border-border pb-1.5">
+                      <CalendarIcon className="h-4 w-4 text-accent" /> Scheduled Meetings
+                    </h4>
+                    <div className="space-y-2 text-[11px]">
+                      {meetings.map((m) => (
+                        <div key={m.id} className="p-2 rounded-lg border bg-muted/10">
+                          <div className="font-semibold">{m.title}</div>
+                          <div className="text-muted-foreground text-[10px] mt-0.5">{m.date} &bull; {m.provider}</div>
                         </div>
-                      ))
-                    ) : (
-                      <div className="text-center py-4 text-[10px] text-muted-foreground italic">
-                        No active meetings scheduled for this task list. Click Collaborate menu to schedule!
-                      </div>
-                    )}
+                      ))}
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </div>
           </div>
         )}
 
-        {/* Timeline Gantt View */}
-        {activeTab === "timeline" && (
+        {/* Timeline Gantt View tab */}
+        {resolvedTab === "timeline" && sheetAnalysis.hasDates && (
           <div className="flex-1 p-6 flex flex-col space-y-4 overflow-hidden">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-sm font-bold text-foreground">Lightweight Timeline & Gantt Chart</h3>
-                <p className="text-xs text-muted-foreground">Suitable for visual schedule planning and resource allocations.</p>
-              </div>
-              <div className="text-[11px] bg-slate-100 text-slate-700 px-2.5 py-1 rounded border font-semibold flex items-center gap-1.5">
-                <Bookmark className="h-3 w-3" /> Baseline: Q2 2026
-              </div>
-            </div>
-
             <div className="flex-1 border border-border bg-card rounded-xl p-4 overflow-auto">
               <div className="min-w-[650px] space-y-4">
-                {/* Timeline Header Row */}
                 <div className="grid grid-cols-12 gap-2 text-center text-[10px] font-bold text-muted-foreground border-b border-border pb-2 bg-muted/30 p-1.5 rounded-lg">
                   <div className="col-span-4 text-left pl-2">Task Title</div>
-                  <div className="col-span-2">Estimated Days</div>
-                  <div className="col-span-2">Progress</div>
-                  <div className="col-span-4 text-left">April 2026 Visual Map</div>
+                  <div className="col-span-2">Average Progress</div>
+                  <div className="col-span-6 text-left">April 2026 Visual Map</div>
                 </div>
 
-                {/* Tasks Timeline Mapping */}
                 <div className="divide-y divide-border/50">
                   {filteredTasks.map((t) => {
-                    const durationStr = t["Estimated Duration"] || t.estimatedDuration || "8";
-                    const duration = parseInt(durationStr) || 8;
                     const startDayNum = parseInt(t.startDate?.split("-")[2] || "1");
                     const endDayNum = parseInt(t.dueDate?.split("-")[2] || "15");
 
-                    // Map days to timeline offsets
                     const startPercent = Math.min(80, Math.max(0, (startDayNum / 30) * 100));
                     const widthPercent = Math.min(100 - startPercent, Math.max(15, ((endDayNum - startDayNum) / 30) * 100));
 
@@ -734,21 +728,13 @@ export default function TasksView({
                         <div className="col-span-4 pl-2 font-bold text-foreground truncate" title={t.taskName}>
                           {t.taskName}
                         </div>
-                        <div className="col-span-2 text-center font-medium text-slate-600">
-                          {duration} Hrs ({Math.ceil(duration / 8)} Days)
-                        </div>
                         <div className="col-span-2 text-center font-bold text-emerald-600">
-                          {t.progress}%
+                          {sheetAnalysis.hasProgress ? `${t.progress}%` : "Tracked"}
                         </div>
-                        <div className="col-span-4 relative h-6 bg-muted/40 rounded-md overflow-hidden border border-border/40">
-                          {/* Colored visual bar */}
+                        <div className="col-span-6 relative h-6 bg-muted/40 rounded-md overflow-hidden border border-border/40">
                           <div
                             className={`absolute h-full rounded flex items-center pl-2 text-[9px] font-bold text-white transition ${
-                              t.priority === "Critical"
-                                ? "bg-rose-500"
-                                : t.priority === "High"
-                                ? "bg-amber-500"
-                                : "bg-accent"
+                              t.priority === "Critical" ? "bg-rose-500" : t.priority === "High" ? "bg-amber-500" : "bg-accent"
                             }`}
                             style={{
                               left: `${startPercent}%`,
@@ -756,7 +742,7 @@ export default function TasksView({
                             }}
                           >
                             <span className="truncate pr-1">
-                              {t.progress}% Done
+                              {t.taskName}
                             </span>
                           </div>
                         </div>
@@ -769,89 +755,70 @@ export default function TasksView({
           </div>
         )}
 
-        {/* Tasks List View with Advanced Filters */}
-        {activeTab === "list" && (
+        {/* Task List tab (always supported) */}
+        {resolvedTab === "list" && (
           <div className="flex-1 p-6 overflow-y-auto space-y-4">
-            <div className="flex items-center justify-between">
-              <h3 className="text-sm font-bold text-foreground">Task Registry List & Workloads</h3>
-              <p className="text-xs text-muted-foreground">Displaying {filteredTasks.length} out of {preparedTasks.length} tasks.</p>
-            </div>
-
             <div className="border border-border bg-card rounded-xl overflow-hidden shadow-sm">
               <table className="w-full text-left text-xs border-collapse">
                 <thead>
                   <tr className="border-b border-border bg-muted/40 text-muted-foreground uppercase font-bold text-[10px]">
                     <th className="p-3 pl-4">Task ID</th>
                     <th className="p-3">Task Name</th>
-                    <th className="p-3">Category</th>
-                    <th className="p-3">Assigned To</th>
-                    <th className="p-3">Priority</th>
-                    <th className="p-3">Status</th>
-                    <th className="p-3">Due Date</th>
-                    <th className="p-3 text-center">Progress</th>
+                    {sheetAnalysis.hasCategory && <th className="p-3">Category</th>}
+                    {sheetAnalysis.hasAssigned && <th className="p-3">Assigned To</th>}
+                    {sheetAnalysis.hasPriority && <th className="p-3">Priority</th>}
+                    {sheetAnalysis.hasStatus && <th className="p-3">Status</th>}
+                    {sheetAnalysis.hasDates && <th className="p-3">Due Date</th>}
+                    {sheetAnalysis.hasProgress && <th className="p-3 text-center">Progress</th>}
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/60">
                   {filteredTasks.map((t) => (
                     <tr
                       key={t.rowIndex}
-                      onClick={() => {
-                        setSelectedTaskIndex(t.rowIndex);
-                        setIsEditing(false);
-                      }}
+                      onClick={() => setSelectedTaskIndex(t.rowIndex)}
                       className="hover:bg-muted/30 cursor-pointer transition"
                     >
-                      <td className="p-3 pl-4 font-bold text-slate-500">{t.taskId}</td>
-                      <td className="p-3 font-semibold text-foreground truncate max-w-[200px]" title={t.taskName}>
+                      <td className="p-3 pl-4 font-bold text-slate-500">
+                        {t.taskId || `ROW-${t.rowIndex}`}
+                      </td>
+                      <td className="p-3 font-semibold text-foreground truncate max-w-[200px]">
                         {t.taskName}
                       </td>
-                      <td className="p-3">
-                        <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
-                          {t.category || "Projects"}
-                        </span>
-                      </td>
-                      <td className="p-3 text-slate-600 font-medium">{t.assignedTo || "Unassigned"}</td>
-                      <td className="p-3">
-                        <span
-                          className={`px-2 py-0.5 rounded font-bold text-[10px] uppercase ${
-                            t.priority === "Critical"
-                              ? "bg-rose-100 text-rose-700"
-                              : t.priority === "High"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-blue-100 text-blue-700"
-                          }`}
-                        >
-                          {t.priority}
-                        </span>
-                      </td>
-                      <td className="p-3">
-                        <span
-                          className={`px-2 py-0.5 rounded font-bold text-[10px] uppercase ${
-                            t.status === "Completed"
-                              ? "bg-emerald-100 text-emerald-700"
-                              : t.status === "In Progress"
-                              ? "bg-amber-100 text-amber-700"
-                              : "bg-slate-100 text-slate-700"
-                          }`}
-                        >
-                          {t.status}
-                        </span>
-                      </td>
-                      <td className="p-3 font-semibold text-slate-500">{t.dueDate}</td>
-                      <td className="p-3 text-center">
-                        <div className="flex items-center gap-1.5 justify-center">
-                          <span className="font-bold text-emerald-600 w-8 text-right">{t.progress}%</span>
-                          <div className="w-16 bg-muted rounded-full h-1.5 hidden sm:block">
-                            <div className="bg-emerald-500 h-1.5 rounded-full" style={{ width: `${t.progress}%` }} />
-                          </div>
-                        </div>
-                      </td>
+                      {sheetAnalysis.hasCategory && (
+                        <td className="p-3">
+                          <span className="bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-medium">
+                            {t.category}
+                          </span>
+                        </td>
+                      )}
+                      {sheetAnalysis.hasAssigned && <td className="p-3 text-slate-600 font-medium">{t.assignedTo}</td>}
+                      {sheetAnalysis.hasPriority && (
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded font-bold text-[10px] uppercase ${t.priority === "Critical" ? "bg-rose-100 text-rose-700" : t.priority === "High" ? "bg-amber-100 text-amber-700" : "bg-blue-100 text-blue-700"}`}>
+                            {t.priority}
+                          </span>
+                        </td>
+                      )}
+                      {sheetAnalysis.hasStatus && (
+                        <td className="p-3">
+                          <span className={`px-2 py-0.5 rounded font-bold text-[10px] uppercase ${t.status === "Completed" ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+                            {t.status}
+                          </span>
+                        </td>
+                      )}
+                      {sheetAnalysis.hasDates && <td className="p-3 font-semibold text-slate-500">{t.dueDate}</td>}
+                      {sheetAnalysis.hasProgress && (
+                        <td className="p-3 text-center">
+                          <span className="font-bold text-emerald-600">{t.progress}%</span>
+                        </td>
+                      )}
                     </tr>
                   ))}
                   {filteredTasks.length === 0 && (
                     <tr>
                       <td colSpan={8} className="p-8 text-center text-muted-foreground italic">
-                        No tasks match your filter criteria or search query.
+                        No tasks found matching your search.
                       </td>
                     </tr>
                   )}
@@ -861,12 +828,12 @@ export default function TasksView({
           </div>
         )}
 
-        {/* Task Details & Discussion Sidebar/Drawer */}
+        {/* Task Details Side drawer (Dynamic based on spreadsheet analysis) */}
         {selectedTask && (
           <div className="w-96 border-l border-border bg-card flex flex-col flex-shrink-0 shadow-lg z-10 animate-in slide-in-from-right-4 duration-150 overflow-y-auto">
             <div className="p-4 border-b border-border flex items-center justify-between">
               <span className="text-xs font-bold text-slate-500 uppercase tracking-wider">
-                Row {selectedTask.rowIndex} &bull; {selectedTask.taskId}
+                Row {selectedTask.rowIndex} {selectedTask.taskId ? `• ${selectedTask.taskId}` : ""}
               </span>
               <button
                 onClick={() => setSelectedTaskIndex(null)}
@@ -876,313 +843,206 @@ export default function TasksView({
               </button>
             </div>
 
-            <div className="p-5 flex-1 space-y-6">
+            <div className="p-5 flex-1 space-y-6 text-xs">
               {/* Task name header */}
               <div>
-                {isEditing ? (
-                  <input
-                    type="text"
-                    value={selectedTask.taskName}
-                    onChange={(e) => onUpdateRecord(selectedTask.rowIndex, "Task Name", e.target.value)}
-                    className="font-bold text-base text-foreground border border-border px-2 py-1 rounded w-full focus:outline-none focus:ring-1 focus:ring-accent"
-                  />
-                ) : (
-                  <h3 className="text-base font-bold text-foreground leading-snug">{selectedTask.taskName}</h3>
+                <input
+                  type="text"
+                  value={selectedTask.taskName}
+                  onChange={(e) => onUpdateRecord(selectedTask.rowIndex, sheetAnalysis.taskNameHeader, e.target.value)}
+                  className="font-bold text-sm text-foreground border border-border px-2 py-1.5 rounded w-full focus:outline-none"
+                />
+                {sheetAnalysis.hasCategory && (
+                  <div className="mt-2.5">
+                    <span className="text-[10px] bg-slate-100 text-slate-700 px-2.5 py-1 rounded font-bold uppercase">
+                      {selectedTask.category}
+                    </span>
+                  </div>
                 )}
-                <div className="flex flex-wrap items-center gap-2 mt-2">
-                  <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold uppercase">
-                    {selectedTask.category || "Projects"}
-                  </span>
-                  <span className="text-[10px] bg-slate-100 text-slate-700 px-2 py-0.5 rounded font-bold uppercase">
-                    {selectedTask.department || "Projects"}
-                  </span>
-                </div>
               </div>
 
-              {/* CRM / Project Association Indicator */}
-              <div className="p-3 rounded-lg border border-border/80 bg-muted/20 space-y-2 text-xs">
-                <div className="flex items-center justify-between">
-                  <span className="font-bold text-slate-700 flex items-center gap-1">
-                    <Building2 className="h-3.5 w-3.5 text-accent" /> Associated CRM Entity
-                  </span>
-                  <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-200 px-1.5 py-0.5 rounded uppercase">
-                    Linked
-                  </span>
-                </div>
-                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                  Linked to Organization: <strong className="text-foreground">Japan International Cooperation Agency (JICA)</strong>
-                  <br />
-                  Linked CRM Record: <strong className="text-foreground">Prepare Partnership Proposal</strong>
+              {/* CRM link details (optional) */}
+              <div className="p-3 rounded-lg border border-border/80 bg-muted/20 space-y-1.5">
+                <span className="font-bold text-slate-700 flex items-center gap-1">
+                  <Building2 className="h-3.5 w-3.5 text-accent" /> Associated CRM Connection
+                </span>
+                <p className="text-[11px] text-muted-foreground">
+                  Task mapped directly with Row {selectedTask.rowIndex} of the spreadsheet structure. Zero delay sync active.
                 </p>
-                <button
-                  onClick={() =>
-                    onOpenMeetingModal({
-                      title: `Strategic Task Review with JICA Team`,
-                      participants: "info@jica.go.jp"
-                    })
-                  }
-                  className="w-full bg-accent/10 hover:bg-accent/15 text-accent font-bold py-1.5 rounded text-[10px] transition mt-1.5"
-                >
-                  Schedule Linked Client Meeting
-                </button>
               </div>
 
-              {/* Task Fields Matrix */}
-              <div className="space-y-3.5 text-xs">
+              {/* Render edit controls dynamically based ONLY on sheet capabilities */}
+              <div className="space-y-4">
                 <h4 className="font-bold text-foreground text-[10px] uppercase tracking-wider text-muted-foreground border-b border-border pb-1">
-                  Task Fields & Synchronizations
+                  Task Fields (Spreadsheet Headers)
                 </h4>
 
                 <div className="grid grid-cols-2 gap-4">
-                  {/* Status selection */}
-                  <div className="space-y-1">
-                    <label className="font-bold text-muted-foreground block text-[10px] uppercase">Status</label>
-                    <select
-                      value={selectedTask.status || "Not Started"}
-                      onChange={(e) => handleMoveTaskStatus(selectedTask.rowIndex, e.target.value)}
-                      className="w-full border border-border rounded-lg p-1.5 bg-background focus:outline-none"
-                    >
-                      {KANBAN_COLUMNS.map((st) => (
-                        <option key={st} value={st}>
-                          {st}
-                        </option>
-                      ))}
-                      <option value="Planned">Planned</option>
-                      <option value="Blocked">Blocked</option>
-                      <option value="Waiting">Waiting</option>
-                      <option value="Cancelled">Cancelled</option>
-                    </select>
-                  </div>
-
-                  {/* Priority selection */}
-                  <div className="space-y-1">
-                    <label className="font-bold text-muted-foreground block text-[10px] uppercase">Priority</label>
-                    <select
-                      value={selectedTask.priority || "Medium"}
-                      onChange={(e) => onUpdateRecord(selectedTask.rowIndex, "Priority", e.target.value)}
-                      className="w-full border border-border rounded-lg p-1.5 bg-background focus:outline-none font-bold"
-                    >
-                      {PRIORITIES.map((p) => (
-                        <option key={p} value={p}>
-                          {p}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-
-                  {/* Assigned To */}
-                  <div className="space-y-1">
-                    <label className="font-bold text-muted-foreground block text-[10px] uppercase">Assigned To</label>
-                    <input
-                      type="text"
-                      value={selectedTask.assignedTo}
-                      onChange={(e) => onUpdateRecord(selectedTask.rowIndex, "Assigned To", e.target.value)}
-                      className="w-full border border-border rounded-lg p-1.5 bg-background focus:outline-none"
-                    />
-                  </div>
-
-                  {/* Assigned By */}
-                  <div className="space-y-1">
-                    <label className="font-bold text-muted-foreground block text-[10px] uppercase">Assigned By</label>
-                    <input
-                      type="text"
-                      value={selectedTask.assignedBy || "Ebenezer Ocloo"}
-                      onChange={(e) => onUpdateRecord(selectedTask.rowIndex, "Assigned By", e.target.value)}
-                      className="w-full border border-border rounded-lg p-1.5 bg-background focus:outline-none"
-                    />
-                  </div>
-
-                  {/* Start Date */}
-                  <div className="space-y-1">
-                    <label className="font-bold text-muted-foreground block text-[10px] uppercase">Start Date</label>
-                    <input
-                      type="date"
-                      value={selectedTask.startDate || ""}
-                      onChange={(e) => onUpdateRecord(selectedTask.rowIndex, "Start Date", e.target.value)}
-                      className="w-full border border-border rounded-lg p-1.5 bg-background focus:outline-none"
-                    />
-                  </div>
-
-                  {/* Due Date */}
-                  <div className="space-y-1">
-                    <label className="font-bold text-muted-foreground block text-[10px] uppercase">Due Date</label>
-                    <input
-                      type="date"
-                      value={selectedTask.dueDate || ""}
-                      onChange={(e) => onUpdateRecord(selectedTask.rowIndex, "Due Date", e.target.value)}
-                      className="w-full border border-border rounded-lg p-1.5 bg-background focus:outline-none"
-                    />
-                  </div>
-
-                  {/* Progress Slider */}
-                  <div className="space-y-1 col-span-2">
-                    <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase">
-                      <span>Progress (%)</span>
-                      <span className="text-accent">{selectedTask.progress}%</span>
+                  {/* Status Selection (only if status column is profiled) */}
+                  {sheetAnalysis.hasStatus && (
+                    <div className="space-y-1">
+                      <label className="font-bold text-muted-foreground text-[10px] uppercase">{sheetAnalysis.statusHeader}</label>
+                      <select
+                        value={selectedTask.status || "Not Started"}
+                        onChange={(e) => handleMoveTaskStatus(selectedTask.rowIndex, e.target.value)}
+                        className="w-full border border-border rounded-lg p-1.5 bg-background focus:outline-none"
+                      >
+                        {KANBAN_COLUMNS.map((st) => (
+                          <option key={st} value={st}>{st}</option>
+                        ))}
+                      </select>
                     </div>
-                    <input
-                      type="range"
-                      min="0"
-                      max="100"
-                      value={selectedTask.progress}
-                      onChange={(e) => onUpdateRecord(selectedTask.rowIndex, "Progress (%)", parseInt(e.target.value))}
-                      className="w-full accent-accent cursor-pointer"
+                  )}
+
+                  {/* Priority (only if priority column is profiled) */}
+                  {sheetAnalysis.hasPriority && (
+                    <div className="space-y-1">
+                      <label className="font-bold text-muted-foreground text-[10px] uppercase">{sheetAnalysis.priorityHeader}</label>
+                      <select
+                        value={selectedTask.priority || "Medium"}
+                        onChange={(e) => onUpdateRecord(selectedTask.rowIndex, sheetAnalysis.priorityHeader!, e.target.value)}
+                        className="w-full border border-border rounded-lg p-1.5 bg-background focus:outline-none"
+                      >
+                        {PRIORITIES.map((p) => (
+                          <option key={p} value={p}>{p}</option>
+                        ))}
+                      </select>
+                    </div>
+                  )}
+
+                  {/* Assignee (only if assigned to column is profiled) */}
+                  {sheetAnalysis.hasAssigned && (
+                    <div className="space-y-1">
+                      <label className="font-bold text-muted-foreground text-[10px] uppercase">{sheetAnalysis.assignedHeader}</label>
+                      <input
+                        type="text"
+                        value={selectedTask.assignedTo}
+                        onChange={(e) => onUpdateRecord(selectedTask.rowIndex, sheetAnalysis.assignedHeader!, e.target.value)}
+                        className="w-full border border-border rounded-lg p-1.5 bg-background focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  {/* Start date */}
+                  {sheetAnalysis.startDateHeader && (
+                    <div className="space-y-1">
+                      <label className="font-bold text-muted-foreground text-[10px] uppercase">{sheetAnalysis.startDateHeader}</label>
+                      <input
+                        type="date"
+                        value={selectedTask.startDate}
+                        onChange={(e) => onUpdateRecord(selectedTask.rowIndex, sheetAnalysis.startDateHeader!, e.target.value)}
+                        className="w-full border border-border rounded-lg p-1.5 bg-background focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  {/* Due date */}
+                  {sheetAnalysis.dueDateHeader && (
+                    <div className="space-y-1">
+                      <label className="font-bold text-muted-foreground text-[10px] uppercase">{sheetAnalysis.dueDateHeader}</label>
+                      <input
+                        type="date"
+                        value={selectedTask.dueDate}
+                        onChange={(e) => onUpdateRecord(selectedTask.rowIndex, sheetAnalysis.dueDateHeader!, e.target.value)}
+                        className="w-full border border-border rounded-lg p-1.5 bg-background focus:outline-none"
+                      />
+                    </div>
+                  )}
+
+                  {/* Progress slider (only if progress column is profiled) */}
+                  {sheetAnalysis.hasProgress && (
+                    <div className="space-y-1 col-span-2">
+                      <div className="flex justify-between text-[10px] font-bold text-muted-foreground uppercase">
+                        <span>{sheetAnalysis.progressHeader}</span>
+                        <span className="text-accent">{selectedTask.progress}%</span>
+                      </div>
+                      <input
+                        type="range"
+                        min="0"
+                        max="100"
+                        value={selectedTask.progress}
+                        onChange={(e) => onUpdateRecord(selectedTask.rowIndex, sheetAnalysis.progressHeader!, parseInt(e.target.value))}
+                        className="w-full accent-accent cursor-pointer"
+                      />
+                    </div>
+                  )}
+                </div>
+
+                {/* Description */}
+                {sheetAnalysis.hasDescription && (
+                  <div className="space-y-1">
+                    <label className="font-bold text-muted-foreground text-[10px] uppercase">{sheetAnalysis.descHeader}</label>
+                    <textarea
+                      value={selectedTask.description}
+                      onChange={(e) => onUpdateRecord(selectedTask.rowIndex, sheetAnalysis.descHeader!, e.target.value)}
+                      rows={2}
+                      className="w-full border border-border rounded-lg p-2 bg-background focus:outline-none"
                     />
                   </div>
-                </div>
+                )}
 
-                {/* Description Textarea */}
-                <div className="space-y-1">
-                  <label className="font-bold text-muted-foreground block text-[10px] uppercase">Description</label>
-                  <textarea
-                    value={selectedTask.description}
-                    onChange={(e) => onUpdateRecord(selectedTask.rowIndex, "Description", e.target.value)}
-                    rows={2}
-                    className="w-full border border-border rounded-lg p-2 bg-background focus:outline-none focus:ring-1 focus:ring-accent leading-normal"
-                    placeholder="Provide a detailed task objective..."
-                  />
-                </div>
-
-                {/* Notes Textarea */}
-                <div className="space-y-1">
-                  <label className="font-bold text-muted-foreground block text-[10px] uppercase">Notes</label>
-                  <textarea
-                    value={selectedTask.notes}
-                    onChange={(e) => onUpdateRecord(selectedTask.rowIndex, "Notes", e.target.value)}
-                    rows={2}
-                    className="w-full border border-border rounded-lg p-2 bg-background focus:outline-none focus:ring-1 focus:ring-accent leading-normal"
-                    placeholder="Optional notes or references..."
-                  />
-                </div>
+                {/* Notes */}
+                {sheetAnalysis.hasNotes && (
+                  <div className="space-y-1">
+                    <label className="font-bold text-muted-foreground text-[10px] uppercase">{sheetAnalysis.notesHeader}</label>
+                    <textarea
+                      value={selectedTask.notes}
+                      onChange={(e) => onUpdateRecord(selectedTask.rowIndex, sheetAnalysis.notesHeader!, e.target.value)}
+                      rows={2}
+                      className="w-full border border-border rounded-lg p-2 bg-background focus:outline-none"
+                    />
+                  </div>
+                )}
               </div>
 
-              {/* Task Comments & Discussions */}
+              {/* Comments (Discussions) */}
               <div className="space-y-3.5 pt-4 border-t border-border">
                 <h4 className="font-bold text-foreground text-[10px] uppercase tracking-wider text-muted-foreground flex items-center justify-between pb-1">
                   <span className="flex items-center gap-1">
                     <MessageSquare className="h-3.5 w-3.5 text-accent" /> Discussions ({comments[selectedTask.rowIndex]?.length || 0})
                   </span>
-                  <span className="text-[9px] text-muted-foreground">Collaborative Feed</span>
                 </h4>
-
-                <div className="space-y-3 max-h-[160px] overflow-y-auto pr-1">
+                <div className="space-y-2.5 max-h-[150px] overflow-y-auto pr-1">
                   {comments[selectedTask.rowIndex]?.map((comment) => (
-                    <div key={comment.id} className="p-2.5 rounded-lg bg-muted/40 border border-border/40 text-[11px] space-y-1 leading-relaxed">
-                      <div className="flex items-center justify-between font-semibold text-foreground">
+                    <div key={comment.id} className="p-2 rounded-lg bg-muted/40 border border-border/40 text-[11px]">
+                      <div className="flex justify-between font-semibold">
                         <span>{comment.author}</span>
-                        <span className="text-[9px] text-muted-foreground font-normal">{comment.timestamp}</span>
+                        <span className="text-[9px] text-muted-foreground">{comment.timestamp}</span>
                       </div>
-                      <p className="text-slate-600 font-medium">{comment.text}</p>
+                      <p className="text-slate-600 mt-0.5">{comment.text}</p>
                     </div>
                   ))}
-                  {(!comments[selectedTask.rowIndex] || comments[selectedTask.rowIndex].length === 0) && (
-                    <p className="text-center text-[10px] text-muted-foreground italic py-2">
-                      No team discussions started yet. Begin the conversation below!
-                    </p>
-                  )}
                 </div>
-
                 <form onSubmit={(e) => handleAddComment(e, selectedTask.rowIndex)} className="flex gap-2">
                   <input
                     type="text"
-                    placeholder="Add feedback..."
+                    placeholder="Add comment..."
                     value={newCommentText}
                     onChange={(e) => setNewCommentText(e.target.value)}
                     className="flex-1 border border-border rounded-lg px-2.5 py-1.5 text-[11px] bg-background focus:outline-none"
                   />
-                  <button
-                    type="submit"
-                    className="bg-accent text-accent-foreground font-bold text-[10px] px-2.5 rounded-lg"
-                  >
+                  <button type="submit" className="bg-accent text-accent-foreground font-bold text-[10px] px-2.5 rounded-lg">
                     Send
                   </button>
                 </form>
               </div>
 
-              {/* Activity Logs & Reminders */}
-              <div className="space-y-3 pt-4 border-t border-border">
-                <h4 className="font-bold text-foreground text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1.5 pb-1">
-                  <BellRing className="h-3.5 w-3.5 text-amber-500" /> Activity Audits & Alarms
-                </h4>
-                <div className="space-y-1.5 text-[10px] text-muted-foreground max-h-[120px] overflow-y-auto pr-1">
-                  {activityHistory[selectedTask.rowIndex]?.map((log, i) => (
-                    <div key={i} className="flex items-start gap-1.5 leading-normal">
-                      <span className="text-accent mt-0.5">&bull;</span>
-                      <span>{log}</span>
-                    </div>
-                  ))}
-                  {(!activityHistory[selectedTask.rowIndex] || activityHistory[selectedTask.rowIndex].length === 0) && (
-                    <p className="italic text-[9px]">No historical audits created for this task yet.</p>
-                  )}
+              {/* Reminders sim */}
+              {sheetAnalysis.hasDates && (
+                <div className="space-y-3 pt-4 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (sheetAnalysis.notesHeader) {
+                        onUpdateRecord(selectedTask.rowIndex, sheetAnalysis.notesHeader, "Deadline reminder alert simulated successfully.");
+                      }
+                    }}
+                    className="w-full border border-amber-300 hover:bg-amber-50 text-amber-700 font-bold py-1.5 rounded-lg text-[10px] transition flex items-center justify-center gap-1.5"
+                  >
+                    <Zap className="h-3.5 w-3.5 text-amber-500 animate-pulse" /> Dispatch Simulated Deadline Reminder
+                  </button>
                 </div>
-
-                {/* Reminder Simulation */}
-                <button
-                  type="button"
-                  onClick={() => {
-                    const todayStr = new Date().toISOString().slice(0, 10);
-                    onUpdateRecord(selectedTask.rowIndex, "Notes", `Reminder generated on ${todayStr} for approaching deadline.`);
-                    setActivityHistory((prev) => ({
-                      ...prev,
-                      [selectedTask.rowIndex]: [
-                        ...(prev[selectedTask.rowIndex] || []),
-                        `Manual deadline reminder alert dispatch simulated successfully.`
-                      ]
-                    }));
-                  }}
-                  className="w-full border border-amber-300 hover:bg-amber-50 text-amber-700 font-bold py-1.5 rounded-lg text-[10px] transition flex items-center justify-center gap-1.5"
-                >
-                  <Zap className="h-3.5 w-3.5 text-amber-500 animate-pulse" /> Dispatch Simulated Deadline Reminder
-                </button>
-              </div>
-
-              {/* Future Modules Architecture Settings Mock Toggle Placeholders */}
-              <div className="space-y-3 pt-4 border-t border-border">
-                <h4 className="font-bold text-foreground text-[10px] uppercase tracking-wider text-muted-foreground flex items-center gap-1 pb-1">
-                  <Sparkles className="h-3.5 w-3.5 text-purple-600" /> Tasks Future Module Sandbox
-                </h4>
-                <div className="space-y-2 text-[11px] text-slate-600 bg-purple-50/50 p-3 rounded-lg border border-purple-100">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Recurring Tasks Pattern</span>
-                    <button
-                      type="button"
-                      onClick={() => setRecurringEnabled(!recurringEnabled)}
-                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded transition ${
-                        recurringEnabled ? "bg-purple-600 text-white" : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {recurringEnabled ? "Enabled" : "Mock Off"}
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Subtasks & Checklists</span>
-                    <button
-                      type="button"
-                      onClick={() => setSubtasksEnabled(!subtasksEnabled)}
-                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded transition ${
-                        subtasksEnabled ? "bg-purple-600 text-white" : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {subtasksEnabled ? "Enabled" : "Mock Off"}
-                    </button>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium">Workload Time Tracking</span>
-                    <button
-                      type="button"
-                      onClick={() => setTimeTrackingEnabled(!timeTrackingEnabled)}
-                      className={`text-[9px] font-bold px-1.5 py-0.5 rounded transition ${
-                        timeTrackingEnabled ? "bg-purple-600 text-white" : "bg-muted text-muted-foreground"
-                      }`}
-                    >
-                      {timeTrackingEnabled ? "Enabled" : "Mock Off"}
-                    </button>
-                  </div>
-                  <div className="text-[10px] text-purple-600/70 pt-1 leading-normal">
-                    * The above structures prepare the layout architecture for seamless integration with upcoming Project Management releases without code modifications.
-                  </div>
-                </div>
-              </div>
+              )}
             </div>
           </div>
         )}

@@ -41,6 +41,24 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
   const [search, setSearch] = useState("");
   const [filterValue, setFilterValue] = useState("all");
 
+  const hasStatusColumn = useMemo(() => {
+    if (!records.length) return false;
+    const keys = Object.keys(records[0]);
+    return keys.some(k => ["status", "state"].some(m => k.toLowerCase().includes(m)));
+  }, [records]);
+
+  const hasNumericColumn = useMemo(() => {
+    if (!records.length) return false;
+    if (solutionType === "CRM") return true;
+    if (solutionType === "Inventory") return true;
+    if (solutionType === "HR") return true;
+    if (solutionType === "Tasks") {
+      const keys = Object.keys(records[0]);
+      return keys.some(k => ["progress"].some(m => k.toLowerCase().includes(m)));
+    }
+    return false;
+  }, [records, solutionType]);
+
   // Dynamic Metrics Generation
   const metrics = useMemo(() => {
     if (!records.length) return [];
@@ -97,35 +115,65 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         ];
       }
       case "Tasks": {
-        const totalTasks = records.length;
-        const completedTasks = records.filter((r) => (r.Status || r.status || "") === "Completed").length;
-        const pendingTasks = totalTasks - completedTasks;
+        const headers = records.length > 0 ? Object.keys(records[0]) : [];
+        const statusHeader = headers.find(h => ["status", "state"].some(m => h.toLowerCase().includes(m)));
+        const priorityHeader = headers.find(h => ["priority", "level"].some(m => h.toLowerCase().includes(m)));
+        const dueDateHeader = headers.find(h => ["due date", "deadline"].some(m => h.toLowerCase().includes(m)));
 
-        // Overdue tasks calculation
-        const today = new Date("2026-04-14"); // Reference baseline date
-        const overdueTasks = records.filter((r) => {
-          const dueStr = r["Due Date"] || r.dueDate || "";
-          if (!dueStr) return false;
-          const dueDate = new Date(dueStr);
-          const status = r["Status"] || r.status || "Not Started";
-          return dueDate < today && status !== "Completed";
-        }).length;
+        const list = [];
+        list.push({
+          label: "Total Tasks",
+          value: records.length,
+          icon: Briefcase,
+          color: "text-blue-500 bg-blue-50"
+        });
 
-        const highPriority = records.filter((r) => {
-          const p = r["Priority"] || r.priority || "";
-          return p === "High" || p === "Critical";
-        }).length;
+        if (statusHeader) {
+          const completedTasks = records.filter(r => String(r[statusHeader!] || "").trim() === "Completed").length;
+          const pendingTasks = records.length - completedTasks;
+          list.push(
+            { label: "Completed Tasks", value: completedTasks, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
+            { label: "Pending Tasks", value: pendingTasks, icon: Clock, color: "text-purple-500 bg-purple-50" }
+          );
 
-        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
+          if (dueDateHeader) {
+            const today = new Date("2026-04-14");
+            const overdueTasks = records.filter(r => {
+              const dueStr = r[dueDateHeader!] || "";
+              if (!dueStr) return false;
+              const dueD = new Date(dueStr);
+              const statusStr = String(r[statusHeader!] || "");
+              return dueD < today && statusStr !== "Completed";
+            }).length;
+            list.push({
+              label: "Overdue Tasks",
+              value: overdueTasks,
+              icon: AlertTriangle,
+              color: "text-rose-500 bg-rose-50",
+              alert: overdueTasks > 0
+            });
+          }
 
-        return [
-          { label: "Total Tasks", value: totalTasks, icon: Briefcase, color: "text-blue-500 bg-blue-50" },
-          { label: "Completed Tasks", value: completedTasks, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
-          { label: "Pending Tasks", value: pendingTasks, icon: Clock, color: "text-purple-500 bg-purple-50" },
-          { label: "Overdue Tasks", value: overdueTasks, icon: AlertTriangle, color: "text-rose-500 bg-rose-50", alert: overdueTasks > 0 },
-          { label: "High/Critical Priority", value: highPriority, icon: AlertTriangle, color: "text-amber-500 bg-amber-50" },
-          { label: "Completion Rate", value: `${completionRate}%`, icon: TrendingUp, color: "text-emerald-500 bg-emerald-50" }
-        ];
+          const rate = records.length > 0 ? Math.round((completedTasks / records.length) * 100) : 0;
+          list.push({
+            label: "Completion Rate",
+            value: `${rate}%`,
+            icon: TrendingUp,
+            color: "text-emerald-500 bg-emerald-50"
+          });
+        }
+
+        if (priorityHeader) {
+          const highVal = records.filter(r => ["high", "critical"].includes(String(r[priorityHeader!] || "").toLowerCase().trim())).length;
+          list.push({
+            label: "High/Critical Priority",
+            value: highVal,
+            icon: AlertTriangle,
+            color: "text-amber-500 bg-amber-50"
+          });
+        }
+
+        return list;
       }
       case "Project": {
         const totalTasks = records.length;
@@ -147,13 +195,16 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
 
   // Aggregate Status counts for charting
   const statusChartData = useMemo(() => {
+    if (solutionType === "Tasks" && !hasStatusColumn) return [];
     const counts: Record<string, number> = {};
     records.forEach((r) => {
-      const statusKey = r.status || r.Status || "Unknown";
+      const keys = Object.keys(r);
+      const statusKeyName = keys.find(k => ["status", "state"].some(m => k.toLowerCase().includes(m)));
+      const statusKey = statusKeyName ? String(r[statusKeyName] || "Unknown") : "Unknown";
       counts[statusKey] = (counts[statusKey] || 0) + 1;
     });
     return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [records]);
+  }, [records, solutionType, hasStatusColumn]);
 
   // Value/Price Distribution chart
   const valueChartData = useMemo(() => {
@@ -175,9 +226,14 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         value: Number(r["Base Salary"]) || 0
       }));
     } else if (solutionType === "Tasks") {
+      const keys = records.length > 0 ? Object.keys(records[0]) : [];
+      const progressKey = keys.find(k => k.toLowerCase().includes("progress"));
+      const nameKey = keys.find(k => ["task name", "task", "name", "title"].some(m => k.toLowerCase().includes(m))) || keys[1] || keys[0];
+
+      if (!progressKey) return [];
       return records.map((r) => ({
-        name: (r["Task Name"] || r.taskName || "").slice(0, 15),
-        value: Number(r["Progress (%)"] || r.progress) || 0
+        name: String(r[nameKey] || "").slice(0, 15),
+        value: parseFloat(r[progressKey]) || 0
       }));
     }
     return [];
@@ -236,35 +292,37 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       </div>
 
       {/* Dynamic Charts Section */}
-      {records.length > 0 && (
+      {records.length > 0 && (statusChartData.length > 0 || valueChartData.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Status breakdown Chart */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
-              <Layers className="h-4 w-4 text-muted-foreground" /> Workflow / Status Distribution
-            </h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={statusChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  >
-                    {statusChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+          {statusChartData.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+              <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
+                <Layers className="h-4 w-4 text-muted-foreground" /> Workflow / Status Distribution
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                    >
+                      {statusChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          </div>
+          )}
 
           {/* Value / Numeric Breakdown Chart */}
           {valueChartData.length > 0 && (
@@ -275,6 +333,8 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
                   ? "Deal Value Distribution"
                   : solutionType === "Inventory"
                   ? "Stock Level Distribution"
+                  : solutionType === "Tasks"
+                  ? "Task Progress Distribution"
                   : "Salary Allocation"}
               </h3>
               <div className="h-64">
