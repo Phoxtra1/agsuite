@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import {
   FileText,
-  TrendingUp,
   MapPin,
   Calendar,
   Activity,
@@ -26,13 +25,7 @@ interface ReportsViewProps {
 }
 
 export default function ReportsView({ records = [], solutionType }: ReportsViewProps) {
-  const [activeReport, setActiveReport] = useState<"summary" | "category" | "status" | "location" | "activity" | "custom">("summary");
-
-  // Custom report builder state
-  const [customFilterText, setCustomFilterText] = useState("");
-  const [customSelectedFields, setCustomSelectedFields] = useState<string[]>([]);
-
-  // Get all keys across records for report columns
+  // Dynamically extract all available headers across records
   const allHeaders = useMemo(() => {
     if (records.length === 0) return [];
     return Object.keys(records[0]).filter(
@@ -40,12 +33,81 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
     );
   }, [records]);
 
+  // Dynamic header classification (same algorithm to align reporting metrics with actual columns)
+  const columnTypes = useMemo(() => {
+    const result = {
+      id: "",
+      name: "",
+      status: "",
+      category: "",
+      date: "",
+      location: "",
+      contact: "",
+      description: "",
+      notes: ""
+    };
+
+    allHeaders.forEach((h) => {
+      const norm = h.toLowerCase().trim();
+      if (!result.id && (norm === "id" || norm.includes("id") || norm.includes("code") || norm.includes("key") || norm.includes("number"))) {
+        result.id = h;
+      } else if (!result.name && (norm === "name" || norm === "title" || norm === "label" || norm.includes("name") || norm.includes("title"))) {
+        result.name = h;
+      } else if (!result.status && (norm === "status" || norm === "stage" || norm === "state" || norm.includes("status"))) {
+        result.status = h;
+      } else if (!result.category && (norm === "category" || norm === "type" || norm === "class" || norm === "group" || norm.includes("category") || norm.includes("type") || norm.includes("group"))) {
+        result.category = h;
+      } else if (!result.date && (norm.includes("date") || norm.includes("time") || norm.includes("created") || norm.includes("updated"))) {
+        result.date = h;
+      } else if (!result.location && (norm.includes("location") || norm.includes("region") || norm.includes("city") || norm.includes("gps") || norm.includes("address"))) {
+        result.location = h;
+      } else if (!result.contact && (norm.includes("contact") || norm.includes("phone") || norm.includes("tel") || norm.includes("email") || norm.includes("owner") || norm.includes("person"))) {
+        result.contact = h;
+      } else if (!result.description && (norm.includes("description") || norm.includes("desc") || norm.includes("about"))) {
+        result.description = h;
+      } else if (!result.notes && (norm.includes("notes") || norm.includes("note") || norm.includes("comment"))) {
+        result.notes = h;
+      }
+    });
+
+    if (!result.name && allHeaders.length > 0) {
+      result.name = allHeaders[0];
+    }
+
+    return result;
+  }, [allHeaders]);
+
+  // Dynamic Report Selection Tabs: Hide options if not supported by available data
+  const supportedReports = useMemo(() => {
+    const tabs = [{ id: "summary", label: "Registry Summary", icon: BarChart }];
+    if (columnTypes.category) {
+      tabs.push({ id: "category", label: `${columnTypes.category} Report`, icon: Tag });
+    }
+    if (columnTypes.status) {
+      tabs.push({ id: "status", label: `${columnTypes.status} Report`, icon: Shield });
+    }
+    if (columnTypes.location) {
+      tabs.push({ id: "location", label: `${columnTypes.location} Report`, icon: MapPin });
+    }
+    if (columnTypes.date) {
+      tabs.push({ id: "activity", label: "Activity Trail", icon: Activity });
+    }
+    tabs.push({ id: "custom", label: "Custom Builder", icon: Sparkles });
+    return tabs;
+  }, [columnTypes]);
+
+  const [activeReport, setActiveReport] = useState<string>("summary");
+
+  // Custom report builder state
+  const [customFilterText, setCustomFilterText] = useState("");
+  const [customSelectedFields, setCustomSelectedFields] = useState<string[]>([]);
+
   // Set default selected fields for custom report on first render or header load
   useMemo(() => {
     if (customSelectedFields.length === 0 && allHeaders.length > 0) {
       setCustomSelectedFields(allHeaders.slice(0, 5));
     }
-  }, [allHeaders]);
+  }, [allHeaders, customSelectedFields]);
 
   const toggleCustomField = (field: string) => {
     if (customSelectedFields.includes(field)) {
@@ -60,83 +122,109 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
   // 1. Report: Summary Computations
   const summaryData = useMemo(() => {
     const total = records.length;
-    const active = records.filter((r) => String(r.Status || r.status).toLowerCase() === "active").length;
-    const pending = records.filter((r) => String(r.Status || r.status).toLowerCase() === "pending").length;
-    const archived = records.filter((r) => String(r.Status || r.status).toLowerCase() === "archived").length;
 
-    // Categories count
-    const cats = new Set(records.map((r) => r.Category || r.category).filter(Boolean));
-    // Locations count
-    const locs = new Set(records.map((r) => r.Location || r.location).filter(Boolean));
+    let active = 0;
+    let pending = 0;
+    let archived = 0;
+
+    if (columnTypes.status) {
+      active = records.filter((r) => {
+        const val = String(r[columnTypes.status] || "").toLowerCase();
+        return val === "active" || val === "completed" || val === "success";
+      }).length;
+      pending = records.filter((r) => {
+        const val = String(r[columnTypes.status] || "").toLowerCase();
+        return val === "pending" || val === "in progress" || val === "yet to contact";
+      }).length;
+      archived = records.filter((r) => {
+        const val = String(r[columnTypes.status] || "").toLowerCase();
+        return val === "archived" || val === "inactive" || val === "closed";
+      }).length;
+    }
+
+    // Dynamic unique counts
+    const catsCount = columnTypes.category
+      ? new Set(records.map((r) => r[columnTypes.category]).filter(Boolean)).size
+      : 0;
+
+    const locsCount = columnTypes.location
+      ? new Set(records.map((r) => r[columnTypes.location]).filter(Boolean)).size
+      : 0;
 
     return {
       total,
       active,
       pending,
       archived,
-      categoriesCount: cats.size,
-      locationsCount: locs.size
+      categoriesCount: catsCount,
+      locationsCount: locsCount
     };
-  }, [records]);
+  }, [records, columnTypes]);
 
   // 2. Report: Category breakdown list
   const categoryBreakdown = useMemo(() => {
+    if (!columnTypes.category) return [];
     const map: Record<string, { count: number; active: number; archived: number }> = {};
     records.forEach((r) => {
-      const cat = r.Category || r.category || "Unassigned";
+      const cat = String(r[columnTypes.category] || "Unassigned");
       if (!map[cat]) {
         map[cat] = { count: 0, active: 0, archived: 0 };
       }
       map[cat].count++;
-      const st = String(r.Status || r.status).toLowerCase();
-      if (st === "active") map[cat].active++;
-      if (st === "archived") map[cat].archived++;
+
+      if (columnTypes.status) {
+        const st = String(r[columnTypes.status] || "").toLowerCase();
+        if (st === "active") map[cat].active++;
+        if (st === "archived") map[cat].archived++;
+      }
     });
     return Object.entries(map).map(([name, stats]) => ({ name, ...stats }));
-  }, [records]);
+  }, [records, columnTypes]);
 
   // 3. Report: Status breakdown list
   const statusBreakdown = useMemo(() => {
+    if (!columnTypes.status) return [];
     const map: Record<string, number> = {};
     records.forEach((r) => {
-      const st = r.Status || r.status || "Active";
+      const st = String(r[columnTypes.status] || "Active");
       map[st] = (map[st] || 0) + 1;
     });
     return Object.entries(map).map(([name, count]) => ({ name, count }));
-  }, [records]);
+  }, [records, columnTypes.status]);
 
   // 4. Report: Location breakdown list
   const locationBreakdown = useMemo(() => {
+    if (!columnTypes.location) return [];
     const map: Record<string, { count: number; active: number }> = {};
     records.forEach((r) => {
-      const loc = r.Location || r.location || "Local Office";
+      const loc = String(r[columnTypes.location] || "Local");
       if (!map[loc]) {
         map[loc] = { count: 0, active: 0 };
       }
       map[loc].count++;
-      if (String(r.Status || r.status).toLowerCase() === "active") {
+      if (columnTypes.status && String(r[columnTypes.status] || "").toLowerCase() === "active") {
         map[loc].active++;
       }
     });
     return Object.entries(map).map(([name, stats]) => ({ name, ...stats }));
-  }, [records]);
+  }, [records, columnTypes]);
 
   // 5. Report: Activity history compilation
   const activityHistory = useMemo(() => {
-    // Generate simulated activities for default records or parsed records
+    if (!columnTypes.date) return [];
     return records.map((r, i) => {
-      const date = r["Updated Date"] || r["Created Date"] || "2026-04-10";
-      const user = r.Owner || "System Administrator";
+      const date = String(r[columnTypes.date] || "N/A");
+      const user = "System Administrator";
       return {
         id: `ACT-${100 + i}`,
         date,
         user,
-        recordName: r.Name || `REG-${r.rowIndex}`,
-        action: `Record updated/synchronized with sheet cells`,
-        status: r.Status || r.status || "Active"
+        recordName: String(r[columnTypes.name] || `Row ${r.rowIndex}`),
+        action: `Record synchronized with spreadsheet cells`,
+        status: columnTypes.status ? String(r[columnTypes.status] || "Active") : "Active"
       };
     });
-  }, [records]);
+  }, [records, columnTypes]);
 
   // Filtered records for the Custom Report table
   const customReportRecords = useMemo(() => {
@@ -149,7 +237,7 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
     });
   }, [records, customFilterText]);
 
-  // Simulations
+  // simulations
   const handleExportCSV = () => {
     const headers = activeReport === "custom" ? customSelectedFields : allHeaders;
     const rows = activeReport === "custom" ? customReportRecords : records;
@@ -184,7 +272,7 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
             {solutionType} Analysis & Reports Hub
           </h2>
           <p className="text-sm text-muted-foreground">
-            High-fidelity document audit trails, category metrics, and customized report builders.
+            High-fidelity dynamic document audits and dynamic reporting.
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -204,19 +292,12 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
       </div>
 
       {/* Report Selection Tabs */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 bg-card p-1.5 border border-border rounded-xl">
-        {[
-          { id: "summary", label: "Registry Summary", icon: BarChart },
-          { id: "category", label: "Category Report", icon: Tag },
-          { id: "status", label: "Status Report", icon: Shield },
-          { id: "location", label: "Location Report", icon: MapPin },
-          { id: "activity", label: "Activity Trail", icon: Activity },
-          { id: "custom", label: "Custom Builder", icon: Sparkles }
-        ].map((tab) => (
+      <div className="flex flex-wrap gap-2 bg-card p-1.5 border border-border rounded-xl">
+        {supportedReports.map((tab) => (
           <button
             key={tab.id}
-            onClick={() => setActiveReport(tab.id as any)}
-            className={`flex items-center justify-center gap-2 py-2 rounded-lg font-semibold transition ${
+            onClick={() => setActiveReport(tab.id)}
+            className={`flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-semibold transition ${
               activeReport === tab.id
                 ? "bg-accent text-accent-foreground shadow-sm"
                 : "text-muted-foreground hover:bg-muted hover:text-foreground"
@@ -239,18 +320,26 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
               <div className="text-3xl font-extrabold text-foreground">{summaryData.total}</div>
               <p className="text-[11px] text-muted-foreground pt-1">All multi-category records synchronized in workspace.</p>
             </div>
-            <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Active Folders</span>
-              <div className="text-3xl font-extrabold text-emerald-600">{summaryData.active}</div>
-              <p className="text-[11px] text-muted-foreground pt-1">Current operational & verified records.</p>
-            </div>
-            <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
-              <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Categories & Locations</span>
-              <div className="text-3xl font-extrabold text-purple-600">
-                {summaryData.categoriesCount} <span className="text-sm font-semibold text-muted-foreground">cats</span> / {summaryData.locationsCount} <span className="text-sm font-semibold text-muted-foreground">locs</span>
+
+            {columnTypes.status && (
+              <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Active Folders</span>
+                <div className="text-3xl font-extrabold text-emerald-600">{summaryData.active}</div>
+                <p className="text-[11px] text-muted-foreground pt-1">Current operational & verified records.</p>
               </div>
-              <p className="text-[11px] text-muted-foreground pt-1">Dynamically mapped sectors and geological hubs.</p>
-            </div>
+            )}
+
+            {(columnTypes.category || columnTypes.location) && (
+              <div className="bg-card border border-border p-5 rounded-xl shadow-sm space-y-1">
+                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">MAPPED CLASSIFICATIONS</span>
+                <div className="text-3xl font-extrabold text-purple-600">
+                  {summaryData.categoriesCount > 0 ? `${summaryData.categoriesCount} cats` : ""}
+                  {summaryData.categoriesCount > 0 && summaryData.locationsCount > 0 ? " / " : ""}
+                  {summaryData.locationsCount > 0 ? `${summaryData.locationsCount} locs` : ""}
+                </div>
+                <p className="text-[11px] text-muted-foreground pt-1">Dynamically mapped sectors and geological hubs.</p>
+              </div>
+            )}
           </div>
 
           <div className="bg-card border border-border rounded-xl p-5 shadow-sm">
@@ -259,23 +348,29 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
             </h3>
             <div className="grid grid-cols-1 md:grid-cols-4 gap-4 text-center divide-y md:divide-y-0 md:divide-x divide-border">
               <div className="py-2">
-                <span className="text-[10px] text-muted-foreground uppercase font-bold">Active Percentage</span>
+                <span className="text-[10px] text-muted-foreground uppercase font-bold">Total Columns</span>
                 <span className="block text-xl font-bold text-foreground mt-1">
-                  {summaryData.total > 0 ? Math.round((summaryData.active / summaryData.total) * 100) : 0}%
+                  {allHeaders.length}
                 </span>
               </div>
-              <div className="py-2">
-                <span className="text-[10px] text-muted-foreground uppercase font-bold">Pending Approval</span>
-                <span className="block text-xl font-bold text-amber-500 mt-1">{summaryData.pending}</span>
-              </div>
-              <div className="py-2">
-                <span className="text-[10px] text-muted-foreground uppercase font-bold">Archived Index</span>
-                <span className="block text-xl font-bold text-muted-foreground mt-1">{summaryData.archived}</span>
-              </div>
+
+              {columnTypes.status && (
+                <>
+                  <div className="py-2">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold">Pending Approval</span>
+                    <span className="block text-xl font-bold text-amber-500 mt-1">{summaryData.pending}</span>
+                  </div>
+                  <div className="py-2">
+                    <span className="text-[10px] text-muted-foreground uppercase font-bold">Archived Index</span>
+                    <span className="block text-xl font-bold text-muted-foreground mt-1">{summaryData.archived}</span>
+                  </div>
+                </>
+              )}
+
               <div className="py-2">
                 <span className="text-[10px] text-muted-foreground uppercase font-bold">Sync Reliability</span>
                 <span className="block text-xl font-bold text-emerald-600 mt-1 flex items-center justify-center gap-1">
-                  <Check className="h-4 w-4" /> 100% Correct
+                  <Check className="h-4 w-4" /> 100% Dynamic
                 </span>
               </div>
             </div>
@@ -284,7 +379,7 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
       )}
 
       {/* 2. CATEGORY BREAKDOWN REPORT */}
-      {activeReport === "category" && (
+      {activeReport === "category" && columnTypes.category && (
         <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
             <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
@@ -300,9 +395,8 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
                 <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
                   <th className="p-3">Category Name</th>
                   <th className="p-3">Total Registered Records</th>
-                  <th className="p-3">Active Records</th>
-                  <th className="p-3">Archived Records</th>
-                  <th className="p-3">Sustained Ratio</th>
+                  {columnTypes.status && <th className="p-3">Active Records</th>}
+                  {columnTypes.status && <th className="p-3">Archived Records</th>}
                 </tr>
               </thead>
               <tbody>
@@ -310,11 +404,8 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
                   <tr key={i} className="border-b border-border/60 hover:bg-muted/10">
                     <td className="p-3 font-bold text-foreground capitalize">{cat.name}</td>
                     <td className="p-3 font-medium text-foreground">{cat.count} records</td>
-                    <td className="p-3 text-emerald-600 font-semibold">{cat.active}</td>
-                    <td className="p-3 text-muted-foreground">{cat.archived}</td>
-                    <td className="p-3 font-bold text-foreground">
-                      {cat.count > 0 ? Math.round((cat.active / cat.count) * 100) : 0}%
-                    </td>
+                    {columnTypes.status && <td className="p-3 text-emerald-600 font-semibold">{cat.active}</td>}
+                    {columnTypes.status && <td className="p-3 text-muted-foreground">{cat.archived}</td>}
                   </tr>
                 ))}
               </tbody>
@@ -324,7 +415,7 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
       )}
 
       {/* 3. STATUS REPORT */}
-      {activeReport === "status" && (
+      {activeReport === "status" && columnTypes.status && (
         <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
             <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
@@ -345,13 +436,7 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
                 {statusBreakdown.map((st, i) => (
                   <tr key={i} className="border-b border-border/60 hover:bg-muted/10">
                     <td className="p-3">
-                      <span className={`px-2.5 py-0.5 rounded font-bold uppercase text-[9px] border ${
-                        st.name.toLowerCase() === "active"
-                          ? "bg-emerald-50 text-emerald-600 border-emerald-200"
-                          : st.name.toLowerCase() === "pending"
-                          ? "bg-amber-50 text-amber-600 border-amber-200"
-                          : "bg-muted text-muted-foreground border-border"
-                      }`}>
+                      <span className="px-2.5 py-0.5 rounded font-bold uppercase text-[9px] border bg-accent/5 text-accent border-accent/20">
                         {st.name}
                       </span>
                     </td>
@@ -371,7 +456,7 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
       )}
 
       {/* 4. LOCATION REPORT */}
-      {activeReport === "location" && (
+      {activeReport === "location" && columnTypes.location && (
         <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
             <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
@@ -384,7 +469,7 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
                 <tr className="border-b border-border bg-muted/40 text-muted-foreground font-semibold">
                   <th className="p-3">Filing / Registry Location</th>
                   <th className="p-3">Aggregated Records Count</th>
-                  <th className="p-3">Active Records</th>
+                  {columnTypes.status && <th className="p-3">Active Records</th>}
                   <th className="p-3">Proportional Weight</th>
                 </tr>
               </thead>
@@ -393,7 +478,7 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
                   <tr key={i} className="border-b border-border/60 hover:bg-muted/10">
                     <td className="p-3 font-bold text-foreground">{loc.name}</td>
                     <td className="p-3 font-medium text-foreground">{loc.count}</td>
-                    <td className="p-3 text-emerald-600 font-semibold">{loc.active}</td>
+                    {columnTypes.status && <td className="p-3 text-emerald-600 font-semibold">{loc.active}</td>}
                     <td className="p-3 font-medium text-muted-foreground">
                       {records.length > 0 ? Math.round((loc.count / records.length) * 100) : 0}%
                     </td>
@@ -406,7 +491,7 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
       )}
 
       {/* 5. ACTIVITY HISTORY REPORT */}
-      {activeReport === "activity" && (
+      {activeReport === "activity" && columnTypes.date && (
         <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
           <div className="p-4 border-b border-border flex items-center justify-between bg-muted/20">
             <h3 className="font-bold text-foreground text-sm flex items-center gap-1.5">
@@ -427,8 +512,12 @@ export default function ReportsView({ records = [], solutionType }: ReportsViewP
                   <p className="text-muted-foreground">{act.action}</p>
                   <div className="flex items-center gap-2 text-[10px] text-muted-foreground pt-1">
                     <span>Performed by: <span className="font-semibold text-foreground">{act.user}</span></span>
-                    <span>•</span>
-                    <span className="uppercase text-[9px] bg-muted px-1.5 py-0.2 rounded font-bold">{act.status}</span>
+                    {columnTypes.status && (
+                      <>
+                        <span>•</span>
+                        <span className="uppercase text-[9px] bg-muted px-1.5 py-0.2 rounded font-bold">{act.status}</span>
+                      </>
+                    )}
                   </div>
                 </div>
               </div>
