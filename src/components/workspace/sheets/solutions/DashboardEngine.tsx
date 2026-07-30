@@ -10,6 +10,9 @@ import {
   PieChart,
   Pie,
   Cell,
+  LineChart,
+  Line,
+  CartesianGrid
 } from "recharts";
 import {
   Users,
@@ -110,15 +113,12 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
     );
   }, [records]);
 
-  // AI-generated classification of available columns to drive data-driven dashboards
-  const columnTypes = useMemo(() => {
-    const result = {
-      id: "",
-      name: "",
-      status: "",
-      category: "",
-      date: "",
-      numeric: [] as string[]
+  // Multi-sheet data parser for HR Solutions
+  const hrData = useMemo(() => {
+    if (solutionType !== "HR" || !allSheets.length) return null;
+    const findAndParse = (name: string) => {
+      const sheet = allSheets.find((s) => s.name === name);
+      return sheet ? parseSheetRows(sheet) : [];
     };
 
     allHeaders.forEach((h) => {
@@ -239,27 +239,27 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
           color: "text-emerald-500 bg-emerald-50"
         });
       }
+      case "Project":
+      case "ProjectManagement": {
+        // Dynamic detection of Project Columns
+        const totalProj = records.length;
+        const budgetCol = columns.find(c => c.toLowerCase().includes("budget") || c.toLowerCase().includes("cost") || c.toLowerCase().includes("value"));
+        const progressCol = columns.find(c => c.toLowerCase().includes("progress") || c.toLowerCase().includes("percent") || c.toLowerCase().includes("%") || c.toLowerCase().includes("complete"));
+        const statusCol = columns.find(c => c.toLowerCase().includes("status") || c.toLowerCase().includes("stage"));
 
-      // 3. Dynamic numeric accumulations (SUM or AVG of any numeric column like cost, value, etc.)
-      columnTypes.numeric.slice(0, 2).forEach((numCol, idx) => {
-        const totalNum = records.reduce((sum, r) => sum + (Number(r[numCol]) || 0), 0);
-        baseMetrics.push({
-          label: `Total Accum. ${numCol}`,
-          value: totalNum.toLocaleString(),
-          icon: DollarSign,
-          color: idx === 0 ? "text-amber-500 bg-amber-50" : "text-rose-500 bg-rose-50"
-        });
-      });
+        const accumulatedBudget = budgetCol ? records.reduce((sum, r) => sum + (Number(r[budgetCol]) || 0), 0) : 0;
+        const completedCount = statusCol ? records.filter(r => String(r[statusCol]).toLowerCase() === "completed" || String(r[statusCol]).toLowerCase() === "active").length : 0;
 
-      // 4. Fill up to 3 minimum metric items if columns are scarce
-      if (baseMetrics.length < 3) {
-        const blankCount = records.filter((r) => !r[allHeaders[0]]).length;
-        baseMetrics.push({
-          label: "Incomplete/Blank Entries",
-          value: blankCount,
-          icon: AlertTriangle,
-          color: "text-amber-500 bg-amber-50"
-        });
+        const results = [
+          { label: "Total Project Records", value: totalProj, icon: Briefcase, color: "text-blue-500 bg-blue-50" }
+        ];
+        if (budgetCol) {
+          results.push({ label: "Allocated Budgets", value: `$${accumulatedBudget.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" });
+        }
+        if (statusCol) {
+          results.push({ label: "Ongoing/Completed", value: completedCount, icon: CheckCircle2, color: "text-purple-500 bg-purple-50" });
+        }
+        return results;
       }
     }
 
@@ -329,6 +329,15 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         name: name.slice(0, 15),
         value
       }));
+    } else if (solutionType === "Project" || solutionType === "ProjectManagement") {
+      const budgetCol = columns.find(c => c.toLowerCase().includes("budget") || c.toLowerCase().includes("cost") || c.toLowerCase().includes("value"));
+      const nameCol = columns.find(c => c.toLowerCase().includes("name") || c.toLowerCase().includes("title") || c.toLowerCase().includes("id")) || columns[0];
+      if (budgetCol && nameCol) {
+        return records.map(r => ({
+          name: String(r[nameCol] || "").slice(0, 15),
+          value: Number(r[budgetCol]) || 0
+        })).filter(d => d.value > 0);
+      }
     }
     return [];
   }, [records, solutionType, columnTypes.category]);
@@ -374,24 +383,28 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       </div>
 
       {/* Dynamic Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {metrics.map((m, idx) => (
-          <div
-            key={idx}
-            className={`rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition flex items-center gap-4 ${
-              m.alert ? "border-rose-300 bg-rose-50/20" : ""
-            }`}
-          >
-            <div className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${m.color}`}>
-              <m.icon className="h-6 w-6" />
+      {metrics.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {metrics.map((m, idx) => (
+            <div
+              key={idx}
+              className={`rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition flex items-center gap-4`}
+            >
+              <div className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${m.color}`}>
+                <m.icon className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{m.label}</div>
+                <div className="text-2xl font-bold text-foreground mt-1">{m.value}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{m.label}</div>
-              <div className="text-2xl font-bold text-foreground mt-1">{m.value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center p-8 bg-card rounded-xl border border-border italic text-xs text-muted-foreground">
+          No metrics could be dynamically parsed from your spreadsheet data. Complete and enrich columns to unlock insights.
+        </div>
+      )}
 
       {/* Dynamic Charts Section */}
       {records.length > 0 && (statusChartData.length > 0 || valueChartData.length > 0) && (
@@ -442,6 +455,7 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={valueChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" fontSize={11} tickLine={false} />
                     <YAxis fontSize={11} />
                     <Tooltip />
