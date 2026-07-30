@@ -12,6 +12,41 @@ const PROMPTS: Record<string, string> = {
   action_items: "Extract a numbered list of clear action items from the following content. Output only the list.",
   decisions: "Extract a numbered list of decisions made in the following content. Output only the list.",
   risks: "Extract a numbered list of risks identified in the following content. Output only the list.",
+  dipa_legal_analysis: `You are Dipa Legal, an expert legal intelligence component embedded inside Amineva Docs.
+Analyze the provided document text and produce a structured JSON object strictly conforming to this schema:
+{
+  "documentContext": "string summarizing factual matrix and purpose",
+  "primaryDomain": "string (e.g. Commercial & Contract Law, Labour & Employment Law, Intellectual Property Law, etc.)",
+  "recommendedPractitioner": "string recommending specific legal specialist type",
+  "legalIssues": [
+    {
+      "id": "string",
+      "category": "Clause Ambiguity | Missing Clause | Risk Exposure | Inconsistency | Regulatory Gap",
+      "severity": "High | Medium | Low",
+      "title": "string",
+      "description": "string",
+      "impactOnAuthor": "string"
+    }
+  ],
+  "requiredInformation": ["string"],
+  "authorities": [
+    {
+      "citation": "string",
+      "court": "string",
+      "jurisdiction": "string",
+      "year": "string",
+      "principle": "string",
+      "relevance": "string",
+      "precedentialStatus": "Binding Precedent | Persuasive Authority | Statutory Regulation | No Verified Authority Found"
+    }
+  ],
+  "strengths": ["string"],
+  "weaknesses": ["string"],
+  "opposingArguments": ["string"],
+  "preliminaryAssessment": "string",
+  "disclaimer": "Informational disclaimer..."
+}
+IMPORTANT: Never fabricate statutes or case citations. Where no reliable authority exists, set citation to 'No Verified Authority Found'. Output ONLY valid JSON.`
 };
 
 Deno.serve(async (req) => {
@@ -56,6 +91,18 @@ Deno.serve(async (req) => {
 
     const data = await resp.json();
     const result = data?.choices?.[0]?.message?.content || '';
+
+    if (action === 'dipa_legal_analysis') {
+      try {
+        const cleaned = result.replace(/```json/g, '').replace(/```/g, '').trim();
+        const parsed = JSON.parse(cleaned);
+        return new Response(JSON.stringify({ analysis: parsed }), {
+          status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+        });
+      } catch (_) {
+        // Fallback if AI output text instead of pure JSON
+      }
+    }
 
     return new Response(JSON.stringify({ result }), {
       status: 200, headers: { ...corsHeaders, 'Content-Type': 'application/json' },

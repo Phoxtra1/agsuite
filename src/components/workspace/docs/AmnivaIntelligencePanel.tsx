@@ -1,13 +1,14 @@
 import { useState } from "react";
 import {
   Sparkles, FileText, CheckCircle, Tag, Wand2, RefreshCw, Languages, FileOutput,
-  ChevronRight, ChevronLeft, Loader2,
+  ChevronRight, ChevronLeft, Loader2, Scale,
 } from "lucide-react";
 import type { Editor } from "@tiptap/react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { DipaLegalPanel } from "./DipaLegalPanel";
 
-type Tab = "intelligence" | "templates" | "analyzer" | "classification";
+type Tab = "intelligence" | "legal" | "templates" | "analyzer" | "classification";
 
 const ACTIONS: { id: string; label: string; icon: any; action: string }[] = [
   { id: "summarize", label: "Summarize Document", icon: FileText, action: "summarize" },
@@ -125,50 +126,65 @@ export function AmnivaIntelligencePanel({
       </div>
 
       <div className="flex border-b border-border">
-        {(["intelligence", "templates", "analyzer", "classification"] as Tab[]).map((t) => (
+        {(["intelligence", "legal", "templates", "analyzer", "classification"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
             className={`flex-1 py-2 text-xs font-medium text-center capitalize border-b-2 ${
-              tab === t ? "border-accent text-foreground bg-accent/5" : "border-transparent text-muted-foreground hover:text-foreground"
+              tab === t ? "border-accent text-foreground bg-accent/5 font-bold" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t === "intelligence" ? "Dipa" : t === "classification" ? "Tags" : t}
+            {t === "intelligence" ? "Dipa" : t === "legal" ? "Dipa Legal" : t === "classification" ? "Tags" : t}
           </button>
         ))}
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4">
-        {tab === "intelligence" && (
-          <div className="space-y-3">
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              Select text or use the whole document. Dipa is ready to assist you.
-            </p>
-            <div className="grid gap-1.5">
-              {ACTIONS.map((a) => (
-                <button
-                  key={a.id}
-                  disabled={!!busy}
-                  onClick={() => runAction(a.action, a.label)}
-                  className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm text-foreground bg-background border border-border rounded-lg hover:border-accent hover:text-accent transition disabled:opacity-50"
-                >
-                  {busy === a.action ? <Loader2 className="h-4 w-4 animate-spin" /> : <a.icon className="h-4 w-4 opacity-70" />}
-                  <span className="font-medium">{a.label}</span>
-                </button>
-              ))}
-            </div>
-            {output && (
-              <div className="mt-3 border border-border rounded-lg bg-muted/30 p-3">
-                <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 font-semibold">Result</div>
-                <div className="text-xs text-foreground whitespace-pre-wrap max-h-60 overflow-y-auto">{output}</div>
-                <div className="flex gap-2 mt-3">
-                  <button onClick={() => insertOutput("replace")} className="flex-1 text-xs px-2 py-1.5 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 font-medium">Replace selection</button>
-                  <button onClick={() => insertOutput("append")} className="flex-1 text-xs px-2 py-1.5 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 font-medium">Append</button>
-                </div>
+      {tab === "legal" ? (
+        <div className="flex-1 overflow-hidden">
+          <DipaLegalPanel editor={editor} />
+        </div>
+      ) : (
+        <div className="flex-1 overflow-y-auto p-4">
+          {tab === "intelligence" && (
+            <div className="space-y-3">
+              <p className="text-xs text-muted-foreground leading-relaxed">
+                Select text or use the whole document. Dipa is ready to assist you.
+              </p>
+              <button
+                onClick={() => setTab("legal")}
+                className="flex items-center justify-between w-full px-3 py-2.5 bg-gradient-to-r from-amber-500/15 to-amber-500/5 border border-amber-500/30 rounded-xl font-bold text-amber-700 dark:text-amber-300 hover:border-amber-500 transition text-xs"
+              >
+                <span className="flex items-center gap-2">
+                  <Scale className="h-4 w-4 text-amber-500" />
+                  <span>Launch Dipa Legal Assessment</span>
+                </span>
+                <ChevronRight className="h-3.5 w-3.5" />
+              </button>
+              <div className="grid gap-1.5">
+                {ACTIONS.map((a) => (
+                  <button
+                    key={a.id}
+                    disabled={!!busy}
+                    onClick={() => runAction(a.action, a.label)}
+                    className="flex items-center gap-2 w-full px-3 py-2 text-left text-sm text-foreground bg-background border border-border rounded-lg hover:border-accent hover:text-accent transition disabled:opacity-50"
+                  >
+                    {busy === a.action ? <Loader2 className="h-4 w-4 animate-spin" /> : <a.icon className="h-4 w-4 opacity-70" />}
+                    <span className="font-medium">{a.label}</span>
+                  </button>
+                ))}
               </div>
-            )}
-          </div>
-        )}
+              {output && (
+                <div className="mt-3 border border-border rounded-lg bg-muted/30 p-3">
+                  <div className="text-[11px] uppercase tracking-wider text-muted-foreground mb-2 font-semibold">Result</div>
+                  <div className="text-xs text-foreground whitespace-pre-wrap max-h-60 overflow-y-auto">{output}</div>
+                  <div className="flex gap-2 mt-3">
+                    <button onClick={() => insertOutput("replace")} className="flex-1 text-xs px-2 py-1.5 rounded-md bg-accent text-accent-foreground hover:bg-accent/90 font-medium">Replace selection</button>
+                    <button onClick={() => insertOutput("append")} className="flex-1 text-xs px-2 py-1.5 rounded-md bg-secondary text-secondary-foreground hover:bg-secondary/80 font-medium">Append</button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
         {tab === "templates" && (
           <div className="space-y-3">
@@ -215,6 +231,7 @@ export function AmnivaIntelligencePanel({
           </div>
         )}
       </div>
+      )}
     </aside>
   );
 }

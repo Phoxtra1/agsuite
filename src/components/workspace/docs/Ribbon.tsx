@@ -20,7 +20,7 @@ import {
   File as FileIcon, FolderOpen, Save, Mail, Printer, Download, Upload,
   KeyRound, Database, Puzzle, Code2, Settings2, Type as TypeIcon,
   Building2, Sparkles, Shapes as ShapesIcon, BringToFront, SendToBack,
-  MoveUp, MoveDown,
+  MoveUp, MoveDown, Scale,
 } from "lucide-react";
 import type { PageSettings } from "./PageCanvas";
 
@@ -1153,6 +1153,15 @@ function ReviewTab({
 }: { editor: Editor; wordsCount: number; charCount: number; onAction: (a: string, p?: any) => void }) {
   return (
     <>
+      <Group label="Dipa Legal">
+        <button
+          onClick={() => onAction("dipa:legal")}
+          className="h-8 px-2.5 rounded-md bg-amber-500/15 border border-amber-500/30 text-amber-700 dark:text-amber-300 font-bold hover:bg-amber-500/25 flex items-center gap-1.5 text-xs transition shadow-sm"
+          title="Embedded Document Legal Review & Risk Analysis"
+        >
+          <Scale className="h-4 w-4 text-amber-500" /> Dipa Legal Audit
+        </button>
+      </Group>
       <Group label="Proofing">
         <div className="text-xs text-foreground px-2 py-1 leading-tight">
           <div className="font-semibold">{wordsCount} words</div>
@@ -1268,6 +1277,7 @@ function ToolsTab({ onAction }: { onAction: (a: string, p?: any) => void }) {
   return (
     <>
       <Group label="Amineva Tools">
+        <Btn icon={Scale} title="Dipa Legal Intelligence Audit" onClick={() => onAction("dipa:legal")} />
         <Btn icon={Sparkles} title="Dipa Tools" onClick={() => onAction("tools:amineva")} />
         <Btn icon={Calculator} title="Quick calc" onClick={() => onAction("tools:calc")} />
         <Btn icon={Building2} title="Workspace tools" onClick={() => onAction("tools:workspace")} />

@@ -29,15 +29,23 @@ import {
   Search,
   CheckCircle2,
   Archive,
-  Info
+  Info,
+  Clock
 } from "lucide-react";
 import { parseSheetRows } from "@/lib/workspace/sheets/smartData";
 
 interface DashboardEngineProps {
   records: Record<string, any>[];
-  
-  solutionType: "CRM" | "Task" | "HR" | "Registry" | "Project" | "ProjectManagement" | "Custom";
-        
+  solutionType:
+    | "CRM"
+    | "Inventory"
+    | "HR"
+    | "Registry"
+    | "Project"
+    | "ProjectManagement"
+    | "Custom"
+    | "Task"
+    | "Tasks";
   meetings?: any[];
   allSheets?: any[];
 }
@@ -48,9 +56,61 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
   const [search, setSearch] = useState("");
   const [filterValue, setFilterValue] = useState("all");
 
-  const columns = useMemo(() => {
-    if (!records.length) return [];
-    return Object.keys(records[0]).filter(k => k !== "rowIndex" && !k.startsWith("_"));
+  // HR workspace data derived from the connected sheets (employees / attendance / leave)
+  const hrData = useMemo(() => {
+    if (solutionType !== "HR") return null;
+
+    const findSheet = (...keywords: string[]) =>
+      (allSheets || []).find((s: any) =>
+        keywords.some((k) => String(s?.name || "").toLowerCase().includes(k))
+      );
+
+    const rowsOf = (sheet: any, fallback: Record<string, any>[] = []) => {
+      if (!sheet) return fallback;
+      try {
+        const parsed = parseSheetRows(sheet);
+        return Array.isArray(parsed) ? parsed : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+
+    return {
+      employees: rowsOf(findSheet("employee", "staff"), records),
+      attendance: rowsOf(findSheet("attendance")),
+      leave: rowsOf(findSheet("leave"))
+    };
+  }, [solutionType, allSheets, records]);
+
+  const attendanceSummary = useMemo(() => {
+    if (solutionType !== "HR" || !hrData) return null;
+    const rows = hrData.attendance.length ? hrData.attendance : hrData.employees;
+    const read = (r: Record<string, any>) =>
+      String(r.Status || r.status || r.Attendance || r["Attendance Status"] || "").toLowerCase();
+    return {
+      present: rows.filter((r) => read(r).includes("present") || read(r).includes("remote")).length,
+      late: rows.filter((r) => read(r).includes("late")).length,
+      absent: rows.filter((r) => read(r).includes("absent")).length
+    };
+  }, [solutionType, hrData]);
+
+  const leaveSummary = useMemo(() => {
+    if (solutionType !== "HR" || !hrData) return null;
+    const rows = hrData.leave;
+    const read = (r: Record<string, any>) =>
+      String(r.Status || r.status || r["Leave Status"] || "").toLowerCase();
+    return {
+      approved: rows.filter((r) => read(r).includes("approve")).length,
+      pending: rows.filter((r) => read(r).includes("pending") || read(r).includes("request")).length
+    };
+  }, [solutionType, hrData]);
+
+  // Dynamically extract all available headers across records
+  const allHeaders = useMemo(() => {
+    if (records.length === 0) return [];
+    return Object.keys(records[0]).filter(
+      (k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_")
+    );
   }, [records]);
 
   // Multi-sheet data parser for HR Solutions
