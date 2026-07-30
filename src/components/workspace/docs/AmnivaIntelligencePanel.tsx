@@ -7,8 +7,9 @@ import type { Editor } from "@tiptap/react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 import { DipaLegalPanel } from "./DipaLegalPanel";
+import { DocWizardsPanel } from "./DocWizardsPanel";
 
-type Tab = "intelligence" | "legal" | "templates" | "analyzer" | "classification";
+type Tab = "intelligence" | "legal" | "wizards" | "templates" | "analyzer" | "classification";
 
 const ACTIONS: { id: string; label: string; icon: any; action: string }[] = [
   { id: "summarize", label: "Summarize Document", icon: FileText, action: "summarize" },
@@ -131,15 +132,15 @@ export function AmnivaIntelligencePanel({
       </div>
 
       <div className="flex border-b border-border">
-        {(["intelligence", "legal", "templates", "analyzer", "classification"] as Tab[]).map((t) => (
+        {(["intelligence", "legal", "wizards", "templates", "analyzer", "classification"] as Tab[]).map((t) => (
           <button
             key={t}
             onClick={() => setTab(t)}
-            className={`flex-1 py-2 text-xs font-medium text-center capitalize border-b-2 ${
+            className={`flex-1 py-2 text-[11px] font-medium text-center capitalize border-b-2 ${
               tab === t ? "border-accent text-foreground bg-accent/5 font-bold" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t === "intelligence" ? "Help" : t === "legal" ? "Dipa Legal" : t === "classification" ? "Tags" : t}
+            {t === "intelligence" ? "Dipa" : t === "legal" ? "Dipa Legal" : t === "wizards" ? "Wizards" : t === "classification" ? "Tags" : t}
           </button>
         ))}
       </div>
@@ -147,6 +148,10 @@ export function AmnivaIntelligencePanel({
       {tab === "legal" ? (
         <div className="flex-1 overflow-hidden">
           <DipaLegalPanel editor={editor} />
+        </div>
+      ) : tab === "wizards" ? (
+        <div className="flex-1 overflow-hidden">
+          <DocWizardsPanel editor={editor} />
         </div>
       ) : (
         <div className="flex-1 overflow-y-auto p-4">

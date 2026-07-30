@@ -10,6 +10,7 @@ import { AmnivaIntelligencePanel } from "@/components/workspace/docs/AmnivaIntel
 import { PageCanvas, DEFAULT_PAGE_SETTINGS, type PageSettings } from "@/components/workspace/docs/PageCanvas";
 import { ShareDialog } from "@/components/workspace/docs/ShareDialog";
 import { ImageEditorDialog } from "@/components/workspace/docs/ImageEditorDialog";
+import { CollaborateDropdown } from "@/components/workspace/docs/CollaborateDropdown";
 import { exportCSV, exportDOC, exportJSON, exportPDF } from "@/components/workspace/docs/exporters";
 import {
   ChevronLeft, CloudUpload, Loader2, Download, Share2, ArrowLeft,
@@ -37,6 +38,7 @@ export default function DocsEditor() {
   const [trackChanges, setTrackChanges] = useState(false);
   const [rightWidth, setRightWidth] = useState(320);
   const [isResizing, setIsResizing] = useState(false);
+  const [totalPageCount, setTotalPageCount] = useState(1);
 
   const startResize = (e: React.MouseEvent) => {
     e.preventDefault();
@@ -285,9 +287,14 @@ ${currentText}`;
             onCSV={() => exportCSV(title, editor.getJSON())}
             onPrint={() => window.print()}
           />
-          <button onClick={() => setShowShare(true)} className="px-4 py-1.5 rounded-md bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/90 inline-flex items-center gap-1.5">
-            <Share2 className="h-3.5 w-3.5" /> Share
-          </button>
+          <CollaborateDropdown
+            documentId={id}
+            documentTitle={title}
+            onOpenShare={() => setShowShare(true)}
+            onInsertMeetingLink={(link, topic) => {
+              editor?.chain().focus().insertContent(`<p style="background: #e0e7ff; padding: 8px 12px; border-radius: 6px; border-left: 4px solid #4f46e5;"><strong>📅 Online Meeting: ${topic}</strong><br/><a href="${link}" target="_blank" style="color: #4f46e5; text-decoration: underline;">${link}</a></p>`).run();
+            }}
+          />
         </div>
       </header>
 
@@ -335,6 +342,7 @@ ${currentText}`;
             surfaceRef={surfaceRef}
             onHeaderChange={(s) => updatePageSettings({ header: s })}
             onFooterChange={(s) => updatePageSettings({ footer: s })}
+            onPageCountChange={(cnt) => setTotalPageCount(cnt)}
           />
         </main>
 
@@ -362,6 +370,7 @@ ${currentText}`;
       {/* Status bar */}
       <footer className="h-7 border-t border-border bg-card flex items-center justify-between px-4 text-[11px] text-muted-foreground flex-shrink-0">
         <div className="flex items-center gap-4">
+          <span className="font-semibold text-foreground bg-muted px-2 py-0.5 rounded border border-border">Page 1 of {totalPageCount}</span>
           <span>Words: <span className="text-foreground font-medium">{words}</span></span>
           <span>Chars: <span className="text-foreground font-medium">{chars}</span></span>
           <span>{pageSettings.size} · {pageSettings.orientation}</span>
