@@ -6,12 +6,9 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line,
   CartesianGrid
 } from "recharts";
 import {
@@ -28,8 +25,6 @@ import {
   Filter,
   Search,
   CheckCircle2,
-  Archive,
-  Info,
   Clock
 } from "lucide-react";
 import { parseSheetRows } from "@/lib/workspace/sheets/smartData";
@@ -50,13 +45,37 @@ interface DashboardEngineProps {
   allSheets?: any[];
 }
 
+type Metric = {
+  label: string;
+  value: string | number;
+  icon: React.ElementType;
+  color: string;
+  alert?: boolean;
+};
+
+type ColumnTypes = {
+  id: string;
+  name: string;
+  status: string;
+  category: string;
+  date: string;
+  numeric: string[];
+};
+
 const COLORS = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"];
 
-export default function DashboardEngine({ records = [], solutionType, meetings = [], allSheets = [] }: DashboardEngineProps) {
+export default function DashboardEngine({
+  records = [],
+  solutionType,
+  meetings = [],
+  allSheets = []
+}: DashboardEngineProps) {
   const [search, setSearch] = useState("");
   const [filterValue, setFilterValue] = useState("all");
 
-  // HR workspace data derived from the connected sheets (employees / attendance / leave)
+  // ---------------------------------------------------------------
+  // HR workspace data derived from connected sheets (single source)
+  // ---------------------------------------------------------------
   const hrData = useMemo(() => {
     if (solutionType !== "HR") return null;
 
@@ -105,7 +124,9 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
     };
   }, [solutionType, hrData]);
 
-  // Dynamically extract all available headers across records
+  // ---------------------------------------------------------------
+  // Dynamic column discovery
+  // ---------------------------------------------------------------
   const allHeaders = useMemo(() => {
     if (records.length === 0) return [];
     return Object.keys(records[0]).filter(
@@ -113,13 +134,10 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
     );
   }, [records]);
 
-  // Multi-sheet data parser for HR Solutions
-  const hrData = useMemo(() => {
-    if (solutionType !== "HR" || !allSheets.length) return null;
-    const findAndParse = (name: string) => {
-      const sheet = allSheets.find((s) => s.name === name);
-      return sheet ? parseSheetRows(sheet) : [];
-    };
+  const columns = allHeaders;
+
+  const columnTypes = useMemo<ColumnTypes>(() => {
+    const result: ColumnTypes = { id: "", name: "", status: "", category: "", date: "", numeric: [] };
 
     allHeaders.forEach((h) => {
       const norm = h.toLowerCase().trim();
@@ -135,8 +153,11 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         result.date = h;
       }
 
-      // Classify numeric value columns (e.g. quantity, costs, value, hours, salary)
-      if (norm.includes("quantity") || norm.includes("qty") || norm.includes("value") || norm.includes("usd") || norm.includes("price") || norm.includes("cost") || norm.includes("salary") || norm.includes("hours") || norm.includes("amount")) {
+      if (
+        norm.includes("quantity") || norm.includes("qty") || norm.includes("value") ||
+        norm.includes("usd") || norm.includes("price") || norm.includes("cost") ||
+        norm.includes("salary") || norm.includes("hours") || norm.includes("amount")
+      ) {
         result.numeric.push(h);
       }
     });
@@ -148,12 +169,13 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
     return result;
   }, [allHeaders]);
 
-  // Dynamic KPI Card Metrics Generation: Generate 3-5 non-empty relevant KPIs from available data
-  const metrics = useMemo(() => {
+  // ---------------------------------------------------------------
+  // KPI metrics
+  // ---------------------------------------------------------------
+  const metrics = useMemo<Metric[]>(() => {
     if (!records.length) return [];
 
-    // Common global KPI: Total Row Count
-    const baseMetrics = [
+    const baseMetrics: Metric[] = [
       { label: "Total Records", value: records.length, icon: FileText, color: "text-blue-500 bg-blue-50" }
     ];
 
@@ -188,18 +210,18 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
     }
 
     if (solutionType === "HR") {
-      const totalEmp = records.length;
-      const uniqueDept = new Set(records.map((r) => r.Department).filter(Boolean));
-      const payroll = records.reduce((sum, r) => sum + (Number(r["Base Salary"]) || 0), 0);
+      const employees = hrData?.employees?.length ? hrData.employees : records;
+      const uniqueDept = new Set(employees.map((r) => r.Department).filter(Boolean));
+      const payroll = employees.reduce((sum, r) => sum + (Number(r["Base Salary"]) || 0), 0);
 
       return [
-        { label: "Total Employees", value: totalEmp, icon: Users, color: "text-blue-500 bg-blue-50" },
+        { label: "Total Employees", value: employees.length, icon: Users, color: "text-blue-500 bg-blue-50" },
         { label: "Departments", value: uniqueDept.size, icon: Layers, color: "text-purple-500 bg-purple-50" },
         { label: "Monthly Payroll", value: `$${payroll.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" }
       ];
     }
 
-    if (solutionType === "Project") {
+    if (solutionType === "Task" || solutionType === "Tasks") {
       const totalTasks = records.length;
       const highPriority = records.filter((r) => r.Priority === "High").length;
       const inProgress = records.filter((r) => r.Status === "In Progress").length;
@@ -213,9 +235,31 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       ];
     }
 
-    // Dynamic Registry Dashboards: Extract KPI indicators completely based on parsed columns
+    if (solutionType === "Project" || solutionType === "ProjectManagement") {
+      const budgetCol = columns.find((c) => c.toLowerCase().includes("budget") || c.toLowerCase().includes("cost") || c.toLowerCase().includes("value"));
+      const statusCol = columns.find((c) => c.toLowerCase().includes("status") || c.toLowerCase().includes("stage"));
+
+      const accumulatedBudget = budgetCol ? records.reduce((sum, r) => sum + (Number(r[budgetCol]) || 0), 0) : 0;
+      const completedCount = statusCol
+        ? records.filter((r) => {
+            const v = String(r[statusCol]).toLowerCase();
+            return v === "completed" || v === "active";
+          }).length
+        : 0;
+
+      const results: Metric[] = [
+        { label: "Total Project Records", value: records.length, icon: Briefcase, color: "text-blue-500 bg-blue-50" }
+      ];
+      if (budgetCol) {
+        results.push({ label: "Allocated Budgets", value: `$${accumulatedBudget.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" });
+      }
+      if (statusCol) {
+        results.push({ label: "Ongoing/Completed", value: completedCount, icon: CheckCircle2, color: "text-purple-500 bg-purple-50" });
+      }
+      return results;
+    }
+
     if (solutionType === "Registry" || solutionType === "Custom") {
-      // 1. Categories Metric
       if (columnTypes.category) {
         const uniqueCats = new Set(records.map((r) => String(r[columnTypes.category] || "")).filter(Boolean));
         const categoryLabel = columnTypes.category.toLowerCase().endsWith("y")
@@ -229,44 +273,36 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
         });
       }
 
-      // 2. Status Metric
       if (columnTypes.status) {
         const uniqueStats = new Set(records.map((r) => String(r[columnTypes.status] || "")).filter(Boolean));
         baseMetrics.push({
-          label: `Distinct Status Stages`,
+          label: "Distinct Status Stages",
           value: uniqueStats.size,
           icon: CheckCircle2,
           color: "text-emerald-500 bg-emerald-50"
         });
       }
-      case "Project":
-      case "ProjectManagement": {
-        // Dynamic detection of Project Columns
-        const totalProj = records.length;
-        const budgetCol = columns.find(c => c.toLowerCase().includes("budget") || c.toLowerCase().includes("cost") || c.toLowerCase().includes("value"));
-        const progressCol = columns.find(c => c.toLowerCase().includes("progress") || c.toLowerCase().includes("percent") || c.toLowerCase().includes("%") || c.toLowerCase().includes("complete"));
-        const statusCol = columns.find(c => c.toLowerCase().includes("status") || c.toLowerCase().includes("stage"));
 
-        const accumulatedBudget = budgetCol ? records.reduce((sum, r) => sum + (Number(r[budgetCol]) || 0), 0) : 0;
-        const completedCount = statusCol ? records.filter(r => String(r[statusCol]).toLowerCase() === "completed" || String(r[statusCol]).toLowerCase() === "active").length : 0;
-
-        const results = [
-          { label: "Total Project Records", value: totalProj, icon: Briefcase, color: "text-blue-500 bg-blue-50" }
-        ];
-        if (budgetCol) {
-          results.push({ label: "Allocated Budgets", value: `$${accumulatedBudget.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" });
-        }
-        if (statusCol) {
-          results.push({ label: "Ongoing/Completed", value: completedCount, icon: CheckCircle2, color: "text-purple-500 bg-purple-50" });
-        }
-        return results;
+      if (columnTypes.numeric.length > 0) {
+        const col = columnTypes.numeric[0];
+        const total = records.reduce((sum, r) => sum + (Number(r[col]) || 0), 0);
+        baseMetrics.push({
+          label: `Total ${col}`,
+          value: total.toLocaleString(),
+          icon: DollarSign,
+          color: "text-amber-500 bg-amber-50"
+        });
       }
+
+      return baseMetrics;
     }
 
     return baseMetrics;
-  }, [records, solutionType, columnTypes, allHeaders]);
+  }, [records, solutionType, columnTypes, columns, hrData]);
 
-  // Aggregate Status counts for charting (only if status column is present)
+  // ---------------------------------------------------------------
+  // Charts
+  // ---------------------------------------------------------------
   const statusChartData = useMemo(() => {
     if (solutionType === "CRM") {
       const counts: Record<string, number> = {};
@@ -290,61 +326,71 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
     return [];
   }, [records, solutionType, columnTypes.status]);
 
-  // Value/Price Distribution chart
   const valueChartData = useMemo(() => {
     if (solutionType === "CRM") {
       return records
         .map((r) => ({
-          name: (r.organizationName || r.Organization || "").slice(0, 15),
+          name: String(r.organizationName || r.Organization || "").slice(0, 15),
           value: Number(r.value || r["Value (USD)"]) || 0
         }))
         .filter((d) => d.value > 0);
-    } else if (solutionType === "Inventory") {
+    }
+
+    if (solutionType === "Inventory") {
       return records.map((r) => ({
-        name: (r["Product Name"] || "").slice(0, 15),
+        name: String(r["Product Name"] || "").slice(0, 15),
         value: Number(r.Quantity) || 0
       }));
-    } else if (solutionType === "HR") {
+    }
+
+    if (solutionType === "HR") {
       const dataToUse = hrData ? hrData.employees : records;
       const counts: Record<string, number> = {};
-      dataToUse.forEach(e => {
+      dataToUse.forEach((e) => {
         const d = e.Department || "Unassigned";
         counts[d] = (counts[d] || 0) + 1;
       });
       return Object.entries(counts).map(([name, value]) => ({ name, value }));
-    } else if (solutionType === "Tasks") {
+    }
+
+    if (solutionType === "Task" || solutionType === "Tasks") {
       return records.map((r) => ({
-        name: (r["Task Name"] || r.taskName || "").slice(0, 15),
+        name: String(r["Task Name"] || r.taskName || "").slice(0, 15),
         value: Number(r["Progress (%)"] || r.progress) || 0
       }));
-    } else if (solutionType === "Registry" || solutionType === "Custom") {
-      // Group records by Category to show Category Distribution
+    }
+
+    if (solutionType === "Registry" || solutionType === "Custom") {
       if (!columnTypes.category) return [];
       const counts: Record<string, number> = {};
       records.forEach((r) => {
         const cat = String(r[columnTypes.category] || "Unassigned");
         counts[cat] = (counts[cat] || 0) + 1;
       });
-      return Object.entries(counts).map(([name, value]) => ({
-        name: name.slice(0, 15),
-        value
-      }));
-    } else if (solutionType === "Project" || solutionType === "ProjectManagement") {
-      const budgetCol = columns.find(c => c.toLowerCase().includes("budget") || c.toLowerCase().includes("cost") || c.toLowerCase().includes("value"));
-      const nameCol = columns.find(c => c.toLowerCase().includes("name") || c.toLowerCase().includes("title") || c.toLowerCase().includes("id")) || columns[0];
+      return Object.entries(counts).map(([name, value]) => ({ name: name.slice(0, 15), value }));
+    }
+
+    if (solutionType === "Project" || solutionType === "ProjectManagement") {
+      const budgetCol = columns.find((c) => c.toLowerCase().includes("budget") || c.toLowerCase().includes("cost") || c.toLowerCase().includes("value"));
+      const nameCol = columns.find((c) => c.toLowerCase().includes("name") || c.toLowerCase().includes("title") || c.toLowerCase().includes("id")) || columns[0];
       if (budgetCol && nameCol) {
-        return records.map(r => ({
-          name: String(r[nameCol] || "").slice(0, 15),
-          value: Number(r[budgetCol]) || 0
-        })).filter(d => d.value > 0);
+        return records
+          .map((r) => ({
+            name: String(r[nameCol] || "").slice(0, 15),
+            value: Number(r[budgetCol]) || 0
+          }))
+          .filter((d) => d.value > 0);
       }
     }
-    return [];
-  }, [records, solutionType, columnTypes.category]);
 
-  // Filter list of records for summary table
+    return [];
+  }, [records, solutionType, columnTypes.category, columns, hrData]);
+
+  // ---------------------------------------------------------------
+  // Table filtering
+  // ---------------------------------------------------------------
   const filteredRecords = useMemo(() => {
-    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
+    const dataToUse = solutionType === "HR" && hrData ? hrData.employees : records;
     return dataToUse.filter((rec) => {
       const matchSearch = Object.values(rec).some((val) =>
         String(val).toLowerCase().includes(search.toLowerCase())
@@ -355,12 +401,12 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       if (!statusField) return matchSearch;
       return matchSearch && String(rec[statusField] || "") === filterValue;
     });
-  }, [records, search, filterValue, solutionType, columnTypes.status]);
+  }, [records, search, filterValue, solutionType, columnTypes.status, hrData]);
 
   const uniqueStatuses = useMemo(() => {
     const statusField = solutionType === "CRM" ? "Status" : columnTypes.status;
     if (!statusField) return [];
-    return Array.from(new Set(records.map((r) => r[statusField]).filter(Boolean)));
+    return Array.from(new Set(records.map((r) => r[statusField]).filter(Boolean))).map((s) => String(s));
   }, [records, solutionType, columnTypes.status]);
 
   return (
@@ -369,9 +415,11 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
           <h2 className="text-xl font-bold text-foreground">
-            {solutionType === "CRM" ? "CRM Live Workspace" :
-             solutionType === "HR" ? "HR Management Workspace Dashboard" :
-             `${solutionType} Smart Dashboard`}
+            {solutionType === "CRM"
+              ? "CRM Live Workspace"
+              : solutionType === "HR"
+              ? "HR Management Workspace Dashboard"
+              : `${solutionType} Smart Dashboard`}
           </h2>
           <p className="text-sm text-muted-foreground">
             Visualized analytics powered by the Smart Data Layer. Zero delay two-way synchronization active.
@@ -388,7 +436,7 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
           {metrics.map((m, idx) => (
             <div
               key={idx}
-              className={`rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition flex items-center gap-4`}
+              className="rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition flex items-center gap-4"
             >
               <div className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${m.color}`}>
                 <m.icon className="h-6 w-6" />
@@ -409,7 +457,6 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       {/* Dynamic Charts Section */}
       {records.length > 0 && (statusChartData.length > 0 || valueChartData.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Status breakdown Chart (Rendered only if status data is available) */}
           {statusChartData.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
@@ -426,7 +473,7 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
-                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
+                      label={({ name, percent }: any) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
                     >
                       {statusChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -439,7 +486,6 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
             </div>
           )}
 
-          {/* Value / Numeric / Category Breakdown Chart (Rendered only if category/value data exists) */}
           {valueChartData.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
@@ -450,7 +496,9 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
                   ? "Stock Level Distribution"
                   : solutionType === "Registry" || solutionType === "Custom"
                   ? `${columnTypes.category || "Category"} Distribution`
-                  : "Salary Allocation"}
+                  : solutionType === "HR"
+                  ? "Department Allocation"
+                  : "Value Distribution"}
               </h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
@@ -515,12 +563,10 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
 
       {/* Live Table + Feed Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Filterable Summary List */}
         <div className="xl:col-span-2 rounded-xl border border-border bg-card p-5 shadow-sm flex flex-col min-h-[400px]">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <h3 className="font-semibold text-foreground text-sm">Synchronized Records Registry</h3>
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              {/* Search */}
               <div className="relative flex-1 sm:w-48">
                 <Search className="h-4 w-4 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input
@@ -531,7 +577,6 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
                   className="w-full text-xs pl-8 pr-2.5 py-1.5 rounded-lg border border-border bg-background focus:outline-none"
                 />
               </div>
-              {/* Status Filter */}
               {uniqueStatuses.length > 0 && (
                 <div className="relative">
                   <select
