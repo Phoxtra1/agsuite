@@ -73,71 +73,27 @@ export default function DashboardEngine({
   const [search, setSearch] = useState("");
   const [filterValue, setFilterValue] = useState("all");
 
-  // ---------------------------------------------------------------
-  // HR workspace data derived from connected sheets (single source)
-  // ---------------------------------------------------------------
-  const hrData = useMemo(() => {
-    if (solutionType !== "HR") return null;
-
-    const findSheet = (...keywords: string[]) =>
-      (allSheets || []).find((s: any) =>
-        keywords.some((k) => String(s?.name || "").toLowerCase().includes(k))
-      );
-
-    const rowsOf = (sheet: any, fallback: Record<string, any>[] = []) => {
-      if (!sheet) return fallback;
-      try {
-        const parsed = parseSheetRows(sheet);
-        return Array.isArray(parsed) ? parsed : fallback;
-      } catch {
-        return fallback;
-      }
-    };
-
-    return {
-      employees: rowsOf(findSheet("employee", "staff"), records),
-      attendance: rowsOf(findSheet("attendance")),
-      leave: rowsOf(findSheet("leave"))
-    };
-  }, [solutionType, allSheets, records]);
-
-  const attendanceSummary = useMemo(() => {
-    if (solutionType !== "HR" || !hrData) return null;
-    const rows = hrData.attendance.length ? hrData.attendance : hrData.employees;
-    const read = (r: Record<string, any>) =>
-      String(r.Status || r.status || r.Attendance || r["Attendance Status"] || "").toLowerCase();
-    return {
-      present: rows.filter((r) => read(r).includes("present") || read(r).includes("remote")).length,
-      late: rows.filter((r) => read(r).includes("late")).length,
-      absent: rows.filter((r) => read(r).includes("absent")).length
-    };
-  }, [solutionType, hrData]);
-
-  const leaveSummary = useMemo(() => {
-    if (solutionType !== "HR" || !hrData) return null;
-    const rows = hrData.leave;
-    const read = (r: Record<string, any>) =>
-      String(r.Status || r.status || r["Leave Status"] || "").toLowerCase();
-    return {
-      approved: rows.filter((r) => read(r).includes("approve")).length,
-      pending: rows.filter((r) => read(r).includes("pending") || read(r).includes("request")).length
-    };
-  }, [solutionType, hrData]);
-
-  // ---------------------------------------------------------------
-  // Dynamic column discovery
-  // ---------------------------------------------------------------
-  const allHeaders = useMemo(() => {
-    if (records.length === 0) return [];
-    return Object.keys(records[0]).filter(
-      (k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_")
-    );
+  const hasStatusColumn = useMemo(() => {
+    if (!records.length) return false;
+    const keys = Object.keys(records[0]);
+    return keys.some(k => ["status", "state"].some(m => k.toLowerCase().includes(m)));
   }, [records]);
 
-  const columns = allHeaders;
+  const hasNumericColumn = useMemo(() => {
+    if (!records.length) return false;
+    if (solutionType === "CRM") return true;
+    if (solutionType === "Inventory") return true;
+    if (solutionType === "HR") return true;
+    if (solutionType === "Tasks") {
+      const keys = Object.keys(records[0]);
+      return keys.some(k => ["progress"].some(m => k.toLowerCase().includes(m)));
+    }
+    return false;
+  }, [records, solutionType]);
 
-  const columnTypes = useMemo<ColumnTypes>(() => {
-    const result: ColumnTypes = { id: "", name: "", status: "", category: "", date: "", numeric: [] };
+  // Dynamic Metrics Generation
+  const metrics = useMemo(() => {
+    if (!records.length) return [];
 
     allHeaders.forEach((h) => {
       const norm = h.toLowerCase().trim();
@@ -272,15 +228,66 @@ export default function DashboardEngine({
           color: "text-purple-500 bg-purple-50"
         });
       }
+      case "Tasks": {
+        const headers = records.length > 0 ? Object.keys(records[0]) : [];
+        const statusHeader = headers.find(h => ["status", "state"].some(m => h.toLowerCase().includes(m)));
+        const priorityHeader = headers.find(h => ["priority", "level"].some(m => h.toLowerCase().includes(m)));
+        const dueDateHeader = headers.find(h => ["due date", "deadline"].some(m => h.toLowerCase().includes(m)));
 
-      if (columnTypes.status) {
-        const uniqueStats = new Set(records.map((r) => String(r[columnTypes.status] || "")).filter(Boolean));
-        baseMetrics.push({
-          label: "Distinct Status Stages",
-          value: uniqueStats.size,
-          icon: CheckCircle2,
-          color: "text-emerald-500 bg-emerald-50"
+        const list = [];
+        list.push({
+          label: "Total Tasks",
+          value: records.length,
+          icon: Briefcase,
+          color: "text-blue-500 bg-blue-50"
         });
+
+        if (statusHeader) {
+          const completedTasks = records.filter(r => String(r[statusHeader!] || "").trim() === "Completed").length;
+          const pendingTasks = records.length - completedTasks;
+          list.push(
+            { label: "Completed Tasks", value: completedTasks, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
+            { label: "Pending Tasks", value: pendingTasks, icon: Clock, color: "text-purple-500 bg-purple-50" }
+          );
+
+          if (dueDateHeader) {
+            const today = new Date("2026-04-14");
+            const overdueTasks = records.filter(r => {
+              const dueStr = r[dueDateHeader!] || "";
+              if (!dueStr) return false;
+              const dueD = new Date(dueStr);
+              const statusStr = String(r[statusHeader!] || "");
+              return dueD < today && statusStr !== "Completed";
+            }).length;
+            list.push({
+              label: "Overdue Tasks",
+              value: overdueTasks,
+              icon: AlertTriangle,
+              color: "text-rose-500 bg-rose-50",
+              alert: overdueTasks > 0
+            });
+          }
+
+          const rate = records.length > 0 ? Math.round((completedTasks / records.length) * 100) : 0;
+          list.push({
+            label: "Completion Rate",
+            value: `${rate}%`,
+            icon: TrendingUp,
+            color: "text-emerald-500 bg-emerald-50"
+          });
+        }
+
+        if (priorityHeader) {
+          const highVal = records.filter(r => ["high", "critical"].includes(String(r[priorityHeader!] || "").toLowerCase().trim())).length;
+          list.push({
+            label: "High/Critical Priority",
+            value: highVal,
+            icon: AlertTriangle,
+            color: "text-amber-500 bg-amber-50"
+          });
+        }
+
+        return list;
       }
 
       if (columnTypes.numeric.length > 0) {
@@ -304,27 +311,16 @@ export default function DashboardEngine({
   // Charts
   // ---------------------------------------------------------------
   const statusChartData = useMemo(() => {
-    if (solutionType === "CRM") {
-      const counts: Record<string, number> = {};
-      records.forEach((r) => {
-        const statusKey = r.status || r.Status || "Unknown";
-        counts[statusKey] = (counts[statusKey] || 0) + 1;
-      });
-      return Object.entries(counts).map(([name, value]) => ({ name, value }));
-    }
-
-    if (solutionType === "Registry" || solutionType === "Custom") {
-      if (!columnTypes.status) return [];
-      const counts: Record<string, number> = {};
-      records.forEach((r) => {
-        const statusKey = String(r[columnTypes.status] || "Unassigned");
-        counts[statusKey] = (counts[statusKey] || 0) + 1;
-      });
-      return Object.entries(counts).map(([name, value]) => ({ name, value }));
-    }
-
-    return [];
-  }, [records, solutionType, columnTypes.status]);
+    if (solutionType === "Tasks" && !hasStatusColumn) return [];
+    const counts: Record<string, number> = {};
+    records.forEach((r) => {
+      const keys = Object.keys(r);
+      const statusKeyName = keys.find(k => ["status", "state"].some(m => k.toLowerCase().includes(m)));
+      const statusKey = statusKeyName ? String(r[statusKeyName] || "Unknown") : "Unknown";
+      counts[statusKey] = (counts[statusKey] || 0) + 1;
+    });
+    return Object.entries(counts).map(([name, value]) => ({ name, value }));
+  }, [records, solutionType, hasStatusColumn]);
 
   const valueChartData = useMemo(() => {
     if (solutionType === "CRM") {
@@ -341,22 +337,20 @@ export default function DashboardEngine({
         name: String(r["Product Name"] || "").slice(0, 15),
         value: Number(r.Quantity) || 0
       }));
-    }
-
-    if (solutionType === "HR") {
-      const dataToUse = hrData ? hrData.employees : records;
-      const counts: Record<string, number> = {};
-      dataToUse.forEach((e) => {
-        const d = e.Department || "Unassigned";
-        counts[d] = (counts[d] || 0) + 1;
-      });
-      return Object.entries(counts).map(([name, value]) => ({ name, value }));
-    }
-
-    if (solutionType === "Task" || solutionType === "Tasks") {
+    } else if (solutionType === "HR") {
       return records.map((r) => ({
-        name: String(r["Task Name"] || r.taskName || "").slice(0, 15),
-        value: Number(r["Progress (%)"] || r.progress) || 0
+        name: (r["Full Name"] || "").slice(0, 15),
+        value: Number(r["Base Salary"]) || 0
+      }));
+    } else if (solutionType === "Tasks") {
+      const keys = records.length > 0 ? Object.keys(records[0]) : [];
+      const progressKey = keys.find(k => k.toLowerCase().includes("progress"));
+      const nameKey = keys.find(k => ["task name", "task", "name", "title"].some(m => k.toLowerCase().includes(m))) || keys[1] || keys[0];
+
+      if (!progressKey) return [];
+      return records.map((r) => ({
+        name: String(r[nameKey] || "").slice(0, 15),
+        value: parseFloat(r[progressKey]) || 0
       }));
     }
 
@@ -457,6 +451,7 @@ export default function DashboardEngine({
       {/* Dynamic Charts Section */}
       {records.length > 0 && (statusChartData.length > 0 || valueChartData.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* Status breakdown Chart */}
           {statusChartData.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
@@ -473,7 +468,7 @@ export default function DashboardEngine({
                       outerRadius={80}
                       fill="#8884d8"
                       dataKey="value"
-                      label={({ name, percent }: any) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                      label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
                     >
                       {statusChartData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
@@ -494,11 +489,9 @@ export default function DashboardEngine({
                   ? "Deal Value Distribution"
                   : solutionType === "Inventory"
                   ? "Stock Level Distribution"
-                  : solutionType === "Registry" || solutionType === "Custom"
-                  ? `${columnTypes.category || "Category"} Distribution`
-                  : solutionType === "HR"
-                  ? "Department Allocation"
-                  : "Value Distribution"}
+                  : solutionType === "Tasks"
+                  ? "Task Progress Distribution"
+                  : "Salary Allocation"}
               </h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
