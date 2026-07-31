@@ -3,7 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   getSheet, updateSheet, EMPTY_WORKBOOK, cellId, parseCell, parseMergeRange,
   insertRow, deleteRow, insertCol, deleteCol,
-  type WorkspaceSheet, type Workbook, type SheetPage, type CellFormat, flattenWorkbookText,
+  type WorkspaceSheet, type Workbook, type SheetPage, type CellFormat, type SheetChart, flattenWorkbookText,
 } from "@/lib/workspace/sheets/documents";
 import { buildEngine, type EngineHandle } from "@/lib/workspace/sheets/engine";
 import { SheetGrid, type Selection } from "@/components/workspace/sheets/SheetGrid";
@@ -12,12 +12,12 @@ import { FormulaBar } from "@/components/workspace/sheets/FormulaBar";
 import { SheetTabs } from "@/components/workspace/sheets/SheetTabs";
 import { StatusBar } from "@/components/workspace/sheets/StatusBar";
 import { AnalysisPanel } from "@/components/workspace/sheets/AnalysisPanel";
+import { LeftSheetPanel } from "@/components/workspace/sheets/LeftSheetPanel";
 import { ChartDialog } from "@/components/workspace/sheets/ChartDialog";
 import { exportCSV, exportJSON, exportXLSX, importXLSX } from "@/components/workspace/sheets/exporters";
 import { useUndoRedo } from "@/components/workspace/sheets/hooks/useUndoRedo";
 import { ArrowLeft, ChevronLeft, ChevronDown, CloudUpload, Download, Loader2, Share2, Upload, Sparkles, AlertCircle, Layout, Table2, Presentation, BarChart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import type { SheetChart } from "@/lib/workspace/sheets/documents";
 
 // Smart Business Solution Imports
 import {
@@ -49,6 +49,7 @@ export default function SheetsEditor() {
   const [selection, setSelection] = useState<Selection>({ r1: 0, c1: 0, r2: 0, c2: 0 });
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
+  const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
   const engineRef = useRef<EngineHandle | null>(null);
   const [engineTick, setEngineTick] = useState(0);
@@ -126,30 +127,11 @@ export default function SheetsEditor() {
 
       let updatedSheets = [...prev.sheets];
 
-      if (type === "ProjectManagement") {
-        // Multi-tab workspace auto-seeding
-        const projectTemplates = ["ProjectManagement", "ProjectTasks", "ProjectMilestones", "ProjectTeams"];
-        const names = ["Projects", "Tasks", "Milestones", "Teams"];
-
-        names.forEach((name, i) => {
-          const tId = projectTemplates[i];
-          const foundIdx = updatedSheets.findIndex(s => s.name === name);
-          const sheetPage = foundIdx !== -1 ? updatedSheets[foundIdx] : { name, cells: {} };
-          const seeded = seedSolutionToSheet(sheetPage, tId);
-
-          if (foundIdx !== -1) {
-            updatedSheets[foundIdx] = seeded;
-          } else {
-            updatedSheets.push(seeded);
-          }
-        });
-      } else {
-        const activeSheetObj = updatedSheets[activeSheetIdx] || updatedSheets[0];
-        const hasNoData = Object.keys(activeSheetObj.cells).length === 0;
-        if (hasNoData) {
-          const seeded = seedSolutionToSheet(activeSheetObj, type);
-          updatedSheets = updatedSheets.map((s, idx) => idx === activeSheetIdx ? seeded : s);
-        }
+      const activeSheetObj = updatedSheets[activeSheetIdx] || updatedSheets[0];
+      const hasNoData = Object.keys(activeSheetObj.cells).length === 0;
+      if (hasNoData) {
+        const seeded = seedSolutionToSheet(activeSheetObj, type);
+        updatedSheets = updatedSheets.map((s, idx) => idx === activeSheetIdx ? seeded : s);
       }
 
       return {
@@ -269,7 +251,7 @@ export default function SheetsEditor() {
 
   // Support multi-tab parsing for Project Management View
   const projectManagementData = useMemo(() => {
-    const projectsSheet = wb.sheets.find(s => s.name === "Projects");
+    const projectsSheet = wb.sheets.find(s => s.name === "Projects") || activeSheet;
     const tasksSheet = wb.sheets.find(s => s.name === "Tasks");
     const milestonesSheet = wb.sheets.find(s => s.name === "Milestones");
     const teamsSheet = wb.sheets.find(s => s.name === "Teams");
@@ -288,7 +270,7 @@ export default function SheetsEditor() {
       hrEmployees: hrSheet ? parseSheetRows(hrSheet) : [],
       registryRecords: registrySheet ? parseSheetRows(registrySheet) : []
     };
-  }, [wb.sheets, engineTick]);
+  }, [wb.sheets, activeSheet, engineTick]);
 
   const recommendedSolutionId = useMemo(() => {
     if (wb.activeSolution) return null;
@@ -974,6 +956,13 @@ export default function SheetsEditor() {
       )}
 
       <div className="flex-1 flex overflow-hidden">
+        {/* Native Spreadsheet Leftside Panel */}
+        <LeftSheetPanel
+          collapsed={leftCollapsed}
+          onToggleCollapsed={() => setLeftCollapsed((v) => !v)}
+          currentId={id}
+        />
+
         {/* Conditional Workspace View Switching */}
         {wb.activeSolution && activeView === "solution" ? (
           wb.activeSolution.type === "CRM" ? (
@@ -1010,18 +999,16 @@ export default function SheetsEditor() {
             />
           ) : (wb.activeSolution.type === "ProjectManagement" || wb.activeSolution.type === "Project") ? (
             <ProjectManagementView
-              projects={projectManagementData.projects}
-              tasks={projectManagementData.tasks}
-              milestones={projectManagementData.milestones}
-              teams={projectManagementData.teams}
-              onUpdateRecord={handleUpdateSheetRecordByName}
-              onAddRecord={handleAddSheetRecordByName}
+              records={projectManagementData.projects}
+              sheetName={activeSheet.name}
+              workbook={wb}
+              onUpdateRecord={(rowIndex, field, value) => handleUpdateRecord(rowIndex, field, value)}
+              onAddRecord={(record) => handleAddRecord(record)}
+              onUpdateRecordByName={handleUpdateSheetRecordByName}
+              onAddRecordByName={handleAddSheetRecordByName}
               onOpenMeetingModal={handleOpenMeetingPrefilled}
               onScheduleEvent={(prefilled) => handleOpenMeetingPrefilled(prefilled)}
               onNotifyTeam={(message) => toast({ title: "Team Notification Sent", description: message })}
-              crmRecords={projectManagementData.crmRecords}
-              hrEmployees={projectManagementData.hrEmployees}
-              registryRecords={projectManagementData.registryRecords}
             />
 
           ) : (
@@ -1056,8 +1043,10 @@ export default function SheetsEditor() {
             allSheets={wb.sheets}
           />
         ) : (
-          /* Default Spreadsheet Editor view */
           <>
+
+          /* Default Spreadsheet Editor view */
+
             <div className="flex-1 flex flex-col overflow-hidden">
               <SheetGrid
                 sheet={activeSheet}
@@ -1118,16 +1107,18 @@ export default function SheetsEditor() {
         saving={saving}
       />
 
-      {showChartDialog && (
-        <ChartDialog
-          sheet={activeSheet}
-          engine={engineRef.current}
-          defaultRange={defaultChartRange}
-          onCancel={() => setShowChartDialog(false)}
-          onInsert={insertChart}
-        />
-      )}
-    </div>
+      {
+        showChartDialog && (
+          <ChartDialog
+            sheet={activeSheet}
+            engine={engineRef.current}
+            defaultRange={defaultChartRange}
+            onCancel={() => setShowChartDialog(false)}
+            onInsert={insertChart}
+          />
+        )
+      }
+    </div >
   );
 }
 

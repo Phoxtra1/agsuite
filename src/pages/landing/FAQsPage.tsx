@@ -33,10 +33,10 @@ const categories: { title: string; faqs: FAQItem[] }[] = [
     ],
   },
   {
-    title: "Odeneho AI",
+    title: "Dipa AI",
     faqs: [
-      { q: "What is Odeneho AI?", a: "Odeneho AI is Amineva Global's intelligent companion for research, writing, planning, documentation, storytelling, knowledge systems, and data analysis — powering insight across the ecosystem." },
-      { q: "What can I use Odeneho AI for?", a: "Research and analysis, content creation, planning and scheduling, business documentation, historical and cultural knowledge, storytelling, library access, and curated narration." },
+      { q: "What is Dipa AI?", a: "Dipa AI is Amineva Global's intelligent companion for research, writing, planning, documentation, storytelling, knowledge systems, and data analysis — powering insight across the ecosystem." },
+      { q: "What can I use Dipa AI for?", a: "Research and analysis, content creation, planning and scheduling, business documentation, historical and cultural knowledge, storytelling, library access, and curated narration." },
     ],
   },
   {

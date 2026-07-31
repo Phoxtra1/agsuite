@@ -57,7 +57,7 @@ export function AnalysisPanel({ sheet, selection, collapsed, onToggleCollapsed, 
           <ChevronLeft className="h-4 w-4" />
         </button>
         <div className="mt-3 text-[10px] font-semibold text-muted-foreground vertical-writing" style={{ writingMode: "vertical-rl" }}>
-          Odeneho
+          Dipa
         </div>
       </div>
     );
@@ -68,7 +68,7 @@ export function AnalysisPanel({ sheet, selection, collapsed, onToggleCollapsed, 
       <header className="h-11 px-3 flex items-center justify-between border-b border-border">
         <div className="inline-flex items-center gap-1.5">
           <Sparkles className="h-3.5 w-3.5 text-accent" />
-          <span className="text-xs font-semibold text-foreground">Odeneho</span>
+          <span className="text-xs font-semibold text-foreground">Dipa</span>
         </div>
         <button onClick={onToggleCollapsed} className="h-6 w-6 rounded hover:bg-muted flex items-center justify-center">
           <ChevronRight className="h-4 w-4" />
@@ -82,7 +82,7 @@ export function AnalysisPanel({ sheet, selection, collapsed, onToggleCollapsed, 
           ["ttest","t-test"],["anova","ANOVA"],
           ["chi","Chi-sq"],["outliers","Outliers"],
           ["cluster","k-means"],["timeseries","Time-series"],
-          ["chart","Chart"],["intelligence","Odeneho"],
+          ["chart","Chart"],["intelligence","Dipa"],
         ].map(([id, label]) => (
           <button
             key={id}
@@ -112,7 +112,7 @@ export function AnalysisPanel({ sheet, selection, collapsed, onToggleCollapsed, 
         {mode === "chart" && <ChartView cols={numericCols} />}
         {mode === "intelligence" && (
           <div className="space-y-2">
-            <div className="text-muted-foreground">Ask Odeneho about this selection.</div>
+            <div className="text-muted-foreground">Ask Dipa about this selection.</div>
             <div className="grid gap-1.5">
               <button onClick={() => runAI("summarize")} disabled={aiBusy} className="text-left px-3 py-2 rounded border border-border hover:bg-muted">Explain this data</button>
               <button onClick={() => runAI("chart")} disabled={aiBusy} className="text-left px-3 py-2 rounded border border-border hover:bg-muted">Suggest a chart</button>

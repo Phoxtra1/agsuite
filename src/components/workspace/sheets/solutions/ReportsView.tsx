@@ -104,7 +104,6 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
   const [customFilterText, setCustomFilterText] = useState("");
   const [customSelectedFields, setCustomSelectedFields] = useState<string[]>([]);
 
-  // Get all keys across records for report columns
   const allHeaders = useMemo(() => {
     if (records.length === 0) return [];
     return Object.keys(records[0]).filter(
@@ -112,7 +111,6 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
     );
   }, [records]);
 
-  // Set default selected fields for custom report on first render or header load
   useEffect(() => {
     if (customSelectedFields.length === 0 && allHeaders.length > 0) {
       setCustomSelectedFields(allHeaders.slice(0, 5));
@@ -127,18 +125,15 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
     } else {
       setCustomSelectedFields((prev) => [...prev, field]);
     }
-  };
+  }, [allHeaders]);
 
-  // 1. Report: Summary Computations
   const summaryData = useMemo(() => {
     const total = records.length;
     const active = records.filter((r) => String(r.Status || r.status).toLowerCase() === "active").length;
     const pending = records.filter((r) => String(r.Status || r.status).toLowerCase() === "pending").length;
     const archived = records.filter((r) => String(r.Status || r.status).toLowerCase() === "archived").length;
 
-    // Categories count
     const cats = new Set(records.map((r) => r.Category || r.category).filter(Boolean));
-    // Locations count
     const locs = new Set(records.map((r) => r.Location || r.location).filter(Boolean));
 
     return {
@@ -151,7 +146,6 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
     };
   }, [records]);
 
-  // 2. Report: Category breakdown list
   const categoryBreakdown = useMemo(() => {
     const map: Record<string, { count: number; active: number; archived: number }> = {};
     records.forEach((r) => {
@@ -264,17 +258,13 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
 
   // Simulations
   const handleExportCSV = () => {
-    const headers = activeReport === "custom" ? customSelectedFields : allHeaders;
-    const rows = activeReport === "custom" ? customReportRecords : records;
-
+    const headers = customSelectedFields.length > 0 ? customSelectedFields : allHeaders;
     let csvContent = "data:text/csv;charset=utf-8,";
     csvContent += headers.join(",") + "\n";
-
-    rows.forEach((r) => {
+    records.forEach((r) => {
       const row = headers.map((h) => `"${String(r[h] ?? "").replace(/"/g, '""')}"`);
       csvContent += row.join(",") + "\n";
     });
-
     const encodedUri = encodeURI(csvContent);
     const link = document.createElement("a");
     link.setAttribute("href", encodedUri);
@@ -455,7 +445,6 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
   // Otherwise, render General / Registry / Custom report layouts
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-muted/20 space-y-6 text-xs">
-      {/* Page Header */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between border-b border-border pb-4 gap-4 flex-shrink-0">
         <div>
           <h2 className="text-xl font-bold text-foreground">
@@ -481,15 +470,10 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
         </div>
       </div>
 
-      {/* Report Selection Tabs */}
-      <div className="grid grid-cols-2 md:grid-cols-6 gap-2 bg-card p-1.5 border border-border rounded-xl">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-2 bg-card p-1.5 border border-border rounded-xl">
         {[
           { id: "summary", label: "Registry Summary", icon: BarChart },
           { id: "category", label: "Category Report", icon: Tag },
-          { id: "status", label: "Status Report", icon: Shield },
-          { id: "location", label: "Location Report", icon: MapPin },
-          { id: "activity", label: "Activity Trail", icon: Activity },
-          { id: "custom", label: "Custom Builder", icon: Sparkles }
         ].map((tab) => (
           <button
             key={tab.id}
@@ -865,7 +849,7 @@ function HrReportsView({ allSheets = [], parseRowsFn }: { allSheets: any[]; pars
   // Extract sheet rows safely
   const sheetData = useMemo(() => {
     const dataMap: Record<string, any[]> = {};
-    const sheetNames = ["Employees", "Departments", "Positions", "Attendance", "Leave", "Performance", "Recruitment", "Onboarding"];
+    const sheetNames = ["Employees", "Departments", "Attendance"];
 
     sheetNames.forEach((name) => {
       const sheet = allSheets.find((s) => s.name === name);
@@ -960,8 +944,6 @@ function HrReportsView({ allSheets = [], parseRowsFn }: { allSheets: any[]; pars
                     <th className="p-3 pl-5">Dept Code</th>
                     <th className="p-3">Department Name</th>
                     <th className="p-3">Headcount</th>
-                    <th className="p-3">Manager</th>
-                    <th className="p-3">Description</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
@@ -980,7 +962,7 @@ function HrReportsView({ allSheets = [], parseRowsFn }: { allSheets: any[]; pars
                     })
                   ) : (
                     <tr>
-                      <td colSpan={5} className="p-8 text-center text-muted-foreground italic">No matches.</td>
+                      <td colSpan={3} className="p-8 text-center text-muted-foreground italic">No matches.</td>
                     </tr>
                   )}
                 </tbody>
@@ -991,9 +973,8 @@ function HrReportsView({ allSheets = [], parseRowsFn }: { allSheets: any[]; pars
       }
 
       case "attendance": {
-        const list = sheetData.Attendance.filter((att) =>
-          String(att["Employee Name"] || "").toLowerCase().includes(q) ||
-          String(att["Attendance Status"] || "").toLowerCase().includes(q)
+        const list = (sheetData.Attendance || []).filter((att) =>
+          String(att["Employee Name"] || "").toLowerCase().includes(q)
         );
 
         return (
@@ -1006,10 +987,6 @@ function HrReportsView({ allSheets = [], parseRowsFn }: { allSheets: any[]; pars
                     <th className="p-3 pl-5">Emp ID</th>
                     <th className="p-3">Employee Name</th>
                     <th className="p-3">Date</th>
-                    <th className="p-3">Check-In</th>
-                    <th className="p-3">Check-Out</th>
-                    <th className="p-3">Working Hours</th>
-                    <th className="p-3">Status</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-border/50">
@@ -1019,119 +996,11 @@ function HrReportsView({ allSheets = [], parseRowsFn }: { allSheets: any[]; pars
                         <td className="p-3 pl-5 font-bold text-muted-foreground">{att["Employee ID"]}</td>
                         <td className="p-3 font-semibold">{att["Employee Name"]}</td>
                         <td className="p-3">{att["Date"]}</td>
-                        <td className="p-3">{att["Check-In Time"] || "-"}</td>
-                        <td className="p-3">{att["Check-Out Time"] || "-"}</td>
-                        <td className="p-3 font-bold">{att["Working Hours"]} hrs</td>
-                        <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            att["Attendance Status"] === "Present" ? "bg-emerald-50 text-emerald-700" :
-                            att["Attendance Status"] === "Late" ? "bg-rose-50 text-rose-700" : "bg-muted text-muted-foreground"
-                          }`}>
-                            {att["Attendance Status"]}
-                          </span>
-                        </td>
                       </tr>
                     ))
                   ) : (
                     <tr>
-                      <td colSpan={7} className="p-8 text-center text-muted-foreground italic">No matches.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      }
-
-      case "leave": {
-        const list = sheetData.Leave.filter((l) =>
-          String(l["Employee Name"] || "").toLowerCase().includes(q) ||
-          String(l["Leave Type"] || "").toLowerCase().includes(q)
-        );
-
-        return (
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-foreground">Leave Requests & Tracker</h3>
-            <div className="overflow-x-auto border border-border rounded-xl bg-card">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-muted/30 border-b border-border text-muted-foreground uppercase font-bold text-[10px]">
-                    <th className="p-3 pl-5">Emp Name</th>
-                    <th className="p-3">Leave Type</th>
-                    <th className="p-3">Start Date</th>
-                    <th className="p-3">End Date</th>
-                    <th className="p-3">Total Days</th>
-                    <th className="p-3">Approver</th>
-                    <th className="p-3">Status</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {list.length > 0 ? (
-                    list.map((l, i) => (
-                      <tr key={i} className="hover:bg-muted/10 text-foreground font-medium">
-                        <td className="p-3 pl-5 font-semibold">{l["Employee Name"]}</td>
-                        <td className="p-3 font-semibold text-accent">{l["Leave Type"]}</td>
-                        <td className="p-3">{l["Start Date"]}</td>
-                        <td className="p-3">{l["End Date"]}</td>
-                        <td className="p-3 font-bold">{l["Total Days"]} days</td>
-                        <td className="p-3">{l["Approver"]}</td>
-                        <td className="p-3">
-                          <span className={`px-2 py-0.5 rounded text-[10px] font-bold ${
-                            l["Status"] === "Approved" ? "bg-emerald-50 text-emerald-700" : "bg-amber-50 text-amber-700"
-                          }`}>
-                            {l["Status"]}
-                          </span>
-                        </td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={7} className="p-8 text-center text-muted-foreground italic">No matches.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        );
-      }
-
-      case "performance": {
-        const list = sheetData.Performance.filter((perf) =>
-          String(perf["Employee Name"] || "").toLowerCase().includes(q)
-        );
-
-        return (
-          <div className="space-y-4">
-            <h3 className="text-sm font-bold text-foreground">Performance Appraisals</h3>
-            <div className="overflow-x-auto border border-border rounded-xl bg-card">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead>
-                  <tr className="bg-muted/30 border-b border-border text-muted-foreground uppercase font-bold text-[10px]">
-                    <th className="p-3 pl-5">Emp Name</th>
-                    <th className="p-3">Reviewer</th>
-                    <th className="p-3">Review Date</th>
-                    <th className="p-3">Rating</th>
-                    <th className="p-3">Goals</th>
-                    <th className="p-3">Comments</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border/50">
-                  {list.length > 0 ? (
-                    list.map((perf, i) => (
-                      <tr key={i} className="hover:bg-muted/10 text-foreground font-medium">
-                        <td className="p-3 pl-5 font-semibold">{perf["Employee Name"]}</td>
-                        <td className="p-3">{perf["Reviewer"]}</td>
-                        <td className="p-3">{perf["Review Date"]}</td>
-                        <td className="p-3 text-amber-600 font-bold">★ {perf["Rating"]} / 5</td>
-                        <td className="p-3 font-medium truncate max-w-xs">{perf["Goals"]}</td>
-                        <td className="p-3 truncate max-w-xs text-muted-foreground">{perf["Comments"]}</td>
-                      </tr>
-                    ))
-                  ) : (
-                    <tr>
-                      <td colSpan={6} className="p-8 text-center text-muted-foreground italic">No matches.</td>
+                      <td colSpan={3} className="p-8 text-center text-muted-foreground italic">No matches.</td>
                     </tr>
                   )}
                 </tbody>
@@ -1260,7 +1129,7 @@ function HrReportsView({ allSheets = [], parseRowsFn }: { allSheets: any[]; pars
             <button
               key={rep.id}
               onClick={() => {
-                setActiveReport(rep.id);
+                setActiveReport(rep.id as any);
                 setSearchQuery("");
               }}
               className={`w-full p-3 text-left rounded-lg flex items-start gap-3 transition ${
@@ -1296,21 +1165,12 @@ function HrReportsView({ allSheets = [], parseRowsFn }: { allSheets: any[]; pars
               className="w-full text-xs pl-8 pr-3 py-1.5 rounded-lg border border-border bg-background focus:outline-none"
             />
           </div>
-
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => window.print()}
-              className="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold bg-background hover:bg-muted flex items-center gap-1.5"
-            >
-              <Printer className="h-3.5 w-3.5" /> Print Report
-            </button>
-            <button
-              onClick={handleExportCSV}
-              className="px-3 py-1.5 rounded-lg bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/90 flex items-center gap-1.5"
-            >
-              <Download className="h-3.5 w-3.5" /> Export Report
-            </button>
-          </div>
+          <button
+            onClick={() => window.print()}
+            className="px-3 py-1.5 rounded-lg border border-border text-xs font-semibold bg-background hover:bg-muted flex items-center gap-1.5"
+          >
+            <Printer className="h-3.5 w-3.5" /> Print Report
+          </button>
         </div>
 
         {/* Dynamic reporting view container */}

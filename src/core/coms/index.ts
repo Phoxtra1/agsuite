@@ -1,13 +1,13 @@
 // src/core/coms/index.ts
-// PURPOSE: Unified coms pipeline — intake → Odeneho AI → decision
+// PURPOSE: Unified coms pipeline — intake → Dipa AI → decision
 
 import { normalizeComms, type RawCommsInput } from "./intake";
-import { odenehoRespond, type OdenehoResponse } from "./odeneho";
+import { DipaRespond, type DipaResponse } from "./dipa";
 import { decideAction, type DecisionResult } from "./decision";
 
 export interface HandleCommsResult {
   normalized: ReturnType<typeof normalizeComms>;
-  response: OdenehoResponse;
+  response: DipaResponse;
   decision: DecisionResult;
 }
 
@@ -16,10 +16,10 @@ export interface HandleCommsResult {
  */
 export function handleComms(input: RawCommsInput): HandleCommsResult {
   const normalized = normalizeComms(input);
-  const response = odenehoRespond(normalized);
+  const response = DipaRespond(normalized);
   const decision = decideAction(response);
 
   return { normalized, response, decision };
 }
 
-export type { RawCommsInput, OdenehoResponse, DecisionResult };
+export type { RawCommsInput, DipaResponse, DecisionResult };

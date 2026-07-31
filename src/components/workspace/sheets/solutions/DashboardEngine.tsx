@@ -6,12 +6,10 @@ import {
   XAxis,
   YAxis,
   Tooltip,
-  Legend,
   PieChart,
   Pie,
   Cell,
-  LineChart,
-  Line
+  CartesianGrid
 } from "recharts";
 import {
   Users,
@@ -27,259 +25,389 @@ import {
   Filter,
   Search,
   CheckCircle2,
-  Clock,
-  Award,
-  UserPlus,
-  ClipboardList,
-  Archive
+  Clock
 } from "lucide-react";
 import { parseSheetRows } from "@/lib/workspace/sheets/smartData";
 
 interface DashboardEngineProps {
   records: Record<string, any>[];
-  solutionType: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom" | "Tasks";
+  solutionType:
+    | "CRM"
+    | "Inventory"
+    | "HR"
+    | "Registry"
+    | "Project"
+    | "ProjectManagement"
+    | "Custom"
+    | "Task"
+    | "Tasks";
   meetings?: any[];
   allSheets?: any[];
 }
 
+type Metric = {
+  label: string;
+  value: string | number;
+  icon: React.ElementType;
+  color: string;
+  alert?: boolean;
+};
+
+type ColumnTypes = {
+  id: string;
+  name: string;
+  status: string;
+  category: string;
+  date: string;
+  numeric: string[];
+};
+
 const COLORS = ["#0ea5e9", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6", "#ec4899", "#14b8a6"];
 
-export default function DashboardEngine({ records = [], solutionType, meetings = [], allSheets = [] }: DashboardEngineProps) {
+export default function DashboardEngine({
+  records = [],
+  solutionType,
+  meetings = [],
+  allSheets = []
+}: DashboardEngineProps) {
   const [search, setSearch] = useState("");
   const [filterValue, setFilterValue] = useState("all");
 
-  // Multi-sheet data parser for HR Solutions
+  // ---------------------------------------------------------------
+  // HR workspace data derived from connected sheets (single source)
+  // ---------------------------------------------------------------
   const hrData = useMemo(() => {
-    if (solutionType !== "HR" || !allSheets.length) return null;
-    const findAndParse = (name: string) => {
-      const sheet = allSheets.find((s) => s.name === name);
-      return sheet ? parseSheetRows(sheet) : [];
+    if (solutionType !== "HR") return null;
+
+    const findSheet = (...keywords: string[]) =>
+      (allSheets || []).find((s: any) =>
+        keywords.some((k) => String(s?.name || "").toLowerCase().includes(k))
+      );
+
+    const rowsOf = (sheet: any, fallback: Record<string, any>[] = []) => {
+      if (!sheet) return fallback;
+      try {
+        const parsed = parseSheetRows(sheet);
+        return Array.isArray(parsed) ? parsed : fallback;
+      } catch {
+        return fallback;
+      }
     };
+
     return {
-      employees: findAndParse("Employees"),
-      departments: findAndParse("Departments"),
-      attendance: findAndParse("Attendance"),
-      leave: findAndParse("Leave"),
-      performance: findAndParse("Performance"),
-      recruitment: findAndParse("Recruitment")
+      employees: rowsOf(findSheet("employee", "staff"), records),
+      attendance: rowsOf(findSheet("attendance")),
+      leave: rowsOf(findSheet("leave"))
     };
-  }, [allSheets, solutionType]);
+  }, [solutionType, allSheets, records]);
 
-  // Dynamic Metrics Generation
-  const metrics = useMemo(() => {
-    if (solutionType === "HR" && hrData) {
-      const emps = hrData.employees;
-      const totalEmployees = emps.length;
-      const activeEmployees = emps.filter(e => e["Employment Status"] === "Active").length;
-      const onLeave = emps.filter(e => e["Employment Status"] === "On Leave" || e["Status"] === "On Leave").length;
-      const newEmployees = emps.filter(e => {
-        const hireDate = e["Hire Date"];
-        return hireDate && hireDate.includes("2026");
-      }).length;
+  const attendanceSummary = useMemo(() => {
+    if (solutionType !== "HR" || !hrData) return null;
+    const rows = hrData.attendance.length ? hrData.attendance : hrData.employees;
+    const read = (r: Record<string, any>) =>
+      String(r.Status || r.status || r.Attendance || r["Attendance Status"] || "").toLowerCase();
+    return {
+      present: rows.filter((r) => read(r).includes("present") || read(r).includes("remote")).length,
+      late: rows.filter((r) => read(r).includes("late")).length,
+      absent: rows.filter((r) => read(r).includes("absent")).length
+    };
+  }, [solutionType, hrData]);
 
-      const totalDepts = hrData.departments.length || new Set(emps.map(e => e.Department).filter(Boolean)).size;
-      const openRecruitment = hrData.recruitment.filter(r => r["Hiring Status"] === "Under Review" || r["Application Status"] === "Applied" || r["Application Status"] === "Interview Scheduled").length;
-      const upcomingReviews = hrData.performance.length;
+  const leaveSummary = useMemo(() => {
+    if (solutionType !== "HR" || !hrData) return null;
+    const rows = hrData.leave;
+    const read = (r: Record<string, any>) =>
+      String(r.Status || r.status || r["Leave Status"] || "").toLowerCase();
+    return {
+      approved: rows.filter((r) => read(r).includes("approve")).length,
+      pending: rows.filter((r) => read(r).includes("pending") || read(r).includes("request")).length
+    };
+  }, [solutionType, hrData]);
+
+  // ---------------------------------------------------------------
+  // Dynamic column discovery
+  // ---------------------------------------------------------------
+  const allHeaders = useMemo(() => {
+    if (records.length === 0) return [];
+    return Object.keys(records[0]).filter(
+      (k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_")
+    );
+  }, [records]);
+
+  const columns = allHeaders;
+
+  const columnTypes = useMemo<ColumnTypes>(() => {
+    const result: ColumnTypes = { id: "", name: "", status: "", category: "", date: "", numeric: [] };
+
+    allHeaders.forEach((h) => {
+      const norm = h.toLowerCase().trim();
+      if (!result.id && (norm === "id" || norm.includes("id") || norm.includes("code") || norm.includes("key") || norm.includes("number"))) {
+        result.id = h;
+      } else if (!result.name && (norm === "name" || norm === "title" || norm === "label" || norm.includes("name") || norm.includes("title"))) {
+        result.name = h;
+      } else if (!result.status && (norm === "status" || norm === "stage" || norm === "state" || norm.includes("status"))) {
+        result.status = h;
+      } else if (!result.category && (norm === "category" || norm === "type" || norm === "class" || norm === "group" || norm.includes("category") || norm.includes("type") || norm.includes("group"))) {
+        result.category = h;
+      } else if (!result.date && (norm.includes("date") || norm.includes("time") || norm.includes("created") || norm.includes("updated"))) {
+        result.date = h;
+      }
+
+      if (
+        norm.includes("quantity") || norm.includes("qty") || norm.includes("value") ||
+        norm.includes("usd") || norm.includes("price") || norm.includes("cost") ||
+        norm.includes("salary") || norm.includes("hours") || norm.includes("amount")
+      ) {
+        result.numeric.push(h);
+      }
+    });
+
+    if (!result.name && allHeaders.length > 0) {
+      result.name = allHeaders[0];
+    }
+
+    return result;
+  }, [allHeaders]);
+
+  // ---------------------------------------------------------------
+  // KPI metrics
+  // ---------------------------------------------------------------
+  const metrics = useMemo<Metric[]>(() => {
+    if (!records.length) return [];
+
+    const baseMetrics: Metric[] = [
+      { label: "Total Records", value: records.length, icon: FileText, color: "text-blue-500 bg-blue-50" }
+    ];
+
+    if (solutionType === "CRM") {
+      const uniqueOrgs = new Set(records.map((r) => r.organizationName || r.Organization).filter(Boolean));
+      const totalContacts = records.filter((r) => r.contactName || r["Contact Person"]).length;
+      const totalValue = records.reduce((sum, r) => sum + (Number(r.value || r["Value (USD)"]) || 0), 0);
+      const activePartnerships = records.filter((r) => (r.status || r["Status"]) === "Partnership Active").length;
+      const followups = records.filter((r) => (r.status || r["Status"]) === "Follow-up Required").length;
 
       return [
-        { label: "Total Employees", value: totalEmployees, icon: Users, color: "text-blue-500 bg-blue-50" },
-        { label: "Active Employees", value: activeEmployees, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
-        { label: "Employees on Leave", value: onLeave, icon: Calendar, color: "text-amber-500 bg-amber-50" },
-        { label: "New Employees (2026)", value: newEmployees, icon: UserPlus, color: "text-purple-500 bg-purple-50" },
-        { label: "Departments", value: totalDepts, icon: Layers, color: "text-cyan-500 bg-cyan-50" },
-        { label: "Open Recruitment", value: openRecruitment, icon: Briefcase, color: "text-rose-500 bg-rose-50" },
-        { label: "Upcoming Reviews", value: upcomingReviews, icon: Award, color: "text-indigo-500 bg-indigo-50" }
+        { label: "Total Organizations", value: uniqueOrgs.size, icon: Building2, color: "text-blue-500 bg-blue-50" },
+        { label: "Total Contacts", value: totalContacts, icon: Users, color: "text-emerald-500 bg-emerald-50" },
+        { label: "Active Partnerships", value: activePartnerships, icon: CheckCircle2, color: "text-purple-500 bg-purple-50" },
+        { label: "Pipeline Value", value: `$${totalValue.toLocaleString()}`, icon: DollarSign, color: "text-amber-500 bg-amber-50" },
+        { label: "Follow-up Pending", value: followups, icon: Calendar, color: "text-rose-500 bg-rose-50" }
       ];
     }
 
-    if (!records.length) return [];
+    if (solutionType === "Inventory") {
+      const totalItems = records.length;
+      const totalQty = records.reduce((sum, r) => sum + (Number(r.Quantity) || 0), 0);
+      const totalVal = records.reduce((sum, r) => sum + ((Number(r.Quantity) || 0) * (Number(r["Unit Cost"]) || 0)), 0);
+      const lowStock = records.filter((r) => (Number(r.Quantity) || 0) <= (Number(r["Stock Alert Level"]) || 5)).length;
 
-    switch (solutionType) {
-      case "CRM": {
-        const uniqueOrgs = new Set(records.map((r) => r.organizationName || r.Organization).filter(Boolean));
-        const totalContacts = records.filter((r) => r.contactName || r["Contact Person"]).length;
-        const totalValue = records.reduce((sum, r) => sum + (Number(r.value || r["Value (USD)"]) || 0), 0);
-        const activePartnerships = records.filter((r) => (r.status || r["Status"]) === "Partnership Active").length;
-        const followups = records.filter((r) => (r.status || r["Status"]) === "Follow-up Required").length;
-
-        return [
-          { label: "Total Organizations", value: uniqueOrgs.size, icon: Building2, color: "text-blue-500 bg-blue-50" },
-          { label: "Total Contacts", value: totalContacts, icon: Users, color: "text-emerald-500 bg-emerald-50" },
-          { label: "Active Partnerships", value: activePartnerships, icon: CheckCircle2, color: "text-purple-500 bg-purple-50" },
-          { label: "Pipeline Value", value: `$${totalValue.toLocaleString()}`, icon: DollarSign, color: "text-amber-500 bg-amber-50" },
-          { label: "Follow-up Pending", value: followups, icon: Calendar, color: "text-rose-500 bg-rose-50" }
-        ];
-      }
-      case "Inventory": {
-        const totalItems = records.length;
-        const totalQty = records.reduce((sum, r) => sum + (Number(r.Quantity) || 0), 0);
-        const totalVal = records.reduce((sum, r) => sum + ((Number(r.Quantity) || 0) * (Number(r["Unit Cost"]) || 0)), 0);
-        const lowStock = records.filter((r) => (Number(r.Quantity) || 0) <= (Number(r["Stock Alert Level"]) || 5)).length;
-
-        return [
-          { label: "Total Products", value: totalItems, icon: Layers, color: "text-blue-500 bg-blue-50" },
-          { label: "Total Inventory Stock", value: totalQty, icon: Inbox, color: "text-purple-500 bg-purple-50" },
-          { label: "Stock Valuation", value: `$${totalVal.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" },
-          { label: "Low Stock Alerts", value: lowStock, icon: AlertTriangle, color: "text-rose-500 bg-rose-50", alert: lowStock > 0 }
-        ];
-      }
-      case "Registry": {
-        const totalRecs = records.length;
-        const activeFiles = records.filter((r) => String(r.Status || r.status).toLowerCase() === "active").length;
-        const archivedFiles = records.filter((r) => String(r.Status || r.status).toLowerCase() === "archived").length;
-
-        // Count "New Records" created in the last 30 days (mocking check based on "Created Date" 2026 values in our default set)
-        const newFiles = records.filter((r) => {
-          const date = String(r["Created Date"] || r.createdDate || "");
-          return date.includes("2026-03") || date.includes("2026-04");
-        }).length;
-
-        const uniqueCats = new Set(records.map((r) => r.Category || r.category).filter(Boolean));
-
-        return [
-          { label: "Total Records", value: totalRecs, icon: FileText, color: "text-blue-500 bg-blue-50" },
-          { label: "Active Records", value: activeFiles, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
-          { label: "New Records (30d)", value: newFiles, icon: TrendingUp, color: "text-amber-500 bg-amber-50" },
-          { label: "Archived Records", value: archivedFiles, icon: Archive, color: "text-rose-500 bg-rose-50" },
-          { label: "Unique Categories", value: uniqueCats.size, icon: Layers, color: "text-purple-500 bg-purple-50" }
-        ];
-      }
-      case "Tasks": {
-        const totalTasks = records.length;
-        const completedTasks = records.filter((r) => (r.Status || r.status || "") === "Completed").length;
-        const pendingTasks = totalTasks - completedTasks;
-
-        // Overdue tasks calculation
-        const today = new Date("2026-04-14"); // Reference baseline date
-        const overdueTasks = records.filter((r) => {
-          const dueStr = r["Due Date"] || r.dueDate || "";
-          if (!dueStr) return false;
-          const dueDate = new Date(dueStr);
-          const status = r["Status"] || r.status || "Not Started";
-          return dueDate < today && status !== "Completed";
-        }).length;
-
-        const highPriority = records.filter((r) => {
-          const p = r["Priority"] || r.priority || "";
-          return p === "High" || p === "Critical";
-        }).length;
-
-        const completionRate = totalTasks > 0 ? Math.round((completedTasks / totalTasks) * 100) : 0;
-
-        return [
-          { label: "Total Tasks", value: totalTasks, icon: Briefcase, color: "text-blue-500 bg-blue-50" },
-          { label: "Completed Tasks", value: completedTasks, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
-          { label: "Pending Tasks", value: pendingTasks, icon: Clock, color: "text-purple-500 bg-purple-50" },
-          { label: "Overdue Tasks", value: overdueTasks, icon: AlertTriangle, color: "text-rose-500 bg-rose-50", alert: overdueTasks > 0 },
-          { label: "High/Critical Priority", value: highPriority, icon: AlertTriangle, color: "text-amber-500 bg-amber-50" },
-          { label: "Completion Rate", value: `${completionRate}%`, icon: TrendingUp, color: "text-emerald-500 bg-emerald-50" }
-        ];
-      }
-      case "Project": {
-        const totalTasks = records.length;
-        const highPriority = records.filter((r) => r.Priority === "High").length;
-        const inProgress = records.filter((r) => r.Status === "In Progress").length;
-        const completed = records.filter((r) => r.Status === "Done" || r.Status === "Completed").length;
-
-        return [
-          { label: "Total Tasks", value: totalTasks, icon: Briefcase, color: "text-blue-500 bg-blue-50" },
-          { label: "In Progress", value: inProgress, icon: TrendingUp, color: "text-purple-500 bg-purple-50" },
-          { label: "High Priority", value: highPriority, icon: AlertTriangle, color: "text-rose-500 bg-rose-50" },
-          { label: "Completed Tasks", value: completed, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" }
-        ];
-      }
-      default:
-        return [{ label: "Total Row Count", value: records.length, icon: Layers, color: "text-gray-500 bg-gray-50" }];
+      return [
+        { label: "Total Products", value: totalItems, icon: Layers, color: "text-blue-500 bg-blue-50" },
+        { label: "Total Inventory Stock", value: totalQty, icon: Inbox, color: "text-purple-500 bg-purple-50" },
+        { label: "Stock Valuation", value: `$${totalVal.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" },
+        { label: "Low Stock Alerts", value: lowStock, icon: AlertTriangle, color: "text-rose-500 bg-rose-50", alert: lowStock > 0 }
+      ];
     }
-  }, [records, solutionType, hrData]);
 
-  // Aggregate Status counts for charting
+    if (solutionType === "HR") {
+      const employees = hrData?.employees?.length ? hrData.employees : records;
+      const uniqueDept = new Set(employees.map((r) => r.Department).filter(Boolean));
+      const payroll = employees.reduce((sum, r) => sum + (Number(r["Base Salary"]) || 0), 0);
+
+      return [
+        { label: "Total Employees", value: employees.length, icon: Users, color: "text-blue-500 bg-blue-50" },
+        { label: "Departments", value: uniqueDept.size, icon: Layers, color: "text-purple-500 bg-purple-50" },
+        { label: "Monthly Payroll", value: `$${payroll.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" }
+      ];
+    }
+
+    if (solutionType === "Task" || solutionType === "Tasks") {
+      const totalTasks = records.length;
+      const highPriority = records.filter((r) => r.Priority === "High").length;
+      const inProgress = records.filter((r) => r.Status === "In Progress").length;
+      const completed = records.filter((r) => r.Status === "Done" || r.Status === "Completed").length;
+
+      return [
+        { label: "Total Tasks", value: totalTasks, icon: Briefcase, color: "text-blue-500 bg-blue-50" },
+        { label: "In Progress", value: inProgress, icon: TrendingUp, color: "text-purple-500 bg-purple-50" },
+        { label: "High Priority", value: highPriority, icon: AlertTriangle, color: "text-rose-500 bg-rose-50" },
+        { label: "Completed Tasks", value: completed, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" }
+      ];
+    }
+
+    if (solutionType === "Project" || solutionType === "ProjectManagement") {
+      const budgetCol = columns.find((c) => c.toLowerCase().includes("budget") || c.toLowerCase().includes("cost") || c.toLowerCase().includes("value"));
+      const statusCol = columns.find((c) => c.toLowerCase().includes("status") || c.toLowerCase().includes("stage"));
+
+      const accumulatedBudget = budgetCol ? records.reduce((sum, r) => sum + (Number(r[budgetCol]) || 0), 0) : 0;
+      const completedCount = statusCol
+        ? records.filter((r) => {
+            const v = String(r[statusCol]).toLowerCase();
+            return v === "completed" || v === "active";
+          }).length
+        : 0;
+
+      const results: Metric[] = [
+        { label: "Total Project Records", value: records.length, icon: Briefcase, color: "text-blue-500 bg-blue-50" }
+      ];
+      if (budgetCol) {
+        results.push({ label: "Allocated Budgets", value: `$${accumulatedBudget.toLocaleString()}`, icon: DollarSign, color: "text-emerald-500 bg-emerald-50" });
+      }
+      if (statusCol) {
+        results.push({ label: "Ongoing/Completed", value: completedCount, icon: CheckCircle2, color: "text-purple-500 bg-purple-50" });
+      }
+      return results;
+    }
+
+    if (solutionType === "Registry" || solutionType === "Custom") {
+      if (columnTypes.category) {
+        const uniqueCats = new Set(records.map((r) => String(r[columnTypes.category] || "")).filter(Boolean));
+        const categoryLabel = columnTypes.category.toLowerCase().endsWith("y")
+          ? `${columnTypes.category.slice(0, -1)}ies`
+          : `${columnTypes.category}s`;
+        baseMetrics.push({
+          label: `Unique ${categoryLabel}`,
+          value: uniqueCats.size,
+          icon: Layers,
+          color: "text-purple-500 bg-purple-50"
+        });
+      }
+
+      if (columnTypes.status) {
+        const uniqueStats = new Set(records.map((r) => String(r[columnTypes.status] || "")).filter(Boolean));
+        baseMetrics.push({
+          label: "Distinct Status Stages",
+          value: uniqueStats.size,
+          icon: CheckCircle2,
+          color: "text-emerald-500 bg-emerald-50"
+        });
+      }
+
+      if (columnTypes.numeric.length > 0) {
+        const col = columnTypes.numeric[0];
+        const total = records.reduce((sum, r) => sum + (Number(r[col]) || 0), 0);
+        baseMetrics.push({
+          label: `Total ${col}`,
+          value: total.toLocaleString(),
+          icon: DollarSign,
+          color: "text-amber-500 bg-amber-50"
+        });
+      }
+
+      return baseMetrics;
+    }
+
+    return baseMetrics;
+  }, [records, solutionType, columnTypes, columns, hrData]);
+
+  // ---------------------------------------------------------------
+  // Charts
+  // ---------------------------------------------------------------
   const statusChartData = useMemo(() => {
-    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
-    const counts: Record<string, number> = {};
-    dataToUse.forEach((r) => {
-      const statusKey = r.status || r.Status || r["Employment Status"] || "Unknown";
-      counts[statusKey] = (counts[statusKey] || 0) + 1;
-    });
-    return Object.entries(counts).map(([name, value]) => ({ name, value }));
-  }, [records, solutionType, hrData]);
+    if (solutionType === "CRM") {
+      const counts: Record<string, number> = {};
+      records.forEach((r) => {
+        const statusKey = r.status || r.Status || "Unknown";
+        counts[statusKey] = (counts[statusKey] || 0) + 1;
+      });
+      return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    }
 
-  // Value/Price Distribution chart
+    if (solutionType === "Registry" || solutionType === "Custom") {
+      if (!columnTypes.status) return [];
+      const counts: Record<string, number> = {};
+      records.forEach((r) => {
+        const statusKey = String(r[columnTypes.status] || "Unassigned");
+        counts[statusKey] = (counts[statusKey] || 0) + 1;
+      });
+      return Object.entries(counts).map(([name, value]) => ({ name, value }));
+    }
+
+    return [];
+  }, [records, solutionType, columnTypes.status]);
+
   const valueChartData = useMemo(() => {
     if (solutionType === "CRM") {
       return records
         .map((r) => ({
-          name: (r.organizationName || r.Organization || "").slice(0, 15),
+          name: String(r.organizationName || r.Organization || "").slice(0, 15),
           value: Number(r.value || r["Value (USD)"]) || 0
         }))
         .filter((d) => d.value > 0);
-    } else if (solutionType === "Inventory") {
+    }
+
+    if (solutionType === "Inventory") {
       return records.map((r) => ({
-        name: (r["Product Name"] || "").slice(0, 15),
+        name: String(r["Product Name"] || "").slice(0, 15),
         value: Number(r.Quantity) || 0
       }));
-    } else if (solutionType === "HR") {
+    }
+
+    if (solutionType === "HR") {
       const dataToUse = hrData ? hrData.employees : records;
       const counts: Record<string, number> = {};
-      dataToUse.forEach(e => {
+      dataToUse.forEach((e) => {
         const d = e.Department || "Unassigned";
         counts[d] = (counts[d] || 0) + 1;
       });
       return Object.entries(counts).map(([name, value]) => ({ name, value }));
-    } else if (solutionType === "Tasks") {
+    }
+
+    if (solutionType === "Task" || solutionType === "Tasks") {
       return records.map((r) => ({
-        name: (r["Task Name"] || r.taskName || "").slice(0, 15),
+        name: String(r["Task Name"] || r.taskName || "").slice(0, 15),
         value: Number(r["Progress (%)"] || r.progress) || 0
       }));
-    } else if (solutionType === "Registry") {
-      // Group records by Category to show Category Distribution
+    }
+
+    if (solutionType === "Registry" || solutionType === "Custom") {
+      if (!columnTypes.category) return [];
       const counts: Record<string, number> = {};
       records.forEach((r) => {
-        const cat = r.Category || r.category || "Unassigned";
+        const cat = String(r[columnTypes.category] || "Unassigned");
         counts[cat] = (counts[cat] || 0) + 1;
       });
-      return Object.entries(counts).map(([name, value]) => ({
-        name: name.slice(0, 15),
-        value
-      }));
+      return Object.entries(counts).map(([name, value]) => ({ name: name.slice(0, 15), value }));
     }
-    return [];
-  }, [records, solutionType, hrData]);
 
-  // Filter list of records for summary table
+    if (solutionType === "Project" || solutionType === "ProjectManagement") {
+      const budgetCol = columns.find((c) => c.toLowerCase().includes("budget") || c.toLowerCase().includes("cost") || c.toLowerCase().includes("value"));
+      const nameCol = columns.find((c) => c.toLowerCase().includes("name") || c.toLowerCase().includes("title") || c.toLowerCase().includes("id")) || columns[0];
+      if (budgetCol && nameCol) {
+        return records
+          .map((r) => ({
+            name: String(r[nameCol] || "").slice(0, 15),
+            value: Number(r[budgetCol]) || 0
+          }))
+          .filter((d) => d.value > 0);
+      }
+    }
+
+    return [];
+  }, [records, solutionType, columnTypes.category, columns, hrData]);
+
+  // ---------------------------------------------------------------
+  // Table filtering
+  // ---------------------------------------------------------------
   const filteredRecords = useMemo(() => {
-    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
+    const dataToUse = solutionType === "HR" && hrData ? hrData.employees : records;
     return dataToUse.filter((rec) => {
       const matchSearch = Object.values(rec).some((val) =>
         String(val).toLowerCase().includes(search.toLowerCase())
       );
       if (filterValue === "all") return matchSearch;
-      return matchSearch && (rec.status || rec.Status || rec["Employment Status"]) === filterValue;
+
+      const statusField = solutionType === "CRM" ? "status" : columnTypes.status;
+      if (!statusField) return matchSearch;
+      return matchSearch && String(rec[statusField] || "") === filterValue;
     });
-  }, [records, search, filterValue, solutionType, hrData]);
+  }, [records, search, filterValue, solutionType, columnTypes.status, hrData]);
 
   const uniqueStatuses = useMemo(() => {
-    const dataToUse = (solutionType === "HR" && hrData) ? hrData.employees : records;
-    return Array.from(new Set(dataToUse.map((r) => r.status || r.Status || r["Employment Status"]).filter(Boolean)));
-  }, [records, solutionType, hrData]);
-
-  // HR specific summary states
-  const attendanceSummary = useMemo(() => {
-    if (solutionType !== "HR" || !hrData) return null;
-    const att = hrData.attendance;
-    const present = att.filter(a => a["Attendance Status"] === "Present" || a["Attendance Status"] === "Remote").length;
-    const late = att.filter(a => a["Attendance Status"] === "Late").length;
-    const absent = att.filter(a => a["Attendance Status"] === "Absent").length;
-    return { present, late, absent, total: att.length };
-  }, [hrData, solutionType]);
-
-  const leaveSummary = useMemo(() => {
-    if (solutionType !== "HR" || !hrData) return null;
-    const leaves = hrData.leave;
-    const approved = leaves.filter(l => l["Status"] === "Approved").length;
-    const pending = leaves.filter(l => l["Status"] === "Pending").length;
-    return { approved, pending, total: leaves.length };
-  }, [hrData, solutionType]);
+    const statusField = solutionType === "CRM" ? "Status" : columnTypes.status;
+    if (!statusField) return [];
+    return Array.from(new Set(records.map((r) => r[statusField]).filter(Boolean))).map((s) => String(s));
+  }, [records, solutionType, columnTypes.status]);
 
   return (
     <div className="flex-1 overflow-y-auto p-6 bg-muted/20 space-y-6">
@@ -287,9 +415,11 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       <div className="flex items-center justify-between border-b border-border pb-4">
         <div>
           <h2 className="text-xl font-bold text-foreground">
-            {solutionType === "CRM" ? "CRM Live Workspace" :
-             solutionType === "HR" ? "HR Management Workspace Dashboard" :
-             `${solutionType} Smart Dashboard`}
+            {solutionType === "CRM"
+              ? "CRM Live Workspace"
+              : solutionType === "HR"
+              ? "HR Management Workspace Dashboard"
+              : `${solutionType} Smart Dashboard`}
           </h2>
           <p className="text-sm text-muted-foreground">
             Visualized analytics powered by the Smart Data Layer. Zero delay two-way synchronization active.
@@ -301,58 +431,61 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
       </div>
 
       {/* Dynamic Metrics Cards */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
-        {metrics.map((m, idx) => (
-          <div
-            key={idx}
-            className={`rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition flex items-center gap-4 ${
-              m.alert ? "border-rose-300 bg-rose-50/20" : ""
-            }`}
-          >
-            <div className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${m.color}`}>
-              <m.icon className="h-6 w-6" />
+      {metrics.length > 0 ? (
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4">
+          {metrics.map((m, idx) => (
+            <div
+              key={idx}
+              className="rounded-xl border border-border bg-card p-5 shadow-sm hover:shadow-md transition flex items-center gap-4"
+            >
+              <div className={`h-12 w-12 rounded-lg flex items-center justify-center flex-shrink-0 ${m.color}`}>
+                <m.icon className="h-6 w-6" />
+              </div>
+              <div>
+                <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{m.label}</div>
+                <div className="text-2xl font-bold text-foreground mt-1">{m.value}</div>
+              </div>
             </div>
-            <div>
-              <div className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">{m.label}</div>
-              <div className="text-2xl font-bold text-foreground mt-1">{m.value}</div>
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </div>
+      ) : (
+        <div className="text-center p-8 bg-card rounded-xl border border-border italic text-xs text-muted-foreground">
+          No metrics could be dynamically parsed from your spreadsheet data. Complete and enrich columns to unlock insights.
+        </div>
+      )}
 
       {/* Dynamic Charts Section */}
-      {statusChartData.length > 0 && (
+      {records.length > 0 && (statusChartData.length > 0 || valueChartData.length > 0) && (
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Status breakdown Chart */}
-          <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
-            <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
-              <Layers className="h-4 w-4 text-muted-foreground" />
-              {solutionType === "HR" ? "Employment Status breakdown" : "Workflow / Status Distribution"}
-            </h3>
-            <div className="h-64">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={statusChartData}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="value"
-                    label={({ name, percent }) => `${name} (${(percent * 100).toFixed(0)}%)`}
-                  >
-                    {statusChartData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
+          {statusChartData.length > 0 && (
+            <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
+              <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
+                <Layers className="h-4 w-4 text-muted-foreground" /> Workflow / Status Distribution
+              </h3>
+              <div className="h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <PieChart>
+                    <Pie
+                      data={statusChartData}
+                      cx="50%"
+                      cy="50%"
+                      labelLine={false}
+                      outerRadius={80}
+                      fill="#8884d8"
+                      dataKey="value"
+                      label={({ name, percent }: any) => `${name} (${((percent || 0) * 100).toFixed(0)}%)`}
+                    >
+                      {statusChartData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
+                      ))}
+                    </Pie>
+                    <Tooltip />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             </div>
-          </div>
+          )}
 
-          {/* Value / Numeric Breakdown Chart */}
           {valueChartData.length > 0 && (
             <div className="rounded-xl border border-border bg-card p-5 shadow-sm">
               <h3 className="font-semibold text-foreground text-sm mb-4 flex items-center gap-2">
@@ -361,15 +494,16 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
                   ? "Deal Value Distribution"
                   : solutionType === "Inventory"
                   ? "Stock Level Distribution"
-                  : solutionType === "Registry"
-                  ? "Category Distribution"
-                  : solutionType === "Tasks"
-                  ? "Task Progress Distribution"
-                  : "Department Headcount Allocation"}
+                  : solutionType === "Registry" || solutionType === "Custom"
+                  ? `${columnTypes.category || "Category"} Distribution`
+                  : solutionType === "HR"
+                  ? "Department Allocation"
+                  : "Value Distribution"}
               </h3>
               <div className="h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={valueChartData}>
+                    <CartesianGrid strokeDasharray="3 3" />
                     <XAxis dataKey="name" fontSize={11} tickLine={false} />
                     <YAxis fontSize={11} />
                     <Tooltip />
@@ -429,12 +563,10 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
 
       {/* Live Table + Feed Grid */}
       <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-        {/* Filterable Summary List */}
         <div className="xl:col-span-2 rounded-xl border border-border bg-card p-5 shadow-sm flex flex-col min-h-[400px]">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-4">
             <h3 className="font-semibold text-foreground text-sm">Synchronized Records Registry</h3>
             <div className="flex items-center gap-2 w-full sm:w-auto">
-              {/* Search */}
               <div className="relative flex-1 sm:w-48">
                 <Search className="h-4 w-4 text-muted-foreground absolute left-2.5 top-1/2 -translate-y-1/2" />
                 <input
@@ -445,13 +577,12 @@ export default function DashboardEngine({ records = [], solutionType, meetings =
                   className="w-full text-xs pl-8 pr-2.5 py-1.5 rounded-lg border border-border bg-background focus:outline-none"
                 />
               </div>
-              {/* Status Filter */}
               {uniqueStatuses.length > 0 && (
                 <div className="relative">
                   <select
                     value={filterValue}
                     onChange={(e) => setFilterValue(e.target.value)}
-                    className="text-xs pl-2.5 pr-8 py-1.5 rounded-lg border border-border bg-background focus:outline-none appearance-none"
+                    className="text-xs pl-2.5 pr-8 py-1.5 rounded-lg border border-border bg-background focus:outline-none appearance-none cursor-pointer"
                   >
                     <option value="all">All Statuses</option>
                     {uniqueStatuses.map((st) => (

@@ -45,7 +45,7 @@ describe("Amineva Forms local data layer tests", () => {
     // Submit correct answers
     const answers = {
       "q-q1": "Amineva Sheets",
-      "q-q2": ["Odeneho AI", "Odeneho"],
+      "q-q2": ["Dipa AI", "Dipa"],
       "q-q3": "Yes"
     };
 
