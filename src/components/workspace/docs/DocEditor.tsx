@@ -21,6 +21,38 @@ import TaskItem from "@tiptap/extension-task-item";
 import CharacterCount from "@tiptap/extension-character-count";
 import type { Editor } from "@tiptap/react";
 
+const CustomImage = Image.extend({
+  addAttributes() {
+    return {
+      ...this.parent?.(),
+      style: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("style"),
+        renderHTML: (attributes) => {
+          if (!attributes.style) return {};
+          return { style: attributes.style };
+        },
+      },
+      width: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("width"),
+        renderHTML: (attributes) => {
+          if (!attributes.width) return {};
+          return { width: attributes.width };
+        },
+      },
+      height: {
+        default: null,
+        parseHTML: (element) => element.getAttribute("height"),
+        renderHTML: (attributes) => {
+          if (!attributes.height) return {};
+          return { height: attributes.height };
+        },
+      },
+    };
+  },
+});
+
 export function useDocEditor(opts: {
   initialContent: any;
   editable?: boolean;
@@ -31,7 +63,7 @@ export function useDocEditor(opts: {
       StarterKit,
       Underline,
       Link.configure({ openOnClick: false, autolink: true, HTMLAttributes: { class: "doc-link" } }),
-      Image.configure({ inline: false, HTMLAttributes: { class: "doc-img" } }),
+      CustomImage.configure({ inline: true, HTMLAttributes: { class: "doc-img" } }),
       Table.configure({ resizable: true }),
       TableRow,
       TableCell,

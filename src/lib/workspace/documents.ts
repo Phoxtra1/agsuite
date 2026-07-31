@@ -62,7 +62,7 @@ function seedDefaultDocs(): WorkspaceDocument[] {
             content: [
               {
                 type: "text",
-                text: "Amineva Docs works seamlessly online or offline. Create, edit, export, and collaborate on your documents with Odeneho AI assistance."
+                text: "Amineva Docs works seamlessly online or offline. Create, edit, export, and collaborate on your documents with Dipa AI assistance."
               }
             ]
           }
@@ -157,23 +157,27 @@ export async function createDocument(title = "Untitled document"): Promise<Works
   local.unshift(newDoc);
   saveLocalDocs(local);
 
-  // Attempt sync to Supabase in background
-  supabase
-    .from("workspace_documents" as any)
-    .insert({ title, owner_id: userId, content_json: EMPTY_DOC, content_text: "" })
-    .select()
-    .single()
-    .then(({ data }) => {
-      if (data) {
-        const updatedLocal = getLocalDocs();
-        const idx = updatedLocal.findIndex((d) => d.id === localId);
-        if (idx >= 0) {
-          updatedLocal[idx] = data as any;
-          saveLocalDocs(updatedLocal);
-        }
+  try {
+    const { data, error } = await supabase
+      .from("workspace_documents" as any)
+      .insert({ title, owner_id: userId, content_json: EMPTY_DOC, content_text: "" })
+      .select()
+      .single();
+
+    if (!error && data) {
+      const updatedLocal = getLocalDocs();
+      const idx = updatedLocal.findIndex((d) => d.id === localId);
+      if (idx >= 0) {
+        updatedLocal[idx] = data as any;
+      } else {
+        updatedLocal.unshift(data as any);
       }
-    })
-    .catch(() => {});
+      saveLocalDocs(updatedLocal);
+      return data as any;
+    }
+  } catch (e) {
+    console.warn("[ag-docs] Failed to create document in Supabase, using offline fallback", e);
+  }
 
   return newDoc;
 }
@@ -235,6 +239,34 @@ export async function duplicateDocument(doc: WorkspaceDocument): Promise<Workspa
   const local = getLocalDocs();
   local.unshift(duplicated);
   saveLocalDocs(local);
+
+  try {
+    const { data, error } = await supabase
+      .from("workspace_documents" as any)
+      .insert({
+        title: `${doc.title} (copy)`,
+        owner_id: userId,
+        content_json: doc.content_json,
+        content_text: doc.content_text,
+      })
+      .select()
+      .single();
+
+    if (!error && data) {
+      const updatedLocal = getLocalDocs();
+      const idx = updatedLocal.findIndex((d) => d.id === localId);
+      if (idx >= 0) {
+        updatedLocal[idx] = data as any;
+      } else {
+        updatedLocal.unshift(data as any);
+      }
+      saveLocalDocs(updatedLocal);
+      return data as any;
+    }
+  } catch (e) {
+    console.warn("[ag-docs] Failed to duplicate document in Supabase, using offline fallback", e);
+  }
+
   return duplicated;
 }
 

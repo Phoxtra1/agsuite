@@ -284,7 +284,7 @@ export function makeSlide(layout: SlideLayout = "titleContent", theme = DEFAULT_
     base.elements = [
       { id: newSlideId(), kind: "text", x: 120, y: 90, w: 1680, h: 120, text: "Key Market Statistics", fontSize: 60, fontWeight: 700, color: titleColor, fontFamily: theme.headerFont ?? theme.font },
       { id: newSlideId(), kind: "text", x: 120, y: 350, w: 1680, h: 250, text: "98%", fontSize: 240, fontWeight: 900, color: accent, align: "center", fontFamily: theme.headerFont ?? theme.font },
-      { id: newSlideId(), kind: "text", x: 120, y: 640, w: 1680, h: 120, text: "of enterprise clients report exceptional productivity gains with Odeneho Workspace.", fontSize: 44, color: titleColor, align: "center", fontFamily: theme.font },
+      { id: newSlideId(), kind: "text", x: 120, y: 640, w: 1680, h: 120, text: "of enterprise clients report exceptional productivity gains with Dipa Workspace.", fontSize: 44, color: titleColor, align: "center", fontFamily: theme.font },
     ];
   } else if (layout === "closing") {
     base.background = theme.primary;

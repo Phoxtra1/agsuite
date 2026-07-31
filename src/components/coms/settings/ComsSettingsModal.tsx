@@ -42,7 +42,7 @@ export function ComsSettingsModal({ open, onOpenChange }: Props) {
 
           <div className="flex items-center justify-between">
             <div>
-              <Label>Odeneho AI Auto-Reply</Label>
+              <Label>Dipa AI Auto-Reply</Label>
               <p className="text-xs text-muted-foreground">Automatically reply to high-confidence queries</p>
             </div>
             <Switch checked={autoReply} onCheckedChange={setAutoReply} />

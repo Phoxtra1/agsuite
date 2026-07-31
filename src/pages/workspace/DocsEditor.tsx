@@ -9,6 +9,7 @@ import { LeftDocPanel } from "@/components/workspace/docs/LeftDocPanel";
 import { AmnivaIntelligencePanel } from "@/components/workspace/docs/AmnivaIntelligencePanel";
 import { PageCanvas, DEFAULT_PAGE_SETTINGS, type PageSettings } from "@/components/workspace/docs/PageCanvas";
 import { ShareDialog } from "@/components/workspace/docs/ShareDialog";
+import { ImageEditorDialog } from "@/components/workspace/docs/ImageEditorDialog";
 import { exportCSV, exportDOC, exportJSON, exportPDF } from "@/components/workspace/docs/exporters";
 import {
   ChevronLeft, CloudUpload, Loader2, Download, Share2, ArrowLeft,
@@ -26,6 +27,7 @@ export default function DocsEditor() {
   const [title, setTitle] = useState("");
   const [saving, setSaving] = useState<"idle" | "saving" | "saved">("idle");
   const [showShare, setShowShare] = useState(false);
+  const [showImageEditor, setShowImageEditor] = useState(false);
   const [zoom, setZoom] = useState(1);
   const [leftCollapsed, setLeftCollapsed] = useState(false);
   const [rightCollapsed, setRightCollapsed] = useState(false);
@@ -121,6 +123,24 @@ export default function DocsEditor() {
 
   async function handleAction(action: string, payload?: any) {
     if (!editor) return;
+    if (action === "dipa:legal") {
+      setRightCollapsed(false);
+      toast({ title: "Dipa Legal Panel Activated", description: "Analyzing document legal structure and precedents." });
+      return;
+    }
+    if (action === "image:position") {
+      const { selection } = editor.state;
+      const isImage = selection && (selection as any).node && (selection as any).node.type.name === "image";
+      if (!isImage) {
+        toast({
+          title: "No image selected",
+          description: "Click on an image in the document first to format and edit it.",
+        });
+        return;
+      }
+      setShowImageEditor(true);
+      return;
+    }
     if (action === "toast") { toast({ title: payload?.title || "" }); return; }
     if (action === "track:toggle") { setTrackChanges((v) => !v); toast({ title: trackChanges ? "Track changes off" : "Track changes on" }); return; }
     if (action === "comment:add") {
@@ -133,7 +153,7 @@ export default function DocsEditor() {
         const { action: a, label } = payload || {};
         const sel = editor.state.doc.textBetween(editor.state.selection.from, editor.state.selection.to, " ");
         const text = sel || editor.getText();
-        toast({ title: `${label}…`, description: "Odeneho is working." });
+        toast({ title: `${label}…`, description: "Dipa is working." });
         const { data, error } = await supabase.functions.invoke("docs-intelligence", { body: { action: a, text } });
         if (error) throw error;
         const result = (data as any)?.result || (data as any)?.text;
@@ -281,6 +301,7 @@ export default function DocsEditor() {
       </footer>
 
       {showShare && id && <ShareDialog documentId={id} onClose={() => setShowShare(false)} />}
+      {showImageEditor && editor && <ImageEditorDialog editor={editor} onClose={() => setShowImageEditor(false)} />}
     </div>
   );
 }

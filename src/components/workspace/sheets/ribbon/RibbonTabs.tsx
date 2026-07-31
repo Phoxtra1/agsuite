@@ -40,7 +40,7 @@ export interface RibbonActions {
 const TABS: { id: RibbonTab; label: string }[] = [
   { id: "home", label: "Home" }, { id: "insert", label: "Insert" },
   { id: "data", label: "Data" }, { id: "view", label: "View" },
-  { id: "formulas", label: "Formulas" }, { id: "ai", label: "Odeneho" },
+  { id: "formulas", label: "Formulas" }, { id: "ai", label: "Dipa" },
 ];
 
 export function RibbonTabs({ actions }: { actions: RibbonActions }) {
@@ -98,6 +98,36 @@ function HomeTab({ actions: a }: { actions: RibbonActions }) {
       </RibbonGroup>
 
       <RibbonGroup label="Font">
+        <select
+          onChange={(e) => a.format({ fontFamily: e.target.value })}
+          className="h-8 text-[11px] border border-border rounded bg-background px-1 focus:outline-none focus:ring-1 focus:ring-accent font-medium text-foreground max-w-[80px]"
+          title="Font family"
+          defaultValue="Inter"
+        >
+          <option value="sans-serif">Sans-Serif</option>
+          <option value="serif">Serif</option>
+          <option value="monospace">Monospace</option>
+          <option value="'Inter', sans-serif">Inter</option>
+          <option value="'Roboto', sans-serif">Roboto</option>
+          <option value="Georgia">Georgia</option>
+          <option value="Courier New">Courier New</option>
+        </select>
+        <select
+          onChange={(e) => a.format({ fontSize: Number(e.target.value) })}
+          className="h-8 w-12 text-[11px] border border-border rounded bg-background px-1 focus:outline-none focus:ring-1 focus:ring-accent font-medium text-foreground"
+          title="Font size"
+          defaultValue="13"
+        >
+          <option value="10">10</option>
+          <option value="11">11</option>
+          <option value="12">12</option>
+          <option value="13">13</option>
+          <option value="14">14</option>
+          <option value="16">16</option>
+          <option value="18">18</option>
+          <option value="20">20</option>
+          <option value="24">24</option>
+        </select>
         <RibbonButton title="Bold" shortcut="Ctrl+B" onClick={() => a.format({ bold: true })} compact><Bold className="h-3.5 w-3.5" /></RibbonButton>
         <RibbonButton title="Italic" shortcut="Ctrl+I" onClick={() => a.format({ italic: true })} compact><Italic className="h-3.5 w-3.5" /></RibbonButton>
         <RibbonButton title="Underline" shortcut="Ctrl+U" onClick={() => a.format({ underline: true })} compact><Underline className="h-3.5 w-3.5" /></RibbonButton>
@@ -106,10 +136,33 @@ function HomeTab({ actions: a }: { actions: RibbonActions }) {
         <RibbonColorPicker icon={<PaintBucket className="h-3.5 w-3.5" />} title="Fill color" onPick={(c) => a.format({ bg: c })} />
       </RibbonGroup>
 
-      <RibbonGroup label="Alignment">
+      <RibbonGroup label="Alignment & Borders">
         <RibbonButton title="Align left" onClick={() => a.format({ align: "left" })} compact><AlignLeft className="h-3.5 w-3.5" /></RibbonButton>
         <RibbonButton title="Align center" onClick={() => a.format({ align: "center" })} compact><AlignCenter className="h-3.5 w-3.5" /></RibbonButton>
         <RibbonButton title="Align right" onClick={() => a.format({ align: "right" })} compact><AlignRight className="h-3.5 w-3.5" /></RibbonButton>
+        <select
+          onChange={(e) => a.format({ valign: e.target.value as any })}
+          className="h-8 text-[11px] border border-border rounded bg-background px-1 focus:outline-none focus:ring-1 focus:ring-accent font-medium text-foreground"
+          title="Vertical alignment"
+          defaultValue="middle"
+        >
+          <option value="top">Top</option>
+          <option value="middle">Middle</option>
+          <option value="bottom">Bottom</option>
+        </select>
+        <select
+          onChange={(e) => a.format({ border: e.target.value as any })}
+          className="h-8 text-[11px] border border-border rounded bg-background px-1 focus:outline-none focus:ring-1 focus:ring-accent font-medium text-foreground"
+          title="Borders"
+          defaultValue="none"
+        >
+          <option value="none">No Border</option>
+          <option value="all">All Borders</option>
+          <option value="top">Top Border</option>
+          <option value="bottom">Bottom Border</option>
+          <option value="left">Left Border</option>
+          <option value="right">Right Border</option>
+        </select>
         <RibbonButton title="Wrap text" onClick={() => a.format({ wrap: true })} compact><WrapText className="h-3.5 w-3.5" /></RibbonButton>
         <RibbonButton title="Merge cells" onClick={a.cells.mergeCells} compact><Merge className="h-3.5 w-3.5" /></RibbonButton>
       </RibbonGroup>
@@ -216,7 +269,7 @@ function FormulasTab({ actions: a }: { actions: RibbonActions }) {
 function AiTab({ actions: a }: { actions: RibbonActions }) {
   return (
     <>
-      <RibbonGroup label="Odeneho">
+      <RibbonGroup label="Dipa">
         <RibbonButton title="Explain this data" onClick={a.ai.summarize}><Sparkles className="h-3.5 w-3.5" /> Explain</RibbonButton>
         <RibbonButton title="Suggest a chart" onClick={a.ai.suggestChart}><BarChart3 className="h-3.5 w-3.5" /> Chart</RibbonButton>
         <RibbonButton title="Detect anomalies" onClick={a.ai.anomalies}><TrendingUp className="h-3.5 w-3.5" /> Anomalies</RibbonButton>

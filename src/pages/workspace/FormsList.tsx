@@ -124,7 +124,7 @@ export default function FormsList() {
           </div>
           <h1 className="text-3xl font-bold text-foreground">Amineva Forms</h1>
           <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-            Enterprise-grade data capture, surveys, and auto-graded assessments powered by Odeneho AI. Custom styling, interactive grids, advanced logic skip triggers, and professional reporting dashboard.
+            Enterprise-grade data capture, surveys, and auto-graded assessments powered by Dipa AI. Custom styling, interactive grids, advanced logic skip triggers, and professional reporting dashboard.
           </p>
         </div>
         <button
@@ -138,7 +138,7 @@ export default function FormsList() {
       {/* Template Gallery Header */}
       <div className="mb-8">
         <h2 className="text-xs font-bold uppercase tracking-widest text-muted-foreground mb-4 flex items-center gap-1.5">
-          <Sparkles className="h-3.5 w-3.5 text-fuchsia-500" /> Start from an Odeneho Template Preset
+          <Sparkles className="h-3.5 w-3.5 text-fuchsia-500" /> Start from an Dipa Template Preset
         </h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Blank */}
