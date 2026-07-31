@@ -91,9 +91,75 @@ export default function DashboardEngine({
     return false;
   }, [records, solutionType]);
 
-  // Dynamic Metrics Generation
-  const metrics = useMemo(() => {
-    if (!records.length) return [];
+  // Dynamically extract all available headers across records
+  const allHeaders = useMemo(() => {
+    if (records.length === 0) return [];
+    return Object.keys(records[0]).filter(
+      (k) => k !== "rowIndex" && k !== "_originalCells" && !k.startsWith("_")
+    );
+  }, [records]);
+
+  const columns = allHeaders;
+
+  // HR workspace data derived from the connected sheets (employees / attendance / leave)
+  const hrData = useMemo(() => {
+    if (solutionType !== "HR") return null;
+
+    const findSheet = (...keywords: string[]) =>
+      (allSheets || []).find((s: any) =>
+        keywords.some((k) => String(s?.name || "").toLowerCase().includes(k))
+      );
+
+    const rowsOf = (sheet: any, fallback: Record<string, any>[] = []) => {
+      if (!sheet) return fallback;
+      try {
+        const parsed = parseSheetRows(sheet);
+        return Array.isArray(parsed) ? parsed : fallback;
+      } catch {
+        return fallback;
+      }
+    };
+
+    return {
+      employees: rowsOf(findSheet("employee", "staff"), records),
+      attendance: rowsOf(findSheet("attendance")),
+      leave: rowsOf(findSheet("leave"))
+    };
+  }, [solutionType, allSheets, records]);
+
+  const attendanceSummary = useMemo(() => {
+    if (solutionType !== "HR" || !hrData) return null;
+    const rows = hrData.attendance.length ? hrData.attendance : hrData.employees;
+    const read = (r: Record<string, any>) =>
+      String(r.Status || r.status || r.Attendance || r["Attendance Status"] || "").toLowerCase();
+    return {
+      present: rows.filter((r) => read(r).includes("present") || read(r).includes("remote")).length,
+      late: rows.filter((r) => read(r).includes("late")).length,
+      absent: rows.filter((r) => read(r).includes("absent")).length
+    };
+  }, [solutionType, hrData]);
+
+  const leaveSummary = useMemo(() => {
+    if (solutionType !== "HR" || !hrData) return null;
+    const rows = hrData.leave;
+    const read = (r: Record<string, any>) =>
+      String(r.Status || r.status || r["Leave Status"] || "").toLowerCase();
+    return {
+      approved: rows.filter((r) => read(r).includes("approve")).length,
+      pending: rows.filter((r) => read(r).includes("pending") || read(r).includes("request")).length
+    };
+  }, [solutionType, hrData]);
+
+  // AI-generated classification of available columns to drive data-driven dashboards
+  const columnTypes = useMemo<ColumnTypes>(() => {
+    const result: ColumnTypes = {
+      id: "",
+      name: "",
+      status: "",
+      category: "",
+      date: "",
+      numeric: []
+    };
 
     allHeaders.forEach((h) => {
       const norm = h.toLowerCase().trim();
@@ -227,67 +293,6 @@ export default function DashboardEngine({
           icon: Layers,
           color: "text-purple-500 bg-purple-50"
         });
-      }
-      case "Tasks": {
-        const headers = records.length > 0 ? Object.keys(records[0]) : [];
-        const statusHeader = headers.find(h => ["status", "state"].some(m => h.toLowerCase().includes(m)));
-        const priorityHeader = headers.find(h => ["priority", "level"].some(m => h.toLowerCase().includes(m)));
-        const dueDateHeader = headers.find(h => ["due date", "deadline"].some(m => h.toLowerCase().includes(m)));
-
-        const list = [];
-        list.push({
-          label: "Total Tasks",
-          value: records.length,
-          icon: Briefcase,
-          color: "text-blue-500 bg-blue-50"
-        });
-
-        if (statusHeader) {
-          const completedTasks = records.filter(r => String(r[statusHeader!] || "").trim() === "Completed").length;
-          const pendingTasks = records.length - completedTasks;
-          list.push(
-            { label: "Completed Tasks", value: completedTasks, icon: CheckCircle2, color: "text-emerald-500 bg-emerald-50" },
-            { label: "Pending Tasks", value: pendingTasks, icon: Clock, color: "text-purple-500 bg-purple-50" }
-          );
-
-          if (dueDateHeader) {
-            const today = new Date("2026-04-14");
-            const overdueTasks = records.filter(r => {
-              const dueStr = r[dueDateHeader!] || "";
-              if (!dueStr) return false;
-              const dueD = new Date(dueStr);
-              const statusStr = String(r[statusHeader!] || "");
-              return dueD < today && statusStr !== "Completed";
-            }).length;
-            list.push({
-              label: "Overdue Tasks",
-              value: overdueTasks,
-              icon: AlertTriangle,
-              color: "text-rose-500 bg-rose-50",
-              alert: overdueTasks > 0
-            });
-          }
-
-          const rate = records.length > 0 ? Math.round((completedTasks / records.length) * 100) : 0;
-          list.push({
-            label: "Completion Rate",
-            value: `${rate}%`,
-            icon: TrendingUp,
-            color: "text-emerald-500 bg-emerald-50"
-          });
-        }
-
-        if (priorityHeader) {
-          const highVal = records.filter(r => ["high", "critical"].includes(String(r[priorityHeader!] || "").toLowerCase().trim())).length;
-          list.push({
-            label: "High/Critical Priority",
-            value: highVal,
-            icon: AlertTriangle,
-            color: "text-amber-500 bg-amber-50"
-          });
-        }
-
-        return list;
       }
 
       if (columnTypes.numeric.length > 0) {
