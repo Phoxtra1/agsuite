@@ -57,6 +57,7 @@ export function useDocEditor(opts: {
   initialContent: any;
   editable?: boolean;
   onUpdate?: (editor: Editor) => void;
+  onDoubleClickImage?: () => void;
 }) {
   return useEditor({
     extensions: [
@@ -84,6 +85,18 @@ export function useDocEditor(opts: {
     content: opts.initialContent,
     editable: opts.editable ?? true,
     onUpdate: ({ editor }) => opts.onUpdate?.(editor),
+    editorProps: {
+      handleDOMEvents: {
+        dblclick: (view, event) => {
+          const target = event.target as HTMLElement;
+          if (target.nodeName === "IMG") {
+            opts.onDoubleClickImage?.();
+            return true;
+          }
+          return false;
+        },
+      },
+    },
   });
 }
 
