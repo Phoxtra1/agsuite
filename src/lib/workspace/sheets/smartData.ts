@@ -1138,3 +1138,130 @@ export function parseHrOnboarding(wb: Workbook): Record<string, any>[] {
   const sheet = wb.sheets.find(s => s.name === "Onboarding");
   return sheet ? parseSheetRows(sheet) : [];
 }
+
+
+export interface SheetAnalysis {
+  hasEmployees: boolean;
+  hasDepartments: boolean;
+  hasPositions: boolean;
+  hasAttendance: boolean;
+  hasLeave: boolean;
+  hasPerformance: boolean;
+  hasRecruitment: boolean;
+  hasOnboarding: boolean;
+  hasSalary: boolean;
+  hasLocation: boolean;
+  hasOwner: boolean;
+  hasStatus: boolean;
+  hasTasks: boolean;
+  hasDates: boolean;
+  hasValue: boolean;
+
+  employeeIdCol?: string;
+  employeeNameCol?: string;
+  departmentCol?: string;
+  positionCol?: string;
+  statusCol?: string;
+  salaryCol?: string;
+  dateCol?: string;
+  locationCol?: string;
+  leaveTypeCol?: string;
+  attendanceStatusCol?: string;
+  ratingCol?: string;
+  jobTitleCol?: string;
+
+  allColumns: string[];
+  customColumns: string[];
+  detectedStatuses: string[];
+}
+
+export function analyzeSheetData(sheet: SheetPage): SheetAnalysis {
+  const headers = getSheetHeaders(sheet);
+  const records = parseSheetRows(sheet);
+
+  const profile: SheetAnalysis = {
+    hasEmployees: false,
+    hasDepartments: false,
+    hasPositions: false,
+    hasAttendance: false,
+    hasLeave: false,
+    hasPerformance: false,
+    hasRecruitment: false,
+    hasOnboarding: false,
+    hasSalary: false,
+    hasLocation: false,
+    hasOwner: false,
+    hasStatus: false,
+    hasTasks: false,
+    hasDates: false,
+    hasValue: false,
+    allColumns: headers,
+    customColumns: [],
+    detectedStatuses: []
+  };
+
+  headers.forEach((h) => {
+    const norm = h.toLowerCase().trim();
+
+    // Map column roles
+    if (norm.includes("employee id") || norm.includes("emp id")) {
+      profile.hasEmployees = true;
+      profile.employeeIdCol = h;
+    } else if (norm.includes("employee name") || norm.includes("full name") || norm.includes("staff name") || norm.includes("member name") || norm.includes("candidate name") || norm.includes("name")) {
+      profile.employeeNameCol = h;
+    } else if (norm.includes("department") || norm.includes("dept")) {
+      profile.hasDepartments = true;
+      profile.departmentCol = h;
+    } else if (norm.includes("position") || norm.includes("job title") || norm.includes("role")) {
+      profile.hasPositions = true;
+      profile.positionCol = h;
+    } else if (norm.includes("attendance") || norm.includes("check-in") || norm.includes("check-out") || norm.includes("working hours")) {
+      profile.hasAttendance = true;
+      profile.attendanceStatusCol = h;
+    } else if (norm.includes("leave")) {
+      profile.hasLeave = true;
+      profile.leaveTypeCol = h;
+    } else if (norm.includes("rating") || norm.includes("performance") || norm.includes("reviewer") || norm.includes("appraisal")) {
+      profile.hasPerformance = true;
+      profile.ratingCol = h;
+    } else if (norm.includes("application") || norm.includes("hiring status") || norm.includes("candidate")) {
+      profile.hasRecruitment = true;
+      profile.jobTitleCol = h;
+    } else if (norm.includes("onboarding") || norm.includes("orientation") || norm.includes("equipment assigned")) {
+      profile.hasOnboarding = true;
+    } else if (norm.includes("salary") || norm.includes("payroll") || norm.includes("compensation") || norm.includes("wage")) {
+      profile.hasSalary = true;
+      profile.salaryCol = h;
+    } else if (norm.includes("location") || norm.includes("office") || norm.includes("branch")) {
+      profile.hasLocation = true;
+      profile.locationCol = h;
+    } else if (norm.includes("owner") || norm.includes("manager") || norm.includes("supervisor")) {
+      profile.hasOwner = true;
+    } else if (norm.includes("status") || norm.includes("workflow") || norm.includes("progress")) {
+      profile.hasStatus = true;
+      profile.statusCol = h;
+    } else if (norm.includes("task") || norm.includes("estimated hours")) {
+      profile.hasTasks = true;
+    } else if (norm.includes("date") || norm.includes("time") || norm.includes("hired") || norm.includes("created") || norm.includes("due")) {
+      profile.hasDates = true;
+      profile.dateCol = h;
+    } else if (norm.includes("value") || norm.includes("budget") || norm.includes("cost") || norm.includes("amount") || norm.includes("$")) {
+      profile.hasValue = true;
+    } else if (h !== "") {
+      // It is a dynamic custom column!
+      profile.customColumns.push(h);
+    }
+  });
+
+  // Extract unique statuses
+  if (profile.statusCol) {
+    const statuses = new Set<string>();
+    records.forEach((r) => {
+      const sVal = r[profile.statusCol!];
+      if (sVal) statuses.add(String(sVal));
+    });
+    profile.detectedStatuses = Array.from(statuses);
+  }
+
+  return profile;
+}
