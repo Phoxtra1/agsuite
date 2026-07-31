@@ -846,7 +846,14 @@ export function PageCanvas({
       <style>{tableCss}
         {`@media print {
           @page { size: ${w}px ${h}px; margin: 0; }
-          .doc-page-frame { break-after: page; box-shadow: none !important; border: 0 !important; }
+          .doc-page-frame:not(:last-child) { break-after: page; }
+          .doc-page-frame { box-shadow: none !important; border: 0 !important; }
+          html, body {
+            margin: 0 !important;
+            padding: 0 !important;
+            height: auto !important;
+            background: #ffffff !important;
+          }
         }`}
       </style>
 
@@ -855,12 +862,22 @@ export function PageCanvas({
         className="relative"
         style={{ width: w, height: stackHeight, margin: "0 auto" }}
       >
+        {/* Render page gap covers to mask any text passing through the gaps on screen */}
+        {Array.from({ length: pageCount - 1 }).map((_, gapIdx) => (
+          <div
+            key={`gap-cover-${gapIdx}`}
+            className="absolute left-[-100px] right-[-100px] bg-muted/30 print:hidden"
+            style={{
+              top: (gapIdx + 1) * h + gapIdx * PAGE_GAP,
+              height: PAGE_GAP,
+              zIndex: 3, // Sit above absolute text canvas (zIndex 2) but below dialogs
+              pointerEvents: "none", // Let clicks pass through to selection/editor
+            }}
+          />
+        ))}
+
         {Array.from({ length: pageCount }).map((_, i) => {
           const isLast = i === pageCount - 1;
-          // A page is "empty" if it's a trailing physical page beyond content —
-          // safe to delete when content stops before this page starts.
-          const pageTop = i * innerHeight;
-          const isEmptyPage = isLast && (contentHeight <= pageTop + 8) && pageCount > 1;
           const isCover = settings.coverPage && i === 0;
 
           const insertBreakHere = () => {
@@ -868,16 +885,68 @@ export function PageCanvas({
             editor.chain().focus().insertContent('<div data-page-break></div><p></p>').run();
             toast({ title: "Page break inserted" });
           };
-          const deleteEmptyPage = () => {
-            if (!editor || !isEmptyPage) return;
-            // Strip trailing page-break markers and empty paragraphs from the doc HTML.
-            const html = editor.getHTML()
-              .replace(/(<p>(\s|&nbsp;|<br\s*\/?\s*>)*<\/p>\s*)+$/i, "")
-              .replace(/(<div[^>]*data-page-break[^>]*><\/div>\s*)+$/i, "")
-              .replace(/(<hr[^>]*class="[^"]*page-break[^"]*"[^>]*\/?>\s*)+$/i, "");
-            editor.commands.setContent(html);
-            toast({ title: "Empty page removed" });
+
+          const deletePage = () => {
+            if (!editor) return;
+            if (pageCount <= 1) {
+              toast({ title: "Cannot delete the only page in the document.", variant: "destructive" as any });
+              return;
+            }
+
+            const wrap = editorWrapRef.current;
+            if (!wrap) return;
+            const pmRoot = wrap.querySelector<HTMLElement>(".ProseMirror");
+            if (!pmRoot) return;
+
+            const startY = i * innerHeight;
+            const endY = (i + 1) * innerHeight;
+            const wrapTop = wrap.getBoundingClientRect().top;
+
+            const tr = editor.state.tr;
+            let deletedCount = 0;
+            const rangesToDelete: { from: number; to: number }[] = [];
+
+            editor.state.doc.descendants((node, pos) => {
+              if (node.isBlock && node.type.name !== "doc") {
+                const domNode = editor.view.nodeDOM(pos) as HTMLElement;
+                if (domNode) {
+                  const r = domNode.getBoundingClientRect();
+                  const top = r.top - wrapTop;
+                  const middle = top + r.height / 2;
+
+                  // If the middle of the element is on this page, queue it for deletion
+                  if (middle >= startY && middle < endY) {
+                    rangesToDelete.push({ from: pos, to: pos + node.nodeSize });
+                  }
+                }
+                return false; // don't recurse into children
+              }
+              return true;
+            });
+
+            if (rangesToDelete.length > 0) {
+              rangesToDelete.sort((a, b) => b.from - a.from);
+              rangesToDelete.forEach((range) => {
+                if (range.from >= 0 && range.to <= editor.state.doc.content.size) {
+                  tr.delete(range.from, range.to);
+                  deletedCount++;
+                }
+              });
+            }
+
+            if (deletedCount > 0) {
+              editor.view.dispatch(tr);
+              toast({ title: `Deleted page ${i + 1}` });
+            } else {
+              // Fallback to removing any page break or empty trailing content
+              const html = editor.getHTML()
+                .replace(/(<div[^>]*data-page-break[^>]*><\/div>\s*)+$/i, "")
+                .replace(/(<hr[^>]*class="[^"]*page-break[^"]*"[^>]*\/?>\s*)+$/i, "");
+              editor.commands.setContent(html);
+              toast({ title: `Removed empty page elements` });
+            }
           };
+
           const copyPageText = async () => {
             const wrap = editorWrapRef.current;
             if (!wrap) return;
@@ -942,11 +1011,11 @@ export function PageCanvas({
               </ContextMenuItem>
               <ContextMenuSeparator />
               <ContextMenuItem
-                disabled={!isEmptyPage}
-                onSelect={deleteEmptyPage}
-                className={isEmptyPage ? "text-destructive focus:text-destructive" : ""}
+                disabled={pageCount <= 1}
+                onSelect={deletePage}
+                className={pageCount > 1 ? "text-destructive focus:text-destructive font-semibold" : ""}
               >
-                {isEmptyPage ? "Delete this empty page" : "Delete page (only when empty)"}
+                Delete this page
               </ContextMenuItem>
             </ContextMenuContent>
           </ContextMenu>

@@ -25,9 +25,9 @@ const ACTIONS: { id: string; label: string; icon: any; action: string }[] = [
 ];
 
 const TEMPLATES = [
-  "Business Proposal", "Company Profile", "Press Release", "Project Report",
-  "Investment Pitch", "Partnership Proposal", "Contract Draft", "Meeting Minutes",
-  "Research Report", "Operational Report",
+  "Business Plan", "Business Proposal", "Company Profile", "Personal Profile",
+  "Press Release", "Project Report", "Investment Pitch", "Partnership Proposal",
+  "Contract Draft", "Meeting Minutes", "Research Report", "Operational Report",
 ];
 
 const TAGS = ["Business", "Finance", "Legal", "Research", "News", "Marketing", "Operations", "Personal"];
@@ -39,6 +39,7 @@ export function AmnivaIntelligencePanel({
   onApplyTemplate,
   classification,
   onSetClassification,
+  width = 320,
 }: {
   editor: Editor | null;
   collapsed: boolean;
@@ -46,6 +47,7 @@ export function AmnivaIntelligencePanel({
   onApplyTemplate?: (name: string) => void;
   classification?: string | null;
   onSetClassification?: (tag: string) => void;
+  width?: number;
 }) {
   const [tab, setTab] = useState<Tab>("intelligence");
   const [busy, setBusy] = useState<string | null>(null);
@@ -110,7 +112,10 @@ export function AmnivaIntelligencePanel({
   }
 
   return (
-    <aside className="w-80 border-l border-border bg-card flex flex-col h-full overflow-hidden">
+    <aside
+      style={{ width: `${width}px` }}
+      className="border-l border-border bg-card flex flex-col h-full overflow-hidden flex-shrink-0"
+    >
       <div className="flex items-center justify-between p-3 border-b border-border bg-muted/30">
         <div className="flex items-center gap-2">
           <Sparkles className="h-4 w-4 text-accent" />

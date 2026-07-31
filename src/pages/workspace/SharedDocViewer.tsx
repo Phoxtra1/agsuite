@@ -45,9 +45,8 @@ export default function SharedDocViewer() {
     setStatus("missing");
   };
 
-  const handlePrint = async () => {
+  const handlePrint = () => {
     window.print();
-    await invalidateAndSetMissing();
   };
 
   useEffect(() => {
@@ -89,7 +88,7 @@ export default function SharedDocViewer() {
 
   return (
     <div className="min-h-screen bg-muted/30">
-      <header className="h-14 flex items-center gap-3 px-4 border-b border-border bg-card sticky top-0 z-30">
+      <header className="h-14 flex items-center gap-3 px-4 border-b border-border bg-card sticky top-0 z-30 print:hidden">
         <span className="text-xs uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-accent/15 text-accent">Amineva Docs</span>
         <span className="font-medium text-foreground text-sm truncate">{payload.title}</span>
         <span className={`text-[10px] uppercase font-bold px-2 py-0.5 rounded-full ${editable ? "bg-amber-500/15 text-amber-600" : "bg-blue-500/15 text-blue-600"}`}>
@@ -110,7 +109,7 @@ export default function SharedDocViewer() {
         )}
       </header>
 
-      <main className="py-8 px-4">
+      <main className="py-8 px-4" id="doc-scroll-container">
         <PageCanvas
           editor={editor}
           settings={pageSettings}

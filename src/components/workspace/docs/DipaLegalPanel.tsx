@@ -186,7 +186,7 @@ NOTICE: ${analysis.disclaimer}
   };
 
   return (
-    <div className="w-96 border-l border-border bg-card flex flex-col h-full overflow-hidden select-none">
+    <div className="w-full bg-card flex flex-col h-full overflow-hidden select-none">
       {/* Header */}
       <div className="p-4 border-b border-border bg-slate-900 text-white flex items-center justify-between flex-shrink-0">
         <div className="flex items-center gap-2.5">
