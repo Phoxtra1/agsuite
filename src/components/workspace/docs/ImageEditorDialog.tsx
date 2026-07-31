@@ -13,6 +13,14 @@ export function ImageEditorDialog({ editor, onClose }: ImageEditorDialogProps) {
   const isImage = selection && (selection as any).node && (selection as any).node.type.name === "image";
   const attrs = isImage ? (selection as any).node.attrs : {};
 
+  // Store image attributes and position on mount to prevent loss on selection change
+  const [imgSrc] = useState(attrs.src || "");
+  const [imgAlt] = useState(attrs.alt || "");
+  const [imagePos] = useState(() => {
+    const { selection: sel } = editor.state;
+    return sel && (sel as any).node && (sel as any).node.type.name === "image" ? sel.from : null;
+  });
+
   // Parse existing styles from style string
   const styleStr = attrs.style || "";
   const initialStyles = parseStyleString(styleStr);
@@ -103,7 +111,11 @@ export function ImageEditorDialog({ editor, onClose }: ImageEditorDialogProps) {
 
   // Sync state to editor attributes on every state change
   useEffect(() => {
-    if (!isImage) return;
+    if (imagePos === null) return;
+
+    // Check if the node at imagePos is still an image
+    const node = editor.state.doc.nodeAt(imagePos);
+    if (!node || node.type.name !== "image") return;
 
     const style = buildStyleString({
       width,
@@ -124,15 +136,20 @@ export function ImageEditorDialog({ editor, onClose }: ImageEditorDialogProps) {
       blur,
     });
 
-    editor.chain().focus().updateAttributes("image", {
-      style,
-      width,
-      height,
-    }).run();
+    // Use ProseMirror setNodeMarkup to update attributes precisely without focus jumping or losing selection
+    editor.view.dispatch(
+      editor.state.tr.setNodeMarkup(imagePos, undefined, {
+        ...node.attrs,
+        style,
+        width,
+        height,
+      })
+    );
   }, [
     width, height, wrap, cropTop, cropRight, cropBottom, cropLeft,
     borderRadius, borderWidth, borderStyle, borderColor,
     rotation, opacity, grayscale, sepia, blur,
+    imagePos, editor,
   ]);
 
   function handleReset() {
@@ -390,10 +407,10 @@ export function ImageEditorDialog({ editor, onClose }: ImageEditorDialogProps) {
             </span>
             <div className="border border-border/80 bg-muted/10 rounded-2xl p-4 flex items-center justify-center min-h-[220px] max-h-[300px] overflow-hidden relative">
               <div className="absolute inset-0 bg-linear-to-b from-transparent to-muted/20 pointer-events-none" />
-              {attrs.src ? (
+              {imgSrc ? (
                 <img
-                  src={attrs.src}
-                  alt={attrs.alt || "Selected Image"}
+                  src={imgSrc}
+                  alt={imgAlt || "Selected Image"}
                   className="max-w-full max-h-full object-contain shadow-md rounded"
                   style={{
                     clipPath: (cropTop > 0 || cropRight > 0 || cropBottom > 0 || cropLeft > 0)
