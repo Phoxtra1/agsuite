@@ -125,7 +125,7 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
     } else {
       setCustomSelectedFields((prev) => [...prev, field]);
     }
-  }, [allHeaders]);
+  };
 
   const summaryData = useMemo(() => {
     const total = records.length;
