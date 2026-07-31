@@ -364,3 +364,16 @@ export async function pushSharedDocument(
   } catch {}
   return false;
 }
+
+export async function invalidateShareToken(token: string): Promise<boolean> {
+  try {
+    const { error } = await supabase
+      .from("workspace_document_shares" as any)
+      .update({ revoked: true })
+      .eq("token", token);
+    if (!error) return true;
+  } catch (e) {
+    console.warn("[ag-docs] Failed to invalidate share token", e);
+  }
+  return false;
+}

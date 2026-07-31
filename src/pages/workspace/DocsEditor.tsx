@@ -62,6 +62,9 @@ export default function DocsEditor() {
     onUpdate: () => {
       onUpdateRef.current?.();
     },
+    onDoubleClickImage: () => {
+      setShowImageEditor(true);
+    },
   });
 
   // Load

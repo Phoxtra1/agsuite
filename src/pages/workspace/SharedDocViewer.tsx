@@ -1,9 +1,10 @@
 import { useEffect, useRef, useState } from "react";
 import { useParams } from "react-router-dom";
-import { fetchSharedDocument, pushSharedDocument, type SharedDocPayload } from "@/lib/workspace/documents";
+import { fetchSharedDocument, pushSharedDocument, invalidateShareToken, type SharedDocPayload } from "@/lib/workspace/documents";
 import { useDocEditor } from "@/components/workspace/docs/DocEditor";
 import { PageCanvas, DEFAULT_PAGE_SETTINGS, type PageSettings } from "@/components/workspace/docs/PageCanvas";
-import { Loader2 } from "lucide-react";
+import { ImageEditorDialog } from "@/components/workspace/docs/ImageEditorDialog";
+import { Loader2, Printer } from "lucide-react";
 
 export default function SharedDocViewer() {
   const { token } = useParams();
@@ -11,6 +12,8 @@ export default function SharedDocViewer() {
   const [status, setStatus] = useState<"loading" | "ready" | "missing">("loading");
   const [saving, setSaving] = useState(false);
   const [pageSettings] = useState<PageSettings>(DEFAULT_PAGE_SETTINGS);
+  const [isInvalidating, setIsInvalidating] = useState(false);
+  const [showImageEditor, setShowImageEditor] = useState(false);
   const surfaceRef = useRef<HTMLDivElement | null>(null);
   const saveTimer = useRef<number | null>(null);
 
@@ -28,7 +31,34 @@ export default function SharedDocViewer() {
         setSaving(false);
       }, 800) as any;
     },
+    onDoubleClickImage: () => {
+      if (editable) {
+        setShowImageEditor(true);
+      }
+    },
   });
+
+  const invalidateAndSetMissing = async () => {
+    if (!token || isInvalidating) return;
+    setIsInvalidating(true);
+    await invalidateShareToken(token);
+    setStatus("missing");
+  };
+
+  const handlePrint = async () => {
+    window.print();
+    await invalidateAndSetMissing();
+  };
+
+  useEffect(() => {
+    const handleAfterPrint = async () => {
+      await invalidateAndSetMissing();
+    };
+    window.addEventListener("afterprint", handleAfterPrint);
+    return () => {
+      window.removeEventListener("afterprint", handleAfterPrint);
+    };
+  }, [token, isInvalidating]);
 
   useEffect(() => {
     if (!token) return;
@@ -66,8 +96,15 @@ export default function SharedDocViewer() {
           {payload.mode === "edit" ? "Editable" : "View only"}
         </span>
         <div className="flex-1" />
+        <button
+          onClick={handlePrint}
+          className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground border border-border text-xs font-medium hover:bg-secondary/80 flex items-center gap-1.5 transition"
+          title="Print Document (Link will become invalid after printing)"
+        >
+          <Printer className="h-3.5 w-3.5" /> Print Document
+        </button>
         {editable && (
-          <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5">
+          <span className="text-xs text-muted-foreground inline-flex items-center gap-1.5 animate-pulse ml-2">
             {saving ? <><Loader2 className="h-3 w-3 animate-spin"/> Saving…</> : "Synced"}
           </span>
         )}
@@ -81,6 +118,10 @@ export default function SharedDocViewer() {
           surfaceRef={surfaceRef}
         />
       </main>
+
+      {showImageEditor && editor && (
+        <ImageEditorDialog editor={editor} onClose={() => setShowImageEditor(false)} />
+      )}
     </div>
   );
 }
