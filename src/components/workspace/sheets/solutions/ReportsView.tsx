@@ -487,7 +487,7 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
             </h3>
             <div className="h-44">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={departmentWorkload}>
+                <RechartsBarChart data={departmentWorkload}>
                   <XAxis dataKey="name" fontSize={10} tickLine={false} />
                   <YAxis fontSize={10} />
                   <Tooltip />
@@ -496,7 +496,7 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
                       <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
                     ))}
                   </Bar>
-                </BarChart>
+                </RechartsBarChart>
               </ResponsiveContainer>
             </div>
           </div>

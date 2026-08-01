@@ -1,6 +1,6 @@
 // src/core/coms/decision.ts
 
-import { DipaResponse } from "./Dipa";
+import { DipaResponse } from "./dipa";
 
 export type CommsAction = "auto-reply" | "escalate";
 

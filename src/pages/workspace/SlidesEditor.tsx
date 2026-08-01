@@ -721,7 +721,7 @@ export default function SlidesEditor() {
               if (!r) return;
               const nextElements = currentSlide.elements.map((e) => {
                 if (e.kind === "text" && e.text) {
-                  return { ...e, text: e.text.replaceAll(f, r) };
+                  return { ...e, text: e.text.split(f).join(r) };
                 }
                 return e;
               });

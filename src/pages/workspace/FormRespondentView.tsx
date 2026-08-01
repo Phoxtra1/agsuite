@@ -200,7 +200,7 @@ export default function FormRespondentView() {
     if (!form) return;
 
     if (forcedByTimer) {
-      toast({ title: "Timer expired", description: "Your response is being submitted automatically.", variant: "warning" });
+      toast({ title: "Timer expired", description: "Your response is being submitted automatically.", variant: "default" });
     } else {
       // Validate mandatory fields on current page
       const missingRequired = currentQuestions.some(
