@@ -47,10 +47,12 @@ export const WORKSPACE_MODULES: WorkspaceModule[] = [
     id: "amineva-forms",
     name: "Amineva Forms",
     description: "Structured data collection forms with link-based distribution.",
-    status: "coming_soon",
+    status: "active",
     icon: ClipboardList,
+    route: "/workspace/forms",
     accent: "bg-fuchsia-500/15 text-fuchsia-500",
   },
+
   {
     id: "amineva-drive",
     name: "Amineva Drive",

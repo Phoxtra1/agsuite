@@ -139,7 +139,7 @@ export function AmnivaIntelligencePanel({
               tab === t ? "border-accent text-foreground bg-accent/5 font-bold" : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
-            {t === "intelligence" ? "Dipa" : t === "legal" ? "Dipa Legal" : t === "classification" ? "Tags" : t}
+            {t === "intelligence" ? "Help" : t === "legal" ? "Dipa Legal" : t === "classification" ? "Tags" : t}
           </button>
         ))}
       </div>
