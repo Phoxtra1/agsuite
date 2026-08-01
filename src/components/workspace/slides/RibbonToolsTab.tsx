@@ -82,7 +82,7 @@ export function RibbonToolsTab({
       utterance.pitch = 1.0;
       window.speechSynthesis.speak(utterance);
     } else {
-      window.alert("Web speech synthesis is not supported on your browser.");
+      globalThis.alert("Web speech synthesis is not supported on your browser.");
     }
   };
 

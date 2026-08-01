@@ -74,10 +74,11 @@ Deno.serve(async (req) => {
       method: 'POST',
       headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'google/gemini-2.5-flash',
+        model: action === 'dipa_legal_analysis' ? 'google/gemini-2.5-pro' : 'google/gemini-2.5-flash',
         messages: [
           { role: 'system', content: system },
-          { role: 'user', content: text.slice(0, 20000) },
+          { role: 'user', content: text.slice(0, action === 'dipa_legal_analysis' ? 120000 : 20000) },
+
         ],
       }),
     });

@@ -1044,8 +1044,8 @@ export default function SheetsEditor() {
           />
         ) : (
           <>
+            {/* Default Spreadsheet Editor view */}
 
-          /* Default Spreadsheet Editor view */
 
             <div className="flex-1 flex flex-col overflow-hidden">
               <SheetGrid

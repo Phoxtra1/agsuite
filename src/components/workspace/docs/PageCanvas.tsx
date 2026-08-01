@@ -708,40 +708,79 @@ export function PageCanvas({
   }, [editor, innerHeight, innerWidth]);
 
   /* ---- Push blocks that cross a page boundary to the next page ---- */
+  const [flowHeight, setFlowHeight] = useState(0);
+
   useLayoutEffect(() => {
     if (!editorWrapRef.current || settings.mode !== "print") return;
     const wrap = editorWrapRef.current;
     const pmRoot = wrap.querySelector<HTMLElement>(".ProseMirror");
     if (!pmRoot) return;
-    const pageStep = innerHeight + PAGE_GAP + (HEADER_BAND + FOOTER_BAND + margins.top / 2 + margins.bottom / 2);
+    // One physical sheet step in editor-local coordinates.
+    const pageStep = h + PAGE_GAP;
+
+    let running = false;
 
     const rebalance = () => {
-      const children = Array.from(pmRoot.children) as HTMLElement[];
-      children.forEach((c) => (c.style.marginTop = c.dataset._origMt || ""));
-      let cursor = 0; // vertical position within editor wrap
-      for (const child of children) {
-        // Skip forced page breaks
-        if (child.hasAttribute("data-page-break") || child.classList.contains("page-break")) {
-          const currentPage = Math.floor(cursor / pageStep);
-          cursor = (currentPage + 1) * pageStep;
-          continue;
+      if (running) return;
+      running = true;
+      try {
+        const children = Array.from(pmRoot.children) as HTMLElement[];
+        // 1. Reset every previously injected offset so layout is measured raw.
+        children.forEach((c) => {
+          if (c.dataset.pcPushed) {
+            c.style.marginTop = c.dataset.pcOrigMt || "";
+            delete c.dataset.pcPushed;
+          }
+        });
+
+        // 2. Walk in document order, re-measuring live after each push so the
+        //    cascade is always based on real layout (margins included).
+        let forceNextPage = false;
+        for (const child of children) {
+          const rootTop = pmRoot.getBoundingClientRect().top;
+          const rect = child.getBoundingClientRect();
+          const top = rect.top - rootTop;
+          const height = rect.height;
+          const isBreak =
+            child.hasAttribute("data-page-break") || child.classList.contains("page-break");
+
+          const page = Math.max(0, Math.floor(top / pageStep));
+          const pageBottom = page * pageStep + innerHeight;
+
+          const needsPush =
+            forceNextPage || (height > 0 && height <= innerHeight && top + height > pageBottom);
+
+          if (needsPush && !isBreak) {
+            const push = (page + 1) * pageStep - top;
+            if (push > 0) {
+              const computedMt = parseFloat(getComputedStyle(child).marginTop) || 0;
+              child.dataset.pcOrigMt = child.style.marginTop || "";
+              child.dataset.pcPushed = "1";
+              child.style.marginTop = `${computedMt + push}px`;
+            }
+          }
+
+          forceNextPage = isBreak;
         }
-        const h = child.getBoundingClientRect().height;
-        const currentPage = Math.floor(cursor / pageStep);
-        const pageBottom = (currentPage + 1) * innerHeight + currentPage * (pageStep - innerHeight);
-        if (h > innerHeight) { cursor += h; continue; } // block larger than a page, let it overflow
-        if (cursor + h > pageBottom) {
-          const push = (currentPage + 1) * pageStep - cursor;
-          child.dataset._origMt = child.style.marginTop || "";
-          child.style.marginTop = `${push + (parseFloat(getComputedStyle(child).marginTop) || 0)}px`;
-          cursor += push + h;
+
+        // 3. Report the flowed height so the page count matches reality.
+        const last = children[children.length - 1];
+        if (last) {
+          const rootTop = pmRoot.getBoundingClientRect().top;
+          const r = last.getBoundingClientRect();
+          setFlowHeight(r.top - rootTop + r.height);
         } else {
-          cursor += h;
+          setFlowHeight(0);
         }
+      } finally {
+        // Release on the next frame so observer callbacks caused by our own
+        // margin writes are ignored.
+        requestAnimationFrame(() => { running = false; });
       }
     };
+
     rebalance();
-    const ro = new ResizeObserver(rebalance);
+    const ro = new ResizeObserver(() => requestAnimationFrame(rebalance));
     ro.observe(pmRoot);
     const onUpdate = () => requestAnimationFrame(rebalance);
     editor?.on("update", onUpdate);
@@ -751,7 +790,7 @@ export function PageCanvas({
       editor?.off("update", onUpdate);
       editor?.off("transaction", onUpdate);
     };
-  }, [editor, innerHeight, settings.mode, margins.top, margins.bottom]);
+  }, [editor, innerHeight, settings.mode, h, margins.top, margins.bottom]);
 
   // Hard page breaks: `<div data-page-break></div>` OR `.page-break`.
   const hardBreaks = useMemo(() => {
@@ -761,8 +800,11 @@ export function PageCanvas({
     return m?.length ?? 0;
   }, [editor, editor?.state]);
 
-  const overflowPages = Math.max(1, Math.ceil(contentHeight / innerHeight));
+  const pageStepPx = h + PAGE_GAP;
+  const measuredFlow = Math.max(flowHeight, contentHeight > innerHeight ? 0 : contentHeight);
+  const overflowPages = Math.max(1, Math.floor(Math.max(0, measuredFlow - 1) / pageStepPx) + 1);
   const contentPages = Math.max(overflowPages, hardBreaks + 1);
+
   // Cover page is its own physical sheet, prepended to content pages.
   const pageCount = contentPages + (settings.coverPage ? 1 : 0);
 

@@ -430,7 +430,7 @@ export async function createDeck(title = "Untitled presentation"): Promise<Works
           saveLocalDecks(updatedLocal);
         }
       }
-    }).catch(() => {});
+    });
 
   return newDeck;
 }

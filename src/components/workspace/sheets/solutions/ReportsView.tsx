@@ -5,9 +5,12 @@ import {
   AlertTriangle,
   Users,
   Layers,
-  Sparkles
+  Sparkles,
+  Clock,
+  Download,
+  Printer
 } from "lucide-react";
-import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip, Cell, PieChart, Pie } from "recharts";
+import { ResponsiveContainer, BarChart as RechartsBarChart, Bar, XAxis, YAxis, Tooltip, Cell, PieChart, Pie } from "recharts";
 
 interface ReportsViewProps {
   records?: Record<string, any>[];
@@ -33,6 +36,9 @@ export default function ReportsView({ records = [], solutionType = "Tasks", allS
 // ----------------------------------------------------
 function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record<string, any>[]; solutionType?: string }) {
   const today = new Date("2026-04-14"); // Consistent baseline reference date
+  const [customFilterText, setCustomFilterText] = useState("");
+  const [customSelectedFields, setCustomSelectedFields] = useState<string[]>([]);
+  const [activeReport, setActiveReport] = useState<string>("overview");
 
   // Dynamic analysis of spreadsheet headers
   const sheetAnalysis = useMemo(() => {
@@ -120,6 +126,11 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
       rate
     };
   }, [parsedTasks, sheetAnalysis]);
+
+  const allHeaders = sheetAnalysis.headers;
+  const totalTasks = completionStats?.total ?? parsedTasks.length;
+  const completedTasks = completionStats?.completed ?? 0;
+  const completionRate = completionStats?.rate ?? 0;
 
   // Metric: Team Workloads & Progress
   const teamPerformance = useMemo(() => {
@@ -476,7 +487,7 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
             </h3>
             <div className="h-44">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={departmentWorkload}>
+                <RechartsBarChart data={departmentWorkload}>
                   <XAxis dataKey="name" fontSize={10} tickLine={false} />
                   <YAxis fontSize={10} />
                   <Tooltip />
@@ -485,7 +496,7 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
                       <Cell key={`cell-${idx}`} fill={COLORS[idx % COLORS.length]} />
                     ))}
                   </Bar>
-                </BarChart>
+                </RechartsBarChart>
               </ResponsiveContainer>
             </div>
           </div>
@@ -567,4 +578,22 @@ function TasksReportsView({ records, solutionType = "Tasks" }: { records: Record
       </div>
     </div>
   );
+}
+
+
+// ----------------------------------------------------
+// HR Reports View
+// ----------------------------------------------------
+function HrReportsView({ allSheets, parseRowsFn }: { allSheets: any[]; parseRowsFn: (sheet: any) => Record<string, any>[] }) {
+  const records = useMemo(() => {
+    return allSheets.flatMap((s) => {
+      try {
+        return parseRowsFn(s) || [];
+      } catch {
+        return [];
+      }
+    });
+  }, [allSheets, parseRowsFn]);
+
+  return <TasksReportsView records={records} solutionType="HR" />;
 }

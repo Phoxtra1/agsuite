@@ -40,7 +40,7 @@ export interface Workbook {
   namedRanges?: Record<string, string>;
   activeSheet?: number;
   activeSolution?: {
-    type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Custom";
+    type: "CRM" | "Inventory" | "HR" | "Registry" | "Project" | "Tasks" | "ProjectManagement" | "Custom";
     meetings?: any[];
   };
 }
@@ -212,7 +212,7 @@ export async function createSheet(title = "Untitled sheet"): Promise<WorkspaceSh
           saveLocalSheets(updatedLocal);
         }
       }
-    }).catch(() => {});
+    });
 
   return newSheet;
 }
