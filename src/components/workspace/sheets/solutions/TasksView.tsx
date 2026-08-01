@@ -223,7 +223,8 @@ export default function TasksView({
 
   // Main task parsing
   const preparedTasks = useMemo(() => {
-    return records.map((r) => {
+    return records.map((r, _idx) => {
+      const rowIndex: number = typeof r.rowIndex === "number" ? r.rowIndex : _idx;
       const taskName = String(r[sheetAnalysis.taskNameHeader] || "");
       const status = sheetAnalysis.statusHeader ? String(r[sheetAnalysis.statusHeader] || "Not Started") : "";
       const priority = sheetAnalysis.priorityHeader ? String(r[sheetAnalysis.priorityHeader] || "Medium") : "";
@@ -255,6 +256,7 @@ export default function TasksView({
         description,
         notes,
         taskId,
+        rowIndex,
         _isOverdue: isOverdue(r)
       };
     });
