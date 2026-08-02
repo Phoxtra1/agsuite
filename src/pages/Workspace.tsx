@@ -31,6 +31,7 @@ export default function Workspace() {
         <Route path="sheets/:id" element={<SheetsEditor />} />
         <Route path="slides/:id" element={<SlidesEditor />} />
         <Route path="forms/:id" element={<FormsEditor />} />
+        <Route path="drive" element={<DriveList />} />
 
         {/* Sidebar layout */}
         <Route
@@ -42,7 +43,6 @@ export default function Workspace() {
                 <Suspense fallback={<Fallback />}>
                   <Routes>
                     <Route index element={<WorkspaceDashboard />} />
-                    <Route path="drive" element={<DriveList />} />
                     <Route path="docs" element={<DocsList />} />
                     <Route path="sheets" element={<SheetsList />} />
                     <Route path="slides" element={<SlidesList />} />
