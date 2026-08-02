@@ -181,7 +181,8 @@ function WorkspaceGuard({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
+  // Drive path bypasses authentication check for now
+  if (!isAuthenticated && !location.pathname.startsWith("/workspace/drive")) {
     const next = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/?authRedirect=${next}`} replace />;
   }

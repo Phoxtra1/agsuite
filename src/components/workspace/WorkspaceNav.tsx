@@ -1,16 +1,16 @@
 import { useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutGrid, FileText, Sheet as SheetIcon, Presentation, ClipboardList, FolderOpen, ArrowLeft, LogOut, Menu, X } from "lucide-react";
+import { LayoutGrid, FolderOpen, FileText, Sheet as SheetIcon, Presentation, ClipboardList, ArrowLeft, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import amvLogo from "@/assets/amv_global_logo.png";
 
 const items = [
   { to: "/workspace", icon: LayoutGrid, label: "Dashboard", end: true },
+  { to: "/workspace/drive", icon: FolderOpen, label: "Amineva Drive" },
   { to: "/workspace/docs", icon: FileText, label: "Amineva Docs" },
   { to: "/workspace/sheets", icon: SheetIcon, label: "Amineva Sheets" },
   { to: "/workspace/slides", icon: Presentation, label: "Amineva Slides" },
   { to: "/workspace/forms", icon: ClipboardList, label: "Amineva Forms" },
-  { to: "/workspace/drive", icon: FolderOpen, label: "Amineva Drive" },
 ];
 
 export function WorkspaceNav() {

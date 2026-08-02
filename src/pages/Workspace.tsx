@@ -12,7 +12,7 @@ const SlidesList = lazy(() => import("./workspace/SlidesList"));
 const SlidesEditor = lazy(() => import("./workspace/SlidesEditor"));
 const FormsList = lazy(() => import("./workspace/FormsList"));
 const FormsEditor = lazy(() => import("./workspace/FormsEditor"));
-const DriveBrowser = lazy(() => import("./workspace/DriveBrowser"));
+const DriveList = lazy(() => import("./workspace/DriveList"));
 
 function Fallback() {
   return (
@@ -42,11 +42,11 @@ export default function Workspace() {
                 <Suspense fallback={<Fallback />}>
                   <Routes>
                     <Route index element={<WorkspaceDashboard />} />
+                    <Route path="drive" element={<DriveList />} />
                     <Route path="docs" element={<DocsList />} />
                     <Route path="sheets" element={<SheetsList />} />
                     <Route path="slides" element={<SlidesList />} />
                     <Route path="forms" element={<FormsList />} />
-                    <Route path="drive" element={<DriveBrowser />} />
                     <Route path="*" element={<Navigate to="/workspace" replace />} />
                   </Routes>
                 </Suspense>

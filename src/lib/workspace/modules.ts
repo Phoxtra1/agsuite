@@ -52,11 +52,10 @@ export const WORKSPACE_MODULES: WorkspaceModule[] = [
   {
     id: "amineva-drive",
     name: "Amineva Drive",
-    description: "Keep all your Workspace files in one place.",
+    description: "Unified storage layer for every Workspace document, sheet, presentation, form, and asset.",
     status: "active",
     icon: FolderOpen,
     route: "/workspace/drive",
     accent: "bg-sky-500/15 text-sky-500",
   },
 ];
-
