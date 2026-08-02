@@ -886,7 +886,10 @@ export default function SheetsEditor() {
         </div>
       </header>
 
-      <RibbonTabs actions={ribbon} />
+      <div className="overflow-x-auto flex-shrink-0">
+        <RibbonTabs actions={ribbon} />
+      </div>
+
 
       {showFormulaBar && (
         <FormulaBar
@@ -898,23 +901,24 @@ export default function SheetsEditor() {
         />
       )}
 
-      {/* Smart Solution Recommender Banner */}
+      {/* Solution recommendation */}
       {recommendedSolutionId && (
-        <div className="bg-gradient-to-r from-accent/15 via-accent/5 to-transparent border-b border-border px-6 py-2 flex items-center justify-between text-xs animate-in slide-in-from-top-2 duration-200">
+        <div className="bg-gradient-to-r from-accent/15 via-accent/5 to-transparent border-b border-border px-4 sm:px-6 py-2 flex flex-wrap gap-2 items-center justify-between text-xs">
           <div className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-accent animate-bounce" />
+            <AlertCircle className="h-4 w-4 text-accent" />
             <span className="font-semibold text-foreground">
-              Smart Data Layer parsed this sheet and detected a structures-match with <strong>{recommendedSolutionId}</strong>.
+              This sheet looks like a <strong>{recommendedSolutionId}</strong> workspace.
             </span>
           </div>
           <button
             onClick={() => handleActivateSolution(recommendedSolutionId as any)}
             className="bg-accent text-accent-foreground font-bold px-3 py-1 rounded-lg hover:bg-accent/90"
           >
-            Activate Connected {recommendedSolutionId} Workspace
+            Use {recommendedSolutionId} workspace
           </button>
         </div>
       )}
+
 
       {/* Business Solution Workspace Tab Selector */}
       {wb.activeSolution && (
