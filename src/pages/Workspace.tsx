@@ -12,6 +12,7 @@ const SlidesList = lazy(() => import("./workspace/SlidesList"));
 const SlidesEditor = lazy(() => import("./workspace/SlidesEditor"));
 const FormsList = lazy(() => import("./workspace/FormsList"));
 const FormsEditor = lazy(() => import("./workspace/FormsEditor"));
+const DriveBrowser = lazy(() => import("./workspace/DriveBrowser"));
 
 function Fallback() {
   return (
@@ -45,6 +46,7 @@ export default function Workspace() {
                     <Route path="sheets" element={<SheetsList />} />
                     <Route path="slides" element={<SlidesList />} />
                     <Route path="forms" element={<FormsList />} />
+                    <Route path="drive" element={<DriveBrowser />} />
                     <Route path="*" element={<Navigate to="/workspace" replace />} />
                   </Routes>
                 </Suspense>
