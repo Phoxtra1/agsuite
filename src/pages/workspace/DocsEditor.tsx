@@ -245,7 +245,7 @@ ${currentText}`;
   if (!editor) return null;
 
   return (
-    <div className="h-screen flex flex-col bg-muted/30 overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-muted/30 overflow-hidden">
       {/* Header */}
       <header className="h-14 flex items-center justify-between px-4 border-b border-border bg-card flex-shrink-0">
         <div className="flex items-center gap-3 min-w-0">
@@ -291,34 +291,38 @@ ${currentText}`;
         </div>
       </header>
 
-      <Ribbon
-        editor={editor}
-        pageSettings={pageSettings}
-        onPageSettings={updatePageSettings}
-        onAction={handleAction}
-        wordsCount={words}
-        charCount={chars}
-        onToggleLeftPanel={() => setLeftCollapsed((v) => !v)}
-        onToggleRightPanel={() => setRightCollapsed((v) => !v)}
-        onZoom={(z) => {
-          if (z === "fit-width" || z === "fit-page") setZoom(z === "fit-width" ? 1 : 0.7);
-          else setZoom(z as number);
-        }}
-        zoom={zoom}
-        showRuler={showRuler}
-        onToggleRuler={() => setShowRuler((v) => !v)}
-      />
+      <div className="overflow-x-auto flex-shrink-0">
+        <Ribbon
+          editor={editor}
+          pageSettings={pageSettings}
+          onPageSettings={updatePageSettings}
+          onAction={handleAction}
+          wordsCount={words}
+          charCount={chars}
+          onToggleLeftPanel={() => setLeftCollapsed((v) => !v)}
+          onToggleRightPanel={() => setRightCollapsed((v) => !v)}
+          onZoom={(z) => {
+            if (z === "fit-width" || z === "fit-page") setZoom(z === "fit-width" ? 1 : 0.7);
+            else setZoom(z as number);
+          }}
+          zoom={zoom}
+          showRuler={showRuler}
+          onToggleRuler={() => setShowRuler((v) => !v)}
+        />
+      </div>
 
       <div className="flex-1 flex overflow-hidden">
-        <LeftDocPanel
-          collapsed={leftCollapsed}
-          onToggleCollapsed={() => setLeftCollapsed((v) => !v)}
-          currentId={id}
-        />
+        <div className="hidden lg:flex">
+          <LeftDocPanel
+            collapsed={leftCollapsed}
+            onToggleCollapsed={() => setLeftCollapsed((v) => !v)}
+            currentId={id}
+          />
+        </div>
 
-        <main className="flex-1 overflow-auto bg-muted/30 py-8 px-4" id="doc-scroll-container">
+        <main className="flex-1 overflow-auto bg-muted/30 py-4 sm:py-8 px-2 sm:px-4" id="doc-scroll-container">
           {showRuler && (
-            <div className="max-w-[900px] mx-auto h-6 bg-card border border-border rounded mb-2 flex items-center px-2 text-[9px] text-muted-foreground">
+            <div className="hidden sm:flex max-w-[900px] mx-auto h-6 bg-card border border-border rounded mb-2 items-center px-2 text-[9px] text-muted-foreground">
               {Array.from({ length: 40 }).map((_, i) => (
                 <div key={i} className="flex-1 border-l border-border h-3" />
               ))}
@@ -337,20 +341,23 @@ ${currentText}`;
         {!rightCollapsed && (
           <div
             onMouseDown={startResize}
-            className={`w-1 hover:w-1.5 bg-border hover:bg-accent/50 cursor-col-resize transition-all h-full flex-shrink-0 select-none ${isResizing ? 'bg-accent w-1.5' : ''}`}
+            className={`hidden lg:block w-1 hover:w-1.5 bg-border hover:bg-accent/50 cursor-col-resize transition-all h-full flex-shrink-0 select-none ${isResizing ? 'bg-accent w-1.5' : ''}`}
           />
         )}
 
-        <AmnivaIntelligencePanel
-          editor={editor}
-          collapsed={rightCollapsed}
-          onToggleCollapsed={() => setRightCollapsed((v) => !v)}
-          onApplyTemplate={applyTemplate}
-          classification={classification}
-          onSetClassification={updateClassification}
-          width={rightWidth}
-        />
+        <div className="hidden lg:flex">
+          <AmnivaIntelligencePanel
+            editor={editor}
+            collapsed={rightCollapsed}
+            onToggleCollapsed={() => setRightCollapsed((v) => !v)}
+            onApplyTemplate={applyTemplate}
+            classification={classification}
+            onSetClassification={updateClassification}
+            width={rightWidth}
+          />
+        </div>
       </div>
+
 
       {/* Status bar */}
       <footer className="h-7 border-t border-border bg-card flex items-center justify-between px-4 text-[11px] text-muted-foreground flex-shrink-0">

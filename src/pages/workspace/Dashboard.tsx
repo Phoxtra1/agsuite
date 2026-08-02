@@ -10,16 +10,17 @@ export default function WorkspaceDashboard() {
   const first = (user?.email || "there").split("@")[0];
 
   return (
-    <div className="max-w-6xl mx-auto p-8">
-      <header className="mb-10">
+    <div className="max-w-6xl mx-auto p-5 sm:p-8">
+      <header className="mb-8 sm:mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent/15 text-accent text-xs font-medium mb-3">
-          <Sparkles className="h-3.5 w-3.5" /> Workspace · Data Intelligence Hub
+          <Sparkles className="h-3.5 w-3.5" /> Amineva Workspace
         </div>
-        <h1 className="text-3xl font-bold text-foreground">Welcome back, {first}.</h1>
-        <p className="text-muted-foreground mt-1">
-          Your unified surface for productivity and structured intelligence.
+        <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Welcome back, {first}.</h1>
+        <p className="text-muted-foreground mt-1 text-sm sm:text-base">
+          Everything you need to create, analyse and share your work.
         </p>
       </header>
+
 
       <section>
         <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-4">

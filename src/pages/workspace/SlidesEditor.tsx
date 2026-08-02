@@ -645,12 +645,12 @@ export default function SlidesEditor() {
   const selectedEl = currentSlide?.elements.find(e => e.id === selectedElId);
 
   return (
-    <div className="h-screen w-screen bg-background text-foreground flex flex-col overflow-hidden">
+    <div className="h-[100dvh] w-full bg-background text-foreground flex flex-col overflow-hidden">
       {/* Top Application Bar */}
-      <div className="h-14 border-b border-border bg-card flex items-center px-4 gap-2 flex-shrink-0 justify-between">
+      <div className="h-14 border-b border-border bg-card flex items-center px-3 sm:px-4 gap-2 flex-shrink-0 justify-between overflow-x-auto">
         <div className="flex items-center gap-3">
           <button onClick={() => navigate("/workspace/slides")} className="p-2 rounded hover:bg-muted"><ArrowLeft className="h-4 w-4" /></button>
-          <Presentation className="h-5 w-5 text-accent animate-pulse" />
+          <Presentation className="h-5 w-5 text-accent" />
           <div className="flex flex-col">
             <input
               value={doc.title}
@@ -658,7 +658,7 @@ export default function SlidesEditor() {
               onBlur={() => updateDeck(doc.id, { title: doc.title })}
               className="bg-transparent border-none outline-none text-sm font-bold flex-1 text-foreground"
             />
-            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Amineva Slides Creator</span>
+            <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Amineva Slides</span>
           </div>
         </div>
 
@@ -673,7 +673,7 @@ export default function SlidesEditor() {
       </div>
 
       {/* Ribbon Bar tabs selection */}
-      <div className="bg-card border-b border-border flex items-center px-4 gap-1 flex-shrink-0">
+      <div className="bg-card border-b border-border flex items-center px-2 sm:px-4 gap-1 flex-shrink-0 overflow-x-auto">
         {(["home", "insert", "design", "transitions", "animations", "slideshow", "review", "view", "tools"] as const).map((tab) => (
           <button
             key={tab}
@@ -690,7 +690,7 @@ export default function SlidesEditor() {
       </div>
 
       {/* Ribbon Panels */}
-      <div className="h-16 border-b border-border bg-slate-50 flex items-center px-4 flex-shrink-0 shadow-sm">
+      <div className="h-16 border-b border-border bg-slate-50 flex items-center px-2 sm:px-4 flex-shrink-0 shadow-sm overflow-x-auto">
         {activeTab === "home" && (
           <RibbonHomeTab
             currentSlide={currentSlide}
@@ -812,7 +812,7 @@ export default function SlidesEditor() {
       <div className="flex-1 flex overflow-hidden">
         {/* Left Navigator (Slide Thumbnail Panel) */}
         {currentView === "sorter" ? null : (
-          <div className="w-56 border-r border-border bg-card overflow-y-auto flex flex-col flex-shrink-0">
+          <div className="hidden md:flex w-56 border-r border-border bg-card overflow-y-auto flex-col flex-shrink-0">
             <div className="p-3 border-b border-border text-xs font-bold uppercase tracking-wider text-muted-foreground">Slide Navigator</div>
             <div className="p-3 space-y-3">
               {deck.slides.map((s, i) => {
@@ -843,8 +843,8 @@ export default function SlidesEditor() {
         {/* Slide Canvas Area */}
         {currentView === "sorter" ? (
           <div className="flex-1 bg-muted/20 p-8 overflow-y-auto">
-            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-6">Slide Sorter View</h2>
-            <div className="grid grid-cols-4 gap-6">
+            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-6">Slide Sorter</h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
               {deck.slides.map((s, i) => {
                 const thumbW = 260, thumbScale = thumbW / CANVAS_W;
                 return (
@@ -891,7 +891,7 @@ export default function SlidesEditor() {
                 <textarea
                   value={currentSlide?.notes ?? ""}
                   onChange={(e) => patchActiveSlide({ notes: e.target.value })}
-                  placeholder="Type notes or transcription outlines for presentation mode here..."
+                  placeholder="Add speaker notes for this slide..."
                   className="w-full flex-1 resize-none bg-transparent border-none outline-none text-xs text-foreground font-medium placeholder-slate-400"
                 />
               </div>
@@ -901,9 +901,9 @@ export default function SlidesEditor() {
 
         {/* Right Properties & Layer Panel */}
         {selectedEl && currentView !== "sorter" && (
-          <div className="w-80 border-l border-border bg-card overflow-y-auto flex flex-col flex-shrink-0">
+          <div className="hidden lg:flex w-80 border-l border-border bg-card overflow-y-auto flex-col flex-shrink-0">
             <div className="p-4 border-b border-border flex items-center justify-between">
-              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"><Sliders className="h-4 w-4 text-accent animate-pulse" /> Properties Panel</h4>
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5"><Sliders className="h-4 w-4 text-accent" /> Properties</h4>
               <button onClick={() => updateSelected({ locked: !selectedEl.locked })} className="p-1 rounded hover:bg-muted">
                 {selectedEl.locked ? <Lock className="h-3.5 w-3.5 text-rose-500" /> : <Unlock className="h-3.5 w-3.5 text-slate-500" />}
               </button>

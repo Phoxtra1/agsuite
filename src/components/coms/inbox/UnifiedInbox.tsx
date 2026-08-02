@@ -174,10 +174,10 @@ export function UnifiedInbox() {
                 <SelectTrigger className="h-7 text-xs flex-1"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Apps</SelectItem>
-                  <SelectItem value="AGStock">AGStock</SelectItem>
-                  <SelectItem value="AGIS">AGIS</SelectItem>
-                  <SelectItem value="AgroClimate">AgroClimate</SelectItem>
-                  <SelectItem value="AminevaOps">AminevaOps</SelectItem>
+                  <SelectItem value="AGStock">Nyansa</SelectItem>
+                  <SelectItem value="AGIS">DataLens</SelectItem>
+                  <SelectItem value="AgroClimate">Agyenkwa</SelectItem>
+                  <SelectItem value="AminevaOps">Sikasɛm</SelectItem>
                   <SelectItem value="external">External</SelectItem>
                 </SelectContent>
               </Select>

@@ -829,7 +829,7 @@ export default function SheetsEditor() {
   if (!doc) return null;
 
   return (
-    <div className="h-screen flex flex-col bg-muted/30 overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-muted/30 overflow-hidden">
       <header className="h-12 flex items-center justify-between px-3 border-b border-border bg-card flex-shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <button onClick={() => navigate("/workspace/sheets")}
@@ -853,26 +853,26 @@ export default function SheetsEditor() {
                 null}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Collaborate Menu Dropdown */}
-          <CollaborateMenu
-            onCreateMeeting={() => { setMeetingPrefilled(null); setIsMeetingModalOpen(true); }}
-            onScheduleEvent={() => { setMeetingPrefilled({ title: "Workspace Event", participants: "" }); setIsMeetingModalOpen(true); }}
-            onShare={() => toast({ title: "Share workspace link", description: "Copied workspace connection link to clipboard." })}
-            onNotifyTeam={() => toast({ title: "Team Notified", description: "Real-time notifications dispatched to all workspace team members." })}
-          />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="hidden lg:flex items-center gap-2">
+            <CollaborateMenu
+              onCreateMeeting={() => { setMeetingPrefilled(null); setIsMeetingModalOpen(true); }}
+              onScheduleEvent={() => { setMeetingPrefilled({ title: "Workspace Event", participants: "" }); setIsMeetingModalOpen(true); }}
+              onShare={() => toast({ title: "Share link copied", description: "Anyone with the link can open this workbook." })}
+              onNotifyTeam={() => toast({ title: "Team notified", description: "Your team members have been notified." })}
+            />
 
-          {/* Business Solution Generator Dropdown */}
-          <SolutionDropdown
-            activeSolution={wb.activeSolution}
-            onSelectSolution={handleActivateSolution}
-            onDeactivate={handleDeactivateSolution}
-          />
+            <SolutionDropdown
+              activeSolution={wb.activeSolution}
+              onSelectSolution={handleActivateSolution}
+              onDeactivate={handleDeactivateSolution}
+            />
+          </div>
 
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) onImportFile(f); e.target.value = ""; }} />
           <button onClick={() => fileRef.current?.click()}
-            className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground border border-border text-xs font-medium hover:bg-secondary/80 flex items-center gap-1.5">
+            className="hidden sm:flex px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground border border-border text-xs font-medium hover:bg-secondary/80 items-center gap-1.5">
             <Upload className="h-3.5 w-3.5" /> Import
           </button>
           <ExportMenu
@@ -880,13 +880,17 @@ export default function SheetsEditor() {
             onCSV={() => exportCSV(title, activeSheet)}
             onJSON={() => exportJSON(title, wb)}
           />
-          <button className="px-4 py-1.5 rounded-md bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/90 inline-flex items-center gap-1.5">
-            <Share2 className="h-3.5 w-3.5" /> Share
+          <button className="px-3 sm:px-4 py-1.5 rounded-md bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/90 inline-flex items-center gap-1.5">
+            <Share2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Share</span>
           </button>
         </div>
+
       </header>
 
-      <RibbonTabs actions={ribbon} />
+      <div className="overflow-x-auto flex-shrink-0">
+        <RibbonTabs actions={ribbon} />
+      </div>
+
 
       {showFormulaBar && (
         <FormulaBar
@@ -898,28 +902,30 @@ export default function SheetsEditor() {
         />
       )}
 
-      {/* Smart Solution Recommender Banner */}
+      {/* Solution recommendation */}
       {recommendedSolutionId && (
-        <div className="bg-gradient-to-r from-accent/15 via-accent/5 to-transparent border-b border-border px-6 py-2 flex items-center justify-between text-xs animate-in slide-in-from-top-2 duration-200">
+        <div className="bg-gradient-to-r from-accent/15 via-accent/5 to-transparent border-b border-border px-4 sm:px-6 py-2 flex flex-wrap gap-2 items-center justify-between text-xs">
           <div className="flex items-center gap-2">
-            <AlertCircle className="h-4 w-4 text-accent animate-bounce" />
+            <AlertCircle className="h-4 w-4 text-accent" />
             <span className="font-semibold text-foreground">
-              Smart Data Layer parsed this sheet and detected a structures-match with <strong>{recommendedSolutionId}</strong>.
+              This sheet looks like a <strong>{recommendedSolutionId}</strong> workspace.
             </span>
           </div>
           <button
             onClick={() => handleActivateSolution(recommendedSolutionId as any)}
             className="bg-accent text-accent-foreground font-bold px-3 py-1 rounded-lg hover:bg-accent/90"
           >
-            Activate Connected {recommendedSolutionId} Workspace
+            Use {recommendedSolutionId} workspace
           </button>
         </div>
       )}
 
+
       {/* Business Solution Workspace Tab Selector */}
       {wb.activeSolution && (
-        <div className="h-10 border-b border-border bg-card flex items-center px-4 justify-between text-xs flex-shrink-0">
-          <div className="flex items-center gap-1.5">
+        <div className="h-10 border-b border-border bg-card flex items-center px-4 justify-between text-xs flex-shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+
             <button
               onClick={() => setActiveView("spreadsheet")}
               className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${activeView === "spreadsheet" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
@@ -932,7 +938,7 @@ export default function SheetsEditor() {
               className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${activeView === "solution" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
                 }`}
             >
-              <Presentation className="h-3.5 w-3.5" /> {wb.activeSolution.type === "Tasks" ? "Tasks View" : `${wb.activeSolution.type} Connected Workspace`}
+              <Presentation className="h-3.5 w-3.5" /> {wb.activeSolution.type === "Tasks" ? "Tasks" : wb.activeSolution.type}
             </button>
             <button
               onClick={() => setActiveView("dashboard")}
@@ -949,19 +955,22 @@ export default function SheetsEditor() {
               <Layout className="h-3.5 w-3.5" /> Reports View
             </button>
           </div>
-          <div className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 shadow-sm">
-            Active: {wb.activeSolution.type} Two-Way Sync
+          <div className="hidden sm:block text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+            {wb.activeSolution.type} active
           </div>
+
         </div>
       )}
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Native Spreadsheet Leftside Panel */}
-        <LeftSheetPanel
-          collapsed={leftCollapsed}
-          onToggleCollapsed={() => setLeftCollapsed((v) => !v)}
-          currentId={id}
-        />
+        <div className="hidden lg:flex">
+          <LeftSheetPanel
+            collapsed={leftCollapsed}
+            onToggleCollapsed={() => setLeftCollapsed((v) => !v)}
+            currentId={id}
+          />
+        </div>
+
 
         {/* Conditional Workspace View Switching */}
         {wb.activeSolution && activeView === "solution" ? (
@@ -1044,10 +1053,7 @@ export default function SheetsEditor() {
           />
         ) : (
           <>
-            {/* Default Spreadsheet Editor view */}
-
-
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden min-w-0">
               <SheetGrid
                 sheet={activeSheet}
                 engine={engineRef.current}
@@ -1079,14 +1085,17 @@ export default function SheetsEditor() {
               />
             </div>
 
-            <AnalysisPanel
-              sheet={activeSheet}
-              selection={selection}
-              collapsed={rightCollapsed}
-              onToggleCollapsed={() => setRightCollapsed((v) => !v)}
-              engine={engineRef.current}
-            />
+            <div className="hidden lg:flex">
+              <AnalysisPanel
+                sheet={activeSheet}
+                selection={selection}
+                collapsed={rightCollapsed}
+                onToggleCollapsed={() => setRightCollapsed((v) => !v)}
+                engine={engineRef.current}
+              />
+            </div>
           </>
+
         )}
       </div>
 
