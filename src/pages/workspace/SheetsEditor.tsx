@@ -1052,10 +1052,7 @@ export default function SheetsEditor() {
           />
         ) : (
           <>
-            {/* Default Spreadsheet Editor view */}
-
-
-            <div className="flex-1 flex flex-col overflow-hidden">
+            <div className="flex-1 flex flex-col overflow-hidden min-w-0">
               <SheetGrid
                 sheet={activeSheet}
                 engine={engineRef.current}
@@ -1087,14 +1084,17 @@ export default function SheetsEditor() {
               />
             </div>
 
-            <AnalysisPanel
-              sheet={activeSheet}
-              selection={selection}
-              collapsed={rightCollapsed}
-              onToggleCollapsed={() => setRightCollapsed((v) => !v)}
-              engine={engineRef.current}
-            />
+            <div className="hidden lg:flex">
+              <AnalysisPanel
+                sheet={activeSheet}
+                selection={selection}
+                collapsed={rightCollapsed}
+                onToggleCollapsed={() => setRightCollapsed((v) => !v)}
+                engine={engineRef.current}
+              />
+            </div>
           </>
+
         )}
       </div>
 
