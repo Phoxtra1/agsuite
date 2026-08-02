@@ -6,11 +6,11 @@ import amvLogo from "@/assets/amv_global_logo.png";
 
 const items = [
   { to: "/workspace", icon: LayoutGrid, label: "Dashboard", end: true },
-  { to: "/workspace/drive", icon: FolderOpen, label: "Amineva Drive" },
   { to: "/workspace/docs", icon: FileText, label: "Amineva Docs" },
   { to: "/workspace/sheets", icon: SheetIcon, label: "Amineva Sheets" },
   { to: "/workspace/slides", icon: Presentation, label: "Amineva Slides" },
   { to: "/workspace/forms", icon: ClipboardList, label: "Amineva Forms" },
+  { to: "/workspace/drive", icon: FolderOpen, label: "Amineva Drive" },
 ];
 
 export function WorkspaceNav() {
