@@ -829,7 +829,7 @@ export default function SheetsEditor() {
   if (!doc) return null;
 
   return (
-    <div className="h-screen flex flex-col bg-muted/30 overflow-hidden">
+    <div className="h-[100dvh] flex flex-col bg-muted/30 overflow-hidden">
       <header className="h-12 flex items-center justify-between px-3 border-b border-border bg-card flex-shrink-0">
         <div className="flex items-center gap-2 min-w-0">
           <button onClick={() => navigate("/workspace/sheets")}
