@@ -16,8 +16,7 @@ export const WORKSPACE_MODULES: WorkspaceModule[] = [
   {
     id: "amineva-docs",
     name: "Amineva Docs",
-    description:
-      "Professional document workspace with structured intelligence, AI assistance and multi-format export.",
+    description: "Write, format and publish professional documents.",
     status: "active",
     icon: FileText,
     route: "/workspace/docs",
@@ -26,8 +25,7 @@ export const WORKSPACE_MODULES: WorkspaceModule[] = [
   {
     id: "amineva-sheets",
     name: "Amineva Sheets",
-    description:
-      "Intelligence-grade spreadsheets with 400+ functions, SPSS-style analytics, and AI-assisted insight.",
+    description: "Build spreadsheets, run calculations and analyse your data.",
     status: "active",
     icon: Sheet,
     route: "/workspace/sheets",
@@ -36,8 +34,7 @@ export const WORKSPACE_MODULES: WorkspaceModule[] = [
   {
     id: "amineva-slides",
     name: "Amineva Slides",
-    description:
-      "Boardroom-grade presentations with AI generation, live data links, presenter tools and PDF export.",
+    description: "Design and present polished presentations.",
     status: "active",
     icon: Presentation,
     route: "/workspace/slides",
@@ -46,19 +43,19 @@ export const WORKSPACE_MODULES: WorkspaceModule[] = [
   {
     id: "amineva-forms",
     name: "Amineva Forms",
-    description: "Structured data collection forms with link-based distribution.",
+    description: "Create forms and collect responses through a shareable link.",
     status: "active",
     icon: ClipboardList,
     route: "/workspace/forms",
     accent: "bg-fuchsia-500/15 text-fuchsia-500",
   },
-
   {
     id: "amineva-drive",
     name: "Amineva Drive",
-    description: "Unified storage layer for every Workspace document and export.",
+    description: "Keep all your Workspace files in one place.",
     status: "coming_soon",
     icon: FolderOpen,
     accent: "bg-sky-500/15 text-sky-500",
   },
 ];
+
