@@ -138,8 +138,8 @@ const initialFormData: CampaignFormData = {
 
 const audienceGroups = [
   { id: 'all', name: 'All Users', count: 12500 },
-  { id: 'agstock', name: 'AGStock Users', count: 3420 },
-  { id: 'agis', name: 'AGIS Users', count: 1890 },
+  { id: 'agstock', name: 'Nyansa Users', count: 3420 },
+  { id: 'agis', name: 'DataLens Users', count: 1890 },
   { id: 'subscribers', name: 'Newsletter Subscribers', count: 8560 },
 ];
 

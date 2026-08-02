@@ -14,11 +14,11 @@ import { ACSExport } from '../ACSExport';
 
 const SOURCES = ['agstock', 'agis', 'amniva', 'agroclimate', 'aminevaops', 'Dipa'] as const;
 const SOURCE_LABELS: Record<string, string> = {
-  agstock: 'AGStock',
-  agis: 'AGIS',
+  agstock: 'Nyansa',
+  agis: 'DataLens',
   amniva: 'ABI',
-  agroclimate: 'AgroClimate',
-  aminevaops: 'AminevaOps',
+  agroclimate: 'Agyenkwa',
+  aminevaops: 'Sikasɛm',
   Dipa: 'Dipa',
 };
 const PAGE_SIZE = 10;
