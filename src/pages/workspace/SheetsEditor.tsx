@@ -853,26 +853,26 @@ export default function SheetsEditor() {
                 null}
           </div>
         </div>
-        <div className="flex items-center gap-2">
-          {/* Collaborate Menu Dropdown */}
-          <CollaborateMenu
-            onCreateMeeting={() => { setMeetingPrefilled(null); setIsMeetingModalOpen(true); }}
-            onScheduleEvent={() => { setMeetingPrefilled({ title: "Workspace Event", participants: "" }); setIsMeetingModalOpen(true); }}
-            onShare={() => toast({ title: "Share workspace link", description: "Copied workspace connection link to clipboard." })}
-            onNotifyTeam={() => toast({ title: "Team Notified", description: "Real-time notifications dispatched to all workspace team members." })}
-          />
+        <div className="flex items-center gap-2 flex-shrink-0">
+          <div className="hidden lg:flex items-center gap-2">
+            <CollaborateMenu
+              onCreateMeeting={() => { setMeetingPrefilled(null); setIsMeetingModalOpen(true); }}
+              onScheduleEvent={() => { setMeetingPrefilled({ title: "Workspace Event", participants: "" }); setIsMeetingModalOpen(true); }}
+              onShare={() => toast({ title: "Share link copied", description: "Anyone with the link can open this workbook." })}
+              onNotifyTeam={() => toast({ title: "Team notified", description: "Your team members have been notified." })}
+            />
 
-          {/* Business Solution Generator Dropdown */}
-          <SolutionDropdown
-            activeSolution={wb.activeSolution}
-            onSelectSolution={handleActivateSolution}
-            onDeactivate={handleDeactivateSolution}
-          />
+            <SolutionDropdown
+              activeSolution={wb.activeSolution}
+              onSelectSolution={handleActivateSolution}
+              onDeactivate={handleDeactivateSolution}
+            />
+          </div>
 
           <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden"
             onChange={(e) => { const f = e.target.files?.[0]; if (f) onImportFile(f); e.target.value = ""; }} />
           <button onClick={() => fileRef.current?.click()}
-            className="px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground border border-border text-xs font-medium hover:bg-secondary/80 flex items-center gap-1.5">
+            className="hidden sm:flex px-3 py-1.5 rounded-md bg-secondary text-secondary-foreground border border-border text-xs font-medium hover:bg-secondary/80 items-center gap-1.5">
             <Upload className="h-3.5 w-3.5" /> Import
           </button>
           <ExportMenu
@@ -880,10 +880,11 @@ export default function SheetsEditor() {
             onCSV={() => exportCSV(title, activeSheet)}
             onJSON={() => exportJSON(title, wb)}
           />
-          <button className="px-4 py-1.5 rounded-md bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/90 inline-flex items-center gap-1.5">
-            <Share2 className="h-3.5 w-3.5" /> Share
+          <button className="px-3 sm:px-4 py-1.5 rounded-md bg-accent text-accent-foreground text-xs font-semibold hover:bg-accent/90 inline-flex items-center gap-1.5">
+            <Share2 className="h-3.5 w-3.5" /> <span className="hidden sm:inline">Share</span>
           </button>
         </div>
+
       </header>
 
       <div className="overflow-x-auto flex-shrink-0">
