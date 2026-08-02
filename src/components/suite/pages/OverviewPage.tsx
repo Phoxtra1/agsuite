@@ -98,7 +98,7 @@ export function OverviewPage() {
                 desc="Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, transport resilience, and operational risk." />
               <EcoCard icon={Shield} title="Nyansa"
                 desc="AI-backed inventory, commerce, sales, and operational management infrastructure for smart business systems." />
-              <EcoCard icon={CheckCircle} title="Nkɔsoɔ"
+              <EcoCard icon={CheckCircle} title="DataLens"
                 desc="Strategic assessment, field inspection, verification, operational intelligence, and documentation infrastructure." />
               <EcoCard icon={TrendingUp} title="Sikasɛm"
                 desc="AI-backed financial operations, monitoring systems, workflow intelligence, and operational oversight infrastructure." />
