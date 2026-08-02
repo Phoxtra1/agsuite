@@ -25,7 +25,8 @@ export default function Workspace() {
         element={
           <div className="min-h-screen bg-background">
             <WorkspaceNav />
-            <main className="ml-64">
+            <main className="md:ml-64">
+
               <Routes>
                 <Route index element={<WorkspaceDashboard />} />
                 <Route path="docs" element={<DocsList />} />
