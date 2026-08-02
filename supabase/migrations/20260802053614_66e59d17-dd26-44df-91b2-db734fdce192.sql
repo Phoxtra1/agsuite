@@ -1,0 +1,1 @@
+UPDATE public.products SET name = 'DataLens', updated_at = now() WHERE name = 'Nkɔsoɔ';
