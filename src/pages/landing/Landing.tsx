@@ -13,7 +13,7 @@ const apps: Array<{ label: string; to: string; external?: boolean }> = [
 
 const explainerItems = [
   { label: "Innovation Ecosystem", to: "/about-us" },
-  { label: "Nkɔsoɔ", to: "/explainer/agis" },
+  { label: "DataLens", to: "/explainer/agis" },
   { label: "ABI", to: "/explainer/amniva" },
   { label: "Sikasɛm", to: "/explainer/aminevaops" },
 ];

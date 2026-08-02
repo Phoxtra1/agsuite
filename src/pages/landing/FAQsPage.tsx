@@ -54,9 +54,9 @@ const categories: { title: string; faqs: FAQItem[] }[] = [
     ],
   },
   {
-    title: "Nkɔsoɔ & Sikasɛm",
+    title: "DataLens & Sikasɛm",
     faqs: [
-      { q: "What is Nkɔsoɔ?", a: "Nkɔsoɔ is the strategic assessment, field inspection, verification, operational intelligence, and documentation infrastructure of the ecosystem." },
+      { q: "What is DataLens?", a: "DataLens is the strategic assessment, field inspection, verification, operational intelligence, and documentation infrastructure of the ecosystem." },
       { q: "What is Sikasɛm?", a: "Sikasɛm is the AI-backed financial operations, monitoring, workflow intelligence, and operational oversight infrastructure for African financial networks." },
     ],
   },
