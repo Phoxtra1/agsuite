@@ -32,6 +32,7 @@ const Suite = lazy(() => import("./pages/Suite"));
 const Workspace = lazy(() => import("./pages/Workspace"));
 const SharedDocViewer = lazy(() => import("./pages/workspace/SharedDocViewer"));
 const FormRespondentView = lazy(() => import("./pages/workspace/FormRespondentView"));
+const SharedFileViewer = lazy(() => import("./pages/workspace/SharedFileViewer"));
 const WorkspacePage = lazy(() => import("./pages/landing/WorkspacePage"));
 const InviteBridge = lazy(() => import("./pages/InviteBridge"));
 
@@ -258,6 +259,9 @@ function AppRoutes() {
 
         {/* Public shareable Amineva Form respondent page (no auth required) */}
         <Route path="/form/:formCode" element={<FormRespondentView />} />
+
+        {/* Public shareable Amineva Drive File viewer (no auth required) */}
+        <Route path="/drive/shared/:token" element={<SharedFileViewer />} />
 
 
         {/* Legacy/shorthand redirects → canonical /suite/* (preserves login context) */}
