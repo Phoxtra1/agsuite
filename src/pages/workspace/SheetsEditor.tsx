@@ -922,8 +922,9 @@ export default function SheetsEditor() {
 
       {/* Business Solution Workspace Tab Selector */}
       {wb.activeSolution && (
-        <div className="h-10 border-b border-border bg-card flex items-center px-4 justify-between text-xs flex-shrink-0">
-          <div className="flex items-center gap-1.5">
+        <div className="h-10 border-b border-border bg-card flex items-center px-4 justify-between text-xs flex-shrink-0 overflow-x-auto">
+          <div className="flex items-center gap-1.5 flex-shrink-0">
+
             <button
               onClick={() => setActiveView("spreadsheet")}
               className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${activeView === "spreadsheet" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
@@ -936,7 +937,7 @@ export default function SheetsEditor() {
               className={`px-3 py-1.5 rounded-lg font-bold transition flex items-center gap-1.5 ${activeView === "solution" ? "bg-accent/15 text-accent" : "text-muted-foreground hover:bg-muted"
                 }`}
             >
-              <Presentation className="h-3.5 w-3.5" /> {wb.activeSolution.type === "Tasks" ? "Tasks View" : `${wb.activeSolution.type} Connected Workspace`}
+              <Presentation className="h-3.5 w-3.5" /> {wb.activeSolution.type === "Tasks" ? "Tasks" : wb.activeSolution.type}
             </button>
             <button
               onClick={() => setActiveView("dashboard")}
@@ -953,19 +954,22 @@ export default function SheetsEditor() {
               <Layout className="h-3.5 w-3.5" /> Reports View
             </button>
           </div>
-          <div className="text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200 shadow-sm">
-            Active: {wb.activeSolution.type} Two-Way Sync
+          <div className="hidden sm:block text-[11px] text-emerald-600 font-bold bg-emerald-50 px-2.5 py-1 rounded border border-emerald-200">
+            {wb.activeSolution.type} active
           </div>
+
         </div>
       )}
 
       <div className="flex-1 flex overflow-hidden">
-        {/* Native Spreadsheet Leftside Panel */}
-        <LeftSheetPanel
-          collapsed={leftCollapsed}
-          onToggleCollapsed={() => setLeftCollapsed((v) => !v)}
-          currentId={id}
-        />
+        <div className="hidden lg:flex">
+          <LeftSheetPanel
+            collapsed={leftCollapsed}
+            onToggleCollapsed={() => setLeftCollapsed((v) => !v)}
+            currentId={id}
+          />
+        </div>
+
 
         {/* Conditional Workspace View Switching */}
         {wb.activeSolution && activeView === "solution" ? (
