@@ -775,7 +775,7 @@ export default function DriveList() {
   };
 
   // Recycle Bin Empty Trash (Requirement: TRASH REQUIREMENTS - Empty Trash)
-  const handleEmptyTrash = () => {
+  const handleEmptyTrash = async () => {
     if (trashedIds.size === 0) {
       toast({ title: "Trash is already empty" });
       return;
@@ -785,6 +785,17 @@ export default function DriveList() {
     const trashedArray = Array.from(trashedIds);
     const nextFolders = folders.filter((f) => !trashedIds.has(f.id));
     const nextUploads = uploadedFiles.filter((u) => !trashedIds.has(u.id));
+    const storedPaths = uploadedFiles
+      .filter((u) => trashedIds.has(u.id) && u.storagePath)
+      .map((u) => u.storagePath)
+      .filter((path): path is string => Boolean(path));
+    if (storedPaths.length > 0 && navigator.onLine) {
+      const { error } = await supabase.storage.from("workspace-drive").remove(storedPaths);
+      if (error) {
+        toast({ title: "Stored files could not be removed", description: "Trash was not emptied. Please try again when the connection is stable.", variant: "destructive" });
+        return;
+      }
+    }
 
     const nextItemFlds = { ...itemFolders };
     const nextItemNames = { ...itemNames };
