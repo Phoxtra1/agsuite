@@ -38,6 +38,7 @@ interface CellInputProps {
   initialValue: string;
   selectOnFocus: boolean;
   onCommit: (val: string, next?: { r: number; c: number }) => void;
+  onDraft: (val: string) => void;
   onCancel: () => void;
   row: number;
   col: number;
@@ -48,6 +49,7 @@ function CellInput({
   initialValue,
   selectOnFocus,
   onCommit,
+  onDraft,
   onCancel,
   row,
   col,
@@ -79,7 +81,11 @@ function CellInput({
     <input
       ref={inputRef}
       value={val}
-      onChange={(e) => setVal(e.target.value)}
+      onChange={(e) => {
+        const next = e.target.value;
+        setVal(next);
+        onDraft(next);
+      }}
       onBlur={() => handleCommit(val)}
       onKeyDown={(e) => {
         if (e.key === "Enter") {
@@ -443,6 +449,7 @@ export function SheetGrid({
                           initialValue={editing!.value}
                           selectOnFocus={editing!.selectOnFocus}
                           onCommit={(val, next) => commitEdit(val, next)}
+                          onDraft={(val) => onCellEdit(id, val)}
                           onCancel={() => setEditing(null)}
                           row={r}
                           col={c}

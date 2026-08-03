@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface DBBackupState {
   folders: any[];
@@ -16,27 +17,10 @@ export async function saveDriveToDatabase(state: DBBackupState) {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    // Fetch user profiles
-    const { data: profiles, error: fetchError } = await supabase
-      .from("profiles")
-      .select("id, metadata")
-      .eq("user_id", user.id);
-
-    if (fetchError || !profiles || profiles.length === 0) return;
-
-    // Update metadata across all user profiles
-    for (const profile of profiles) {
-      const currentMetadata = (profile.metadata as Record<string, any>) || {};
-      const updatedMetadata = {
-        ...currentMetadata,
-        amineva_drive: state
-      };
-
-      await supabase
-        .from("profiles")
-        .update({ metadata: updatedMetadata })
-        .eq("id", profile.id);
-    }
+    if (typeof navigator !== "undefined" && !navigator.onLine) return;
+    await supabase
+      .from("workspace_drive_state")
+      .upsert({ user_id: user.id, state_json: state as unknown as Json }, { onConflict: "user_id" });
   } catch (e) {
     console.error("[drive-sync] Failed to save drive state to DB", e);
   }
@@ -47,19 +31,13 @@ export async function loadDriveFromDatabase(): Promise<DBBackupState | null> {
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    const { data: profiles } = await supabase
-      .from("profiles")
-      .select("metadata")
-      .eq("user_id", user.id);
-
-    if (profiles && profiles.length > 0) {
-      for (const p of profiles) {
-        const metadata = p.metadata as Record<string, any>;
-        if (metadata?.amineva_drive) {
-          return metadata.amineva_drive;
-        }
-      }
-    }
+    if (typeof navigator !== "undefined" && !navigator.onLine) return null;
+    const { data } = await supabase
+      .from("workspace_drive_state")
+      .select("state_json")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (data?.state_json) return data.state_json as unknown as DBBackupState;
   } catch (e) {
     console.error("[drive-sync] Failed to load drive state from DB", e);
   }

@@ -348,25 +348,36 @@ function seedDefaultDecks(): WorkspaceSlideDoc[] {
 }
 
 export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
+  const local = getLocalDecks();
+  if (typeof navigator !== "undefined" && !navigator.onLine) return local.length > 0 ? local : seedDefaultDecks();
   try {
     const { data, error } = await supabase.from(TBL).select("*").order("updated_at", { ascending: false });
     if (!error && data && Array.isArray(data) && data.length > 0) {
-      saveLocalDecks(data as any);
-      return data as any;
+      const remote = data as any as WorkspaceSlideDoc[];
+      const merged = [...local];
+      for (const deck of remote) {
+        const idx = merged.findIndex((item) => item.id === deck.id);
+        if (idx < 0) merged.push(deck);
+        else if (new Date(deck.updated_at).getTime() > new Date(merged[idx].updated_at).getTime()) merged[idx] = deck;
+      }
+      merged.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      saveLocalDecks(merged);
+      return merged;
     }
   } catch (e) {
     console.warn("[slides] Offline fetch fallback", e);
   }
-  const local = getLocalDecks();
   if (local.length > 0) return local;
   return seedDefaultDecks();
 }
 
 export async function getDeck(id: string): Promise<WorkspaceSlideDoc | null> {
+  const local = getLocalDecks();
+  const cached = local.find((d) => d.id === id);
+  if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
   try {
     const { data, error } = await supabase.from(TBL).select("*").eq("id", id).maybeSingle();
     if (!error && data) {
-      const local = getLocalDecks();
       const idx = local.findIndex((d) => d.id === id);
       if (idx >= 0) local[idx] = data as any;
       else local.unshift(data as any);
@@ -376,7 +387,6 @@ export async function getDeck(id: string): Promise<WorkspaceSlideDoc | null> {
   } catch (e) {
     console.warn("[slides] Offline get deck", e);
   }
-  const local = getLocalDecks();
   const found = local.find((d) => d.id === id);
   if (found) return found;
 

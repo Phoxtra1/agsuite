@@ -2,6 +2,7 @@ import { Suspense, lazy } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { Loader2 } from "lucide-react";
 import { WorkspaceNav } from "@/components/workspace/WorkspaceNav";
+import { OfflineIndicator } from "@/components/workspace/OfflineIndicator";
 import WorkspaceDashboard from "./workspace/Dashboard";
 
 const DocsList = lazy(() => import("./workspace/DocsList"));
@@ -25,6 +26,7 @@ function Fallback() {
 export default function Workspace() {
   return (
     <Suspense fallback={<Fallback />}>
+      <OfflineIndicator />
       <Routes>
         {/* Full-bleed editors (no sidebar) */}
         <Route path="docs/:id" element={<DocsEditor />} />

@@ -130,35 +130,48 @@ function seedDefaultSheets(): WorkspaceSheet[] {
 }
 
 export async function listSheets(): Promise<WorkspaceSheet[]> {
+  const local = getLocalSheets();
+  if (typeof navigator !== "undefined" && !navigator.onLine) {
+    return local.length > 0 ? local : seedDefaultSheets();
+  }
   try {
     const { data, error } = await supabase.from("workspace_sheets" as any).select("*").order("updated_at", { ascending: false });
     if (!error && data && Array.isArray(data) && data.length > 0) {
-      saveLocalSheets(data as any);
-      return data as any;
+      const remote = data as any as WorkspaceSheet[];
+      const merged = [...local];
+      for (const sheet of remote) {
+        const idx = merged.findIndex((item) => item.id === sheet.id);
+        if (idx < 0) merged.push(sheet);
+        else if (new Date(sheet.updated_at).getTime() > new Date(merged[idx].updated_at).getTime()) merged[idx] = sheet;
+      }
+      merged.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      saveLocalSheets(merged);
+      return merged;
     }
   } catch (e) {
     console.warn("[sheets] Offline fetch fallback", e);
   }
-  const local = getLocalSheets();
   if (local.length > 0) return local;
   return seedDefaultSheets();
 }
 
 export async function getSheet(id: string): Promise<WorkspaceSheet | null> {
+  const local = getLocalSheets();
+  const cached = local.find((s) => s.id === id);
+  if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
   try {
     const { data, error } = await supabase.from("workspace_sheets" as any).select("*").eq("id", id).maybeSingle();
     if (!error && data) {
-      const local = getLocalSheets();
       const idx = local.findIndex((s) => s.id === id);
-      if (idx >= 0) local[idx] = data as any;
-      else local.unshift(data as any);
+      if (idx >= 0) {
+        if (new Date((data as any).updated_at).getTime() > new Date(local[idx].updated_at).getTime()) local[idx] = data as any;
+      } else local.unshift(data as any);
       saveLocalSheets(local);
-      return data as any;
+      return idx >= 0 ? local[idx] : data as any;
     }
   } catch (e) {
     console.warn("[sheets] Offline get sheet", e);
   }
-  const local = getLocalSheets();
   const found = local.find((s) => s.id === id);
   if (found) return found;
 
@@ -226,6 +239,7 @@ export async function updateSheet(id: string, patch: Partial<WorkspaceSheet>): P
     saveLocalSheets(local);
   }
 
+  if (typeof navigator !== "undefined" && !navigator.onLine) return true;
   try {
     const { error } = await supabase.from("workspace_sheets" as any).update(patch).eq("id", id);
     if (!error) return true;

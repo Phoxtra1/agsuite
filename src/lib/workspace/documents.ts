@@ -78,24 +78,36 @@ function seedDefaultDocs(): WorkspaceDocument[] {
 }
 
 export async function listDocuments(): Promise<WorkspaceDocument[]> {
+  const local = getLocalDocs();
+  if (typeof navigator !== "undefined" && !navigator.onLine) return local.length > 0 ? local : seedDefaultDocs();
   try {
     const { data, error } = await supabase
       .from("workspace_documents" as any)
       .select("*")
       .order("updated_at", { ascending: false });
     if (!error && data && Array.isArray(data) && data.length > 0) {
-      saveLocalDocs(data as any);
-      return data as any;
+      const remote = data as any as WorkspaceDocument[];
+      const merged = [...local];
+      for (const doc of remote) {
+        const idx = merged.findIndex((item) => item.id === doc.id);
+        if (idx < 0) merged.push(doc);
+        else if (new Date(doc.updated_at).getTime() > new Date(merged[idx].updated_at).getTime()) merged[idx] = doc;
+      }
+      merged.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      saveLocalDocs(merged);
+      return merged;
     }
   } catch (e) {
     console.warn("[ag-docs] Supabase unreachable, using offline storage", e);
   }
-  const local = getLocalDocs();
   if (local.length > 0) return local;
   return seedDefaultDocs();
 }
 
 export async function getDocument(id: string): Promise<WorkspaceDocument | null> {
+  const local = getLocalDocs();
+  const cached = local.find((d) => d.id === id);
+  if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
   try {
     const { data, error } = await supabase
       .from("workspace_documents" as any)
@@ -103,7 +115,6 @@ export async function getDocument(id: string): Promise<WorkspaceDocument | null>
       .eq("id", id)
       .maybeSingle();
     if (!error && data) {
-      const local = getLocalDocs();
       const idx = local.findIndex((d) => d.id === id);
       if (idx >= 0) local[idx] = data as any;
       else local.unshift(data as any);
@@ -114,7 +125,6 @@ export async function getDocument(id: string): Promise<WorkspaceDocument | null>
     console.warn("[ag-docs] Offline get document", e);
   }
 
-  const local = getLocalDocs();
   const found = local.find((d) => d.id === id);
   if (found) return found;
 

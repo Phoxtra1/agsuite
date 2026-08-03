@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { LayoutGrid, FolderOpen, FileText, Sheet as SheetIcon, Presentation, ClipboardList, ArrowLeft, LogOut, Menu, X } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -17,6 +17,19 @@ export function WorkspaceNav() {
   const { user, logout } = useAuth() as any;
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+
+  useEffect(() => {
+    const preload = () => {
+      void import("@/pages/workspace/DocsList");
+      void import("@/pages/workspace/DocsEditor");
+      void import("@/pages/workspace/SheetsList");
+      void import("@/pages/workspace/SheetsEditor");
+      void import("@/pages/workspace/SlidesList");
+      void import("@/pages/workspace/SlidesEditor");
+    };
+    const timer = window.setTimeout(preload, 50);
+    return () => window.clearTimeout(timer);
+  }, []);
 
   return (
     <>
