@@ -25,6 +25,7 @@ export interface DriveUploadedFile {
   createdAt: string;
   updatedAt: string;
   starred?: boolean;
+  storagePath?: string;
 }
 
 export interface DriveFolder {
@@ -609,23 +610,30 @@ export default function DriveList() {
     loadDriveContent();
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const filesList = e.target.files;
     if (!filesList || filesList.length === 0) return;
 
     const added: DriveUploadedFile[] = [];
-    Array.from(filesList).forEach((file) => {
+    for (const file of Array.from(filesList)) {
+      const uploadId = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+      const storagePath = user?.id ? `${user.id}/root/${uploadId}-${file.name}` : undefined;
       added.push({
-        id: `upload-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+        id: uploadId,
         name: file.name,
         size: file.size || 1024 * 50,
         type: file.type || "application/octet-stream",
         folderId: currentFolderId || undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
+        storagePath,
       });
+      if (storagePath && navigator.onLine) {
+        const { error } = await supabase.storage.from("workspace-drive").upload(storagePath, file, { upsert: true });
+        if (error) toast({ title: `Could not upload ${file.name}`, description: "It remains listed locally and can be retried when online.", variant: "destructive" });
+      }
       logDriveActivity("Uploaded file", file.name);
-    });
+    }
 
     const nextUploads = [...added, ...uploadedFiles];
     toast({ title: "Files uploaded", description: `${added.length} file(s) added to Drive.` });

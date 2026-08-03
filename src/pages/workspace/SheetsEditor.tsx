@@ -54,6 +54,7 @@ export default function SheetsEditor() {
   const engineRef = useRef<EngineHandle | null>(null);
   const [engineTick, setEngineTick] = useState(0);
   const saveTimer = useRef<number | null>(null);
+  const latestWorkbookRef = useRef(wb);
   const fileRef = useRef<HTMLInputElement | null>(null);
   const [clipboard, setClipboard] = useState<{ range: Selection; cut: boolean; cells: Record<string, any>; formats: Record<string, any> } | null>(null);
   const [copiedRange, setCopiedRange] = useState<Selection | null>(null);
@@ -97,6 +98,14 @@ export default function SheetsEditor() {
   const activeSheet = wb.sheets[activeSheetIdx] ?? wb.sheets[0];
 
   const persist = useCallback((nextWb: Workbook, nextTitle = titleRef.current) => {
+    latestWorkbookRef.current = nextWb;
+    if (id) {
+      void updateSheet(id, {
+        workbook_json: nextWb as any,
+        content_text: flattenWorkbookText(nextWb),
+        title: nextTitle,
+      });
+    }
     setSaving("saving");
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(async () => {
@@ -108,6 +117,24 @@ export default function SheetsEditor() {
       });
       setSaving(ok ? "saved" : "idle");
     }, 800) as any;
+  }, [id]);
+
+  useEffect(() => {
+    const flush = () => {
+      if (!id) return;
+      void updateSheet(id, {
+        workbook_json: latestWorkbookRef.current as any,
+        content_text: flattenWorkbookText(latestWorkbookRef.current),
+        title: titleRef.current,
+      });
+    };
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", flush);
+    return () => {
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", flush);
+      flush();
+    };
   }, [id]);
 
   const setWb = useCallback((updater: (prev: Workbook) => Workbook, record = true) => {
