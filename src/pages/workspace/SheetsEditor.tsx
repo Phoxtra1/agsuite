@@ -18,6 +18,7 @@ import { exportCSV, exportJSON, exportXLSX, importXLSX } from "@/components/work
 import { useUndoRedo } from "@/components/workspace/sheets/hooks/useUndoRedo";
 import { ArrowLeft, ChevronLeft, ChevronDown, CloudUpload, Download, Loader2, Share2, Upload, Sparkles, AlertCircle, Layout, Table2, Presentation, BarChart } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { dispatchSyncStatus } from "@/components/workspace/OfflineIndicator";
 
 // Smart Business Solution Imports
 import {
@@ -106,6 +107,7 @@ export default function SheetsEditor() {
         title: nextTitle,
       });
     }
+    dispatchSyncStatus("sheets", navigator.onLine ? "saving" : "queued");
     setSaving("saving");
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(async () => {
@@ -116,6 +118,7 @@ export default function SheetsEditor() {
         title: nextTitle,
       });
       setSaving(ok ? "saved" : "idle");
+      dispatchSyncStatus("sheets", ok && navigator.onLine ? "synced" : "queued");
     }, 800) as any;
   }, [id]);
 
