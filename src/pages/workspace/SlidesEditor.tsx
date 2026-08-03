@@ -14,6 +14,7 @@ import {
   makeSlide, newSlideId, flattenDeckText, DEFAULT_THEME,
   SlideBackground, DeckTheme, ElementAnimation, SlideComment
 } from "@/lib/workspace/slides/documents";
+import { dispatchSyncStatus } from "@/components/workspace/OfflineIndicator";
 
 // Ribbon Sub-tabs
 import { RibbonHomeTab } from "@/components/workspace/slides/RibbonHomeTab";
@@ -471,6 +472,7 @@ export default function SlidesEditor() {
       deck_json: deck,
       content_text: flattenDeckText(deck),
     } as any);
+    dispatchSyncStatus("slides", navigator.onLine ? "saving" : "queued");
     const timer = setTimeout(async () => {
       setSaving(true);
       const ok = await updateDeck(doc.id, {
@@ -478,7 +480,12 @@ export default function SlidesEditor() {
         content_text: flattenDeckText(deck),
       } as any);
       setSaving(false);
-      if (ok) setSavedAt(new Date());
+      if (ok) {
+        setSavedAt(new Date());
+        dispatchSyncStatus("slides", navigator.onLine ? "synced" : "queued");
+      } else {
+        dispatchSyncStatus("slides", "queued");
+      }
     }, 800);
     return () => clearTimeout(timer);
   }, [deck, doc]);
@@ -659,7 +666,12 @@ export default function SlidesEditor() {
             <input
               value={doc.title}
               onChange={(e) => setDoc({ ...doc, title: e.target.value })}
-              onBlur={() => updateDeck(doc.id, { title: doc.title })}
+              onBlur={async () => {
+                if (!doc) return;
+                dispatchSyncStatus("slides", navigator.onLine ? "saving" : "queued");
+                const ok = await updateDeck(doc.id, { title: doc.title });
+                dispatchSyncStatus("slides", ok && navigator.onLine ? "synced" : "queued");
+              }}
               className="bg-transparent border-none outline-none text-sm font-bold flex-1 text-foreground"
             />
             <span className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider">Amineva Slides</span>

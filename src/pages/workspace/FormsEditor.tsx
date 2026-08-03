@@ -66,6 +66,7 @@ import {
   type FormResponse
 } from "@/lib/workspace/forms/documents";
 import { toast } from "@/hooks/use-toast";
+import { dispatchSyncStatus } from "@/components/workspace/OfflineIndicator";
 
 const ALL_QUESTION_TYPES = [
   { id: "short_answer", label: "Short Answer", icon: AlignLeft, category: "Text" },
@@ -152,7 +153,10 @@ export default function FormsEditor() {
       setRedoStack([]);
     }
     setForm(newDoc);
-    updateForm(newDoc.id, newDoc);
+    dispatchSyncStatus("forms", "saving");
+    updateForm(newDoc.id, newDoc).then((ok) => {
+      dispatchSyncStatus("forms", ok ? "synced" : "queued");
+    });
   }
 
   function handleUndo() {
@@ -161,7 +165,10 @@ export default function FormsEditor() {
     setHistory((prev) => prev.slice(0, -1));
     setRedoStack((prev) => [JSON.parse(JSON.stringify(form)), ...prev]);
     setForm(previous);
-    updateForm(previous.id, previous);
+    dispatchSyncStatus("forms", "saving");
+    updateForm(previous.id, previous).then((ok) => {
+      dispatchSyncStatus("forms", ok ? "synced" : "queued");
+    });
     toast({ title: "Undo action performed" });
   }
 
@@ -171,7 +178,10 @@ export default function FormsEditor() {
     setRedoStack((prev) => prev.slice(1));
     setHistory((prev) => [...prev, JSON.parse(JSON.stringify(form))]);
     setForm(next);
-    updateForm(next.id, next);
+    dispatchSyncStatus("forms", "saving");
+    updateForm(next.id, next).then((ok) => {
+      dispatchSyncStatus("forms", ok ? "synced" : "queued");
+    });
     toast({ title: "Redo action performed" });
   }
 

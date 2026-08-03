@@ -213,19 +213,24 @@ export async function createSheet(title = "Untitled sheet"): Promise<WorkspaceSh
   local.unshift(newSheet);
   saveLocalSheets(local);
 
-  supabase.from("workspace_sheets" as any)
-    .insert({ title, owner_id: userId, workbook_json: EMPTY_WORKBOOK, content_text: "" })
-    .select().single()
-    .then(({ data }) => {
-      if (data) {
-        const updatedLocal = getLocalSheets();
-        const idx = updatedLocal.findIndex((s) => s.id === localId);
-        if (idx >= 0) {
-          updatedLocal[idx] = data as any;
-          saveLocalSheets(updatedLocal);
-        }
+  try {
+    const { data, error } = await supabase.from("workspace_sheets" as any)
+      .insert({ title, owner_id: userId, workbook_json: EMPTY_WORKBOOK, content_text: "" })
+      .select().single();
+    if (!error && data) {
+      const updatedLocal = getLocalSheets();
+      const idx = updatedLocal.findIndex((s) => s.id === localId);
+      if (idx >= 0) {
+        updatedLocal[idx] = data as any;
+      } else {
+        updatedLocal.unshift(data as any);
       }
-    });
+      saveLocalSheets(updatedLocal);
+      return data as any;
+    }
+  } catch (e) {
+    console.warn("[sheets] Failed to create sheet in Supabase, using offline fallback", e);
+  }
 
   return newSheet;
 }

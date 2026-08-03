@@ -16,6 +16,7 @@ import {
   ChevronLeft, CloudUpload, Loader2, Download, Share2, ArrowLeft,
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { dispatchSyncStatus } from "@/components/workspace/OfflineIndicator";
 import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/integrations/supabase/client";
 
@@ -116,6 +117,7 @@ export default function DocsEditor() {
     const immediateJson = editor.getJSON();
     const immediateText = editor.getText();
     void updateDocument(id, { content_json: immediateJson, content_text: immediateText, title: titleRef.current, ...extra } as any);
+    dispatchSyncStatus("docs", navigator.onLine ? "saving" : "queued");
     setSaving("saving");
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(async () => {
@@ -123,6 +125,7 @@ export default function DocsEditor() {
       const text = editor.getText();
       const ok = await updateDocument(id, { content_json: json, content_text: text, title: titleRef.current, ...extra } as any);
       setSaving(ok ? "saved" : "idle");
+      dispatchSyncStatus("docs", ok && navigator.onLine ? "synced" : "queued");
     }, 800) as any;
     if (versionTimer.current) window.clearTimeout(versionTimer.current);
     versionTimer.current = window.setTimeout(() => {
@@ -152,7 +155,9 @@ export default function DocsEditor() {
 
   async function commitTitle() {
     if (!id) return;
-    await updateDocument(id, { title });
+    dispatchSyncStatus("docs", navigator.onLine ? "saving" : "queued");
+    const ok = await updateDocument(id, { title });
+    dispatchSyncStatus("docs", ok && navigator.onLine ? "synced" : "queued");
     setDoc((d) => (d ? { ...d, title } : d));
   }
 
