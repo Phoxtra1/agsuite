@@ -113,6 +113,9 @@ export default function DocsEditor() {
 
   function scheduleSave(extra: Partial<any> = {}) {
     if (!id || !editor) return;
+    const immediateJson = editor.getJSON();
+    const immediateText = editor.getText();
+    void updateDocument(id, { content_json: immediateJson, content_text: immediateText, title: titleRef.current, ...extra } as any);
     setSaving("saving");
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
     saveTimer.current = window.setTimeout(async () => {
@@ -126,6 +129,13 @@ export default function DocsEditor() {
       if (editor) snapshotVersion(id, editor.getJSON());
     }, 30000) as any;
   }
+
+  useEffect(() => {
+    return () => {
+      if (!id || !editor) return;
+      void updateDocument(id, { content_json: editor.getJSON(), content_text: editor.getText(), title: titleRef.current });
+    };
+  }, [id, editor]);
 
   function updatePageSettings(patch: Partial<PageSettings>) {
     const next = { ...pageSettings, ...patch };

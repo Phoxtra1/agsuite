@@ -467,6 +467,10 @@ export default function SlidesEditor() {
   /* Autosave */
   useEffect(() => {
     if (!doc) return;
+    void updateDeck(doc.id, {
+      deck_json: deck,
+      content_text: flattenDeckText(deck),
+    } as any);
     const timer = setTimeout(async () => {
       setSaving(true);
       const ok = await updateDeck(doc.id, {

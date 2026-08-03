@@ -163,8 +163,9 @@ export async function getSheet(id: string): Promise<WorkspaceSheet | null> {
     const { data, error } = await supabase.from("workspace_sheets" as any).select("*").eq("id", id).maybeSingle();
     if (!error && data) {
       const idx = local.findIndex((s) => s.id === id);
-      if (idx >= 0 && new Date((data as any).updated_at).getTime() > new Date(local[idx].updated_at).getTime()) local[idx] = data as any;
-      else local.unshift(data as any);
+      if (idx >= 0) {
+        if (new Date((data as any).updated_at).getTime() > new Date(local[idx].updated_at).getTime()) local[idx] = data as any;
+      } else local.unshift(data as any);
       saveLocalSheets(local);
       return idx >= 0 ? local[idx] : data as any;
     }

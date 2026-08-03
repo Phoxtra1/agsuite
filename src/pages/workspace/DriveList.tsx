@@ -13,6 +13,7 @@ import { listDecks, createDeck, duplicateDeck, type WorkspaceSlideDoc } from "@/
 import { listForms, createForm, duplicateForm, type FormDocument } from "@/lib/workspace/forms/documents";
 import { useAuth } from "@/contexts/AuthContext";
 import { saveDriveToDatabase, loadDriveFromDatabase } from "@/lib/workspace/drive/sync";
+import { listQueuedDriveUploads, queueDriveUpload, removeQueuedDriveUpload } from "@/lib/workspace/drive/offlineFiles";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
 
@@ -200,6 +201,10 @@ function formatBytes(bytes: number, decimals = 1): string {
   return formatted + " " + sizes[i];
 }
 
+function jsonSize(value: unknown): number {
+  return new TextEncoder().encode(JSON.stringify(value ?? null)).byteLength;
+}
+
 function logDriveActivity(action: string, name: string) {
   try {
     const raw = localStorage.getItem(STORAGE_ACTIVITY_KEY);
@@ -380,7 +385,8 @@ export default function DriveList() {
 
     // 2. Multi-device Database Restore on Initial Mount
     setSyncing(true);
-    const dbState = await loadDriveFromDatabase();
+    const hasLocalDriveState = localFolders.length > 0 || uploads.length > 0 || stars.size > 0 || pins.size > 0 || trashed.size > 0 || Object.keys(itemFlds).length > 0 || Object.keys(itemNms).length > 0;
+    const dbState = hasLocalDriveState ? null : await loadDriveFromDatabase();
     let currentFolders = localFolders;
     let currentUploads = uploads;
     let currentStarred = stars;
@@ -463,8 +469,7 @@ export default function DriveList() {
 
     // Docs (Requirement: REAL-TIME STORAGE dynamically computed from text length)
     docs.forEach((d: WorkspaceDocument) => {
-      const textLen = d.content_text?.length || 50;
-      const calculatedBytes = textLen * 12 + 1024;
+       const calculatedBytes = jsonSize(d);
       unified.push({
         id: d.id,
         title: itemNms[d.id] || d.title || "Untitled Document",
@@ -482,8 +487,7 @@ export default function DriveList() {
 
     // Sheets (Requirement: REAL-TIME STORAGE calculated dynamically from total cells)
     sheets.forEach((s: WorkspaceSheet) => {
-      const cellCount = Object.keys(s.workbook_json?.sheets?.[0]?.cells || {}).length;
-      const calculatedBytes = cellCount * 256 + 10240;
+      const calculatedBytes = jsonSize(s);
       unified.push({
         id: s.id,
         title: itemNms[s.id] || s.title || "Untitled Sheet",
@@ -501,8 +505,7 @@ export default function DriveList() {
 
     // Slides (Requirement: REAL-TIME STORAGE computed from deck slides count)
     slides.forEach((sl: WorkspaceSlideDoc) => {
-      const slidesCount = sl.deck_json?.slides?.length || 1;
-      const calculatedBytes = slidesCount * 153600 + 40960;
+      const calculatedBytes = jsonSize(sl);
       unified.push({
         id: sl.id,
         title: itemNms[sl.id] || sl.title || "Untitled Presentation",
@@ -520,8 +523,7 @@ export default function DriveList() {
 
     // Forms (Requirement: REAL-TIME STORAGE computed from total questions)
     forms.forEach((fm: FormDocument) => {
-      const questionCount = fm.questions?.length || 1;
-      const calculatedBytes = questionCount * 4096 + 1024;
+      const calculatedBytes = jsonSize(fm);
       unified.push({
         id: fm.id,
         title: itemNms[fm.id] || fm.title || "Untitled Form",
@@ -559,6 +561,23 @@ export default function DriveList() {
   useEffect(() => {
     loadDriveContent();
   }, [activeTab]);
+
+  useEffect(() => {
+    const flushQueuedUploads = async () => {
+      if (!navigator.onLine) return;
+      const queued = await listQueuedDriveUploads();
+      for (const upload of queued) {
+        const { error } = await supabase.storage.from("workspace-drive").upload(upload.path, upload.file, {
+          contentType: upload.type,
+          upsert: true,
+        });
+        if (!error) await removeQueuedDriveUpload(upload.path);
+      }
+    };
+    void flushQueuedUploads();
+    window.addEventListener("online", flushQueuedUploads);
+    return () => window.removeEventListener("online", flushQueuedUploads);
+  }, []);
 
   // Handlers
   const toggleStar = (id: string) => {
@@ -630,7 +649,12 @@ export default function DriveList() {
       });
       if (storagePath && navigator.onLine) {
         const { error } = await supabase.storage.from("workspace-drive").upload(storagePath, file, { upsert: true });
-        if (error) toast({ title: `Could not upload ${file.name}`, description: "It remains listed locally and can be retried when online.", variant: "destructive" });
+        if (error) {
+          await queueDriveUpload(storagePath, file);
+          toast({ title: `${file.name} saved offline`, description: "It will upload automatically when the connection returns." });
+        }
+      } else if (storagePath) {
+        await queueDriveUpload(storagePath, file);
       }
       logDriveActivity("Uploaded file", file.name);
     }
