@@ -11,38 +11,39 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ACSEmitter, startACSEmitter, stopACSEmitter } from "@/core/acs/emitter";
 import { AppAuthGate } from "@/components/auth/AppAuthGate";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 
 /* Lazy Pages */
-const Landing = lazy(() => import("./pages/landing/Landing"));
-const HomePage = lazy(() => import("./pages/HomePage"));
-const AboutUs = lazy(() => import("./pages/landing/AboutUs"));
-const DipaAIPage = lazy(() => import("./pages/landing/DipaAIPage"));
-const AGStockPage = lazy(() => import("./pages/landing/AGStockPage"));
-const AGISPage = lazy(() => import("./pages/landing/AGISPage"));
-const AmnivaPage = lazy(() => import("./pages/landing/AmnivaPage"));
-const AgroClimatePage = lazy(() => import("./pages/landing/AgroClimatePage"));
-const AdesuaPage = lazy(() => import("./pages/landing/AdesuaPage"));
-const AminevaOpsPage = lazy(() => import("./pages/landing/AminevaOpsPage"));
-const SupportPage = lazy(() => import("./pages/landing/SupportPage"));
-const FAQsPage = lazy(() => import("./pages/landing/FAQsPage"));
-const TermsPage = lazy(() => import("./pages/landing/TermsPage"));
-const PrivacyPage = lazy(() => import("./pages/landing/PrivacyPage"));
+const Landing = lazyWithRetry(() => import("./pages/landing/Landing"));
+const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
+const AboutUs = lazyWithRetry(() => import("./pages/landing/AboutUs"));
+const DipaAIPage = lazyWithRetry(() => import("./pages/landing/DipaAIPage"));
+const AGStockPage = lazyWithRetry(() => import("./pages/landing/AGStockPage"));
+const AGISPage = lazyWithRetry(() => import("./pages/landing/AGISPage"));
+const AmnivaPage = lazyWithRetry(() => import("./pages/landing/AmnivaPage"));
+const AgroClimatePage = lazyWithRetry(() => import("./pages/landing/AgroClimatePage"));
+const AdesuaPage = lazyWithRetry(() => import("./pages/landing/AdesuaPage"));
+const AminevaOpsPage = lazyWithRetry(() => import("./pages/landing/AminevaOpsPage"));
+const SupportPage = lazyWithRetry(() => import("./pages/landing/SupportPage"));
+const FAQsPage = lazyWithRetry(() => import("./pages/landing/FAQsPage"));
+const TermsPage = lazyWithRetry(() => import("./pages/landing/TermsPage"));
+const PrivacyPage = lazyWithRetry(() => import("./pages/landing/PrivacyPage"));
 
-const Suite = lazy(() => import("./pages/Suite"));
-const Workspace = lazy(() => import("./pages/Workspace"));
-const SharedDocViewer = lazy(() => import("./pages/workspace/SharedDocViewer"));
-const FormRespondentView = lazy(() => import("./pages/workspace/FormRespondentView"));
-const SharedFileViewer = lazy(() => import("./pages/workspace/SharedFileViewer"));
-const WorkspacePage = lazy(() => import("./pages/landing/WorkspacePage"));
-const InviteBridge = lazy(() => import("./pages/InviteBridge"));
+const Suite = lazyWithRetry(() => import("./pages/Suite"));
+const Workspace = lazyWithRetry(() => import("./pages/Workspace"));
+const SharedDocViewer = lazyWithRetry(() => import("./pages/workspace/SharedDocViewer"));
+const FormRespondentView = lazyWithRetry(() => import("./pages/workspace/FormRespondentView"));
+const SharedFileViewer = lazyWithRetry(() => import("./pages/workspace/SharedFileViewer"));
+const WorkspacePage = lazyWithRetry(() => import("./pages/landing/WorkspacePage"));
+const InviteBridge = lazyWithRetry(() => import("./pages/InviteBridge"));
 
-const Recovery = lazy(() => import("./pages/auth/Recovery"));
-const ResetPassword = lazy(() => import("./pages/auth/ResetPassword"));
-const VerifyEmail = lazy(() => import("./pages/auth/VerifyEmail"));
-const AuthCallback = lazy(() => import("./pages/suite/AuthCallback"));
-const NotFound = lazy(() => import("./pages/NotFound"));
-const Seal = lazy(() => import("./pages/Seal"));
-const AccessDenied = lazy(() => import("./pages/AccessDenied"));
+const Recovery = lazyWithRetry(() => import("./pages/auth/Recovery"));
+const ResetPassword = lazyWithRetry(() => import("./pages/auth/ResetPassword"));
+const VerifyEmail = lazyWithRetry(() => import("./pages/auth/VerifyEmail"));
+const AuthCallback = lazyWithRetry(() => import("./pages/suite/AuthCallback"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"));
+const Seal = lazyWithRetry(() => import("./pages/Seal"));
+const AccessDenied = lazyWithRetry(() => import("./pages/AccessDenied"));
 
 const queryClient = new QueryClient();
 
