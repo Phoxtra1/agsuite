@@ -59,6 +59,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     (nextUserId: string | null) => {
       if (lastUserIdRef.current !== nextUserId) {
         resetClientState(queryClient);
+        // Bind every Workspace offline cache to the new account and drop
+        // any cache that belongs to a different account on this device.
+        setWorkspaceUser(nextUserId);
         lastUserIdRef.current = nextUserId;
       }
     },
