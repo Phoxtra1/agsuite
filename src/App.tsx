@@ -11,6 +11,7 @@ import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
 import { ACSEmitter, startACSEmitter, stopACSEmitter } from "@/core/acs/emitter";
 import { AppAuthGate } from "@/components/auth/AppAuthGate";
+import { WorkspaceGate } from "@/components/workspace/WorkspaceGate";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 
 /* Lazy Pages */
@@ -170,27 +171,6 @@ function SuiteGuard() {
   );
 }
 
-function WorkspaceGuard({ children }: { children: React.ReactNode }) {
-  const { isAuthenticated, isLoading } = useAuth();
-  const location = useLocation();
-
-  if (isLoading) {
-    return (
-      <div className="min-h-screen flex items-center justify-center bg-background">
-        <div className="text-sm text-muted-foreground">Verifying access…</div>
-      </div>
-    );
-  }
-
-  // Drive path bypasses authentication check for now
-  if (!isAuthenticated && !location.pathname.startsWith("/workspace/drive")) {
-    const next = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/?authRedirect=${next}`} replace />;
-  }
-
-  return <>{children}</>;
-}
-
 function PublicHome() {
   // If seal-authenticated, redirect to Suite
   if (!isPreview() && isSealAuthenticated()) {
@@ -246,13 +226,9 @@ function AppRoutes() {
         <Route
           path="/workspace/*"
           element={
-            isPreview() ? (
+            <WorkspaceGate>
               <Workspace />
-            ) : (
-              <WorkspaceGuard>
-                <Workspace />
-              </WorkspaceGuard>
-            )
+            </WorkspaceGate>
           }
         />
 
