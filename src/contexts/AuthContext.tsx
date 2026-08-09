@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { clearLast2FAVerified } from "@/lib/stepUpAuth";
 import { checkLoginDevice } from "@/lib/auth/loginAlert";
 import { resetClientState } from "@/lib/auth/resetClientState";
+import { setWorkspaceUser } from "@/lib/workspace/scope";
 import { useQueryClient } from "@tanstack/react-query";
 
 type AuthUser = {
