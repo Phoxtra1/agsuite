@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { wsKey } from "@/lib/workspace/scope";
 
 export interface WorkspaceSheet {
   id: string;
@@ -77,12 +78,13 @@ export const EMPTY_WORKBOOK: Workbook = {
   activeSheet: 0,
 };
 
-const CACHE_KEY = "amineva_workspace_sheets";
+const CACHE_BASE = "amineva_workspace_sheets";
+const CACHE_KEY = () => wsKey(CACHE_BASE);
 
 function getLocalSheets(): WorkspaceSheet[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(CACHE_KEY());
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -92,7 +94,7 @@ function getLocalSheets(): WorkspaceSheet[] {
 function saveLocalSheets(sheets: WorkspaceSheet[]) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(sheets));
+    localStorage.setItem(CACHE_KEY(), JSON.stringify(sheets));
   } catch (e) {
     console.error("[sheets] Failed to save local sheets", e);
   }

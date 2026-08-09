@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { wsKey } from "@/lib/workspace/scope";
 
 export interface WorkspaceDocument {
   id: string;
@@ -21,12 +22,13 @@ export interface DocumentShare {
 }
 
 const EMPTY_DOC = { type: "doc", content: [{ type: "paragraph" }] };
-const CACHE_KEY = "amineva_workspace_docs";
+const CACHE_BASE = "amineva_workspace_docs";
+const CACHE_KEY = () => wsKey(CACHE_BASE);
 
 function getLocalDocs(): WorkspaceDocument[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(CACHE_KEY());
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -36,7 +38,7 @@ function getLocalDocs(): WorkspaceDocument[] {
 function saveLocalDocs(docs: WorkspaceDocument[]) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(docs));
+    localStorage.setItem(CACHE_KEY(), JSON.stringify(docs));
   } catch (e) {
     console.error("[ag-docs] Failed to save local docs", e);
   }
