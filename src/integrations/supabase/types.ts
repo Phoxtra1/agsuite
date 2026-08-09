@@ -1295,6 +1295,7 @@ export type Database = {
         Args: { _app_id: string; _user_id: string }
         Returns: string
       }
+      ensure_self_app_access: { Args: { _app_slug: string }; Returns: string }
       get_shared_document: {
         Args: { _token: string }
         Returns: {
