@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { wsKey } from "@/lib/workspace/scope";
 
 export type DriveKind = "upload" | "doc" | "sheet" | "slide" | "form";
 
@@ -81,7 +82,7 @@ async function getUserEmail(): Promise<string> {
 function getLocal<T>(key: string): T[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(key);
+    const raw = localStorage.getItem(wsKey(key));
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -91,7 +92,7 @@ function getLocal<T>(key: string): T[] {
 function saveLocal<T>(key: string, data: T[]) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(key, JSON.stringify(data));
+    localStorage.setItem(wsKey(key), JSON.stringify(data));
   } catch (e) {
     console.error(`[drive] Failed to save local key: ${key}`, e);
   }
