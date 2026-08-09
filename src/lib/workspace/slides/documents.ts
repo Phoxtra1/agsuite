@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { wsKey } from "@/lib/workspace/scope";
 
 export type SlideElementKind = "text" | "shape" | "image" | "table" | "chart" | "video" | "audio";
 export type ShapeKind = "rect" | "ellipse" | "triangle" | "line" | "arrow" | "star" | "banner" | "hexagon";
@@ -309,12 +310,13 @@ export function flattenDeckText(d: Deck): string {
 
 /* ------------------- CRUD ------------------- */
 const TBL = "workspace_slides" as any;
-const CACHE_KEY = "amineva_workspace_slides";
+const CACHE_BASE = "amineva_workspace_slides";
+const CACHE_KEY = () => wsKey(CACHE_BASE);
 
 function getLocalDecks(): WorkspaceSlideDoc[] {
   if (typeof window === "undefined") return [];
   try {
-    const raw = localStorage.getItem(CACHE_KEY);
+    const raw = localStorage.getItem(CACHE_KEY());
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -324,7 +326,7 @@ function getLocalDecks(): WorkspaceSlideDoc[] {
 function saveLocalDecks(decks: WorkspaceSlideDoc[]) {
   if (typeof window === "undefined") return;
   try {
-    localStorage.setItem(CACHE_KEY, JSON.stringify(decks));
+    localStorage.setItem(CACHE_KEY(), JSON.stringify(decks));
   } catch (e) {
     console.error("[slides] Failed to save local slides", e);
   }

@@ -1,3 +1,4 @@
+import { wsKey } from "@/lib/workspace/scope";
 export interface FormTheme {
   primary: string;
   background: string;
@@ -398,7 +399,7 @@ export const FORM_TEMPLATES: Array<Partial<FormDocument> & { id: string; categor
 export async function listForms(): Promise<FormDocument[]> {
   if (typeof window === "undefined") return [];
 
-  const raw = localStorage.getItem("amineva_forms");
+  const raw = localStorage.getItem(wsKey("amineva_forms"));
   if (!raw) {
     // Populate with default populated documents
     const seeded: FormDocument[] = FORM_TEMPLATES.map((tpl, i) => {
@@ -430,7 +431,7 @@ export async function listForms(): Promise<FormDocument[]> {
         ],
       };
     });
-    localStorage.setItem("amineva_forms", JSON.stringify(seeded));
+    localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(seeded));
     return seeded;
   }
 
@@ -475,7 +476,7 @@ export async function getFormById(id: string): Promise<FormDocument | null> {
     auditLogs: [],
   };
   list.unshift(fallback);
-  localStorage.setItem("amineva_forms", JSON.stringify(list));
+  localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(list));
   return fallback;
 }
 
@@ -544,7 +545,7 @@ export async function createForm(title: string, templateId?: string): Promise<Fo
   };
 
   list.unshift(newDoc);
-  localStorage.setItem("amineva_forms", JSON.stringify(list));
+  localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(list));
   return newDoc;
 }
 
@@ -582,7 +583,7 @@ export async function updateForm(id: string, updates: Partial<FormDocument>): Pr
     updatedAt: now,
   };
 
-  localStorage.setItem("amineva_forms", JSON.stringify(list));
+  localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(list));
   return true;
 }
 
@@ -591,7 +592,7 @@ export async function deleteForm(id: string): Promise<boolean> {
   const filtered = list.filter((f) => f.id !== id);
   if (list.length === filtered.length) return false;
 
-  localStorage.setItem("amineva_forms", JSON.stringify(filtered));
+  localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(filtered));
   return true;
 }
 
@@ -620,7 +621,7 @@ export async function duplicateForm(form: FormDocument): Promise<FormDocument | 
   };
 
   list.unshift(duplicated);
-  localStorage.setItem("amineva_forms", JSON.stringify(list));
+  localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(list));
   return duplicated;
 }
 
@@ -692,6 +693,6 @@ export async function submitFormResponse(formId: string, respondentId: string, a
     updatedAt: now,
   };
 
-  localStorage.setItem("amineva_forms", JSON.stringify(list));
+  localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(list));
   return newResponse;
 }
