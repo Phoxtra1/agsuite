@@ -19,12 +19,12 @@ const Landing = lazyWithRetry(() => import("./pages/landing/Landing"));
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const AboutUs = lazyWithRetry(() => import("./pages/landing/AboutUs"));
 const DipaAIPage = lazyWithRetry(() => import("./pages/landing/DipaAIPage"));
-const AGStockPage = lazyWithRetry(() => import("./pages/landing/AGStockPage"));
-const AGISPage = lazyWithRetry(() => import("./pages/landing/AGISPage"));
-const AmnivaPage = lazyWithRetry(() => import("./pages/landing/AmnivaPage"));
-const AgroClimatePage = lazyWithRetry(() => import("./pages/landing/AgroClimatePage"));
+const InventraPage = lazyWithRetry(() => import("./pages/landing/InventraPage"));
+const DataLensPage = lazyWithRetry(() => import("./pages/landing/DataLenPage"));
+const ABIPage = lazyWithRetry(() => import("./pages/landing/ABIPage"));
+const AgyenkwaPage = lazyWithRetry(() => import("./pages/landing/AgroClimatePage"));
 const AdesuaPage = lazyWithRetry(() => import("./pages/landing/AdesuaPage"));
-const AminevaOpsPage = lazyWithRetry(() => import("./pages/landing/AminevaOpsPage"));
+const SikasɛmPage = lazyWithRetry(() => import("./pages/landing/SikasɛmPage"));
 const SupportPage = lazyWithRetry(() => import("./pages/landing/SupportPage"));
 const FAQsPage = lazyWithRetry(() => import("./pages/landing/FAQsPage"));
 const TermsPage = lazyWithRetry(() => import("./pages/landing/TermsPage"));
@@ -193,14 +193,13 @@ function AppRoutes() {
           <Route index element={<PublicHome />} />
           <Route path="about-us" element={<AboutUs />} />
           <Route path="apps/dipa-ai" element={<DipaAIPage />} />
-          <Route path="apps/Dipa-ai" element={<DipaAIPage />} />
-          <Route path="/apps/agstock" element={<AGStockPage />} />
-          <Route path="/apps/agroclimate" element={<AgroClimatePage />} />
+          <Route path="/apps/inventra" element={<InventraPage />} />
+          <Route path="/apps/agyenkwa" element={<AgyenkwaPage />} />
           <Route path="/apps/adesua" element={<AdesuaPage />} />
           <Route path="explainer/adesua" element={<AdesuaPage />} />
-          <Route path="explainer/agis" element={<AGISPage />} />
-          <Route path="explainer/amniva" element={<AmnivaPage />} />
-          <Route path="explainer/aminevaops" element={<AminevaOpsPage />} />
+          <Route path="explainer/datalens" element={<DataLensPage />} />
+          <Route path="explainer/abi" element={<ABIPage />} />
+          <Route path="explainer/sikasem" element={<SikasɛmPage />} />
           <Route path="explainer/workspace" element={<WorkspacePage />} />
           <Route path="support" element={<SupportPage />} />
           <Route path="faqs" element={<FAQsPage />} />
