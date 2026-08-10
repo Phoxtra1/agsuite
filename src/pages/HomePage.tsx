@@ -171,9 +171,12 @@ export default function HomePage() {
   }, [categories, products]);
 
   const canShowAuthCard = useMemo(() => {
+    const s = `${selectedProduct?.id || ""} ${selectedProduct?.name || ""} ${selectedProduct?.url || ""}`.toLowerCase();
+    if (s.includes("sikas") || s.includes("aminevaops") || s.includes("ops.amineva.com")) return false;
     if (isAgStock) return agStepConfirmed;
     return true;
-  }, [isAgStock, agStepConfirmed]);
+  }, [isAgStock, agStepConfirmed, selectedProduct]);
+
 
   const onPickProduct = (p: ProductData) => {
     if (p.status === "coming_soon" || p.status === "offline") return;
