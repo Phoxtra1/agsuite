@@ -188,11 +188,8 @@ export async function deleteDocument(id: string): Promise<boolean> {
 }
 
 export async function duplicateDocument(doc: WorkspaceDocument): Promise<WorkspaceDocument | null> {
-  let userId = "usr-demo";
-  try {
-    const { data: u } = await supabase.auth.getUser();
-    if (u?.user) userId = u.user.id;
-  } catch {}
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `doc-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

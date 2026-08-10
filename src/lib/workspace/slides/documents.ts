@@ -453,11 +453,8 @@ export async function deleteDeck(id: string): Promise<boolean> {
 }
 
 export async function duplicateDeck(d: WorkspaceSlideDoc): Promise<WorkspaceSlideDoc | null> {
-  let userId = "usr-demo";
-  try {
-    const { data: u } = await supabase.auth.getUser();
-    if (u?.user) userId = u.user.id;
-  } catch {}
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `slide-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

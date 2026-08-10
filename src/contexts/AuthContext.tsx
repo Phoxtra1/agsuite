@@ -189,6 +189,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setIsAuthenticated(false);
       // Wipe all per-user caches so the next account starts cold.
       resetClientState(queryClient);
+      setWorkspaceUser(null);
       lastUserIdRef.current = null;
     } finally {
       setIsLoading(false);

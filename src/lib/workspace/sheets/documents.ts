@@ -230,11 +230,8 @@ export async function deleteSheet(id: string): Promise<boolean> {
 }
 
 export async function duplicateSheet(s: WorkspaceSheet): Promise<WorkspaceSheet | null> {
-  let userId = "usr-demo";
-  try {
-    const { data: u } = await supabase.auth.getUser();
-    if (u?.user) userId = u.user.id;
-  } catch {}
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `sheet-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
