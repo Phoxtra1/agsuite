@@ -171,9 +171,12 @@ export default function HomePage() {
   }, [categories, products]);
 
   const canShowAuthCard = useMemo(() => {
+    const s = `${selectedProduct?.id || ""} ${selectedProduct?.name || ""} ${selectedProduct?.url || ""}`.toLowerCase();
+    if (s.includes("sikas") || s.includes("aminevaops") || s.includes("ops.amineva.com")) return false;
     if (isAgStock) return agStepConfirmed;
     return true;
-  }, [isAgStock, agStepConfirmed]);
+  }, [isAgStock, agStepConfirmed, selectedProduct]);
+
 
   const onPickProduct = (p: ProductData) => {
     if (p.status === "coming_soon" || p.status === "offline") return;
@@ -181,10 +184,18 @@ export default function HomePage() {
     // Sikasɛm no longer authenticates through Suite — it opens its own homepage.
     // Category listing + live/offline status stay managed here in the Suite.
     const pid = (p.id || "").toLowerCase();
-    if (pid === "aminevaops" || pid === "sikasem" || pid === "sikasɛm") {
-      window.open(p.url || "https://ops.amineva.com", "_blank", "noopener,noreferrer");
+    const pname = (p.name || "").toLowerCase();
+    const purl = (p.url || "").toLowerCase();
+    const isSikasem =
+      pid.includes("aminevaops") ||
+      pid.includes("sikas") ||
+      pname.includes("sikas") ||
+      purl.includes("ops.amineva.com");
+    if (isSikasem) {
+      window.location.href = p.url || "https://ops.amineva.com";
       return;
     }
+
 
     setSelectedProduct(p);
     setAuthTab("signin");
