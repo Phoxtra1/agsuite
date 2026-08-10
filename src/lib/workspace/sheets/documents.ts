@@ -139,7 +139,9 @@ export async function getSheet(id: string): Promise<WorkspaceSheet | null> {
   const cached = local.find((s) => s.id === id);
   if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
   try {
-    const { data, error } = await supabase.from("workspace_sheets" as any).select("*").eq("id", id).maybeSingle();
+    const userId = await getAuthenticatedUserId();
+    if (!userId) return null;
+    const { data, error } = await supabase.from("workspace_sheets" as any).select("*").eq("id", id).eq("owner_id", userId).maybeSingle();
     if (!error && data) {
       const idx = local.findIndex((s) => s.id === id);
       if (idx >= 0) {

@@ -369,7 +369,9 @@ export async function getDeck(id: string): Promise<WorkspaceSlideDoc | null> {
   const cached = local.find((d) => d.id === id);
   if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
   try {
-    const { data, error } = await supabase.from(TBL).select("*").eq("id", id).maybeSingle();
+    const userId = await getAuthenticatedUserId();
+    if (!userId) return null;
+    const { data, error } = await supabase.from(TBL).select("*").eq("id", id).eq("owner_id", userId).maybeSingle();
     if (!error && data) {
       const idx = local.findIndex((d) => d.id === id);
       if (idx >= 0) local[idx] = data as any;
