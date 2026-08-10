@@ -177,6 +177,15 @@ export default function HomePage() {
 
   const onPickProduct = (p: ProductData) => {
     if (p.status === "coming_soon" || p.status === "offline") return;
+
+    // Sikasɛm no longer authenticates through Suite — it opens its own homepage.
+    // Category listing + live/offline status stay managed here in the Suite.
+    const pid = (p.id || "").toLowerCase();
+    if (pid === "aminevaops" || pid === "sikasem" || pid === "sikasɛm") {
+      window.open(p.url || "https://ops.amineva.com", "_blank", "noopener,noreferrer");
+      return;
+    }
+
     setSelectedProduct(p);
     setAuthTab("signin");
     setEmail("");
