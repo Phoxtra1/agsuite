@@ -96,7 +96,7 @@ export function OverviewPage() {
                 desc="Intelligent companion for research, writing, planning, documentation, storytelling, knowledge systems, and data analysis." />
               <EcoCard icon={CloudSun} title="Agyenkwa"
                 desc="Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, transport resilience, and operational risk." />
-              <EcoCard icon={Shield} title="Nyansa"
+              <EcoCard icon={Shield} title="Inventra"
                 desc="AI-backed inventory, commerce, sales, and operational management infrastructure for smart business systems." />
               <EcoCard icon={CheckCircle} title="DataLens"
                 desc="Strategic assessment, field inspection, verification, operational intelligence, and documentation infrastructure." />

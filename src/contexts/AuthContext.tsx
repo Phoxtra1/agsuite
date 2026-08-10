@@ -181,6 +181,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, []);
 
   const logout = useCallback(async () => {
+    authActionInProgress.current = true;
     setIsLoading(true);
     try {
       await supabase.auth.signOut();
@@ -193,6 +194,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       lastUserIdRef.current = null;
     } finally {
       setIsLoading(false);
+      authActionInProgress.current = false;
     }
   }, [queryClient]);
 
