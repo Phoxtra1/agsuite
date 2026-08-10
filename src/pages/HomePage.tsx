@@ -337,7 +337,7 @@ export default function HomePage() {
                  rel="noreferrer"
                   className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
                  >
-                    Nyansa
+                    Inventra
                    </a>
 
                     <a

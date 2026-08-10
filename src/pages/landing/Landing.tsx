@@ -6,7 +6,7 @@ import amvLogo from "@/assets/amv_global_logo.png";
 
 const apps: Array<{ label: string; to: string; external?: boolean }> = [
   { label: "Dipa AI", to: "/apps/dipa-ai" },
-  { label: "Nyansa", to: "/apps/agstock" },
+  { label: "Inventra", to: "/apps/agstock" },
   { label: "Agyenkwa", to: "/apps/agroclimate" },
   { label: "Adesua", to: "/apps/adesua" },
 ];

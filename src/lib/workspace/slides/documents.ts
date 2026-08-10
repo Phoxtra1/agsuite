@@ -332,29 +332,20 @@ function saveLocalDecks(decks: WorkspaceSlideDoc[]) {
   }
 }
 
-function seedDefaultDecks(): WorkspaceSlideDoc[] {
-  const now = new Date().toISOString();
-  const defaultDecks: WorkspaceSlideDoc[] = [
-    {
-      id: "slide-welcome",
-      owner_id: "usr-demo",
-      title: "Amineva Suite Platform Overview",
-      deck_json: EMPTY_DECK,
-      content_text: "Presentation Title Subtitle Amineva Slides",
-      created_at: now,
-      updated_at: now,
-    }
-  ];
-  saveLocalDecks(defaultDecks);
-  return defaultDecks;
+async function getAuthenticatedUserId(): Promise<string | null> {
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) return null;
+  return data.user.id;
 }
 
 export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
   const local = getLocalDecks();
-  if (typeof navigator !== "undefined" && !navigator.onLine) return local.length > 0 ? local : seedDefaultDecks();
+  if (typeof navigator !== "undefined" && !navigator.onLine) return local;
   try {
-    const { data, error } = await supabase.from(TBL).select("*").order("updated_at", { ascending: false });
-    if (!error && data && Array.isArray(data) && data.length > 0) {
+    const userId = await getAuthenticatedUserId();
+    if (!userId) return [];
+    const { data, error } = await supabase.from(TBL).select("*").eq("owner_id", userId).order("updated_at", { ascending: false });
+    if (!error && data && Array.isArray(data)) {
       const remote = data as any as WorkspaceSlideDoc[];
       const merged = [...local];
       for (const deck of remote) {
@@ -370,7 +361,7 @@ export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
     console.warn("[slides] Offline fetch fallback", e);
   }
   if (local.length > 0) return local;
-  return seedDefaultDecks();
+  return [];
 }
 
 export async function getDeck(id: string): Promise<WorkspaceSlideDoc | null> {
@@ -378,7 +369,9 @@ export async function getDeck(id: string): Promise<WorkspaceSlideDoc | null> {
   const cached = local.find((d) => d.id === id);
   if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
   try {
-    const { data, error } = await supabase.from(TBL).select("*").eq("id", id).maybeSingle();
+    const userId = await getAuthenticatedUserId();
+    if (!userId) return null;
+    const { data, error } = await supabase.from(TBL).select("*").eq("id", id).eq("owner_id", userId).maybeSingle();
     if (!error && data) {
       const idx = local.findIndex((d) => d.id === id);
       if (idx >= 0) local[idx] = data as any;
@@ -392,27 +385,12 @@ export async function getDeck(id: string): Promise<WorkspaceSlideDoc | null> {
   const found = local.find((d) => d.id === id);
   if (found) return found;
 
-  const now = new Date().toISOString();
-  const fallback: WorkspaceSlideDoc = {
-    id,
-    owner_id: "usr-demo",
-    title: "Untitled Presentation",
-    deck_json: EMPTY_DECK,
-    content_text: "",
-    created_at: now,
-    updated_at: now,
-  };
-  local.unshift(fallback);
-  saveLocalDecks(local);
-  return fallback;
+  return null;
 }
 
 export async function createDeck(title = "Untitled presentation"): Promise<WorkspaceSlideDoc | null> {
-  let userId = "usr-demo";
-  try {
-    const { data: u } = await supabase.auth.getUser();
-    if (u?.user) userId = u.user.id;
-  } catch {}
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `slide-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -477,11 +455,8 @@ export async function deleteDeck(id: string): Promise<boolean> {
 }
 
 export async function duplicateDeck(d: WorkspaceSlideDoc): Promise<WorkspaceSlideDoc | null> {
-  let userId = "usr-demo";
-  try {
-    const { data: u } = await supabase.auth.getUser();
-    if (u?.user) userId = u.user.id;
-  } catch {}
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `slide-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

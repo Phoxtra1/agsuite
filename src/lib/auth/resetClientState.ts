@@ -25,8 +25,14 @@ function purgeStorage(storage: Storage) {
     const keys: string[] = [];
     for (let i = 0; i < storage.length; i++) {
       const k = storage.key(i);
+      const isScopedWorkspaceCache =
+        k.includes("::") &&
+        (k.startsWith("amineva_workspace_") ||
+          k.startsWith("amineva_forms::") ||
+          k.startsWith("amineva_drive_"));
       if (
         k === "amineva_theme" ||
+        isScopedWorkspaceCache ||
         k.startsWith("amineva_workspace_") ||
         k === "amineva_forms"
       ) {

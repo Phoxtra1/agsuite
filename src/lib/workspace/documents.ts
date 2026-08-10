@@ -44,50 +44,24 @@ function saveLocalDocs(docs: WorkspaceDocument[]) {
   }
 }
 
-function seedDefaultDocs(): WorkspaceDocument[] {
-  const now = new Date().toISOString();
-  const defaultDocs: WorkspaceDocument[] = [
-    {
-      id: "doc-welcome",
-      owner_id: "usr-demo",
-      title: "Welcome to Amineva Docs",
-      content_json: {
-        type: "doc",
-        content: [
-          {
-            type: "heading",
-            attrs: { level: 1 },
-            content: [{ type: "text", text: "Welcome to Amineva Docs" }]
-          },
-          {
-            type: "paragraph",
-            content: [
-              {
-                type: "text",
-                text: "Amineva Docs works seamlessly online or offline. Create, edit, export, and collaborate on your documents with Dipa AI assistance."
-              }
-            ]
-          }
-        ]
-      },
-      content_text: "Welcome to Amineva Docs. Amineva Docs works seamlessly online or offline.",
-      created_at: now,
-      updated_at: now,
-    }
-  ];
-  saveLocalDocs(defaultDocs);
-  return defaultDocs;
+async function getAuthenticatedUserId(): Promise<string | null> {
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) return null;
+  return data.user.id;
 }
 
 export async function listDocuments(): Promise<WorkspaceDocument[]> {
   const local = getLocalDocs();
-  if (typeof navigator !== "undefined" && !navigator.onLine) return local.length > 0 ? local : seedDefaultDocs();
+  if (typeof navigator !== "undefined" && !navigator.onLine) return local;
   try {
+    const userId = await getAuthenticatedUserId();
+    if (!userId) return [];
     const { data, error } = await supabase
       .from("workspace_documents" as any)
       .select("*")
+      .eq("owner_id", userId)
       .order("updated_at", { ascending: false });
-    if (!error && data && Array.isArray(data) && data.length > 0) {
+    if (!error && data && Array.isArray(data)) {
       const remote = data as any as WorkspaceDocument[];
       const merged = [...local];
       for (const doc of remote) {
@@ -103,7 +77,7 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
     console.warn("[ag-docs] Supabase unreachable, using offline storage", e);
   }
   if (local.length > 0) return local;
-  return seedDefaultDocs();
+  return [];
 }
 
 export async function getDocument(id: string): Promise<WorkspaceDocument | null> {
@@ -111,10 +85,13 @@ export async function getDocument(id: string): Promise<WorkspaceDocument | null>
   const cached = local.find((d) => d.id === id);
   if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
   try {
+    const userId = await getAuthenticatedUserId();
+    if (!userId) return null;
     const { data, error } = await supabase
       .from("workspace_documents" as any)
       .select("*")
       .eq("id", id)
+      .eq("owner_id", userId)
       .maybeSingle();
     if (!error && data) {
       const idx = local.findIndex((d) => d.id === id);
@@ -130,28 +107,12 @@ export async function getDocument(id: string): Promise<WorkspaceDocument | null>
   const found = local.find((d) => d.id === id);
   if (found) return found;
 
-  // Fallback: create local doc on demand so link never opens blank
-  const now = new Date().toISOString();
-  const fallback: WorkspaceDocument = {
-    id,
-    owner_id: "usr-demo",
-    title: "Untitled Document",
-    content_json: EMPTY_DOC,
-    content_text: "",
-    created_at: now,
-    updated_at: now,
-  };
-  local.unshift(fallback);
-  saveLocalDocs(local);
-  return fallback;
+  return null;
 }
 
 export async function createDocument(title = "Untitled document"): Promise<WorkspaceDocument | null> {
-  let userId = "usr-demo";
-  try {
-    const { data: u } = await supabase.auth.getUser();
-    if (u?.user) userId = u.user.id;
-  } catch {}
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `doc-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -230,11 +191,8 @@ export async function deleteDocument(id: string): Promise<boolean> {
 }
 
 export async function duplicateDocument(doc: WorkspaceDocument): Promise<WorkspaceDocument | null> {
-  let userId = "usr-demo";
-  try {
-    const { data: u } = await supabase.auth.getUser();
-    if (u?.user) userId = u.user.id;
-  } catch {}
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `doc-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
