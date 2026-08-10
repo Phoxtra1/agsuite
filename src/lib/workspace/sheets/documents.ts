@@ -100,45 +100,22 @@ function saveLocalSheets(sheets: WorkspaceSheet[]) {
   }
 }
 
-function seedDefaultSheets(): WorkspaceSheet[] {
-  const now = new Date().toISOString();
-  const defaultSheets: WorkspaceSheet[] = [
-    {
-      id: "sheet-welcome",
-      owner_id: "usr-demo",
-      title: "Financial Planning & Revenue Model",
-      workbook_json: {
-        sheets: [
-          {
-            name: "Overview",
-            cells: {
-              A1: "Quarter", B1: "Revenue ($)", C1: "Growth (%)",
-              A2: "Q1 2026", B2: 125000, C2: "15%",
-              A3: "Q2 2026", B3: 180000, C3: "44%",
-              A4: "Q3 2026", B4: 240000, C4: "33%",
-            },
-            colWidths: { 0: 160, 1: 160, 2: 140 },
-          }
-        ],
-        activeSheet: 0,
-      },
-      content_text: "Quarter Revenue Growth Q1 2026 125000 15% Q2 2026 180000 44%",
-      created_at: now,
-      updated_at: now,
-    }
-  ];
-  saveLocalSheets(defaultSheets);
-  return defaultSheets;
+async function getAuthenticatedUserId(): Promise<string | null> {
+  const { data, error } = await supabase.auth.getUser();
+  if (error || !data.user) return null;
+  return data.user.id;
 }
 
 export async function listSheets(): Promise<WorkspaceSheet[]> {
   const local = getLocalSheets();
   if (typeof navigator !== "undefined" && !navigator.onLine) {
-    return local.length > 0 ? local : seedDefaultSheets();
+    return local;
   }
   try {
-    const { data, error } = await supabase.from("workspace_sheets" as any).select("*").order("updated_at", { ascending: false });
-    if (!error && data && Array.isArray(data) && data.length > 0) {
+    const userId = await getAuthenticatedUserId();
+    if (!userId) return [];
+    const { data, error } = await supabase.from("workspace_sheets" as any).select("*").eq("owner_id", userId).order("updated_at", { ascending: false });
+    if (!error && data && Array.isArray(data)) {
       const remote = data as any as WorkspaceSheet[];
       const merged = [...local];
       for (const sheet of remote) {
@@ -154,7 +131,7 @@ export async function listSheets(): Promise<WorkspaceSheet[]> {
     console.warn("[sheets] Offline fetch fallback", e);
   }
   if (local.length > 0) return local;
-  return seedDefaultSheets();
+  return [];
 }
 
 export async function getSheet(id: string): Promise<WorkspaceSheet | null> {
@@ -177,27 +154,12 @@ export async function getSheet(id: string): Promise<WorkspaceSheet | null> {
   const found = local.find((s) => s.id === id);
   if (found) return found;
 
-  const now = new Date().toISOString();
-  const fallback: WorkspaceSheet = {
-    id,
-    owner_id: "usr-demo",
-    title: "Untitled Sheet",
-    workbook_json: EMPTY_WORKBOOK,
-    content_text: "",
-    created_at: now,
-    updated_at: now,
-  };
-  local.unshift(fallback);
-  saveLocalSheets(local);
-  return fallback;
+  return null;
 }
 
 export async function createSheet(title = "Untitled sheet"): Promise<WorkspaceSheet | null> {
-  let userId = "usr-demo";
-  try {
-    const { data: u } = await supabase.auth.getUser();
-    if (u?.user) userId = u.user.id;
-  } catch {}
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `sheet-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

@@ -1,4 +1,4 @@
-import { wsKey } from "@/lib/workspace/scope";
+import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
 export interface FormTheme {
   primary: string;
   background: string;
@@ -401,38 +401,7 @@ export async function listForms(): Promise<FormDocument[]> {
 
   const raw = localStorage.getItem(wsKey("amineva_forms"));
   if (!raw) {
-    // Populate with default populated documents
-    const seeded: FormDocument[] = FORM_TEMPLATES.map((tpl, i) => {
-      const code = generateFormCode();
-      const now = new Date();
-      now.setHours(now.getHours() - i * 4); // staggered times
-      return {
-        id: tpl.id,
-        ownerId: "usr-demo",
-        title: tpl.title || "Seeded Form",
-        description: tpl.description,
-        theme: tpl.theme || DEFAULT_THEME,
-        settings: tpl.settings || DEFAULT_SETTINGS,
-        quizSettings: tpl.quizSettings || DEFAULT_QUIZ_SETTINGS,
-        formCode: code,
-        status: "draft",
-        questions: tpl.questions || [],
-        responses: [],
-        createdAt: now.toISOString(),
-        updatedAt: now.toISOString(),
-        comments: [],
-        auditLogs: [
-          {
-            id: "log-1",
-            user: "Workspace Demo Owner",
-            action: "Form instantiated from system preset template",
-            timestamp: now.toISOString(),
-          }
-        ],
-      };
-    });
-    localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(seeded));
-    return seeded;
+    return [];
   }
 
   try {
@@ -448,36 +417,7 @@ export async function getFormById(id: string): Promise<FormDocument | null> {
   const found = list.find((f) => f.id === id || f.formCode === id);
   if (found) return found;
 
-  // Fallback: Create form on demand so link never opens blank
-  const now = new Date().toISOString();
-  const code = generateFormCode();
-  const fallback: FormDocument = {
-    id,
-    ownerId: "usr-demo",
-    title: "Untitled Form",
-    description: "Amineva Form created in Workspace.",
-    theme: { ...DEFAULT_THEME },
-    settings: { ...DEFAULT_SETTINGS },
-    quizSettings: { ...DEFAULT_QUIZ_SETTINGS },
-    formCode: code,
-    status: "draft",
-    questions: [
-      {
-        id: "q-first",
-        type: "short_answer",
-        title: "Untitled Question 1",
-        required: false,
-      },
-    ],
-    responses: [],
-    createdAt: now,
-    updatedAt: now,
-    comments: [],
-    auditLogs: [],
-  };
-  list.unshift(fallback);
-  localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(list));
-  return fallback;
+  return null;
 }
 
 export async function getFormByCode(code: string): Promise<FormDocument | null> {
@@ -488,6 +428,8 @@ export async function getFormByCode(code: string): Promise<FormDocument | null> 
 }
 
 export async function createForm(title: string, templateId?: string): Promise<FormDocument | null> {
+  const userId = getWorkspaceUser();
+  if (userId === "anon") return null;
   const list = await listForms();
   const now = new Date().toISOString();
   const code = generateFormCode();
@@ -521,7 +463,7 @@ export async function createForm(title: string, templateId?: string): Promise<Fo
 
   const newDoc: FormDocument = {
     id: `form-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-    ownerId: "usr-demo",
+    ownerId: userId,
     title,
     description,
     theme,
@@ -537,7 +479,7 @@ export async function createForm(title: string, templateId?: string): Promise<Fo
     auditLogs: [
       {
         id: "log-init",
-        user: "Workspace Demo Owner",
+        user: userId,
         action: `Form created ${templateId ? `from preset template '${templateId}'` : "as blank canvas"}`,
         timestamp: now,
       }

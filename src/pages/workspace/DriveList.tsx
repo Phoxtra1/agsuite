@@ -12,6 +12,7 @@ import { listSheets, createSheet, duplicateSheet, type WorkspaceSheet } from "@/
 import { listDecks, createDeck, duplicateDeck, type WorkspaceSlideDoc } from "@/lib/workspace/slides/documents";
 import { listForms, createForm, duplicateForm, type FormDocument } from "@/lib/workspace/forms/documents";
 import { useAuth } from "@/contexts/AuthContext";
+import { wsKey } from "@/lib/workspace/scope";
 import { saveDriveToDatabase, loadDriveFromDatabase } from "@/lib/workspace/drive/sync";
 import { listQueuedDriveUploads, queueDriveUpload, removeQueuedDriveUpload } from "@/lib/workspace/drive/offlineFiles";
 import { supabase } from "@/integrations/supabase/client";
@@ -73,7 +74,7 @@ const STORAGE_PINNED_KEY = "amineva_drive_pinned_ids";
 
 function getLocalUploadedFiles(): DriveUploadedFile[] {
   try {
-    const raw = localStorage.getItem(STORAGE_FILES_KEY);
+    const raw = localStorage.getItem(wsKey(STORAGE_FILES_KEY));
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -82,7 +83,7 @@ function getLocalUploadedFiles(): DriveUploadedFile[] {
 
 function saveLocalUploadedFiles(files: DriveUploadedFile[]) {
   try {
-    localStorage.setItem(STORAGE_FILES_KEY, JSON.stringify(files));
+    localStorage.setItem(wsKey(STORAGE_FILES_KEY), JSON.stringify(files));
   } catch (e) {
     console.error("Failed to save uploaded files", e);
   }
@@ -90,7 +91,7 @@ function saveLocalUploadedFiles(files: DriveUploadedFile[]) {
 
 function getLocalFolders(): DriveFolder[] {
   try {
-    const raw = localStorage.getItem(STORAGE_FOLDERS_KEY);
+    const raw = localStorage.getItem(wsKey(STORAGE_FOLDERS_KEY));
     return raw ? JSON.parse(raw) : [];
   } catch {
     return [];
@@ -99,7 +100,7 @@ function getLocalFolders(): DriveFolder[] {
 
 function saveLocalFolders(folders: DriveFolder[]) {
   try {
-    localStorage.setItem(STORAGE_FOLDERS_KEY, JSON.stringify(folders));
+    localStorage.setItem(wsKey(STORAGE_FOLDERS_KEY), JSON.stringify(folders));
   } catch (e) {
     console.error("Failed to save folders", e);
   }
@@ -107,7 +108,7 @@ function saveLocalFolders(folders: DriveFolder[]) {
 
 function getStarredIds(): Set<string> {
   try {
-    const raw = localStorage.getItem(STORAGE_STARRED_KEY);
+    const raw = localStorage.getItem(wsKey(STORAGE_STARRED_KEY));
     return raw ? new Set(JSON.parse(raw)) : new Set();
   } catch {
     return new Set();
@@ -116,7 +117,7 @@ function getStarredIds(): Set<string> {
 
 function saveStarredIds(ids: Set<string>) {
   try {
-    localStorage.setItem(STORAGE_STARRED_KEY, JSON.stringify(Array.from(ids)));
+    localStorage.setItem(wsKey(STORAGE_STARRED_KEY), JSON.stringify(Array.from(ids)));
   } catch (e) {
     console.error("Failed to save starred IDs", e);
   }
@@ -124,7 +125,7 @@ function saveStarredIds(ids: Set<string>) {
 
 function getPinnedIds(): Set<string> {
   try {
-    const raw = localStorage.getItem(STORAGE_PINNED_KEY);
+    const raw = localStorage.getItem(wsKey(STORAGE_PINNED_KEY));
     return raw ? new Set(JSON.parse(raw)) : new Set();
   } catch {
     return new Set();
@@ -133,7 +134,7 @@ function getPinnedIds(): Set<string> {
 
 function savePinnedIds(ids: Set<string>) {
   try {
-    localStorage.setItem(STORAGE_PINNED_KEY, JSON.stringify(Array.from(ids)));
+    localStorage.setItem(wsKey(STORAGE_PINNED_KEY), JSON.stringify(Array.from(ids)));
   } catch (e) {
     console.error("Failed to save pinned IDs", e);
   }
@@ -141,7 +142,7 @@ function savePinnedIds(ids: Set<string>) {
 
 function getTrashedIds(): Set<string> {
   try {
-    const raw = localStorage.getItem(STORAGE_TRASHED_KEY);
+    const raw = localStorage.getItem(wsKey(STORAGE_TRASHED_KEY));
     return raw ? new Set(JSON.parse(raw)) : new Set();
   } catch {
     return new Set();
@@ -150,7 +151,7 @@ function getTrashedIds(): Set<string> {
 
 function saveTrashedIds(ids: Set<string>) {
   try {
-    localStorage.setItem(STORAGE_TRASHED_KEY, JSON.stringify(Array.from(ids)));
+    localStorage.setItem(wsKey(STORAGE_TRASHED_KEY), JSON.stringify(Array.from(ids)));
   } catch (e) {
     console.error("Failed to save trashed IDs", e);
   }
@@ -158,7 +159,7 @@ function saveTrashedIds(ids: Set<string>) {
 
 function getItemFolders(): Record<string, string> {
   try {
-    const raw = localStorage.getItem(STORAGE_ITEM_FOLDERS_KEY);
+    const raw = localStorage.getItem(wsKey(STORAGE_ITEM_FOLDERS_KEY));
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -167,7 +168,7 @@ function getItemFolders(): Record<string, string> {
 
 function saveItemFolders(mapping: Record<string, string>) {
   try {
-    localStorage.setItem(STORAGE_ITEM_FOLDERS_KEY, JSON.stringify(mapping));
+    localStorage.setItem(wsKey(STORAGE_ITEM_FOLDERS_KEY), JSON.stringify(mapping));
   } catch (e) {
     console.error("Failed to save item folders mapping", e);
   }
@@ -175,7 +176,7 @@ function saveItemFolders(mapping: Record<string, string>) {
 
 function getItemNames(): Record<string, string> {
   try {
-    const raw = localStorage.getItem(STORAGE_ITEM_NAMES_KEY);
+    const raw = localStorage.getItem(wsKey(STORAGE_ITEM_NAMES_KEY));
     return raw ? JSON.parse(raw) : {};
   } catch {
     return {};
@@ -184,7 +185,7 @@ function getItemNames(): Record<string, string> {
 
 function saveItemNames(names: Record<string, string>) {
   try {
-    localStorage.setItem(STORAGE_ITEM_NAMES_KEY, JSON.stringify(names));
+    localStorage.setItem(wsKey(STORAGE_ITEM_NAMES_KEY), JSON.stringify(names));
   } catch (e) {
     console.error("Failed to save item names", e);
   }
@@ -207,7 +208,7 @@ function jsonSize(value: unknown): number {
 
 function logDriveActivity(action: string, name: string) {
   try {
-    const raw = localStorage.getItem(STORAGE_ACTIVITY_KEY);
+    const raw = localStorage.getItem(wsKey(STORAGE_ACTIVITY_KEY));
     const list: ActivityEntry[] = raw ? JSON.parse(raw) : [];
     list.unshift({
       id: `act-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -215,7 +216,7 @@ function logDriveActivity(action: string, name: string) {
       name,
       timestamp: new Date().toISOString()
     });
-    localStorage.setItem(STORAGE_ACTIVITY_KEY, JSON.stringify(list.slice(0, 100)));
+    localStorage.setItem(wsKey(STORAGE_ACTIVITY_KEY), JSON.stringify(list.slice(0, 100)));
   } catch (e) {
     console.error("Failed to log drive activity", e);
   }
@@ -248,7 +249,7 @@ export default function DriveList() {
 
   // Custom main drive name
   const [driveName, setDriveName] = useState<string>(() => {
-    return localStorage.getItem(STORAGE_DRIVE_NAME_KEY) || "My Drive";
+    return localStorage.getItem(wsKey(STORAGE_DRIVE_NAME_KEY)) || "My Drive";
   });
 
   // Sidebar navigation tab state - defaulted to "home" now!
@@ -333,7 +334,7 @@ export default function DriveList() {
     saveTrashedIds(nextTrashed);
     saveItemFolders(nextItemFolders);
     saveItemNames(nextItemNames);
-    localStorage.setItem(STORAGE_DRIVE_NAME_KEY, nextDriveName);
+    localStorage.setItem(wsKey(STORAGE_DRIVE_NAME_KEY), nextDriveName);
 
     // Persist immediately to Supabase
     syncWithDatabase(
@@ -368,17 +369,17 @@ export default function DriveList() {
     setItemNames(itemNms);
 
     try {
-      const rawLogs = localStorage.getItem(STORAGE_ACTIVITY_KEY);
+      const rawLogs = localStorage.getItem(wsKey(STORAGE_ACTIVITY_KEY));
       setActivityLogs(rawLogs ? JSON.parse(rawLogs) : []);
     } catch {
       setActivityLogs([]);
     }
 
     // Load fast cache versions of document modules to show them instantly
-    const cachedDocs = JSON.parse(localStorage.getItem("amineva_workspace_docs") || "[]");
-    const cachedSheets = JSON.parse(localStorage.getItem("amineva_workspace_sheets") || "[]");
-    const cachedDecks = JSON.parse(localStorage.getItem("amineva_workspace_slides") || "[]");
-    const cachedForms = JSON.parse(localStorage.getItem("amineva_forms") || "[]");
+    const cachedDocs = JSON.parse(localStorage.getItem(wsKey("amineva_workspace_docs")) || "[]");
+    const cachedSheets = JSON.parse(localStorage.getItem(wsKey("amineva_workspace_sheets")) || "[]");
+    const cachedDecks = JSON.parse(localStorage.getItem(wsKey("amineva_workspace_slides")) || "[]");
+    const cachedForms = JSON.parse(localStorage.getItem(wsKey("amineva_forms")) || "[]");
 
     buildUnifiedItems(localFolders, uploads, cachedDocs, cachedSheets, cachedDecks, cachedForms, stars, pins, itemFlds, itemNms);
     setLoading(false);
@@ -422,7 +423,7 @@ export default function DriveList() {
       saveTrashedIds(currentTrashed);
       saveItemFolders(currentItemFolders);
       saveItemNames(currentItemNames);
-      localStorage.setItem(STORAGE_DRIVE_NAME_KEY, currentDriveName);
+      localStorage.setItem(wsKey(STORAGE_DRIVE_NAME_KEY), currentDriveName);
     }
 
     // 3. Fresh Background Fetch Incremental Loading
