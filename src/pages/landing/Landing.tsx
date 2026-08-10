@@ -6,16 +6,16 @@ import amvLogo from "@/assets/amv_global_logo.png";
 
 const apps: Array<{ label: string; to: string; external?: boolean }> = [
   { label: "Dipa AI", to: "/apps/dipa-ai" },
-  { label: "Inventra", to: "/apps/agstock" },
+  { label: "Inventra", to: "/apps/inventra" },
   { label: "Agyenkwa", to: "/apps/agroclimate" },
   { label: "Adesua", to: "/apps/adesua" },
 ];
 
 const explainerItems = [
   { label: "Innovation Ecosystem", to: "/about-us" },
-  { label: "DataLens", to: "/explainer/agis" },
-  { label: "ABI", to: "/explainer/amniva" },
-  { label: "Sikasɛm", to: "/explainer/aminevaops" },
+  { label: "DataLens", to: "/explainer/datalens" },
+  { label: "ABI", to: "/explainer/abi" },
+  { label: "Sikasɛm", to: "/explainer/sikasɛm" },
 ];
 
 const navLinks = [
