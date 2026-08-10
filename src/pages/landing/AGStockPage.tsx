@@ -42,7 +42,7 @@ const NyansaPage: FC = () => {
               <span className="text-accent">Grow Your Business.</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto mb-8">
-              Nyansa is an inventory and sales management platform built for retailer shops, wholesalers, warehouses, restaurants, bars, and any inventory-driven entity.
+              Inventra is an inventory and sales management platform built for retailer shops, wholesalers, warehouses, restaurants, bars, and any inventory-driven entity.
             </p>
             <a
               href="https://stock.amineva.com"
@@ -101,7 +101,7 @@ const NyansaPage: FC = () => {
       <section className="max-w-7xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
           <span className="text-sm font-semibold text-accent uppercase tracking-wider">Built For</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Who Uses Nyansa?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Who Uses inventra?</h2>
         </div>
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {audiences.map((a, i) => (
@@ -114,11 +114,11 @@ const NyansaPage: FC = () => {
         </div>
       </section>
 
-      {/* Why Nyansa */}
+      {/* Why inventra */}
       <section className="bg-secondary py-20 px-6">
         <div className="max-w-5xl mx-auto">
           <div className="text-center mb-14">
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground">Why Choose Nyansa?</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">Why Choose inventra?</h2>
           </div>
           <div className="grid md:grid-cols-2 gap-6">
             {[
@@ -144,7 +144,7 @@ const NyansaPage: FC = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Start Managing Your Inventory Today</h2>
           <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-            Join businesses across Africa and beyond who trust Nyansa to run their operations.
+            Join businesses across Africa and beyond who trust inventra to run their operations.
           </p>
           <a
             href="https://stock.amineva.com"
