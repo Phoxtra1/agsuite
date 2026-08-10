@@ -10,7 +10,7 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
 };
 
-const NyansaPage: FC = () => {
+const InventraPage: FC = () => {
   const features = [
     { icon: Package, title: "Inventory Tracking", desc: "Real-time stock levels, low-stock alerts, and automated reorder points for every product." },
     { icon: ShoppingCart, title: "Point of Sale", desc: "Fast, intuitive POS system with barcode scanning, receipts, and multi-payment support." },
