@@ -11,7 +11,7 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
 };
 
-const AmnivaPage: FC = () => {
+const ABIPage: FC = () => {
   const features = [
     { icon: Gauge, title: "Dashboards & KPIs", desc: "Real-time executive dashboards, KPI tracking, and operational scorecards across every business unit." },
     { icon: BarChart3, title: "Reporting & Analytics", desc: "Self-service reporting, drill-down analytics, and automated insight delivery for decision-makers." },
