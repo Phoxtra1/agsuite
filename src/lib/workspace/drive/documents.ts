@@ -121,16 +121,19 @@ export async function listActivity(): Promise<DriveActivity[]> {
 // ---- Database or Local Fallback Handlers ----
 
 export async function listFolder(folderId: string | null): Promise<{ folders: DriveFolder[]; files: DriveFile[] }> {
+  const uid = await getUserId();
   try {
-    // Attempt Supabase Fetch
+    // Attempt Supabase Fetch — always scoped to the signed-in account.
     const { data: foldersData, error: foldersErr } = await supabase
       .from("drive_folders" as any)
       .select("*")
+      .eq("owner_id", uid)
       .eq("parent_id", folderId);
 
     const { data: filesData, error: filesErr } = await supabase
       .from("drive_files" as any)
       .select("*")
+      .eq("owner_id", uid)
       .eq("folder_id", folderId)
       .is("trashed_at", null);
 
@@ -143,15 +146,16 @@ export async function listFolder(folderId: string | null): Promise<{ folders: Dr
     console.warn("[drive] Fallback to local indexing", e);
   }
 
-  // Offline/Local Storage mapping
+  // Offline/Local Storage mapping (owner-scoped as well)
   const allFolders = getLocal<DriveFolder>(STORAGE_KEY_FOLDERS);
   const allFiles = getLocal<DriveFile>(STORAGE_KEY_FILES);
 
-  const folders = allFolders.filter(f => f.parent_id === folderId);
-  const files = allFiles.filter(f => f.folder_id === folderId && !f.trashed_at);
+  const folders = allFolders.filter((f) => f.parent_id === folderId && (!f.owner_id || f.owner_id === uid));
+  const files = allFiles.filter((f) => f.folder_id === folderId && !f.trashed_at && (!f.owner_id || f.owner_id === uid));
 
   return { folders, files };
 }
+
 
 export async function createFolder(
   name: string,
