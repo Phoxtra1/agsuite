@@ -160,4 +160,4 @@ const InventraPage: FC = () => {
   );
 };
 
-export default NyansaPage;
+export default InventraPage;

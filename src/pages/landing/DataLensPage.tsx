@@ -135,4 +135,4 @@ const DataLensPage: FC = () => {
   );
 };
 
-export default NkosooPage;
+export default DataLensPage;
