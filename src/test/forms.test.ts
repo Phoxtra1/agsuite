@@ -8,10 +8,12 @@ import {
   submitFormResponse,
   FORM_TEMPLATES
 } from "@/lib/workspace/forms/documents";
+import { setWorkspaceUser } from "@/lib/workspace/scope";
 
 describe("Amineva Forms local data layer tests", () => {
   beforeEach(() => {
     localStorage.clear();
+    setWorkspaceUser("test-user-forms");
   });
 
   it("should generate proper 6-character alphanumeric formCodes", () => {
