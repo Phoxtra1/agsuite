@@ -149,4 +149,4 @@ const ABIPage: FC = () => {
   );
 };
 
-export default AmnivaPage;
+export default ABIPage;
