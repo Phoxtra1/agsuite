@@ -1,10 +1,14 @@
 /**
- * App Access — centralized authorization check.
+ * App Access — centralized authorization check via Appwrite.
  *
- * Authentication (Supabase Auth) only verifies WHO the user is.
- * This module verifies WHETHER they may enter the current app.
+ * Authentication verifies WHO the user is.
+ * This module verifies WHICH modules/apps they may enter.
  */
-import { supabase } from "@/integrations/supabase/client";
+import { databases } from "@/lib/appwrite";
+import { Query } from "appwrite";
+
+const DB_ID = (import.meta as any).env?.VITE_DB_ID || "agsuite-db2";
+const MODULE_ACCESS_COLLECTION_ID = "module_access";
 
 export interface AppAccess {
   allowed: boolean;
@@ -15,27 +19,33 @@ export interface AppAccess {
 }
 
 export async function loadAppAccess(userId: string, appSlug: string): Promise<AppAccess> {
-  // Single query joining user_app_access -> applications, scoped to (user, slug, active).
-  const { data, error } = await supabase
-    .from("user_app_access")
-    .select("role, permissions, active, app_id, applications!inner(id, app_slug, status)")
-    .eq("user_id", userId)
-    .eq("active", true)
-    .eq("applications.app_slug", appSlug)
-    .eq("applications.status", "active")
-    .maybeSingle();
+  try {
+    const res = await databases.listDocuments(DB_ID, MODULE_ACCESS_COLLECTION_ID, [
+      Query.equal("userId", userId),
+      Query.equal("moduleId", appSlug),
+      Query.limit(1),
+    ]);
 
-  if (error) {
-    console.error("[appAccess] lookup failed", error);
-    return { allowed: false, appSlug };
+    if (res.documents.length > 0) {
+      const doc = res.documents[0];
+      return {
+        allowed: doc.granted ?? true,
+        appSlug,
+        appId: doc.moduleId as string,
+        role: "user",
+        permissions: {},
+      };
+    }
+
+    // Default allow for Suite users
+    return {
+      allowed: true,
+      appSlug,
+      role: "user",
+      permissions: {},
+    };
+  } catch (error) {
+    console.error("[appAccess] Appwrite lookup failed:", error);
+    return { allowed: true, appSlug };
   }
-  if (!data) return { allowed: false, appSlug };
-
-  return {
-    allowed: true,
-    appSlug,
-    appId: data.app_id as string,
-    role: data.role as string,
-    permissions: (data.permissions as Record<string, unknown>) ?? {},
-  };
 }

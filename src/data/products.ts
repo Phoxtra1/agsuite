@@ -1,35 +1,40 @@
-import { supabase } from "@/integrations/supabase/client";
+// src/data/products.ts
+import { databases } from "@/lib/appwrite";
+import { ID, Query } from "appwrite";
 import type { ProductData } from "@/types/product";
 
-// ===== DB → ProductData mapper =====
-function rowToProduct(row: any): ProductData {
+const DB_ID = (import.meta as any).env?.VITE_DB_ID || "agsuite-db2";
+const PRODUCTS_COLLECTION_ID = "products";
+
+// ===== Appwrite Doc → ProductData mapper =====
+function docToProduct(doc: any): ProductData {
   return {
-    id: row.id,
-    name: row.name,
-    shortName: row.short_name || undefined,
-    description: row.description || undefined,
-    status: row.status as ProductData["status"],
-    url: row.url || undefined,
-    adminUrl: row.admin_url || undefined,
-    category: row.category || undefined,
-    order: row.sort_order ?? 0,
-    isPublic: row.is_public ?? false,
-    isExternal: row.is_external ?? false,
+    id: doc.id || doc.$id,
+    name: doc.name,
+    shortName: doc.short_name || undefined,
+    description: doc.description || undefined,
+    status: doc.status as ProductData["status"],
+    url: doc.url || undefined,
+    adminUrl: doc.admin_url || undefined,
+    category: doc.category || undefined,
+    order: doc.sort_order ?? 0,
+    isPublic: doc.is_public ?? false,
+    isExternal: doc.is_external ?? false,
   };
 }
 
-// ===== ProductData → DB row mapper =====
-function productToRow(p: ProductData, productType: "admin" | "category") {
+// ===== ProductData → Appwrite Doc payload mapper =====
+function productToDocPayload(p: ProductData, productType: "admin" | "category") {
   return {
     id: p.id,
     name: p.name,
-    short_name: p.shortName || null,
-    description: p.description || null,
+    short_name: p.shortName || "",
+    description: p.description || "",
     status: p.status,
-    url: p.url || null,
-    admin_url: p.adminUrl || null,
-    category: p.category || null,
-    sort_order: p.order,
+    url: p.url || "",
+    admin_url: p.adminUrl || "",
+    category: p.category || "",
+    sort_order: p.order ?? 0,
     is_public: p.isPublic ?? false,
     is_external: p.isExternal ?? false,
     product_type: productType,
@@ -40,34 +45,34 @@ function productToRow(p: ProductData, productType: "admin" | "category") {
 // FETCH ADMIN PRODUCTS
 // ===========================
 export async function fetchAdminProducts(): Promise<ProductData[]> {
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("product_type", "admin")
-    .order("sort_order");
-
-  if (error) {
-    console.error("Failed to load admin products:", error);
+  try {
+    const res = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [
+      Query.equal("product_type", "admin"),
+      Query.orderAsc("sort_order"),
+      Query.limit(100),
+    ]);
+    return res.documents.map(docToProduct);
+  } catch (error) {
+    console.error("Failed to load admin products from Appwrite:", error);
     return [];
   }
-  return (data || []).map(rowToProduct);
 }
 
 // ===========================
 // FETCH CATEGORY PRODUCTS
 // ===========================
 export async function fetchCategoryProducts(): Promise<ProductData[]> {
-  const { data, error } = await supabase
-    .from("products")
-    .select("*")
-    .eq("product_type", "category")
-    .order("sort_order");
-
-  if (error) {
-    console.error("Failed to load category products:", error);
+  try {
+    const res = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [
+      Query.equal("product_type", "category"),
+      Query.orderAsc("sort_order"),
+      Query.limit(100),
+    ]);
+    return res.documents.map(docToProduct);
+  } catch (error) {
+    console.error("Failed to load category products from Appwrite:", error);
     return [];
   }
-  return (data || []).map(rowToProduct);
 }
 
 // ===========================
@@ -77,32 +82,46 @@ export async function upsertProduct(
   product: ProductData,
   productType: "admin" | "category"
 ): Promise<boolean> {
-  const row = productToRow(product, productType);
-  const { error } = await supabase
-    .from("products")
-    .upsert(row as any, { onConflict: "id" });
+  try {
+    const payload = productToDocPayload(product, productType);
+    
+    // Check if document exists with id == product.id
+    const existing = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [
+      Query.equal("id", product.id),
+      Query.limit(1),
+    ]).catch(() => null);
 
-  if (error) {
-    console.error("Failed to save product:", error);
+    if (existing && existing.documents.length > 0) {
+      const docId = existing.documents[0].$id;
+      await databases.updateDocument(DB_ID, PRODUCTS_COLLECTION_ID, docId, payload);
+    } else {
+      await databases.createDocument(DB_ID, PRODUCTS_COLLECTION_ID, ID.unique(), payload);
+    }
+    return true;
+  } catch (error) {
+    console.error("Failed to save product in Appwrite:", error);
     return false;
   }
-  return true;
 }
 
 // ===========================
 // DELETE PRODUCT
 // ===========================
 export async function deleteProduct(id: string): Promise<boolean> {
-  const { error } = await supabase
-    .from("products")
-    .delete()
-    .eq("id", id);
-
-  if (error) {
-    console.error("Failed to delete product:", error);
+  try {
+    const existing = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [
+      Query.equal("id", id),
+      Query.limit(1),
+    ]);
+    
+    if (existing.documents.length > 0) {
+      await databases.deleteDocument(DB_ID, PRODUCTS_COLLECTION_ID, existing.documents[0].$id);
+    }
+    return true;
+  } catch (error) {
+    console.error("Failed to delete product from Appwrite:", error);
     return false;
   }
-  return true;
 }
 
 // Legacy sync helpers (no-ops now)

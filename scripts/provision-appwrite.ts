@@ -1,9 +1,9 @@
-// scripts/provision-appwrite.js
+// scripts/provision-appwrite.ts
 /**
  * Idempotent Appwrite Provisioning Script for AG Suite (Amineva Suite)
  * 
  * Usage:
- *   APPWRITE_API_KEY=your_key node scripts/provision-appwrite.js
+ *   APPWRITE_API_KEY=your_key npx tsx scripts/provision-appwrite.ts
  *
  * Reads config from .env or environment variables:
  * - VITE_APPWRITE_ENDPOINT (default: https://fra.cloud.appwrite.io/v1)
@@ -15,8 +15,7 @@
 import fs from 'fs';
 import path from 'path';
 
-// Read .env manually if process.env isn't populated
-function loadDotEnv() {
+function loadDotEnv(): void {
   const envPath = path.resolve(process.cwd(), '.env');
   if (fs.existsSync(envPath)) {
     const lines = fs.readFileSync(envPath, 'utf8').split('\n');
@@ -49,19 +48,25 @@ if (!API_KEY) {
   console.log('---------------------------------------------------------');
   console.log('NOTICE: APPWRITE_API_KEY is not set.');
   console.log('To run automated provisioning against Appwrite Cloud/Server, run:');
-  console.log('   APPWRITE_API_KEY=<your_admin_api_key> node scripts/provision-appwrite.js');
+  console.log('   APPWRITE_API_KEY=<your_admin_api_key> npx tsx scripts/provision-appwrite.ts');
   console.log('---------------------------------------------------------');
 }
 
-const headers = {
+const headers: Record<string, string> = {
   'Content-Type': 'application/json',
   'x-appwrite-project': PROJECT_ID,
   'x-appwrite-key': API_KEY || '',
 };
 
-async function apiRequest(method, path, body = null) {
-  const url = `${ENDPOINT}${path}`;
-  const options = {
+interface ApiResponse {
+  status: number;
+  ok: boolean;
+  data: any;
+}
+
+async function apiRequest(method: string, apiPath: string, body: any = null): Promise<ApiResponse> {
+  const url = `${ENDPOINT}${apiPath}`;
+  const options: RequestInit = {
     method,
     headers,
   };
@@ -73,8 +78,22 @@ async function apiRequest(method, path, body = null) {
   return { status: res.status, ok: res.ok, data };
 }
 
+interface AttributeSchema {
+  key: string;
+  type: 'string' | 'integer' | 'float' | 'boolean' | 'datetime';
+  size?: number;
+  required: boolean;
+  default?: any;
+}
+
+interface CollectionSchema {
+  id: string;
+  name: string;
+  attributes: AttributeSchema[];
+}
+
 // Database schema definition for AG Suite
-const collectionsSchema = [
+const collectionsSchema: CollectionSchema[] = [
   {
     id: 'profiles',
     name: 'User Profiles',
@@ -86,6 +105,24 @@ const collectionsSchema = [
       { key: 'role', type: 'string', size: 100, required: false, default: 'user' },
       { key: 'onboardingComplete', type: 'boolean', required: false, default: false },
       { key: 'updated_at', type: 'string', size: 255, required: false },
+    ],
+  },
+  {
+    id: 'products',
+    name: 'Suite Products & Applications',
+    attributes: [
+      { key: 'id', type: 'string', size: 255, required: true },
+      { key: 'name', type: 'string', size: 255, required: true },
+      { key: 'short_name', type: 'string', size: 255, required: false },
+      { key: 'description', type: 'string', size: 1024, required: false },
+      { key: 'status', type: 'string', size: 50, required: true },
+      { key: 'url', type: 'string', size: 1024, required: false },
+      { key: 'admin_url', type: 'string', size: 1024, required: false },
+      { key: 'category', type: 'string', size: 255, required: false },
+      { key: 'sort_order', type: 'integer', required: false, default: 0 },
+      { key: 'is_public', type: 'boolean', required: false, default: false },
+      { key: 'is_external', type: 'boolean', required: false, default: false },
+      { key: 'product_type', type: 'string', size: 50, required: true },
     ],
   },
   {
@@ -236,7 +273,7 @@ const collectionsSchema = [
   },
 ];
 
-async function runProvisioning() {
+async function runProvisioning(): Promise<void> {
   if (!API_KEY) {
     console.error('Cannot proceed without APPWRITE_API_KEY environment variable.');
     process.exit(1);
@@ -286,7 +323,7 @@ async function runProvisioning() {
 
     // Check existing attributes
     const attrCheck = await apiRequest('GET', `/databases/${DB_ID}/collections/${colSchema.id}/attributes`);
-    const existingAttrs = new Set(attrCheck.ok && attrCheck.data?.attributes ? attrCheck.data.attributes.map((a) => a.key) : []);
+    const existingAttrs = new Set(attrCheck.ok && attrCheck.data?.attributes ? attrCheck.data.attributes.map((a: any) => a.key) : []);
 
     for (const attr of colSchema.attributes) {
       if (existingAttrs.has(attr.key)) {
@@ -296,7 +333,7 @@ async function runProvisioning() {
 
       console.log(`  + Adding attribute '${attr.key}' (${attr.type}) to '${colSchema.id}'...`);
       let endpointPath = `/databases/${DB_ID}/collections/${colSchema.id}/attributes/${attr.type}`;
-      const payload = {
+      const payload: any = {
         key: attr.key,
         required: attr.required,
       };

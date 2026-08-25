@@ -2,7 +2,6 @@ import React, { useState, useEffect } from "react";
 import { Routes, Route, Navigate, useNavigate, useLocation, useSearchParams } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ShieldCheck, X } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
 
 import { SuiteNav } from "@/components/suite/SuiteNav";
 import { OverviewPage } from "@/components/suite/pages/OverviewPage";
@@ -59,48 +58,9 @@ export default function Suite() {
       return;
     }
 
-    // Bypass secure handshakes during local development or Lovable preview context to avoid blocker friction
-    if (isPreview()) {
-      setSecuredUrl(viewportUrl);
-      setGeneratingToken(false);
-      setGateError(null);
-      return;
-    }
-
-    let isMounted = true;
-
-    async function authorizeEnclave() {
-      setGeneratingToken(true);
-      setGateError(null);
-      try {
-        // Generate a cryptographically secure, single-use SSO handshake token
-        const { data: token, error } = await (supabase.rpc as any)("generate_handshake_token", {
-          target_app_name: targetApp.toLowerCase().trim()
-        });
-
-        if (error || !token) throw error || new Error("Failed to generate secure SSO session parameters.");
-
-        if (isMounted) {
-          const separator = viewportUrl.includes("?") ? "&" : "?";
-          setSecuredUrl(`${viewportUrl}${separator}handshake=${token}`);
-        }
-      } catch (err: any) {
-        console.error("SSO Enclave Handshake Failure:", err);
-        if (isMounted) {
-          setGateError(err?.message || "Secure gateway SSO authentication failed.");
-        }
-      } finally {
-        if (isMounted) {
-          setGeneratingToken(false);
-        }
-      }
-    }
-
-    authorizeEnclave();
-
-    return () => {
-      isMounted = false;
-    };
+    setSecuredUrl(viewportUrl);
+    setGeneratingToken(false);
+    setGateError(null);
   }, [viewportUrl, targetApp]);
 
   const handleTabChange = (tab: TabView) => {

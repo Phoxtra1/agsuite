@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { supabase } from "@/integrations/supabase/client";
+import { account } from "@/lib/appwrite";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
@@ -77,20 +77,13 @@ export default function VerifyEmail() {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    // Get session to check verification status
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        setIsConfirmed(!!session.user.email_confirmed_at);
-        setUserRole(session.user.user_metadata?.role || "user");
-        setLoading(false);
-      } else {
-        // Fallback: Check if they are actually logged in
-        supabase.auth.getUser().then(({ data: { user } }) => {
-          setIsConfirmed(!!user?.email_confirmed_at);
-          setUserRole(user?.user_metadata?.role || "user");
-          setLoading(false);
-        });
-      }
+    account.get().then((user) => {
+      setIsConfirmed(user.emailVerification);
+      setUserRole((user.prefs?.role as string) || "user");
+      setLoading(false);
+    }).catch(() => {
+      setIsConfirmed(false);
+      setLoading(false);
     });
   }, []);
 

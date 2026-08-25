@@ -15,8 +15,8 @@ class BackendManager {
       const stored = localStorage.getItem("amineva_backend") as BackendType | null;
       if (stored === "lovable" || stored === "appwrite") return stored;
     } catch {}
-    // Default to lovable
-    return (import.meta.env.VITE_BACKEND_PROVIDER as BackendType) || "lovable";
+    // Default to appwrite
+    return (import.meta.env.VITE_BACKEND_PROVIDER as BackendType) || "appwrite";
   }
 
   /** Switch backend dynamically and notify all listeners */
