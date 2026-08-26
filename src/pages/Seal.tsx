@@ -154,11 +154,11 @@ export default function Seal() {
     navigate("/suite", { replace: true });
   };
 
-  // Switch to login tab and pre-fill created ID
+  // Switch to login tab and pre-fill created ID (keeping PIN empty for maximum security)
   const handleSwitchToLoginWithCred = () => {
     if (createdCred) {
       setLoginId(createdCred.id);
-      setLoginPin(createdCred.pin);
+      setLoginPin("");
     }
     setShowModal(false);
     setMode("login");
@@ -325,7 +325,7 @@ export default function Seal() {
 
         {/* Mode 1: Login via ID / Recovery ID & PIN */}
         {mode === "login" && (
-          <form onSubmit={handleLoginSubmit} className="space-y-4">
+          <form onSubmit={handleLoginSubmit} autoComplete="off" data-form-type="other" className="space-y-4">
             <div>
               <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                 Admin ID or Recovery ID
@@ -338,6 +338,11 @@ export default function Seal() {
                   onChange={(e) => setLoginId(e.target.value)}
                   required
                   autoFocus
+                  autoComplete="off"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  data-lpignore="true"
                   className="h-11 bg-slate-950/70 border-white/10 text-white placeholder-slate-500 focus-visible:ring-emerald-500/40 uppercase tracking-wide font-mono text-sm pr-9"
                 />
                 <Shield className="h-4 w-4 text-slate-500 absolute right-3 top-3.5 pointer-events-none" />
@@ -356,6 +361,11 @@ export default function Seal() {
                   onChange={(e) => setLoginPin(e.target.value)}
                   required
                   maxLength={12}
+                  autoComplete="new-password"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  data-lpignore="true"
                   className="h-11 bg-slate-950/70 border-white/10 text-white placeholder-slate-500 focus-visible:ring-emerald-500/40 font-mono tracking-widest text-sm pr-10"
                 />
                 <button
@@ -397,7 +407,7 @@ export default function Seal() {
 
         {/* Mode 2: Create Admin ID & PIN */}
         {mode === "create" && (
-          <form onSubmit={handleCreateSubmit} className="space-y-4">
+          <form onSubmit={handleCreateSubmit} autoComplete="off" data-form-type="other" className="space-y-4">
             <div>
               <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                 Position / Title
@@ -408,6 +418,8 @@ export default function Seal() {
                 value={position}
                 onChange={(e) => setPosition(e.target.value)}
                 required
+                autoComplete="off"
+                data-lpignore="true"
                 className="h-11 bg-slate-950/70 border-white/10 text-white placeholder-slate-500 focus-visible:ring-emerald-500/40 text-sm"
               />
               {/* Presets */}
@@ -441,6 +453,11 @@ export default function Seal() {
                   onChange={(e) => setCreatePin(e.target.value)}
                   required
                   maxLength={12}
+                  autoComplete="new-password"
+                  autoCorrect="off"
+                  autoCapitalize="off"
+                  spellCheck={false}
+                  data-lpignore="true"
                   className="h-11 bg-slate-950/70 border-white/10 text-white placeholder-slate-500 focus-visible:ring-emerald-500/40 font-mono tracking-widest text-sm pr-10"
                 />
                 <button
@@ -464,6 +481,11 @@ export default function Seal() {
                 onChange={(e) => setConfirmPin(e.target.value)}
                 required
                 maxLength={12}
+                autoComplete="new-password"
+                autoCorrect="off"
+                autoCapitalize="off"
+                spellCheck={false}
+                data-lpignore="true"
                 className="h-11 bg-slate-950/70 border-white/10 text-white placeholder-slate-500 focus-visible:ring-emerald-500/40 font-mono tracking-widest text-sm"
               />
             </div>
@@ -662,11 +684,12 @@ export default function Seal() {
                   </div>
                 </div>
 
-                {/* PIN Reminder */}
+                {/* PIN Security Indicator (Confidential & Masked) */}
                 <div className="bg-slate-950/60 border border-white/5 rounded-lg p-2.5 flex items-center justify-between text-xs">
-                  <span className="text-slate-400">Created PIN:</span>
-                  <span className="font-mono font-bold text-white tracking-widest">
-                    {createdCred.pin}
+                  <span className="text-slate-400">Security PIN Status:</span>
+                  <span className="font-mono font-bold text-emerald-400 tracking-widest flex items-center gap-1.5">
+                    <Lock className="h-3.5 w-3.5 text-emerald-400" />
+                    <span>Protected (Keep Confidential)</span>
                   </span>
                 </div>
 
@@ -698,13 +721,13 @@ export default function Seal() {
                   <Button
                     variant="outline"
                     onClick={() => {
-                      const text = `Position: ${createdCred.position}\nMain Admin ID: ${createdCred.id}\nRecovery ID: ${createdCred.recoveryId}\nPIN: ${createdCred.pin}`;
+                      const text = `Position: ${createdCred.position}\nMain Admin ID: ${createdCred.id}\nRecovery ID: ${createdCred.recoveryId}\nSecurity Note: Keep your PIN confidential.`;
                       handleCopy(text, "all");
                     }}
                     className="h-10 border-white/10 hover:bg-white/5 text-slate-300 text-xs gap-1.5"
                   >
                     {copiedAll ? <Check className="h-3.5 w-3.5 text-emerald-400" /> : <Copy className="h-3.5 w-3.5" />}
-                    <span>{copiedAll ? "Copied All" : "Copy All Details"}</span>
+                    <span>{copiedAll ? "Copied Details" : "Copy Details"}</span>
                   </Button>
 
                   <Button

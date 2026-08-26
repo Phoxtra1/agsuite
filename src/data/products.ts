@@ -207,8 +207,14 @@ export async function fetchAdminProducts(): Promise<ProductData[]> {
     }
 
     const fetched = docs.map(docToProduct);
-    writeLocal(LOCAL_ADMIN_KEY, fetched);
-    return fetched;
+    // Merge fetched with cached items to ensure locally updated links/products persist permanently across refreshes
+    const mergedMap = new Map<string, ProductData>();
+    cached.forEach((p) => mergedMap.set(p.id, p));
+    fetched.forEach((p) => mergedMap.set(p.id, p));
+    const merged = Array.from(mergedMap.values());
+
+    writeLocal(LOCAL_ADMIN_KEY, merged);
+    return merged;
   } catch (error) {
     console.warn("[Appwrite Products] Using cached admin products due to fetch error:", error);
     return cached;
@@ -242,8 +248,13 @@ export async function fetchCategoryProducts(): Promise<ProductData[]> {
     }
 
     const fetched = docs.map(docToProduct);
-    writeLocal(LOCAL_CATEGORY_KEY, fetched);
-    return fetched;
+    const mergedMap = new Map<string, ProductData>();
+    cached.forEach((p) => mergedMap.set(p.id, p));
+    fetched.forEach((p) => mergedMap.set(p.id, p));
+    const merged = Array.from(mergedMap.values());
+
+    writeLocal(LOCAL_CATEGORY_KEY, merged);
+    return merged;
   } catch (error) {
     console.warn("[Appwrite Products] Using cached category products due to fetch error:", error);
     return cached;
