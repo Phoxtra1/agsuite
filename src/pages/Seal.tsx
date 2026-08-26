@@ -326,12 +326,17 @@ export default function Seal() {
         {/* Mode 1: Login via ID / Recovery ID & PIN */}
         {mode === "login" && (
           <form onSubmit={handleLoginSubmit} autoComplete="off" data-form-type="other" className="space-y-4">
+            {/* Decoy hidden fields to trap browser password managers */}
+            <input type="text" name="decoy_user_prevent_autofill" style={{ display: "none" }} tabIndex={-1} autoComplete="off" />
+            <input type="password" name="decoy_pass_prevent_autofill" style={{ display: "none" }} tabIndex={-1} autoComplete="new-password" />
+
             <div>
               <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                 Admin ID or Recovery ID
               </label>
               <div className="relative">
                 <Input
+                  name="amv_sec_no_autofill_id"
                   type="text"
                   placeholder="e.g. AMV-SEC-001 or AMV-REC-999001"
                   value={loginId}
@@ -343,6 +348,8 @@ export default function Seal() {
                   autoCapitalize="off"
                   spellCheck={false}
                   data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-bwignore="true"
                   className="h-11 bg-slate-950/70 border-white/10 text-white placeholder-slate-500 focus-visible:ring-emerald-500/40 uppercase tracking-wide font-mono text-sm pr-9"
                 />
                 <Shield className="h-4 w-4 text-slate-500 absolute right-3 top-3.5 pointer-events-none" />
@@ -355,6 +362,7 @@ export default function Seal() {
               </label>
               <div className="relative">
                 <Input
+                  name="amv_sec_no_autofill_pin"
                   type={showLoginPin ? "text" : "password"}
                   placeholder="Enter 4-6 digit PIN"
                   value={loginPin}
@@ -366,6 +374,8 @@ export default function Seal() {
                   autoCapitalize="off"
                   spellCheck={false}
                   data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-bwignore="true"
                   className="h-11 bg-slate-950/70 border-white/10 text-white placeholder-slate-500 focus-visible:ring-emerald-500/40 font-mono tracking-widest text-sm pr-10"
                 />
                 <button
@@ -408,11 +418,16 @@ export default function Seal() {
         {/* Mode 2: Create Admin ID & PIN */}
         {mode === "create" && (
           <form onSubmit={handleCreateSubmit} autoComplete="off" data-form-type="other" className="space-y-4">
+            {/* Decoy hidden fields to trap browser password managers */}
+            <input type="text" name="decoy_user_prevent_autofill" style={{ display: "none" }} tabIndex={-1} autoComplete="off" />
+            <input type="password" name="decoy_pass_prevent_autofill" style={{ display: "none" }} tabIndex={-1} autoComplete="new-password" />
+
             <div>
               <label className="block text-[11px] font-semibold text-slate-400 uppercase tracking-wider mb-1.5">
                 Position / Title
               </label>
               <Input
+                name="amv_sec_no_autofill_position"
                 type="text"
                 placeholder="e.g. System Manager, Operations Lead"
                 value={position}
@@ -420,6 +435,8 @@ export default function Seal() {
                 required
                 autoComplete="off"
                 data-lpignore="true"
+                data-1p-ignore="true"
+                data-bwignore="true"
                 className="h-11 bg-slate-950/70 border-white/10 text-white placeholder-slate-500 focus-visible:ring-emerald-500/40 text-sm"
               />
               {/* Presets */}
@@ -447,6 +464,7 @@ export default function Seal() {
               </label>
               <div className="relative">
                 <Input
+                  name="amv_sec_no_autofill_newpin"
                   type={showCreatePin ? "text" : "password"}
                   placeholder="Create 4-6 digit numeric PIN"
                   value={createPin}
@@ -458,6 +476,8 @@ export default function Seal() {
                   autoCapitalize="off"
                   spellCheck={false}
                   data-lpignore="true"
+                  data-1p-ignore="true"
+                  data-bwignore="true"
                   className="h-11 bg-slate-950/70 border-white/10 text-white placeholder-slate-500 focus-visible:ring-emerald-500/40 font-mono tracking-widest text-sm pr-10"
                 />
                 <button
@@ -475,6 +495,7 @@ export default function Seal() {
                 Confirm Security PIN
               </label>
               <Input
+                name="amv_sec_no_autofill_confirmpin"
                 type="password"
                 placeholder="Re-enter PIN to verify"
                 value={confirmPin}
@@ -486,6 +507,8 @@ export default function Seal() {
                 autoCapitalize="off"
                 spellCheck={false}
                 data-lpignore="true"
+                data-1p-ignore="true"
+                data-bwignore="true"
                 className="h-11 bg-slate-950/70 border-white/10 text-white placeholder-slate-500 focus-visible:ring-emerald-500/40 font-mono tracking-widest text-sm"
               />
             </div>

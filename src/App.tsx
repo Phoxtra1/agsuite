@@ -13,6 +13,7 @@ import { ACSEmitter, startACSEmitter, stopACSEmitter } from "@/core/acs/emitter"
 import { AppAuthGate } from "@/components/auth/AppAuthGate";
 import { WorkspaceGate } from "@/components/workspace/WorkspaceGate";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
+import { useIdleSignout } from "@/hooks/useIdleSignout";
 
 /* Lazy Pages */
 const Landing = lazyWithRetry(() => import("./pages/landing/Landing"));
@@ -249,6 +250,11 @@ function AppRoutes() {
   );
 }
 
+function AppIdleGuard() {
+  useIdleSignout();
+  return null;
+}
+
 export default function App() {
   const [ready, setReady] = useState(false);
   const handleFinish = useCallback(() => setReady(true), []);
@@ -270,6 +276,7 @@ export default function App() {
             <Sonner />
             <HashNormalizer />
             <AppTelemetry />
+            <AppIdleGuard />
             <AppRoutes />
           </TooltipProvider>
         </AuthProvider>
