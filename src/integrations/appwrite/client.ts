@@ -381,7 +381,24 @@ const authAdapter = {
         error: null,
       };
     } catch (err: any) {
-      return { data: { user: null, session: null }, error: { message: err?.message || "Sign up failed" } };
+      const msg = err?.message || "";
+      if (err?.code === 409 || err?.type === "user_already_exists" || msg.includes("already exists")) {
+        // Attempt login if user is registering again with matching credentials
+        try {
+          const session = await account.createEmailPasswordSession(email, password);
+          const user = await account.get();
+          return {
+            data: {
+              user: { id: user.$id, email: user.email, user_metadata: { name: user.name, ...(options?.data || {}) } },
+              session,
+            },
+            error: null,
+          };
+        } catch {
+          return { data: { user: null, session: null }, error: { message: "An account with this email already exists. Please sign in." } };
+        }
+      }
+      return { data: { user: null, session: null }, error: { message: msg || "Sign up failed" } };
     }
   },
 

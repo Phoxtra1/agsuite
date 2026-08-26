@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 
 export type AuthResult<T> = { data: T } | { error: string };
 
@@ -36,7 +36,13 @@ export async function logout() {
 export function isAlreadyRegisteredError(err: unknown): boolean {
   if (err && typeof err === "object" && "message" in err) {
     const msg = ((err as any).message as string).toLowerCase();
-    return msg.includes("already registered") || msg.includes("user already registered") || msg.includes("already exists");
+    return (
+      msg.includes("already registered") ||
+      msg.includes("user already registered") ||
+      msg.includes("already exists") ||
+      msg.includes("user_already_exists") ||
+      msg.includes("409")
+    );
   }
   return false;
 }
@@ -44,9 +50,9 @@ export function isAlreadyRegisteredError(err: unknown): boolean {
 export function formatAuthError(err: unknown): string {
   if (err && typeof err === "object" && "message" in err) {
     const msg = (err as any).message as string;
-    if (msg.includes("Invalid login")) return "Invalid email or password.";
+    if (msg.includes("Invalid login") || msg.includes("Invalid credentials")) return "Invalid email or password.";
     if (msg.includes("Email not confirmed")) return "Please verify your email before signing in.";
-    if (isAlreadyRegisteredError(err)) return "This email is already registered.";
+    if (isAlreadyRegisteredError(err)) return "This email is already registered. Please sign in.";
     return msg;
   }
   return "An unexpected error occurred.";
