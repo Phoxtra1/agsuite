@@ -14,6 +14,17 @@ interface AppRow {
   status: string;
 }
 
+const DEFAULT_SUB_PRODUCTS: AppRow[] = [
+  { id: "agis", app_slug: "agis", app_name: "AGIS Intelligence", app_type: "spatial", status: "active" },
+  { id: "agstock", app_slug: "agstock", app_name: "AG Stock Engine", app_type: "inventory", status: "active" },
+  { id: "aminevaops", app_slug: "aminevaops", app_name: "Sikasɛm Financial Ops", app_type: "financial", status: "active" },
+  { id: "workspace", app_slug: "workspace", app_name: "Amineva Workspace", app_type: "workspace", status: "active" },
+  { id: "agroclimate", app_slug: "agroclimate", app_name: "AgroClimate", app_type: "climate", status: "active" },
+  { id: "adesua", app_slug: "adesua", app_name: "Adesua Learning", app_type: "education", status: "active" },
+  { id: "datalens", app_slug: "datalens", app_name: "DataLens Intel", app_type: "intel", status: "active" },
+  { id: "amniva", app_slug: "amniva", app_name: "Amniva Intelligence", app_type: "bi", status: "active" },
+];
+
 type ChecklistState = Record<string, { env: boolean; gate: boolean }>;
 
 const STORAGE_KEY = "suite_release_checklist";
@@ -27,18 +38,25 @@ const loadState = (): ChecklistState => {
 };
 
 export default function SubProductReleaseChecklist() {
-  const [apps, setApps] = useState<AppRow[]>([]);
+  const [apps, setApps] = useState<AppRow[]>(DEFAULT_SUB_PRODUCTS);
   const [state, setState] = useState<ChecklistState>(() => loadState());
   const [loading, setLoading] = useState(false);
 
   const loadApps = async () => {
     setLoading(true);
-    const { data } = await supabase
-      .from("applications")
-      .select("id, app_slug, app_name, app_type, status")
-      .neq("app_slug", "suite")
-      .order("app_name");
-    setApps((data as AppRow[]) ?? []);
+    try {
+      const { data } = await supabase
+        .from("applications")
+        .select("id, app_slug, app_name, app_type, status")
+        .neq("app_slug", "suite");
+      if (data && data.length > 0) {
+        setApps(data as AppRow[]);
+      } else {
+        setApps(DEFAULT_SUB_PRODUCTS);
+      }
+    } catch {
+      setApps(DEFAULT_SUB_PRODUCTS);
+    }
     setLoading(false);
   };
 
