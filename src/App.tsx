@@ -155,20 +155,12 @@ function AppTelemetry() {
 }
 
 function SuiteGuard() {
-  // In preview/dev, render the Suite directly so hot-reloads and direct
-  // visits to /suite never bounce back to "/". Production keeps the
-  // seal-auth requirement and the per-app authorization gate.
-  if (isPreview()) {
+  // If preview or authenticated via Seal Auth (Admin ID & PIN), grant direct access to Suite & Amineva Console.
+  if (isPreview() || isSealAuthenticated()) {
     return <Suite />;
   }
 
-  if (!isSealAuthenticated()) return <Navigate to="/" replace />;
-
-  return (
-    <AppAuthGate>
-      <Suite />
-    </AppAuthGate>
-  );
+  return <Navigate to="/" replace />;
 }
 
 function PublicHome() {

@@ -38,10 +38,10 @@ const DEFAULT_SYSTEM_CRED: AdminCredential = {
 };
 
 export function getSealSession(): { token: string; email: string; position?: string; id?: string } | null {
-  const token = sessionStorage.getItem(SEAL_KEY);
-  const email = sessionStorage.getItem(SEAL_EMAIL_KEY);
-  const position = sessionStorage.getItem(SEAL_POSITION_KEY) || undefined;
-  const id = sessionStorage.getItem(SEAL_ADMIN_ID_KEY) || undefined;
+  const token = sessionStorage.getItem(SEAL_KEY) || localStorage.getItem(SEAL_KEY);
+  const email = sessionStorage.getItem(SEAL_EMAIL_KEY) || localStorage.getItem(SEAL_EMAIL_KEY);
+  const position = sessionStorage.getItem(SEAL_POSITION_KEY) || localStorage.getItem(SEAL_POSITION_KEY) || undefined;
+  const id = sessionStorage.getItem(SEAL_ADMIN_ID_KEY) || localStorage.getItem(SEAL_ADMIN_ID_KEY) || undefined;
   if (token && email) return { token, email, position, id };
   return null;
 }
@@ -49,8 +49,16 @@ export function getSealSession(): { token: string; email: string; position?: str
 export function setSealSession(token: string, email: string, position?: string, id?: string) {
   sessionStorage.setItem(SEAL_KEY, token);
   sessionStorage.setItem(SEAL_EMAIL_KEY, email);
-  if (position) sessionStorage.setItem(SEAL_POSITION_KEY, position);
-  if (id) sessionStorage.setItem(SEAL_ADMIN_ID_KEY, id);
+  localStorage.setItem(SEAL_KEY, token);
+  localStorage.setItem(SEAL_EMAIL_KEY, email);
+  if (position) {
+    sessionStorage.setItem(SEAL_POSITION_KEY, position);
+    localStorage.setItem(SEAL_POSITION_KEY, position);
+  }
+  if (id) {
+    sessionStorage.setItem(SEAL_ADMIN_ID_KEY, id);
+    localStorage.setItem(SEAL_ADMIN_ID_KEY, id);
+  }
 }
 
 export function clearSealSession() {
@@ -58,6 +66,10 @@ export function clearSealSession() {
   sessionStorage.removeItem(SEAL_EMAIL_KEY);
   sessionStorage.removeItem(SEAL_POSITION_KEY);
   sessionStorage.removeItem(SEAL_ADMIN_ID_KEY);
+  localStorage.removeItem(SEAL_KEY);
+  localStorage.removeItem(SEAL_EMAIL_KEY);
+  localStorage.removeItem(SEAL_POSITION_KEY);
+  localStorage.removeItem(SEAL_ADMIN_ID_KEY);
 }
 
 export function isSealAuthenticated(): boolean {
