@@ -6,7 +6,7 @@ import { formatAuthError, isAlreadyRegisteredError } from "@/lib/auth";
 import { getProductRedirectUrl } from "@/lib/productRouting";
 import { loadAppAccess } from "@/lib/auth/appAccess";
 import { Mail } from "lucide-react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 
 interface AuthCardProps {
   product: ProductData;

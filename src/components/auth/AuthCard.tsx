@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useAuth } from "@/contexts/AuthContext";
 import { loadAppAccess } from "@/lib/auth/appAccess";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 import { Mail } from "lucide-react";
 
 interface AuthCardProps {

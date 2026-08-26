@@ -92,7 +92,7 @@ interface CollectionSchema {
   attributes: AttributeSchema[];
 }
 
-// Database schema definition for AG Suite
+// Complete Database Schema definition for AG Suite
 const collectionsSchema: CollectionSchema[] = [
   {
     id: 'profiles',
@@ -147,6 +147,157 @@ const collectionsSchema: CollectionSchema[] = [
     ],
   },
   {
+    id: 'applications',
+    name: 'Suite Applications',
+    attributes: [
+      { key: 'app_id', type: 'string', size: 255, required: true },
+      { key: 'app_name', type: 'string', size: 255, required: true },
+      { key: 'app_slug', type: 'string', size: 255, required: true },
+      { key: 'app_type', type: 'string', size: 50, required: false },
+      { key: 'status', type: 'string', size: 50, required: false },
+    ],
+  },
+  {
+    id: 'user_app_access',
+    name: 'User Application Access',
+    attributes: [
+      { key: 'user_id', type: 'string', size: 255, required: true },
+      { key: 'app_id', type: 'string', size: 255, required: true },
+      { key: 'role', type: 'string', size: 100, required: false },
+      { key: 'active', type: 'boolean', required: false, default: true },
+    ],
+  },
+  {
+    id: 'acs_events',
+    name: 'ACS Events',
+    attributes: [
+      { key: 'type', type: 'string', size: 255, required: true },
+      { key: 'source', type: 'string', size: 255, required: true },
+      { key: 'payload', type: 'string', size: 10000, required: false },
+      { key: 'user_id', type: 'string', size: 255, required: false },
+    ],
+  },
+  {
+    id: 'acs_raw_data',
+    name: 'ACS Raw Data',
+    attributes: [
+      { key: 'platform', type: 'string', size: 255, required: true },
+      { key: 'dataset_type', type: 'string', size: 255, required: true },
+      { key: 'raw_payload', type: 'string', size: 100000, required: false },
+      { key: 'ingested_at', type: 'string', size: 255, required: false },
+    ],
+  },
+  {
+    id: 'acs_intelligence_outputs',
+    name: 'ACS Intelligence Outputs',
+    attributes: [
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'category', type: 'string', size: 255, required: true },
+      { key: 'intelligence', type: 'string', size: 100000, required: false },
+      { key: 'confidence', type: 'float', required: false },
+    ],
+  },
+  {
+    id: 'acs_sync_logs',
+    name: 'ACS Sync Logs',
+    attributes: [
+      { key: 'source', type: 'string', size: 255, required: true },
+      { key: 'status', type: 'string', size: 100, required: true },
+      { key: 'records_synced', type: 'integer', required: false, default: 0 },
+    ],
+  },
+  {
+    id: 'acs_processing_logs',
+    name: 'ACS Processing Logs',
+    attributes: [
+      { key: 'pipeline', type: 'string', size: 255, required: true },
+      { key: 'status', type: 'string', size: 100, required: true },
+      { key: 'input_count', type: 'integer', required: false, default: 0 },
+      { key: 'output_count', type: 'integer', required: false, default: 0 },
+    ],
+  },
+  {
+    id: 'acs_daily_intelligence_cache',
+    name: 'ACS Daily Intelligence Cache',
+    attributes: [
+      { key: 'cache_key', type: 'string', size: 255, required: true },
+      { key: 'data', type: 'string', size: 100000, required: false },
+      { key: 'created_at', type: 'string', size: 255, required: false },
+    ],
+  },
+  {
+    id: 'coms_templates',
+    name: 'COMS Email Templates',
+    attributes: [
+      { key: 'template_id', type: 'string', size: 255, required: true },
+      { key: 'name', type: 'string', size: 255, required: true },
+      { key: 'subject', type: 'string', size: 255, required: false },
+      { key: 'body', type: 'string', size: 10000, required: false },
+      { key: 'category', type: 'string', size: 100, required: false },
+    ],
+  },
+  {
+    id: 'campaigns',
+    name: 'COMS Campaigns',
+    attributes: [
+      { key: 'name', type: 'string', size: 255, required: true },
+      { key: 'type', type: 'string', size: 100, required: true },
+      { key: 'status', type: 'string', size: 100, required: true },
+      { key: 'audience', type: 'integer', required: false, default: 0 },
+    ],
+  },
+  {
+    id: 'coms_logs',
+    name: 'COMS Activity Logs',
+    attributes: [
+      { key: 'channel', type: 'string', size: 100, required: true },
+      { key: 'event', type: 'string', size: 255, required: true },
+      { key: 'recipient', type: 'string', size: 255, required: true },
+      { key: 'delivery_status', type: 'string', size: 100, required: true },
+    ],
+  },
+  {
+    id: 'inbound_messages',
+    name: 'COMS Inbound Messages',
+    attributes: [
+      { key: 'sender', type: 'string', size: 255, required: true },
+      { key: 'subject', type: 'string', size: 255, required: true },
+      { key: 'body', type: 'string', size: 10000, required: true },
+      { key: 'channel', type: 'string', size: 100, required: true },
+    ],
+  },
+  {
+    id: 'support_tickets',
+    name: 'Support Tickets',
+    attributes: [
+      { key: 'ticket_id', type: 'string', size: 255, required: true },
+      { key: 'user_id', type: 'string', size: 255, required: true },
+      { key: 'subject', type: 'string', size: 255, required: true },
+      { key: 'status', type: 'string', size: 50, required: true },
+      { key: 'priority', type: 'string', size: 50, required: false },
+      { key: 'message', type: 'string', size: 10000, required: false },
+      { key: 'created_at', type: 'string', size: 255, required: false },
+    ],
+  },
+  {
+    id: 'ticket_attachments',
+    name: 'Ticket Attachments',
+    attributes: [
+      { key: 'ticket_id', type: 'string', size: 255, required: true },
+      { key: 'file_name', type: 'string', size: 255, required: true },
+      { key: 'storage_path', type: 'string', size: 1024, required: true },
+    ],
+  },
+  {
+    id: 'ticket_audit_log',
+    name: 'Ticket Audit Log',
+    attributes: [
+      { key: 'ticket_id', type: 'string', size: 255, required: true },
+      { key: 'action', type: 'string', size: 255, required: true },
+      { key: 'details', type: 'string', size: 1000, required: false },
+    ],
+  },
+  {
     id: 'workspace_documents',
     name: 'Workspace Documents',
     attributes: [
@@ -175,6 +326,15 @@ const collectionsSchema: CollectionSchema[] = [
       { key: 'document_id', type: 'string', size: 255, required: true },
       { key: 'shared_with_id', type: 'string', size: 255, required: true },
       { key: 'permission_level', type: 'string', size: 50, required: true },
+    ],
+  },
+  {
+    id: 'workspace_document_comments',
+    name: 'Workspace Document Comments',
+    attributes: [
+      { key: 'document_id', type: 'string', size: 255, required: true },
+      { key: 'author_id', type: 'string', size: 255, required: true },
+      { key: 'body', type: 'string', size: 5000, required: true },
     ],
   },
   {
@@ -218,45 +378,51 @@ const collectionsSchema: CollectionSchema[] = [
     ],
   },
   {
-    id: 'support_tickets',
-    name: 'Support Tickets',
+    id: 'workspace_forms',
+    name: 'Workspace Forms',
     attributes: [
-      { key: 'ticket_id', type: 'string', size: 255, required: true },
+      { key: 'form_id', type: 'string', size: 255, required: true },
+      { key: 'title', type: 'string', size: 255, required: true },
+      { key: 'schema_json', type: 'string', size: 100000, required: false },
+      { key: 'owner_id', type: 'string', size: 255, required: true },
+    ],
+  },
+  {
+    id: 'workspace_drive_state',
+    name: 'Workspace Drive State',
+    attributes: [
       { key: 'user_id', type: 'string', size: 255, required: true },
-      { key: 'subject', type: 'string', size: 255, required: true },
-      { key: 'status', type: 'string', size: 50, required: true },
-      { key: 'priority', type: 'string', size: 50, required: false },
-      { key: 'message', type: 'string', size: 10000, required: false },
-      { key: 'created_at', type: 'string', size: 255, required: false },
+      { key: 'state_json', type: 'string', size: 100000, required: false },
     ],
   },
   {
-    id: 'coms_templates',
-    name: 'COMS Email Templates',
+    id: 'drive_folders',
+    name: 'Drive Folders',
     attributes: [
-      { key: 'template_id', type: 'string', size: 255, required: true },
       { key: 'name', type: 'string', size: 255, required: true },
-      { key: 'subject', type: 'string', size: 255, required: false },
-      { key: 'body', type: 'string', size: 10000, required: false },
-      { key: 'category', type: 'string', size: 100, required: false },
+      { key: 'owner_id', type: 'string', size: 255, required: true },
+      { key: 'parent_id', type: 'string', size: 255, required: false },
     ],
   },
   {
-    id: 'applications',
-    name: 'Suite Applications',
+    id: 'drive_files',
+    name: 'Drive Files',
     attributes: [
-      { key: 'app_id', type: 'string', size: 255, required: true },
       { key: 'name', type: 'string', size: 255, required: true },
-      { key: 'status', type: 'string', size: 50, required: false },
+      { key: 'kind', type: 'string', size: 50, required: true },
+      { key: 'owner_id', type: 'string', size: 255, required: true },
+      { key: 'folder_id', type: 'string', size: 255, required: false },
+      { key: 'storage_path', type: 'string', size: 1024, required: false },
+      { key: 'size_bytes', type: 'integer', required: false, default: 0 },
     ],
   },
   {
-    id: 'acs_daily_intelligence_cache',
-    name: 'ACS Daily Intelligence Cache',
+    id: 'drive_shares',
+    name: 'Drive Shares',
     attributes: [
-      { key: 'cache_key', type: 'string', size: 255, required: true },
-      { key: 'data', type: 'string', size: 100000, required: false },
-      { key: 'created_at', type: 'string', size: 255, required: false },
+      { key: 'file_id', type: 'string', size: 255, required: true },
+      { key: 'token', type: 'string', size: 255, required: true },
+      { key: 'access', type: 'string', size: 50, required: true },
     ],
   },
   {
@@ -271,6 +437,12 @@ const collectionsSchema: CollectionSchema[] = [
       { key: 'updatedAt', type: 'string', size: 255, required: false },
     ],
   },
+];
+
+const storageBuckets = [
+  { id: 'suite_assets', name: 'Suite Assets' },
+  { id: 'workspace-drive', name: 'Workspace Drive Storage' },
+  { id: 'ticket-attachments', name: 'Support Ticket Attachments' },
 ];
 
 async function runProvisioning(): Promise<void> {
@@ -353,6 +525,29 @@ async function runProvisioning(): Promise<void> {
       } else {
         console.error(`  x Failed to create attribute '${attr.key}':`, createAttr.data);
       }
+    }
+  }
+
+  // 3. Ensure Storage Buckets exist
+  for (const b of storageBuckets) {
+    console.log(`Checking storage bucket '${b.id}'...`);
+    const bCheck = await apiRequest('GET', `/storage/buckets/${b.id}`);
+    if (!bCheck.ok) {
+      console.log(`Creating storage bucket '${b.id}'...`);
+      const createB = await apiRequest('POST', '/storage/buckets', {
+        bucketId: b.id,
+        name: b.name,
+        permissions: ['read("any")', 'create("users")', 'update("users")', 'delete("users")'],
+        fileSecurity: false,
+        enabled: true,
+      });
+      if (createB.ok) {
+        console.log(`Storage bucket '${b.id}' created.`);
+      } else {
+        console.error(`Failed to create bucket '${b.id}':`, createB.data);
+      }
+    } else {
+      console.log(`Storage bucket '${b.id}' already exists.`);
     }
   }
 

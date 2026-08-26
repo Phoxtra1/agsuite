@@ -1,14 +1,11 @@
 // src/components/acs/ACSModule.tsx
 // PURPOSE: Amineva Central Server — real-time intelligence infrastructure
-// Tabs: Monitor | Data Lake | Intelligence | Alerts | Connection
 
 import React, { useState, useEffect } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Database, Brain, Bell, Plug, Activity } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Wifi, WifiOff, Radio } from 'lucide-react';
-import BackendManager from '@/core/backend/BackendManager';
-import { toast } from 'sonner';
 import { ACSMonitorTab } from './tabs/ACSMonitorTab';
 import { ACSDataLakeTab } from './tabs/ACSDataLakeTab';
 import { ACSIntelligenceTab } from './tabs/ACSIntelligenceTab';
@@ -18,17 +15,9 @@ import { acs } from '@/core/backend';
 
 export function ACSModule() {
   const [topTab, setTopTab] = useState<string>('monitor');
-  const [currentBackend, setCurrentBackend] = useState(BackendManager.getBackend());
+  const currentBackend = 'appwrite';
   const [realtimeConnected, setRealtimeConnected] = useState(false);
   const [liveCount, setLiveCount] = useState(0);
-
-  useEffect(() => {
-    const unsub = BackendManager.onChange((b) => {
-      setCurrentBackend(b);
-      toast.info(`Backend switched to ${b}. Reloading ACS data…`);
-    });
-    return unsub;
-  }, []);
 
   // Realtime subscription
   useEffect(() => {
@@ -40,7 +29,7 @@ export function ACSModule() {
       setRealtimeConnected(false);
       unsub();
     };
-  }, [currentBackend]);
+  }, []);
 
   return (
     <div className="space-y-6">
@@ -55,8 +44,8 @@ export function ACSModule() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Badge variant="outline" className="gap-1 text-xs border-muted-foreground/50 text-muted-foreground">
-            {currentBackend === 'lovable' ? 'Cloud' : 'Appwrite'}
+          <Badge variant="outline" className="gap-1 text-xs border-primary text-primary">
+            Appwrite Native
           </Badge>
           {realtimeConnected ? (
             <Badge variant="outline" className="gap-1 text-xs border-primary text-primary">

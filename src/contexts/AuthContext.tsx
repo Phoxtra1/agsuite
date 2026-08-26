@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useRef,
 } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 import { clearLast2FAVerified } from "@/lib/stepUpAuth";
 import { checkLoginDevice } from "@/lib/auth/loginAlert";
 import { resetClientState } from "@/lib/auth/resetClientState";

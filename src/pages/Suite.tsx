@@ -11,7 +11,6 @@ import { AminevaConsole } from "@/components/admin/AminevaConsole";
 import { ComsSystem } from "@/components/coms/ComsSystem";
 import { ACSModule } from "@/components/acs/ACSModule";
 
-import { BackendToggle } from "@/components/suite/pages/BackendToggle";
 import { EmailVerificationBanner } from "@/components/suite/EmailVerificationBanner";
 import { useAppSession } from "@/components/auth/AppAuthGate";
 import { getSealSession } from "@/lib/sealAuth";
@@ -154,7 +153,6 @@ export default function Suite() {
 
       <main className="ml-64 p-8">
         <EmailVerificationBanner />
-        <BackendToggle />
 
         <Routes>
           <Route index element={<OverviewPage />} />

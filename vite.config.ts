@@ -2,7 +2,11 @@ import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
-import { VitePWA } from "vite-plugin-pwa";
+
+let VitePWA: any = null;
+try {
+  VitePWA = require("vite-plugin-pwa").VitePWA;
+} catch {}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -16,7 +20,7 @@ export default defineConfig(({ mode }) => ({
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    VitePWA({
+    VitePWA && VitePWA({
       registerType: "autoUpdate",
       injectRegister: null,
       devOptions: { enabled: false },
@@ -29,7 +33,7 @@ export default defineConfig(({ mode }) => ({
         navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
         runtimeCaching: [
           {
-            urlPattern: ({ request, url }) =>
+            urlPattern: ({ request, url }: any) =>
               request.mode === "navigate" && !url.pathname.startsWith("/~oauth"),
             handler: "NetworkFirst",
             options: {
@@ -39,7 +43,7 @@ export default defineConfig(({ mode }) => ({
             },
           },
           {
-            urlPattern: ({ url, sameOrigin }) =>
+            urlPattern: ({ url, sameOrigin }: any) =>
               sameOrigin && /\.(?:js|css|woff2|png|svg|jpg|jpeg|webp)$/.test(url.pathname),
             handler: "CacheFirst",
             options: {
