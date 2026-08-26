@@ -92,6 +92,28 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     isPublic: true,
   },
   {
+    id: "datalens",
+    name: "DataLens Intel",
+    shortName: "DataLens",
+    description: "Opportunity intelligence and automated outreach engine",
+    status: "live",
+    url: "https://datalens.amineva.com",
+    category: "data-intelligence",
+    order: 2,
+    isPublic: true,
+  },
+  {
+    id: "agroclimate",
+    name: "AgroClimate Telemetry",
+    shortName: "AgroClimate",
+    description: "Agricultural climate intelligence & harvest telemetry",
+    status: "live",
+    url: "https://agro.amineva.com",
+    category: "data-intelligence",
+    order: 3,
+    isPublic: true,
+  },
+  {
     id: "aminevaops",
     name: "Sikasɛm Financials",
     shortName: "Sikasɛm",
@@ -99,7 +121,7 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     status: "live",
     url: "https://ops.amineva.com",
     category: "financial-operations",
-    order: 2,
+    order: 4,
     isPublic: true,
   },
   {
@@ -110,7 +132,7 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     status: "live",
     url: "https://amniva.amineva.com",
     category: "business-intelligence",
-    order: 3,
+    order: 5,
     isPublic: true,
   },
   {
@@ -121,7 +143,29 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     status: "live",
     url: "https://www.amineva.com/workspace",
     category: "workspace",
-    order: 4,
+    order: 6,
+    isPublic: true,
+  },
+  {
+    id: "adesua",
+    name: "Adesua Learning",
+    shortName: "Adesua",
+    description: "Education platform & scholarship portal",
+    status: "live",
+    url: "https://as.amineva.com",
+    category: "learning-inventory",
+    order: 7,
+    isPublic: true,
+  },
+  {
+    id: "agstock",
+    name: "Inventra Stock",
+    shortName: "Inventra",
+    description: "Inventory & supply chain management engine",
+    status: "live",
+    url: "https://stock.amineva.com",
+    category: "learning-inventory",
+    order: 8,
     isPublic: true,
   },
 ];
@@ -195,22 +239,20 @@ export async function fetchAdminProducts(): Promise<ProductData[]> {
       ]);
       docs = res.documents;
     } catch {
-      // Query index might be missing; list all docs and filter in memory
       const res = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [Query.limit(100)]);
       docs = res.documents.filter((d: any) => d.product_type === "admin" || !d.product_type);
     }
 
     if (docs.length === 0) {
-      // Auto-seed default admin products in Appwrite asynchronously
       seedDefaults("admin", DEFAULT_ADMIN_PRODUCTS);
       return cached;
     }
 
     const fetched = docs.map(docToProduct);
-    // Merge fetched with cached items to ensure locally updated links/products persist permanently across refreshes
+    // Prioritize cached local items so admin local edits (like status: "offline", custom links) strictly override remote defaults
     const mergedMap = new Map<string, ProductData>();
-    cached.forEach((p) => mergedMap.set(p.id, p));
     fetched.forEach((p) => mergedMap.set(p.id, p));
+    cached.forEach((p) => mergedMap.set(p.id, p));
     const merged = Array.from(mergedMap.values());
 
     writeLocal(LOCAL_ADMIN_KEY, merged);
@@ -236,21 +278,20 @@ export async function fetchCategoryProducts(): Promise<ProductData[]> {
       ]);
       docs = res.documents;
     } catch {
-      // Query index might be missing; list all docs and filter in memory
       const res = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [Query.limit(100)]);
       docs = res.documents.filter((d: any) => d.product_type === "category");
     }
 
     if (docs.length === 0) {
-      // Auto-seed default category products in Appwrite asynchronously
       seedDefaults("category", DEFAULT_CATEGORY_PRODUCTS);
       return cached;
     }
 
     const fetched = docs.map(docToProduct);
+    // Prioritize cached local items so admin local edits (like status: "offline", custom links) strictly override remote defaults
     const mergedMap = new Map<string, ProductData>();
-    cached.forEach((p) => mergedMap.set(p.id, p));
     fetched.forEach((p) => mergedMap.set(p.id, p));
+    cached.forEach((p) => mergedMap.set(p.id, p));
     const merged = Array.from(mergedMap.values());
 
     writeLocal(LOCAL_CATEGORY_KEY, merged);
@@ -268,19 +309,37 @@ export async function upsertProduct(
   product: ProductData,
   productType: "admin" | "category"
 ): Promise<boolean> {
-  const cacheKey = productType === "admin" ? LOCAL_ADMIN_KEY : LOCAL_CATEGORY_KEY;
-  const currentLocal = readLocal(cacheKey, productType === "admin" ? DEFAULT_ADMIN_PRODUCTS : DEFAULT_CATEGORY_PRODUCTS);
+  const primaryCacheKey = productType === "admin" ? LOCAL_ADMIN_KEY : LOCAL_CATEGORY_KEY;
+  const secondaryCacheKey = productType === "admin" ? LOCAL_CATEGORY_KEY : LOCAL_ADMIN_KEY;
 
-  // Optimistically update local cache immediately
-  const existingIdx = currentLocal.findIndex((p) => p.id === product.id);
-  let updatedLocal: ProductData[];
+  // 1. Update primary local cache immediately
+  const primaryLocal = readLocal(primaryCacheKey, productType === "admin" ? DEFAULT_ADMIN_PRODUCTS : DEFAULT_CATEGORY_PRODUCTS);
+  const existingIdx = primaryLocal.findIndex((p) => p.id === product.id);
+  let updatedPrimary: ProductData[];
   if (existingIdx >= 0) {
-    updatedLocal = [...currentLocal];
-    updatedLocal[existingIdx] = product;
+    updatedPrimary = [...primaryLocal];
+    updatedPrimary[existingIdx] = product;
   } else {
-    updatedLocal = [...currentLocal, product];
+    updatedPrimary = [...primaryLocal, product];
   }
-  writeLocal(cacheKey, updatedLocal);
+  writeLocal(primaryCacheKey, updatedPrimary);
+
+  // 2. Also update secondary cache so Homepage & Console stay 100% synchronized
+  const secondaryLocal = readLocal(secondaryCacheKey, productType === "admin" ? DEFAULT_CATEGORY_PRODUCTS : DEFAULT_ADMIN_PRODUCTS);
+  const secIdx = secondaryLocal.findIndex((p) => p.id === product.id);
+  if (secIdx >= 0) {
+    const updatedSec = [...secondaryLocal];
+    updatedSec[secIdx] = {
+      ...updatedSec[secIdx],
+      name: product.name,
+      shortName: product.shortName || updatedSec[secIdx].shortName,
+      description: product.description || updatedSec[secIdx].description,
+      status: product.status,
+      url: product.url || updatedSec[secIdx].url,
+      adminUrl: product.adminUrl || updatedSec[secIdx].adminUrl,
+    };
+    writeLocal(secondaryCacheKey, updatedSec);
+  }
 
   // Sync to Appwrite
   try {
@@ -294,7 +353,6 @@ export async function upsertProduct(
       ]);
       if (existing.documents.length > 0) docId = existing.documents[0].$id;
     } catch {
-      // Query equal on "id" failed; try listing all and searching manually
       const all = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [Query.limit(100)]);
       const match = all.documents.find((d: any) => d.id === product.id || d.$id === product.id);
       if (match) docId = match.$id;
@@ -308,7 +366,7 @@ export async function upsertProduct(
     return true;
   } catch (error) {
     console.warn("[Appwrite Products] Appwrite upsert deferred, saved locally:", error);
-    return true; // Return true so UI operation completes successfully
+    return true;
   }
 }
 
