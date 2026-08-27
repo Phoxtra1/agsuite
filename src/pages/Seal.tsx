@@ -42,8 +42,8 @@ export default function Seal() {
   const [loginPin, setLoginPin] = useState("");
   const [showLoginPin, setShowLoginPin] = useState(false);
 
-  // Creation form state
-  const [position, setPosition] = useState("System Manager");
+  // Creation form state (Default position strictly: System Administrator)
+  const [position, setPosition] = useState("System Administrator");
   const [createPin, setCreatePin] = useState("");
   const [confirmPin, setConfirmPin] = useState("");
   const [showCreatePin, setShowCreatePin] = useState(false);
@@ -73,8 +73,8 @@ export default function Seal() {
     }
   }, [navigate]);
 
-  // Minimal position presets
-  const POSITION_PRESETS = ["System Manager", "Operations Lead", "Executive Lead"];
+  // Position preset — strictly System Administrator
+  const POSITION_PRESETS = ["System Administrator"];
 
   // Handle Login submission
   const handleLoginSubmit = (e: React.FormEvent) => {
@@ -91,7 +91,7 @@ export default function Seal() {
         navigate("/suite", { replace: true });
       }, 400);
     } else {
-      setError(result.error || "Authentication failed. Invalid credentials.");
+      setError(result.error || "Authentication failed.");
     }
   };
 
@@ -100,13 +100,9 @@ export default function Seal() {
     e.preventDefault();
     setError(null);
 
-    const cleanPos = position.trim();
+    const cleanPos = position.trim() || "System Administrator";
     const cleanPin = createPin.trim();
 
-    if (!cleanPos) {
-      setError("Select or specify a Position.");
-      return;
-    }
     if (!cleanPin || cleanPin.length < 4) {
       setError("PIN must be at least 4 digits.");
       return;
@@ -236,55 +232,54 @@ export default function Seal() {
       <motion.div
         initial={{ opacity: 0, scale: 0.98 }}
         animate={{ opacity: 1, scale: 1 }}
-        className="w-full max-w-sm bg-slate-900/90 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-2xl z-10 relative"
+        className="w-full max-w-sm bg-slate-900/90 border border-white/10 rounded-2xl p-6 backdrop-blur-xl shadow-2xl z-10 relative flex flex-col items-center"
       >
-        {/* Stealth Enclave Brand Header */}
-        <div className="flex items-center justify-center gap-2 mb-6">
-          <div className="h-9 w-9 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center">
-            <ShieldCheck className="h-5 w-5 text-emerald-400" />
+        {/* Stealth Pulsing Symbol Header — No text heading */}
+        <div className="flex items-center justify-center mb-6">
+          <div className="h-12 w-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center shadow-lg shadow-emerald-500/10 animate-pulse">
+            <ShieldCheck className="h-6 w-6 text-emerald-400" />
           </div>
-          <span className="text-base font-bold text-white tracking-widest uppercase">AMINEVA SEAL</span>
         </div>
 
-        {/* Minimalist Tab Navigation */}
-        <div className="grid grid-cols-3 gap-1 bg-slate-950/90 p-1 rounded-xl border border-white/5 mb-6">
+        {/* Minimalist Tab Navigation — Pure Symbols, NO text labels */}
+        <div className="grid grid-cols-3 gap-2 bg-slate-950/90 p-1.5 rounded-xl border border-white/5 mb-6 w-full">
           <button
             type="button"
+            title="Authentication"
             onClick={() => { setMode("login"); setError(null); setSuccessMsg(null); }}
-            className={`flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-lg transition-all ${
+            className={`flex items-center justify-center py-2.5 rounded-lg transition-all ${
               mode === "login"
-                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
-            <KeyRound className="h-3.5 w-3.5" />
-            <span>Auth</span>
+            <KeyRound className="h-4 w-4" />
           </button>
 
           <button
             type="button"
+            title="Register Credentials"
             onClick={() => { setMode("create"); setError(null); setSuccessMsg(null); }}
-            className={`flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-lg transition-all ${
+            className={`flex items-center justify-center py-2.5 rounded-lg transition-all ${
               mode === "create"
-                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
-            <UserPlus className="h-3.5 w-3.5" />
-            <span>Register</span>
+            <UserPlus className="h-4 w-4" />
           </button>
 
           <button
             type="button"
+            title="Email Verification"
             onClick={() => { setMode("otp"); setError(null); setSuccessMsg(null); }}
-            className={`flex items-center justify-center gap-1.5 py-2 text-xs font-medium rounded-lg transition-all ${
+            className={`flex items-center justify-center py-2.5 rounded-lg transition-all ${
               mode === "otp"
-                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
+                ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40 shadow-sm"
                 : "text-slate-400 hover:text-slate-200"
             }`}
           >
-            <Mail className="h-3.5 w-3.5" />
-            <span>OTP</span>
+            <Mail className="h-4 w-4" />
           </button>
         </div>
 
@@ -295,7 +290,7 @@ export default function Seal() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="bg-rose-500/10 border border-rose-500/20 text-rose-300 p-2.5 rounded-lg text-xs mb-4 text-center font-medium"
+              className="w-full bg-rose-500/10 border border-rose-500/20 text-rose-300 p-2.5 rounded-lg text-xs mb-4 text-center font-medium"
             >
               {error}
             </motion.div>
@@ -306,7 +301,7 @@ export default function Seal() {
               initial={{ opacity: 0, height: 0 }}
               animate={{ opacity: 1, height: "auto" }}
               exit={{ opacity: 0, height: 0 }}
-              className="bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 p-2.5 rounded-lg text-xs mb-4 text-center font-medium flex items-center justify-center gap-2"
+              className="w-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 p-2.5 rounded-lg text-xs mb-4 text-center font-medium flex items-center justify-center gap-2"
             >
               <Check className="h-4 w-4 text-emerald-400" />
               <span>{successMsg}</span>
@@ -316,7 +311,7 @@ export default function Seal() {
 
         {/* Form 1: Authentication */}
         {mode === "login" && (
-          <form onSubmit={handleLoginSubmit} autoComplete="off" data-form-type="other" className="space-y-3.5">
+          <form onSubmit={handleLoginSubmit} autoComplete="off" data-form-type="other" className="w-full space-y-3.5">
             <input type="text" name="decoy_user_prevent_autofill" style={{ display: "none" }} tabIndex={-1} autoComplete="off" />
             <input type="password" name="decoy_pass_prevent_autofill" style={{ display: "none" }} tabIndex={-1} autoComplete="new-password" />
 
@@ -388,7 +383,7 @@ export default function Seal() {
 
         {/* Form 2: Credential Registration */}
         {mode === "create" && (
-          <form onSubmit={handleCreateSubmit} autoComplete="off" data-form-type="other" className="space-y-3.5">
+          <form onSubmit={handleCreateSubmit} autoComplete="off" data-form-type="other" className="w-full space-y-3.5">
             <input type="text" name="decoy_user_prevent_autofill" style={{ display: "none" }} tabIndex={-1} autoComplete="off" />
             <input type="password" name="decoy_pass_prevent_autofill" style={{ display: "none" }} tabIndex={-1} autoComplete="new-password" />
 
@@ -396,7 +391,7 @@ export default function Seal() {
               <Input
                 name="amv_sec_no_autofill_position"
                 type="text"
-                placeholder="Position / Title"
+                placeholder="System Administrator"
                 value={position}
                 onChange={(e) => setPosition(e.target.value)}
                 required
@@ -412,11 +407,7 @@ export default function Seal() {
                     key={preset}
                     type="button"
                     onClick={() => setPosition(preset)}
-                    className={`text-[10px] px-2 py-1 rounded-md border transition ${
-                      position === preset
-                        ? "bg-emerald-500/20 border-emerald-500/40 text-emerald-300"
-                        : "bg-slate-950/50 border-white/5 text-slate-400 hover:text-slate-200"
-                    }`}
+                    className="text-[10px] px-2 py-1 rounded-md border bg-emerald-500/20 border-emerald-500/40 text-emerald-300 font-medium"
                   >
                     {preset}
                   </button>
@@ -471,7 +462,7 @@ export default function Seal() {
 
             <Button
               type="submit"
-              disabled={!position.trim() || !createPin.trim() || !confirmPin.trim()}
+              disabled={!createPin.trim() || !confirmPin.trim()}
               className="w-full h-11 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold transition-all shadow-lg shadow-emerald-500/20 mt-1"
             >
               <div className="flex items-center justify-center gap-2">
@@ -484,7 +475,7 @@ export default function Seal() {
 
         {/* Form 3: OTP */}
         {mode === "otp" && (
-          <div>
+          <div className="w-full">
             <AnimatePresence mode="wait">
               {otpStep === "email" ? (
                 <motion.form
