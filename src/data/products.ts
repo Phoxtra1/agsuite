@@ -92,28 +92,6 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     isPublic: true,
   },
   {
-    id: "datalens",
-    name: "DataLens Intel",
-    shortName: "DataLens",
-    description: "Opportunity intelligence and automated outreach engine",
-    status: "live",
-    url: "https://datalens.amineva.com",
-    category: "data-intelligence",
-    order: 2,
-    isPublic: true,
-  },
-  {
-    id: "agroclimate",
-    name: "AgroClimate Telemetry",
-    shortName: "AgroClimate",
-    description: "Agricultural climate intelligence & harvest telemetry",
-    status: "live",
-    url: "https://agro.amineva.com",
-    category: "data-intelligence",
-    order: 3,
-    isPublic: true,
-  },
-  {
     id: "aminevaops",
     name: "Sikasɛm Financials",
     shortName: "Sikasɛm",
@@ -121,7 +99,7 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     status: "live",
     url: "https://ops.amineva.com",
     category: "financial-operations",
-    order: 4,
+    order: 2,
     isPublic: true,
   },
   {
@@ -132,7 +110,7 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     status: "live",
     url: "https://amniva.amineva.com",
     category: "business-intelligence",
-    order: 5,
+    order: 3,
     isPublic: true,
   },
   {
@@ -143,36 +121,14 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     status: "live",
     url: "https://www.amineva.com/workspace",
     category: "workspace",
-    order: 6,
-    isPublic: true,
-  },
-  {
-    id: "adesua",
-    name: "Adesua Learning",
-    shortName: "Adesua",
-    description: "Education platform & scholarship portal",
-    status: "live",
-    url: "https://as.amineva.com",
-    category: "learning-inventory",
-    order: 7,
-    isPublic: true,
-  },
-  {
-    id: "agstock",
-    name: "Inventra Stock",
-    shortName: "Inventra",
-    description: "Inventory & supply chain management engine",
-    status: "live",
-    url: "https://stock.amineva.com",
-    category: "learning-inventory",
-    order: 8,
+    order: 4,
     isPublic: true,
   },
 ];
 
 // Local cache keys
-const LOCAL_ADMIN_KEY = "amineva_admin_products_v2";
-const LOCAL_CATEGORY_KEY = "amineva_category_products_v2";
+const LOCAL_ADMIN_KEY = "amineva_admin_products_v4";
+const LOCAL_CATEGORY_KEY = "amineva_category_products_v4";
 
 function readLocal(key: string, fallback: ProductData[]): ProductData[] {
   try {
@@ -249,7 +205,6 @@ export async function fetchAdminProducts(): Promise<ProductData[]> {
     }
 
     const fetched = docs.map(docToProduct);
-    // Prioritize cached local items so admin local edits (like status: "offline", custom links) strictly override remote defaults
     const mergedMap = new Map<string, ProductData>();
     fetched.forEach((p) => mergedMap.set(p.id, p));
     cached.forEach((p) => mergedMap.set(p.id, p));
@@ -288,7 +243,6 @@ export async function fetchCategoryProducts(): Promise<ProductData[]> {
     }
 
     const fetched = docs.map(docToProduct);
-    // Prioritize cached local items so admin local edits (like status: "offline", custom links) strictly override remote defaults
     const mergedMap = new Map<string, ProductData>();
     fetched.forEach((p) => mergedMap.set(p.id, p));
     cached.forEach((p) => mergedMap.set(p.id, p));
@@ -310,7 +264,6 @@ export async function upsertProduct(
   productType: "admin" | "category"
 ): Promise<boolean> {
   const primaryCacheKey = productType === "admin" ? LOCAL_ADMIN_KEY : LOCAL_CATEGORY_KEY;
-  const secondaryCacheKey = productType === "admin" ? LOCAL_CATEGORY_KEY : LOCAL_ADMIN_KEY;
 
   // 1. Update primary local cache immediately
   const primaryLocal = readLocal(primaryCacheKey, productType === "admin" ? DEFAULT_ADMIN_PRODUCTS : DEFAULT_CATEGORY_PRODUCTS);
@@ -323,23 +276,6 @@ export async function upsertProduct(
     updatedPrimary = [...primaryLocal, product];
   }
   writeLocal(primaryCacheKey, updatedPrimary);
-
-  // 2. Also update secondary cache so Homepage & Console stay 100% synchronized
-  const secondaryLocal = readLocal(secondaryCacheKey, productType === "admin" ? DEFAULT_CATEGORY_PRODUCTS : DEFAULT_ADMIN_PRODUCTS);
-  const secIdx = secondaryLocal.findIndex((p) => p.id === product.id);
-  if (secIdx >= 0) {
-    const updatedSec = [...secondaryLocal];
-    updatedSec[secIdx] = {
-      ...updatedSec[secIdx],
-      name: product.name,
-      shortName: product.shortName || updatedSec[secIdx].shortName,
-      description: product.description || updatedSec[secIdx].description,
-      status: product.status,
-      url: product.url || updatedSec[secIdx].url,
-      adminUrl: product.adminUrl || updatedSec[secIdx].adminUrl,
-    };
-    writeLocal(secondaryCacheKey, updatedSec);
-  }
 
   // Sync to Appwrite
   try {

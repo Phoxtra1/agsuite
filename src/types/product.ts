@@ -51,7 +51,7 @@ export const DEFAULT_CATEGORIES: ProductCategory[] = [
     id: "data-intelligence",
     name: "Data Intelligence",
     order: 1,
-    products: ["agis", "datalens", "agroclimate"],
+    products: ["agis"],
   },
   {
     id: "financial-operations",
@@ -70,11 +70,5 @@ export const DEFAULT_CATEGORIES: ProductCategory[] = [
     name: "Workspace & Collaboration",
     order: 4,
     products: ["workspace"],
-  },
-  {
-    id: "learning-inventory",
-    name: "Learning & Operations",
-    order: 5,
-    products: ["adesua", "agstock"],
   },
 ];

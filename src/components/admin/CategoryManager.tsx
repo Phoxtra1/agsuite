@@ -97,7 +97,7 @@ export function CategoryManager() {
       <div className="flex items-center justify-between">
         <div>
           <h2 className="text-2xl font-semibold text-foreground">Category Products</h2>
-          <p className="text-muted-foreground">Manage products displayed on the homepage. Changes are saved permanently.</p>
+          <p className="text-muted-foreground">Manage products displayed on the homepage. Status controls availability (Live, Offline, Coming Soon).</p>
         </div>
         <Button onClick={handleAdd} className="bg-accent text-accent-foreground hover:bg-accent/90">
           <Plus className="mr-2 h-4 w-4" /> Add Product
@@ -208,3 +208,4 @@ export function CategoryManager() {
     </div>
   );
 }
+
