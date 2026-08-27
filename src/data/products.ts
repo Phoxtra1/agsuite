@@ -207,6 +207,7 @@ export async function fetchAdminProducts(): Promise<ProductData[]> {
     const fetched = docs.map(docToProduct);
     const mergedMap = new Map<string, ProductData>();
     fetched.forEach((p) => mergedMap.set(p.id, p));
+    // Cached local edits strictly override fetched items so offline status changes persist
     cached.forEach((p) => mergedMap.set(p.id, p));
     const merged = Array.from(mergedMap.values());
 
@@ -245,6 +246,7 @@ export async function fetchCategoryProducts(): Promise<ProductData[]> {
     const fetched = docs.map(docToProduct);
     const mergedMap = new Map<string, ProductData>();
     fetched.forEach((p) => mergedMap.set(p.id, p));
+    // Cached local edits strictly override fetched items so offline status changes persist
     cached.forEach((p) => mergedMap.set(p.id, p));
     const merged = Array.from(mergedMap.values());
 
@@ -277,7 +279,12 @@ export async function upsertProduct(
   }
   writeLocal(primaryCacheKey, updatedPrimary);
 
-  // Sync to Appwrite
+  // Notify active components immediately
+  if (productType === "category") {
+    window.dispatchEvent(new Event("categoryProductsUpdated"));
+  }
+
+  // 2. Sync to Appwrite with strict product_type filter
   try {
     const payload = productToDocPayload(product, productType);
 
@@ -285,12 +292,15 @@ export async function upsertProduct(
     try {
       const existing = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [
         Query.equal("id", product.id),
+        Query.equal("product_type", productType),
         Query.limit(1),
       ]);
       if (existing.documents.length > 0) docId = existing.documents[0].$id;
     } catch {
       const all = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [Query.limit(100)]);
-      const match = all.documents.find((d: any) => d.id === product.id || d.$id === product.id);
+      const match = all.documents.find(
+        (d: any) => (d.id === product.id || d.$id === product.id) && (d.product_type === productType || !d.product_type)
+      );
       if (match) docId = match.$id;
     }
 
