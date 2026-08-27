@@ -28,10 +28,19 @@ export interface AdminCredential {
   createdAt: string;
 }
 
+function generateAlphaNumeric(length: number): string {
+  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+  let result = "";
+  for (let i = 0; i < length; i++) {
+    result += chars.charAt(Math.floor(Math.random() * chars.length));
+  }
+  return result;
+}
+
 // Default fallback credential for instant initial admin access if none created yet
 const DEFAULT_SYSTEM_CRED: AdminCredential = {
-  id: "AMV-SEC-001",
-  recoveryId: "AMV-REC-999001",
+  id: "SM-001-SEC1",
+  recoveryId: "RC-999-REC",
   position: "System Manager",
   pin: "1234",
   createdAt: new Date().toISOString(),
@@ -92,18 +101,15 @@ export function getStoredAdminCredentials(): AdminCredential[] {
 }
 
 /**
- * Create a new Admin Credential with Position, PIN, Main Admin ID and Recovery ID.
+ * Create a new Admin Credential with Position, PIN, Main Admin ID (SM-XXX-XXXX) and Recovery ID (RC-XXX-XXX).
  */
 export function createAdminCredential(position: string, pin: string): AdminCredential {
   const cleanPos = position.trim() || "System Manager";
   const cleanPin = pin.trim();
 
-  // Generate unique IDs
-  const randomNum = Math.floor(100000 + Math.random() * 900000).toString();
-  const randomLong = Math.floor(10000000 + Math.random() * 90000000).toString();
-
-  const mainId = `AMV-SEC-${randomNum}`;
-  const recoveryId = `AMV-REC-${randomLong}`;
+  // Generate SM-XXX-XXXX and RC-XXX-XXX
+  const mainId = `SM-${generateAlphaNumeric(3)}-${generateAlphaNumeric(4)}`;
+  const recoveryId = `RC-${generateAlphaNumeric(3)}-${generateAlphaNumeric(3)}`;
 
   const newCred: AdminCredential = {
     id: mainId,
