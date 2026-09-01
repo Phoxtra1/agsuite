@@ -203,7 +203,8 @@ function productToDocPayload(p: ProductData, productType: "admin" | "category") 
 // FETCH ADMIN PRODUCTS
 // ===========================
 export async function fetchAdminProducts(): Promise<ProductData[]> {
-  const deleted = new Set(readDeleted());
+  // Workspace is a homepage/category product only — never an admin console entry
+  const deleted = new Set([...readDeleted(), "workspace"]);
   const cached = readLocal(LOCAL_ADMIN_KEY, DEFAULT_ADMIN_PRODUCTS).filter((p) => !deleted.has(p.id));
 
   try {
@@ -229,7 +230,7 @@ export async function fetchAdminProducts(): Promise<ProductData[]> {
     fetched.forEach((p) => mergedMap.set(p.id, p));
     // Cached local edits strictly override fetched items so offline status changes persist
     cached.forEach((p) => mergedMap.set(p.id, p));
-    readDeleted().forEach((id) => mergedMap.delete(id));
+    deleted.forEach((id) => mergedMap.delete(id));
     const merged = Array.from(mergedMap.values()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     writeLocal(LOCAL_ADMIN_KEY, merged);
@@ -270,7 +271,7 @@ export async function fetchCategoryProducts(): Promise<ProductData[]> {
     fetched.forEach((p) => mergedMap.set(p.id, p));
     // Cached local edits strictly override fetched items so offline status changes persist
     cached.forEach((p) => mergedMap.set(p.id, p));
-    readDeleted().forEach((id) => mergedMap.delete(id));
+    deleted.forEach((id) => mergedMap.delete(id));
     const merged = Array.from(mergedMap.values()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     writeLocal(LOCAL_CATEGORY_KEY, merged);
