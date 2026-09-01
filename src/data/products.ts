@@ -120,6 +120,29 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
 const LOCAL_ADMIN_KEY = "amineva_admin_products_v4";
 const LOCAL_CATEGORY_KEY = "amineva_category_products_v4";
 const DELETED_KEY = "amineva_products_deleted_v1";
+const PENDING_KEY = "amineva_products_pending_v1";
+
+function readPending(): string[] {
+  try {
+    const raw = localStorage.getItem(PENDING_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function addPending(id: string) {
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(Array.from(new Set([...readPending(), id]))));
+  } catch {}
+}
+
+function clearPending(id: string) {
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(readPending().filter((x) => x !== id)));
+  } catch {}
+}
 
 function readDeleted(): string[] {
   try {
@@ -226,10 +249,15 @@ export async function fetchAdminProducts(): Promise<ProductData[]> {
     }
 
     const fetched = docs.map(docToProduct);
+    const pending = new Set(readPending());
     const mergedMap = new Map<string, ProductData>();
-    fetched.forEach((p) => mergedMap.set(p.id, p));
-    // Cached local edits strictly override fetched items so offline status changes persist
+    // Start from cached so locally-known items survive, then let the server win
     cached.forEach((p) => mergedMap.set(p.id, p));
+    fetched.forEach((p) => {
+      // Only unsynced local edits may override the server copy
+      if (pending.has(p.id) && mergedMap.has(p.id)) return;
+      mergedMap.set(p.id, p);
+    });
     deleted.forEach((id) => mergedMap.delete(id));
     const merged = Array.from(mergedMap.values()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -267,10 +295,15 @@ export async function fetchCategoryProducts(): Promise<ProductData[]> {
     }
 
     const fetched = docs.map(docToProduct);
+    const pending = new Set(readPending());
     const mergedMap = new Map<string, ProductData>();
-    fetched.forEach((p) => mergedMap.set(p.id, p));
-    // Cached local edits strictly override fetched items so offline status changes persist
+    // Start from cached so locally-known items survive, then let the server win
     cached.forEach((p) => mergedMap.set(p.id, p));
+    fetched.forEach((p) => {
+      // Only unsynced local edits may override the server copy
+      if (pending.has(p.id) && mergedMap.has(p.id)) return;
+      mergedMap.set(p.id, p);
+    });
     deleted.forEach((id) => mergedMap.delete(id));
     const merged = Array.from(mergedMap.values()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -303,28 +336,48 @@ export async function upsertProduct(
   }
   writeLocal(primaryCacheKey, updatedPrimary);
 
+  // 1b. Mirror shared fields (status is the critical one) into the sibling list
+  const siblingType: "admin" | "category" = productType === "admin" ? "category" : "admin";
+  const siblingKey = siblingType === "admin" ? LOCAL_ADMIN_KEY : LOCAL_CATEGORY_KEY;
+  const siblingLocal = readLocal(siblingKey, siblingType === "admin" ? DEFAULT_ADMIN_PRODUCTS : DEFAULT_CATEGORY_PRODUCTS);
+  const siblingIdx = siblingLocal.findIndex((p) => p.id === product.id);
+  let siblingProduct: ProductData | null = null;
+  if (siblingIdx >= 0) {
+    siblingProduct = {
+      ...siblingLocal[siblingIdx],
+      name: product.name,
+      shortName: product.shortName,
+      description: product.description,
+      status: product.status,
+    };
+    const updatedSibling = [...siblingLocal];
+    updatedSibling[siblingIdx] = siblingProduct;
+    writeLocal(siblingKey, updatedSibling);
+  }
+
   // Re-saving a previously deleted product resurrects it
   clearDeleted(product.id);
+  addPending(product.id);
 
-  // Notify active components immediately
+  // Notify active components immediately (both surfaces stay in sync)
   notifyProductsUpdated(productType);
+  notifyProductsUpdated(siblingType);
 
-  // 2. Sync to Appwrite with strict product_type filter
-  try {
-    const payload = productToDocPayload(product, productType);
-
+  // 2. Sync to Appwrite for this product type, then mirror status onto the sibling doc
+  const syncOne = async (p: ProductData, type: "admin" | "category") => {
+    const payload = productToDocPayload(p, type);
     let docId: string | null = null;
     try {
       const existing = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [
-        Query.equal("id", product.id),
-        Query.equal("product_type", productType),
+        Query.equal("id", p.id),
+        Query.equal("product_type", type),
         Query.limit(1),
       ]);
       if (existing.documents.length > 0) docId = existing.documents[0].$id;
     } catch {
       const all = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [Query.limit(100)]);
       const match = all.documents.find(
-        (d: any) => (d.id === product.id || d.$id === product.id) && (d.product_type === productType || !d.product_type)
+        (d: any) => (d.id === p.id || d.$id === p.id) && (d.product_type === type || !d.product_type)
       );
       if (match) docId = match.$id;
     }
@@ -334,12 +387,22 @@ export async function upsertProduct(
     } else {
       await databases.createDocument(DB_ID, PRODUCTS_COLLECTION_ID, ID.unique(), payload);
     }
+  };
+
+  try {
+    await syncOne(product, productType);
+    if (siblingProduct) {
+      await syncOne(siblingProduct, siblingType).catch(() => null);
+    }
+    // Server now holds the truth — stop overriding it locally
+    clearPending(product.id);
     return true;
   } catch (error) {
     console.warn("[Appwrite Products] Appwrite upsert deferred, saved locally:", error);
     return true;
   }
 }
+
 
 // ===========================
 // DELETE PRODUCT
