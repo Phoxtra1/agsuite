@@ -7,7 +7,7 @@ const IDLE_TIMEOUT_MS = 10 * 60 * 1000; // 10 minutes (600,000 ms)
 
 export function useIdleSignout() {
   const navigate = useNavigate();
-  const { signOut, isAuthenticated } = useAuth();
+  const { logout: signOut, isAuthenticated } = useAuth();
   const timerRef = useRef<NodeJS.Timeout | null>(null);
 
   const handleSignout = () => {

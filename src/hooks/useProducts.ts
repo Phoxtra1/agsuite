@@ -24,6 +24,8 @@ export function useAdminProducts() {
 
   useEffect(() => {
     refresh();
+    window.addEventListener("adminProductsUpdated", refresh);
+    return () => window.removeEventListener("adminProductsUpdated", refresh);
   }, [refresh]);
 
   return { products, loading, refresh };
@@ -46,6 +48,8 @@ export function useCategoryProducts() {
 
   useEffect(() => {
     refresh();
+    window.addEventListener("categoryProductsUpdated", refresh);
+    return () => window.removeEventListener("categoryProductsUpdated", refresh);
   }, [refresh]);
 
   return { products, loading, refresh };
