@@ -120,6 +120,29 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
 const LOCAL_ADMIN_KEY = "amineva_admin_products_v4";
 const LOCAL_CATEGORY_KEY = "amineva_category_products_v4";
 const DELETED_KEY = "amineva_products_deleted_v1";
+const PENDING_KEY = "amineva_products_pending_v1";
+
+function readPending(): string[] {
+  try {
+    const raw = localStorage.getItem(PENDING_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function addPending(id: string) {
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(Array.from(new Set([...readPending(), id]))));
+  } catch {}
+}
+
+function clearPending(id: string) {
+  try {
+    localStorage.setItem(PENDING_KEY, JSON.stringify(readPending().filter((x) => x !== id)));
+  } catch {}
+}
 
 function readDeleted(): string[] {
   try {
@@ -226,10 +249,15 @@ export async function fetchAdminProducts(): Promise<ProductData[]> {
     }
 
     const fetched = docs.map(docToProduct);
+    const pending = new Set(readPending());
     const mergedMap = new Map<string, ProductData>();
-    fetched.forEach((p) => mergedMap.set(p.id, p));
-    // Cached local edits strictly override fetched items so offline status changes persist
+    // Start from cached so locally-known items survive, then let the server win
     cached.forEach((p) => mergedMap.set(p.id, p));
+    fetched.forEach((p) => {
+      // Only unsynced local edits may override the server copy
+      if (pending.has(p.id) && mergedMap.has(p.id)) return;
+      mergedMap.set(p.id, p);
+    });
     deleted.forEach((id) => mergedMap.delete(id));
     const merged = Array.from(mergedMap.values()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -267,10 +295,15 @@ export async function fetchCategoryProducts(): Promise<ProductData[]> {
     }
 
     const fetched = docs.map(docToProduct);
+    const pending = new Set(readPending());
     const mergedMap = new Map<string, ProductData>();
-    fetched.forEach((p) => mergedMap.set(p.id, p));
-    // Cached local edits strictly override fetched items so offline status changes persist
+    // Start from cached so locally-known items survive, then let the server win
     cached.forEach((p) => mergedMap.set(p.id, p));
+    fetched.forEach((p) => {
+      // Only unsynced local edits may override the server copy
+      if (pending.has(p.id) && mergedMap.has(p.id)) return;
+      mergedMap.set(p.id, p);
+    });
     deleted.forEach((id) => mergedMap.delete(id));
     const merged = Array.from(mergedMap.values()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
