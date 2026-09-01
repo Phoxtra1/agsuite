@@ -38,16 +38,6 @@ export const DEFAULT_ADMIN_PRODUCTS: ProductData[] = [
     isPublic: true,
   },
   {
-    id: "workspace",
-    name: "Amineva Workspace",
-    shortName: "Workspace",
-    description: "Docs, Sheets, Slides, Forms, Drive collaboration",
-    status: "live",
-    adminUrl: "https://www.amineva.com/workspace",
-    order: 4,
-    isPublic: true,
-  },
-  {
     id: "agroclimate",
     name: "AgroClimate",
     shortName: "AgroClimate",
@@ -129,6 +119,35 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
 // Local cache keys
 const LOCAL_ADMIN_KEY = "amineva_admin_products_v4";
 const LOCAL_CATEGORY_KEY = "amineva_category_products_v4";
+const DELETED_KEY = "amineva_products_deleted_v1";
+
+function readDeleted(): string[] {
+  try {
+    const raw = localStorage.getItem(DELETED_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function addDeleted(id: string) {
+  try {
+    const next = Array.from(new Set([...readDeleted(), id]));
+    localStorage.setItem(DELETED_KEY, JSON.stringify(next));
+  } catch {}
+}
+
+function clearDeleted(id: string) {
+  try {
+    localStorage.setItem(DELETED_KEY, JSON.stringify(readDeleted().filter((x) => x !== id)));
+  } catch {}
+}
+
+function notifyProductsUpdated(productType: "admin" | "category") {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(new Event(productType === "category" ? "categoryProductsUpdated" : "adminProductsUpdated"));
+}
 
 function readLocal(key: string, fallback: ProductData[]): ProductData[] {
   try {
@@ -184,7 +203,8 @@ function productToDocPayload(p: ProductData, productType: "admin" | "category") 
 // FETCH ADMIN PRODUCTS
 // ===========================
 export async function fetchAdminProducts(): Promise<ProductData[]> {
-  const cached = readLocal(LOCAL_ADMIN_KEY, DEFAULT_ADMIN_PRODUCTS);
+  const deleted = new Set(readDeleted());
+  const cached = readLocal(LOCAL_ADMIN_KEY, DEFAULT_ADMIN_PRODUCTS).filter((p) => !deleted.has(p.id));
 
   try {
     let docs: any[] = [];
@@ -209,7 +229,8 @@ export async function fetchAdminProducts(): Promise<ProductData[]> {
     fetched.forEach((p) => mergedMap.set(p.id, p));
     // Cached local edits strictly override fetched items so offline status changes persist
     cached.forEach((p) => mergedMap.set(p.id, p));
-    const merged = Array.from(mergedMap.values());
+    readDeleted().forEach((id) => mergedMap.delete(id));
+    const merged = Array.from(mergedMap.values()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     writeLocal(LOCAL_ADMIN_KEY, merged);
     return merged;
@@ -223,7 +244,8 @@ export async function fetchAdminProducts(): Promise<ProductData[]> {
 // FETCH CATEGORY PRODUCTS
 // ===========================
 export async function fetchCategoryProducts(): Promise<ProductData[]> {
-  const cached = readLocal(LOCAL_CATEGORY_KEY, DEFAULT_CATEGORY_PRODUCTS);
+  const deleted = new Set(readDeleted());
+  const cached = readLocal(LOCAL_CATEGORY_KEY, DEFAULT_CATEGORY_PRODUCTS).filter((p) => !deleted.has(p.id));
 
   try {
     let docs: any[] = [];
@@ -248,7 +270,8 @@ export async function fetchCategoryProducts(): Promise<ProductData[]> {
     fetched.forEach((p) => mergedMap.set(p.id, p));
     // Cached local edits strictly override fetched items so offline status changes persist
     cached.forEach((p) => mergedMap.set(p.id, p));
-    const merged = Array.from(mergedMap.values());
+    readDeleted().forEach((id) => mergedMap.delete(id));
+    const merged = Array.from(mergedMap.values()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     writeLocal(LOCAL_CATEGORY_KEY, merged);
     return merged;
@@ -279,10 +302,11 @@ export async function upsertProduct(
   }
   writeLocal(primaryCacheKey, updatedPrimary);
 
+  // Re-saving a previously deleted product resurrects it
+  clearDeleted(product.id);
+
   // Notify active components immediately
-  if (productType === "category") {
-    window.dispatchEvent(new Event("categoryProductsUpdated"));
-  }
+  notifyProductsUpdated(productType);
 
   // 2. Sync to Appwrite with strict product_type filter
   try {
@@ -325,6 +349,9 @@ export async function deleteProduct(id: string): Promise<boolean> {
   const categoryLocal = readLocal(LOCAL_CATEGORY_KEY, DEFAULT_CATEGORY_PRODUCTS).filter((p) => p.id !== id);
   writeLocal(LOCAL_ADMIN_KEY, adminLocal);
   writeLocal(LOCAL_CATEGORY_KEY, categoryLocal);
+  addDeleted(id);
+  notifyProductsUpdated("category");
+  notifyProductsUpdated("admin");
 
   try {
     let docId: string | null = null;
