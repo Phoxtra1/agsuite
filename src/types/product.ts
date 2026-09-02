@@ -51,36 +51,25 @@ export const DEFAULT_CATEGORIES: ProductCategory[] = [
     id: "data-intelligence",
     name: "Data Intelligence",
     order: 1,
-    products: ["agis", "datalens"],
+    products: ["datalens", "agis"],
   },
   {
     id: "financial-operations",
-    name: "Financial Operations & Inventory",
+    name: "Financial Operations",
     order: 2,
     products: ["aminevaops", "agstock"],
   },
   {
-    id: "climate-sustainability",
-    name: "Climate & Sustainability",
-    order: 3,
-    products: ["agroclimate"],
-  },
-  {
-    id: "career-development",
-    name: "Career & Development Platform",
-    order: 4,
-    products: ["adesua"],
-  },
-  {
     id: "business-intelligence",
     name: "Business Intelligence",
-    order: 5,
+    order: 3,
     products: ["amniva"],
   },
   {
     id: "workspace",
-    name: "Workspace & Collaboration",
-    order: 6,
+    name: "Workspace",
+    order: 4,
     products: ["workspace"],
   },
 ];
+
