@@ -104,28 +104,6 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     isPublic: true,
   },
   {
-    id: "agroclimate",
-    name: "AgroClimate",
-    shortName: "AgroClimate",
-    description: "Agricultural climate intelligence & harvest telemetry",
-    status: "live",
-    url: "https://agro.amineva.com",
-    category: "climate-sustainability",
-    order: 4,
-    isPublic: true,
-  },
-  {
-    id: "adesua",
-    name: "Adesua Career Intel",
-    shortName: "Adesua",
-    description: "Career development & professional pathways platform",
-    status: "live",
-    url: "https://as.amineva.com",
-    category: "career-development",
-    order: 5,
-    isPublic: true,
-  },
-  {
     id: "datalens",
     name: "DataLens Intel",
     shortName: "DataLens",
@@ -149,11 +127,11 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
   },
   {
     id: "workspace",
-    name: "Workspace Platform",
+    name: "Amineva Workspace",
     shortName: "Workspace",
     description: "Cloud office suite for team collaboration",
     status: "live",
-    url: "https://www.amineva.com/workspace",
+    url: "/workspace",
     category: "workspace",
     order: 8,
     isPublic: true,
@@ -161,8 +139,8 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
 ];
 
 // Local cache keys
-const LOCAL_ADMIN_KEY = "amineva_admin_products_v6";
-const LOCAL_CATEGORY_KEY = "amineva_category_products_v6";
+const LOCAL_ADMIN_KEY = "amineva_admin_products_v7";
+const LOCAL_CATEGORY_KEY = "amineva_category_products_v7";
 const DELETED_KEY = "amineva_products_deleted_v1";
 const PENDING_KEY = "amineva_products_pending_v1";
 
