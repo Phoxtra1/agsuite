@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import { useCategoryProducts, useCategoryProductMutations } from "@/hooks/useProducts";
-import { ProductData, STATUS_COLORS, STATUS_LABELS, ProductStatus } from "@/types/product";
+import { DEFAULT_CATEGORIES, ProductData, STATUS_COLORS, STATUS_LABELS, ProductStatus } from "@/types/product";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -24,11 +24,12 @@ interface FormData {
   shortName: string;
   description: string;
   url: string;
+  category: string;
   status: ProductStatus;
 }
 
 const initialFormData: FormData = {
-  name: "", shortName: "", description: "", url: "", status: "coming_soon",
+  name: "", shortName: "", description: "", url: "", category: DEFAULT_CATEGORIES[0].id, status: "coming_soon",
 };
 
 export function CategoryManager() {
@@ -45,7 +46,7 @@ export function CategoryManager() {
   const handleEdit = (id: string) => {
     const p = products.find(x => x.id === id);
     if (!p) return;
-    setFormData({ name: p.name, shortName: p.shortName || "", description: p.description || "", url: p.url || "", status: p.status });
+    setFormData({ name: p.name, shortName: p.shortName || "", description: p.description || "", url: p.url || "", category: p.category || DEFAULT_CATEGORIES[0].id, status: p.status });
     setEditingId(id);
     setIsDialogOpen(true);
   };
@@ -57,13 +58,14 @@ export function CategoryManager() {
     setSaving(true);
 
     const product: ProductData = editingId
-      ? { ...products.find(p => p.id === editingId)!, name, shortName: formData.shortName, description: formData.description, url: formData.url, status: formData.status }
+      ? { ...products.find(p => p.id === editingId)!, name, shortName: formData.shortName, description: formData.description, url: formData.url, category: formData.category, status: formData.status }
       : {
           id: `cat-${Date.now()}`,
           name,
           shortName: formData.shortName,
           description: formData.description,
           url: formData.url,
+          category: formData.category,
           status: formData.status,
           order: products.length + 1,
         };
@@ -110,6 +112,7 @@ export function CategoryManager() {
             <TableHeader>
               <TableRow>
                 <TableHead>Name</TableHead>
+                <TableHead>Category</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>URL</TableHead>
                 <TableHead className="w-24">Actions</TableHead>
@@ -123,6 +126,11 @@ export function CategoryManager() {
                       <p className="font-medium text-foreground">{p.name}</p>
                       <p className="text-sm text-muted-foreground line-clamp-1">{p.description || "No description"}</p>
                     </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="text-sm text-muted-foreground">
+                      {DEFAULT_CATEGORIES.find(c => c.id === p.category)?.name || "Unassigned"}
+                    </span>
                   </TableCell>
                   <TableCell>
                     <Badge className={cn("text-xs", STATUS_COLORS[p.status])}>{STATUS_LABELS[p.status]}</Badge>
@@ -171,6 +179,17 @@ export function CategoryManager() {
             <div className="space-y-1.5">
               <Label className="text-foreground">URL</Label>
               <Input value={formData.url} onChange={e => setFormData(p => ({ ...p, url: e.target.value }))} placeholder="https://product.amineva.com" className="h-9" />
+            </div>
+            <div className="space-y-1.5">
+              <Label className="text-foreground">Homepage Category</Label>
+              <Select value={formData.category} onValueChange={v => setFormData(p => ({ ...p, category: v }))}>
+                <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  {DEFAULT_CATEGORIES.map(c => (
+                    <SelectItem key={c.id} value={c.id}>{c.name}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
             <div className="space-y-1.5">
               <Label className="text-foreground">Status</Label>
