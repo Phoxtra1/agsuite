@@ -159,18 +159,27 @@ export default function HomePage() {
   const selectedAgOption = useMemo(() => countryCurrencyOptions.find((o) => o.id === agCountry) || null, [agCountry, countryCurrencyOptions]);
   const effectiveCountryLabel = useMemo(() => selectedAgOption?.label || displayCountryLabel || "Ghana", [selectedAgOption, displayCountryLabel]);
 
-  const categories = useMemo(() => DEFAULT_CATEGORIES.map((cat) => ({
-    ...cat,
-    products: cat.products.map((id) => products.find((p) => p.id === id)).filter(Boolean) as ProductData[],
-  })), [products]);
-
+  // Homepage categories are driven entirely by Category Management data.
+  // A product appears once, in exactly one category — no duplicates, no "other" bucket.
   const allCategories = useMemo(() => {
-    const categorizedIds = new Set(DEFAULT_CATEGORIES.flatMap((c) => c.products));
-    const uncategorized = products.filter((p) => !categorizedIds.has(p.id));
-    return uncategorized.length > 0
-      ? [...categories, { id: "other", name: "Other Applications", order: 99, products: uncategorized }]
-      : categories;
-  }, [categories, products]);
+    const fallbackCategoryOf = (id: string) =>
+      DEFAULT_CATEGORIES.find((c) => c.products.includes(id))?.id;
+
+    const seen = new Set<string>();
+    return DEFAULT_CATEGORIES.map((cat) => ({
+      ...cat,
+      products: products
+        .filter((p) => {
+          if (seen.has(p.id)) return false;
+          const catId = p.category || fallbackCategoryOf(p.id);
+          if (catId !== cat.id) return false;
+          seen.add(p.id);
+          return true;
+        })
+        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
+    }));
+  }, [products]);
+
 
   const canShowAuthCard = useMemo(() => {
     const s = `${selectedProduct?.id || ""} ${selectedProduct?.name || ""} ${selectedProduct?.url || ""}`.toLowerCase();
