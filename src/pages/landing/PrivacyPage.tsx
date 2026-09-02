@@ -20,7 +20,7 @@ const PrivacyPage: FC = () => {
         <div className="prose prose-neutral dark:prose-invert max-w-none space-y-8">
           <div>
             <h2 className="text-2xl font-bold text-foreground mb-3">1. Introduction</h2>
-            <p className="text-muted-foreground leading-relaxed">Amineva Global ("Amineva," "we," "us," or "our") is committed to protecting the privacy and security of your personal information. This Privacy Policy describes how we collect, use, disclose, and safeguard your information when you use our platforms and services, including Nyansa, DataLens, ABI, Sikasɛm, Agyenkwa, and Adesua.</p>
+            <p className="text-muted-foreground leading-relaxed">Amineva Global ("Amineva," "we," "us," or "our") is committed to protecting the privacy and security of your personal information. This Privacy Policy describes how we collect, use, disclose, and safeguard your information when you use our platforms and services, including Nyansa, DataLens, ABI, Sikasɛm, AgroClimate, and Adesua.</p>
           </div>
 
           <div>
@@ -31,7 +31,7 @@ const PrivacyPage: FC = () => {
               <li><strong className="text-foreground">Usage Data:</strong> Information about how you interact with our Services, including pages visited, features used, and time spent</li>
               <li><strong className="text-foreground">Device Information:</strong> Browser type, operating system, IP address, and device identifiers</li>
               <li><strong className="text-foreground">Business Data:</strong> Inventory records, sales data, and operational information you input into our platforms</li>
-              <li><strong className="text-foreground">Location Data:</strong> Geographic location when you use location-dependent features such as Agyenkwa</li>
+              <li><strong className="text-foreground">Location Data:</strong> Geographic location when you use location-dependent features such as AgroClimate</li>
             </ul>
           </div>
 

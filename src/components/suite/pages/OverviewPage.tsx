@@ -1,6 +1,6 @@
 import React from 'react';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Globe, Target, Database, Link2, Shield, Eye, CheckCircle, TrendingUp, Sparkles, CloudSun } from 'lucide-react';
+import { Globe, Target, Database, Link2, Shield, Eye, CheckCircle, TrendingUp, Sparkles, CloudSun, Compass } from 'lucide-react';
 
 export function OverviewPage() {
   return (
@@ -94,7 +94,7 @@ export function OverviewPage() {
             <div className="grid md:grid-cols-2 gap-6 mt-6">
               <EcoCard icon={Sparkles} title="Dipa AI"
                 desc="Intelligent companion for research, writing, planning, documentation, storytelling, knowledge systems, and data analysis." />
-              <EcoCard icon={CloudSun} title="Agyenkwa"
+              <EcoCard icon={CloudSun} title="AgroClimate"
                 desc="Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, transport resilience, and operational risk." />
               <EcoCard icon={Shield} title="Inventra"
                 desc="AI-backed inventory, commerce, sales, and operational management infrastructure for smart business systems." />
@@ -104,6 +104,8 @@ export function OverviewPage() {
                 desc="AI-backed financial operations, monitoring systems, workflow intelligence, and operational oversight infrastructure." />
               <EcoCard icon={Eye} title="ABI"
                 desc="Amineva Business Intelligence — unified BI infrastructure for dashboards, KPIs, market analytics, and data-driven decision support across the ecosystem." />
+              <EcoCard icon={Compass} title="Adesua"
+                desc="Career development platform — career pathways, professional skill advancement, institutional discovery, and scholarship opportunities." />
             </div>
           </CardContent>
         </Card>

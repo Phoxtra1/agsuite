@@ -24,7 +24,7 @@ const CATEGORIES = [
 
 const PLATFORMS = [
   { value: 'all', label: 'All Platforms' },
-  { value: 'agroclimate', label: 'Agyenkwa' },
+  { value: 'agroclimate', label: 'AgroClimate' },
   { value: 'agstock', label: 'Nyansa' },
   { value: 'agis', label: 'DataLens' },
   { value: 'aminevaops', label: 'Sikasɛm' },

@@ -40,10 +40,10 @@ const categories: { title: string; faqs: FAQItem[] }[] = [
     ],
   },
   {
-    title: "Agyenkwa",
+    title: "AgroClimate",
     faqs: [
-      { q: "What is Agyenkwa?", a: "Agyenkwa is the climate-tech and environmental intelligence infrastructure of the ecosystem — supporting agriculture, environmental monitoring, forecasting, transport resilience, and operational risk awareness." },
-      { q: "Who is Agyenkwa built for?", a: "Farmers, cooperatives, agribusinesses, transport operators, and institutions that need climate-aware planning and environmental intelligence." },
+      { q: "What is AgroClimate?", a: "AgroClimate is the climate-tech and environmental intelligence infrastructure of the ecosystem — supporting agriculture, environmental monitoring, forecasting, transport resilience, and operational risk awareness." },
+      { q: "Who is AgroClimate built for?", a: "Farmers, cooperatives, agribusinesses, transport operators, and institutions that need climate-aware planning and environmental intelligence." },
     ],
   },
   {
@@ -63,8 +63,8 @@ const categories: { title: string; faqs: FAQItem[] }[] = [
   {
     title: "Adesua",
     faqs: [
-      { q: "What is Adesua?", a: "Adesua is a digital learning and career pathway platform designed to help learners discover opportunities, build knowledge, and prepare for their future — combining learning resources, career guidance, school discovery, and scholarship opportunities." },
-      { q: "What does Adesua include?", a: "ICT Masterclass learning, structured digital learning resources, an external book learning section, a career pathway explorer, and a scholarship opportunity section." },
+      { q: "What is Adesua?", a: "Adesua is a career development platform designed to help professionals and students explore career pathways, develop market-relevant skills, discover educational institutions, and access global scholarship opportunities." },
+      { q: "What does Adesua include?", a: "Career pathway exploration, professional ICT and technical masterclasses, curated career literature, institution discovery, scholarship tracking, and personalized professional growth roadmaps." },
     ],
   },
   {

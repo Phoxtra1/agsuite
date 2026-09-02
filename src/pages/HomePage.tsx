@@ -9,14 +9,16 @@ import { useTheme } from "@/contexts/ThemeContext";
 import amvLogo from "@/assets/amv_global_logo.png";
 import AuthCard from "@/components/home/AuthCard";
 
+import { getProductIcon } from "@/lib/products";
+
 type CountryCurrencyOption = {
   id: string;
   label: string;
   currencyCode: string;
 };
 
-function getProductIconSafe(_productId: string) {
-  return Grid3X3;
+function getProductIconSafe(productId: string) {
+  return getProductIcon(productId);
 }
 
 function getStatusBadge(status: ProductData["status"]) {
@@ -346,7 +348,7 @@ export default function HomePage() {
                      rel="noreferrer"
                      className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
                    >
-                     Agyenkwa
+                     AgroClimate
                   </a>
 
                     <a

@@ -65,7 +65,7 @@ const SupportPage: FC = () => {
     { value: "agstock", label: "Nyansa" },
     { value: "agis", label: "DataLens" },
     { value: "amniva", label: "ABI" },
-    { value: "agroclimate", label: "Agyenkwa" },
+    { value: "agroclimate", label: "AgroClimate" },
     { value: "aminevaops", label: "Sikasɛm" },
     { value: "adesua", label: "Adesua" },
     { value: "partnership", label: "Partnership" },

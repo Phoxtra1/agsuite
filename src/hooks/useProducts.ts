@@ -48,8 +48,15 @@ export function useCategoryProducts() {
 
   useEffect(() => {
     refresh();
-    window.addEventListener("categoryProductsUpdated", refresh);
-    return () => window.removeEventListener("categoryProductsUpdated", refresh);
+    const handleUpdate = () => {
+      refresh();
+    };
+    window.addEventListener("categoryProductsUpdated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("categoryProductsUpdated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
   }, [refresh]);
 
   return { products, loading, refresh };

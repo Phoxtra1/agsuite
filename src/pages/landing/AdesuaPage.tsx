@@ -2,7 +2,7 @@ import { FC } from "react";
 import { motion } from "framer-motion";
 import {
   GraduationCap, BookOpen, Compass, School, Award, Cpu,
-  ArrowRight, Lightbulb, Library, Sparkles,
+  ArrowRight, Lightbulb, Library, Sparkles, Target, Briefcase,
 } from "lucide-react";
 
 const fadeUp = {
@@ -12,12 +12,12 @@ const fadeUp = {
 
 const AdesuaPage: FC = () => {
   const modules = [
-    { icon: Cpu, title: "ICT Masterclass", desc: "Practical ICT skills — from basic computer knowledge through advanced secondary-school-level ICT concepts." },
-    { icon: BookOpen, title: "Digital Learning Resources", desc: "Structured educational content organized for progressive learning across subjects and levels." },
-    { icon: Library, title: "External Book Learning", desc: "A growing library where additional educational books and reading materials can be added for learners." },
-    { icon: Compass, title: "Career Pathway", desc: "Explore career interests, understand possible education routes, discover schools, and learn about future opportunities." },
-    { icon: Award, title: "Scholarship Opportunities", desc: "Discover available scholarship and support opportunities to help fund and shape your learning journey." },
-    { icon: School, title: "School Discovery", desc: "Find schools and programmes aligned with your interests, goals, and chosen pathways." },
+    { icon: Compass, title: "Career Pathway Engine", desc: "Explore market-aligned career pathways, skill maps, and actionable roadmaps for professional growth." },
+    { icon: Cpu, title: "Professional ICT Masterclasses", desc: "High-impact technical training — from foundational computer science to industry-ready software & cloud engineering." },
+    { icon: Library, title: "Career Development Literature", desc: "Curated professional books, research papers, and technical publications to deepen domain expertise." },
+    { icon: School, title: "Institutional Intelligence", desc: "Discover top-tier universities, technical institutes, and specialized academies aligned with your career goals." },
+    { icon: Award, title: "Global Scholarship Portal", desc: "Discover vetted funding, grants, and scholarship opportunities to support your advanced education and certifications." },
+    { icon: Target, title: "Milestones & Pathways", desc: "Track skill acquisition, benchmark professional capabilities, and map your trajectory toward career success." },
   ];
 
   return (
@@ -28,14 +28,14 @@ const AdesuaPage: FC = () => {
         <div className="relative z-10 max-w-5xl mx-auto text-center px-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-medium mb-6">
-              <GraduationCap className="h-4 w-4" /> Learning & Career Pathway Platform
+              <Briefcase className="h-4 w-4" /> Career Development Platform
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6">
-              Learn. Discover.<br />
-              <span className="text-accent">Shape Your Future.</span>
+              Advance Your Career.<br />
+              <span className="text-accent">Unlock Professional Opportunities.</span>
             </h1>
-            <p className="text-lg text-primary-foreground/80 max-w-2xl mx-auto mb-8">
-              Adesua is a digital learning and career pathway platform designed to help learners discover opportunities, build knowledge, and prepare for their future.
+            <p className="text-lg text-primary-foreground/80 max-w-3xl mx-auto mb-8">
+              Adesua is an enterprise career development platform designed to empower professionals and students with structured career pathways, skill advancement, institutional insights, and global scholarship intelligence.
             </p>
             <a
               href="https://as.amineva.com"
@@ -43,7 +43,7 @@ const AdesuaPage: FC = () => {
               rel="noreferrer"
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg"
             >
-              Enter Adesua <ArrowRight className="h-5 w-5" />
+              Explore Career Pathways <ArrowRight className="h-5 w-5" />
             </a>
           </motion.div>
         </div>
@@ -53,9 +53,9 @@ const AdesuaPage: FC = () => {
       <section className="max-w-5xl mx-auto py-20 px-6 text-center">
         <Lightbulb className="h-10 w-10 text-accent mx-auto mb-4" />
         <span className="text-sm font-semibold text-accent uppercase tracking-wider">Overview</span>
-        <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2 mb-6">A Platform Built Around Learners</h2>
+        <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2 mb-6">Empowering Professional Mobility & Growth</h2>
         <p className="text-muted-foreground leading-relaxed text-lg">
-          Adesua combines learning resources, career guidance, school discovery, and scholarship opportunities into one platform — supporting learners in understanding possible educational and career directions.
+          Adesua brings career mapping, technical masterclasses, institutional discovery, scholarship opportunities, and curated professional literature together — enabling professionals and ambitious learners to accelerate their career trajectories.
         </p>
       </section>
 
@@ -64,7 +64,7 @@ const AdesuaPage: FC = () => {
         <div className="max-w-7xl mx-auto">
           <div className="text-center mb-14">
             <span className="text-sm font-semibold text-accent uppercase tracking-wider">Inside Adesua</span>
-            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">What Learners Can Explore</h2>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Core Career Development Modules</h2>
           </div>
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {modules.map((m, i) => (
@@ -78,13 +78,13 @@ const AdesuaPage: FC = () => {
         </div>
       </section>
 
-      {/* Learner Experience */}
+      {/* Professional Experience */}
       <section className="max-w-5xl mx-auto py-20 px-6">
         <div className="text-center mb-10">
           <Sparkles className="h-10 w-10 text-accent mx-auto mb-4" />
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground">Simple Access for Every Learner</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">Seamless Onboarding for Career Growth</h2>
           <p className="text-muted-foreground mt-4 max-w-2xl mx-auto">
-            Learners register with their name and receive a personal platform ID for sign-in and account access, with secure PIN recovery for continued access.
+            Professionals register securely to receive a unique Career Profile ID, unlocking personalized learning progress, book bookmarks, pathway achievements, and scholarship tracking.
           </p>
         </div>
       </section>
@@ -92,9 +92,9 @@ const AdesuaPage: FC = () => {
       {/* CTA */}
       <section className="py-20 px-6 bg-gradient-to-r from-primary to-primary/90 text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Begin Your Learning Journey</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Accelerate Your Career Trajectory Today</h2>
           <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-            Discover ICT masterclasses, career pathways, schools, and scholarships — all in one place.
+            Explore market-relevant career pathways, advanced technical masterclasses, institution discovery, and global scholarship funding.
           </p>
           <a
             href="https://as.amineva.com"
@@ -102,7 +102,7 @@ const AdesuaPage: FC = () => {
             rel="noreferrer"
             className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg"
           >
-            Enter Adesua <ArrowRight className="h-5 w-5" />
+            Launch Adesua Platform <ArrowRight className="h-5 w-5" />
           </a>
         </motion.div>
       </section>
@@ -111,3 +111,4 @@ const AdesuaPage: FC = () => {
 };
 
 export default AdesuaPage;
+

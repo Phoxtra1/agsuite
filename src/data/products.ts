@@ -49,9 +49,9 @@ export const DEFAULT_ADMIN_PRODUCTS: ProductData[] = [
   },
   {
     id: "adesua",
-    name: "Adesua Learning",
+    name: "Adesua Career Intel",
     shortName: "Adesua",
-    description: "Education platform & scholarship portal",
+    description: "Career development & professional pathways platform",
     status: "live",
     adminUrl: "https://as.amineva.com",
     order: 6,
@@ -82,6 +82,17 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     isPublic: true,
   },
   {
+    id: "agstock",
+    name: "AG Stock",
+    shortName: "AG Stock",
+    description: "Inventory & supply chain management engine",
+    status: "live",
+    url: "https://stock.amineva.com",
+    category: "financial-operations",
+    order: 2,
+    isPublic: true,
+  },
+  {
     id: "aminevaops",
     name: "Sikasɛm Financials",
     shortName: "Sikasɛm",
@@ -89,7 +100,40 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     status: "live",
     url: "https://ops.amineva.com",
     category: "financial-operations",
-    order: 2,
+    order: 3,
+    isPublic: true,
+  },
+  {
+    id: "agroclimate",
+    name: "AgroClimate",
+    shortName: "AgroClimate",
+    description: "Agricultural climate intelligence & harvest telemetry",
+    status: "live",
+    url: "https://agro.amineva.com",
+    category: "climate-sustainability",
+    order: 4,
+    isPublic: true,
+  },
+  {
+    id: "adesua",
+    name: "Adesua Career Intel",
+    shortName: "Adesua",
+    description: "Career development & professional pathways platform",
+    status: "live",
+    url: "https://as.amineva.com",
+    category: "career-development",
+    order: 5,
+    isPublic: true,
+  },
+  {
+    id: "datalens",
+    name: "DataLens Intel",
+    shortName: "DataLens",
+    description: "Opportunity intelligence and automated outreach engine",
+    status: "live",
+    url: "https://datalens.amineva.com",
+    category: "data-intelligence",
+    order: 6,
     isPublic: true,
   },
   {
@@ -100,7 +144,7 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     status: "live",
     url: "https://amniva.amineva.com",
     category: "business-intelligence",
-    order: 3,
+    order: 7,
     isPublic: true,
   },
   {
@@ -111,14 +155,14 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     status: "live",
     url: "https://www.amineva.com/workspace",
     category: "workspace",
-    order: 4,
+    order: 8,
     isPublic: true,
   },
 ];
 
 // Local cache keys
-const LOCAL_ADMIN_KEY = "amineva_admin_products_v4";
-const LOCAL_CATEGORY_KEY = "amineva_category_products_v4";
+const LOCAL_ADMIN_KEY = "amineva_admin_products_v6";
+const LOCAL_CATEGORY_KEY = "amineva_category_products_v6";
 const DELETED_KEY = "amineva_products_deleted_v1";
 const PENDING_KEY = "amineva_products_pending_v1";
 

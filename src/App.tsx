@@ -23,7 +23,7 @@ const DipaAIPage = lazyWithRetry(() => import("./pages/landing/DipaAIPage"));
 const InventraPage = lazyWithRetry(() => import("./pages/landing/InventraPage"));
 const DataLensPage = lazyWithRetry(() => import("./pages/landing/DataLensPage"));
 const ABIPage = lazyWithRetry(() => import("./pages/landing/ABIPage"));
-const AgyenkwaPage = lazyWithRetry(() => import("./pages/landing/AgyenkwaPage"));
+const AgroClimatePage = lazyWithRetry(() => import("./pages/landing/AgroClimatePage"));
 const AdesuaPage = lazyWithRetry(() => import("./pages/landing/AdesuaPage"));
 const SikasɛmPage = lazyWithRetry(() => import("./pages/landing/SikasɛmPage"));
 const SupportPage = lazyWithRetry(() => import("./pages/landing/SupportPage"));
@@ -187,7 +187,9 @@ function AppRoutes() {
           <Route path="about-us" element={<AboutUs />} />
           <Route path="apps/dipa-ai" element={<DipaAIPage />} />
           <Route path="/apps/inventra" element={<InventraPage />} />
-          <Route path="/apps/agyenkwa" element={<AgyenkwaPage />} />
+          <Route path="/apps/agroclimate" element={<AgroClimatePage />} />
+          <Route path="explainer/agroclimate" element={<AgroClimatePage />} />
+          <Route path="/apps/agyenkwa" element={<Navigate to="/apps/agroclimate" replace />} />
           <Route path="/apps/adesua" element={<AdesuaPage />} />
           <Route path="explainer/adesua" element={<AdesuaPage />} />
           <Route path="explainer/datalens" element={<DataLensPage />} />

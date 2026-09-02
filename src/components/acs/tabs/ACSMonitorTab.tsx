@@ -17,7 +17,7 @@ const SOURCE_LABELS: Record<string, string> = {
   agstock: 'Nyansa',
   agis: 'DataLens',
   amniva: 'ABI',
-  agroclimate: 'Agyenkwa',
+  agroclimate: 'AgroClimate',
   aminevaops: 'Sikasɛm',
   Dipa: 'Dipa',
 };

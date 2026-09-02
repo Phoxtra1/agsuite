@@ -176,7 +176,7 @@ export function UnifiedInbox() {
                   <SelectItem value="all">All Apps</SelectItem>
                   <SelectItem value="AGStock">Nyansa</SelectItem>
                   <SelectItem value="AGIS">DataLens</SelectItem>
-                  <SelectItem value="AgroClimate">Agyenkwa</SelectItem>
+                  <SelectItem value="AgroClimate">AgroClimate</SelectItem>
                   <SelectItem value="AminevaOps">Sikasɛm</SelectItem>
                   <SelectItem value="external">External</SelectItem>
                 </SelectContent>

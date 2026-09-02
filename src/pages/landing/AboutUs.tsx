@@ -4,7 +4,7 @@ import { Link } from "react-router-dom";
 import {
   Eye, Lightbulb, Globe, Cpu, CloudSun, Microscope, Rocket,
   Network, ArrowRight, Layers, Sparkles, BarChart3, ShieldCheck,
-  Leaf, Building2, Brain, LineChart,
+  Leaf, Building2, Brain, LineChart, Compass,
 } from "lucide-react";
 import {
   Accordion, AccordionContent, AccordionItem, AccordionTrigger,
@@ -26,12 +26,12 @@ const sectorFocus = [
 
 const platformEcosystem = [
   { icon: Sparkles, title: "Dipa AI", role: "Intelligent companion for research, writing, planning, knowledge systems, and storytelling." },
-  { icon: CloudSun, title: "Agyenkwa", role: "Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, and operational risk." },
+  { icon: CloudSun, title: "AgroClimate", role: "Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, and operational risk." },
   { icon: BarChart3, title: "Inventra", role: "AI-backed inventory, commerce, and operational management infrastructure for smart business systems." },
   { icon: ShieldCheck, title: "DataLens", role: "Strategic assessment, field inspection, verification, and documentation infrastructure." },
   { icon: LineChart, title: "Sikasɛm", role: "AI-backed financial operations, monitoring, and oversight infrastructure." },
   { icon: Eye, title: "ABI", role: "Amineva Business Intelligence — unified BI infrastructure for dashboards, KPIs, market analytics, and data-driven decision support." },
-  { icon: Lightbulb, title: "Adesua", role: "Digital learning and career pathway platform — ICT masterclass, learning resources, career guidance, school discovery, and scholarship opportunities." },
+  { icon: Compass, title: "Adesua", role: "Career development platform — career pathways, professional skill advancement, institutional discovery, and scholarship opportunities." },
 ];
 
 const coreValues = [

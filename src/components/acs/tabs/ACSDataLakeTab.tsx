@@ -12,7 +12,7 @@ import type { ACSRawData, ACSProcessingLog, ACSTransformationAudit } from '@/cor
 const PLATFORMS = ['all', 'agroclimate', 'agstock', 'agis', 'aminevaops', 'Dipa'] as const;
 const PLATFORM_LABELS: Record<string, string> = {
   all: 'All Platforms',
-  agroclimate: 'Agyenkwa',
+  agroclimate: 'AgroClimate',
   agstock: 'Nyansa',
   agis: 'DataLens',
   aminevaops: 'Sikasɛm',

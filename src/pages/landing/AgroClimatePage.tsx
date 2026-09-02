@@ -10,7 +10,7 @@ const fadeUp = {
   visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
 };
 
-const AgyenkwaPage: FC = () => {
+const AgroClimatePage: FC = () => {
   const features = [
     { icon: Cloud, title: "Real-Time Weather Forecast", desc: "Hyper-local weather data updated every hour with 7-day forecasts for your exact farm location." },
     { icon: Leaf, title: "Agro Production Alerts", desc: "Smart alerts for livestock, crops, and aquaculture based on your location and current conditions." },
@@ -42,14 +42,14 @@ const AgyenkwaPage: FC = () => {
         <div className="relative z-10 max-w-5xl mx-auto text-center px-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-medium mb-6">
-              <Leaf className="h-4 w-4" /> Smart Farming Platform
+              <Leaf className="h-4 w-4" /> Smart Farming & Climate Platform
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6">
               Farm Smarter with<br />
-              <span className="text-accent">Climate Intelligence</span>
+              <span className="text-accent">AgroClimate Intelligence</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 max-w-3xl mx-auto mb-8">
-              Agyenkwa provides real-time weather forecasts, agro production alerts, environmental predictions, drone advisory, AI-powered farming assistance, and learning resources — built for community farming production.
+              AgroClimate provides real-time weather forecasts, agro production alerts, environmental predictions, drone advisory, AI-powered farming assistance, and learning resources — built for community farming production.
             </p>
             <a
               href="https://agro.amineva.com"
@@ -155,7 +155,7 @@ const AgyenkwaPage: FC = () => {
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
           <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Start Farming Smarter Today</h2>
           <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-            Join thousands of farmers using Agyenkwa for weather intelligence and AI-powered farming guidance.
+            Join thousands of farmers using AgroClimate for weather intelligence and AI-powered farming guidance.
           </p>
           <a
             href="https://agro.amineva.com"
@@ -171,4 +171,4 @@ const AgyenkwaPage: FC = () => {
   );
 };
 
-export default AgyenkwaPage;
+export default AgroClimatePage;
