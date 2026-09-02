@@ -72,7 +72,7 @@ export function useCategoryProductMutations() {
   }, []);
 
   const remove = useCallback(async (id: string) => {
-    return deleteProduct(id);
+    return deleteProduct(id, "category");
   }, []);
 
   return { save, remove };
@@ -88,7 +88,7 @@ export function useAdminProductMutations() {
   }, []);
 
   const remove = useCallback(async (id: string) => {
-    return deleteProduct(id);
+    return deleteProduct(id, "admin");
   }, []);
 
   return { save, remove };
