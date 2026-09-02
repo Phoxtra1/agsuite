@@ -207,6 +207,14 @@ export default function HomePage() {
       return;
     }
 
+    // Workspace uses its own authentication surface
+    if (pid.includes("workspace") || pname.includes("workspace")) {
+      navigate("/workspace");
+      return;
+    }
+
+
+
 
     setSelectedProduct(p);
     setAuthTab("signin");
