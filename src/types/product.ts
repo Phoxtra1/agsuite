@@ -51,19 +51,19 @@ export const DEFAULT_CATEGORIES: ProductCategory[] = [
     id: "data-intelligence",
     name: "Data Intelligence",
     order: 1,
-    products: ["datalens", "agis"],
+    products: ["datalens"],
   },
   {
     id: "financial-operations",
     name: "Financial Operations",
     order: 2,
-    products: ["aminevaops", "agstock"],
+    products: ["aminevaops"],
   },
   {
     id: "business-intelligence",
     name: "Business Intelligence",
     order: 3,
-    products: ["amniva"],
+    products: ["abi"],
   },
   {
     id: "workspace",

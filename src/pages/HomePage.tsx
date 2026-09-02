@@ -165,19 +165,15 @@ export default function HomePage() {
     const fallbackCategoryOf = (id: string) =>
       DEFAULT_CATEGORIES.find((c) => c.products.includes(id))?.id;
 
-    const seen = new Set<string>();
     return DEFAULT_CATEGORIES.map((cat) => ({
       ...cat,
       products: products
         .filter((p) => {
-          if (seen.has(p.id)) return false;
           const catId = p.category || fallbackCategoryOf(p.id);
-          if (catId !== cat.id) return false;
-          seen.add(p.id);
-          return true;
+          return catId === cat.id;
         })
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-    }));
+    })).map((cat) => ({ ...cat, products: cat.products.slice(0, 1) }));
   }, [products]);
 
 
