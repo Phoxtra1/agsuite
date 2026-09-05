@@ -242,6 +242,51 @@ export type Database = {
           },
         ]
       }
+      admin_credentials: {
+        Row: {
+          active: boolean
+          admin_id: string
+          created_at: string
+          failed_attempts: number
+          id: string
+          last_login_at: string | null
+          locked_until: string | null
+          pin_hash: string
+          pin_salt: string
+          position: string
+          recovery_id: string
+          updated_at: string
+        }
+        Insert: {
+          active?: boolean
+          admin_id: string
+          created_at?: string
+          failed_attempts?: number
+          id?: string
+          last_login_at?: string | null
+          locked_until?: string | null
+          pin_hash: string
+          pin_salt: string
+          position?: string
+          recovery_id: string
+          updated_at?: string
+        }
+        Update: {
+          active?: boolean
+          admin_id?: string
+          created_at?: string
+          failed_attempts?: number
+          id?: string
+          last_login_at?: string | null
+          locked_until?: string | null
+          pin_hash?: string
+          pin_salt?: string
+          position?: string
+          recovery_id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       admin_otp_codes: {
         Row: {
           code: string
