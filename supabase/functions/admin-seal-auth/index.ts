@@ -94,7 +94,125 @@ serve(async (req) => {
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
   try {
-    const { action, email, code } = await req.json();
+    const body = await req.json();
+    const { action, email, code } = body;
+
+    // ──────── ADMIN ID + PIN (server-side, hashed) ────────
+    if (action === "id-login" || action === "id-create" || action === "id-migrate") {
+      const json = (payload: unknown, status = 200) =>
+        new Response(JSON.stringify(payload), {
+          status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+
+      // ---- CREATE ----
+      if (action === "id-create") {
+        const position = String(body.position || "System Administrator").trim() || "System Administrator";
+        const pin = String(body.pin || "").trim();
+        if (!/^\d{4,12}$/.test(pin)) {
+          return json({ error: "PIN must be 4–12 digits." }, 400);
+        }
+
+        const adminId = `SM-${randomCode(3)}-${randomCode(4)}`;
+        const recoveryId = `RC-${randomCode(3)}-${randomCode(3)}`;
+        const salt = randomSalt();
+
+        const { error } = await supabase.from("admin_credentials").insert({
+          admin_id: adminId,
+          recovery_id: recoveryId,
+          position,
+          pin_salt: salt,
+          pin_hash: await hashPin(salt, pin),
+        });
+        if (error) {
+          console.error("id-create error:", error.message);
+          return json({ error: "Could not create credential." }, 500);
+        }
+
+        return json({
+          success: true,
+          credential: { id: adminId, recoveryId, position, createdAt: new Date().toISOString() },
+        });
+      }
+
+      // ---- MIGRATE legacy browser-stored credentials ----
+      if (action === "id-migrate") {
+        const creds = Array.isArray(body.credentials) ? body.credentials : [];
+        let migrated = 0;
+        for (const c of creds) {
+          const adminId = String(c?.id || "").trim().toUpperCase();
+          const pin = String(c?.pin || "").trim();
+          if (!adminId || !pin) continue;
+          const { data: existing } = await supabase
+            .from("admin_credentials")
+            .select("id")
+            .eq("admin_id", adminId)
+            .maybeSingle();
+          if (existing) continue;
+          const salt = randomSalt();
+          const { error } = await supabase.from("admin_credentials").insert({
+            admin_id: adminId,
+            recovery_id: String(c?.recoveryId || `RC-${randomCode(3)}-${randomCode(3)}`).toUpperCase(),
+            position: String(c?.position || "System Administrator"),
+            pin_salt: salt,
+            pin_hash: await hashPin(salt, pin),
+          });
+          if (!error) migrated++;
+        }
+        return json({ success: true, migrated });
+      }
+
+      // ---- LOGIN ----
+      const identifier = String(body.identifier || "").trim().toUpperCase();
+      const pin = String(body.pin || "").trim();
+      if (!identifier || !pin) {
+        return json({ error: "Enter your Admin ID and PIN." }, 400);
+      }
+
+      const { data: rows } = await supabase
+        .from("admin_credentials")
+        .select("*")
+        .or(`admin_id.eq.${identifier},recovery_id.eq.${identifier}`)
+        .limit(1);
+
+      const cred = rows?.[0];
+      if (!cred || cred.active === false) {
+        return json({ error: "Unrecognized Admin ID or Recovery ID." }, 401);
+      }
+
+      if (cred.locked_until && new Date(cred.locked_until) > new Date()) {
+        return json({ error: "Too many attempts. Try again later." }, 429);
+      }
+
+      const candidate = await hashPin(cred.pin_salt, pin);
+      if (candidate !== cred.pin_hash) {
+        const attempts = (cred.failed_attempts || 0) + 1;
+        await supabase
+          .from("admin_credentials")
+          .update({
+            failed_attempts: attempts,
+            locked_until: attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000).toISOString() : null,
+          })
+          .eq("id", cred.id);
+        return json({ error: "Invalid Security PIN. Please try again." }, 401);
+      }
+
+      await supabase
+        .from("admin_credentials")
+        .update({ failed_attempts: 0, locked_until: null, last_login_at: new Date().toISOString() })
+        .eq("id", cred.id);
+
+      const tokenBytes = new Uint8Array(32);
+      crypto.getRandomValues(tokenBytes);
+      const token = Array.from(tokenBytes).map((b) => b.toString(16).padStart(2, "0")).join("");
+
+      return json({
+        success: true,
+        token,
+        credential: { id: cred.admin_id, recoveryId: cred.recovery_id, position: cred.position },
+      });
+    }
+
 
     // ──────── REQUEST OTP ────────
     if (action === "request") {
