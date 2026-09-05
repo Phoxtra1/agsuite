@@ -37,15 +37,6 @@ function generateAlphaNumeric(length: number): string {
   return result;
 }
 
-// Default fallback credential for instant initial admin access if none created yet
-const DEFAULT_SYSTEM_CRED: AdminCredential = {
-  id: "SM-001-SEC1",
-  recoveryId: "RC-999-REC",
-  position: "System Manager",
-  pin: "1234",
-  createdAt: new Date().toISOString(),
-};
-
 export function getSealSession(): { token: string; email: string; position?: string; id?: string } | null {
   const token = sessionStorage.getItem(SEAL_KEY) || localStorage.getItem(SEAL_KEY);
   const email = sessionStorage.getItem(SEAL_EMAIL_KEY) || localStorage.getItem(SEAL_EMAIL_KEY);
@@ -85,88 +76,7 @@ export function isSealAuthenticated(): boolean {
   return !!getSealSession();
 }
 
-/**
- * Retrieve all created Admin Credentials stored in persistence.
- */
-export function getStoredAdminCredentials(): AdminCredential[] {
-  try {
-    const data = localStorage.getItem(STORAGE_CREDS_KEY);
-    if (!data) return [DEFAULT_SYSTEM_CRED];
-    const parsed = JSON.parse(data);
-    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
-    return [DEFAULT_SYSTEM_CRED];
-  } catch {
-    return [DEFAULT_SYSTEM_CRED];
-  }
-}
-
-/**
- * Create a new Admin Credential with Position, PIN, Main Admin ID (SM-XXX-XXXX) and Recovery ID (RC-XXX-XXX).
- */
-export function createAdminCredential(position: string, pin: string): AdminCredential {
-  const cleanPos = position.trim() || "System Manager";
-  const cleanPin = pin.trim();
-
-  // Generate SM-XXX-XXXX and RC-XXX-XXX
-  const mainId = `SM-${generateAlphaNumeric(3)}-${generateAlphaNumeric(4)}`;
-  const recoveryId = `RC-${generateAlphaNumeric(3)}-${generateAlphaNumeric(3)}`;
-
-  const newCred: AdminCredential = {
-    id: mainId,
-    recoveryId,
-    position: cleanPos,
-    pin: cleanPin,
-    createdAt: new Date().toISOString(),
-  };
-
-  const current = getStoredAdminCredentials();
-  const updated = [newCred, ...current.filter((c) => c.id !== mainId)];
-  localStorage.setItem(STORAGE_CREDS_KEY, JSON.stringify(updated));
-
-  return newCred;
-}
-
-/**
- * Authenticate via Admin ID or Recovery ID and PIN.
- */
-export function verifyAdminCredentials(
-  idOrRecoveryId: string,
-  pin: string
-): { success: boolean; credential?: AdminCredential; error?: string } {
-  const cleanId = idOrRecoveryId.trim().toUpperCase();
-  const cleanPin = pin.trim();
-
-  if (!cleanId) {
-    return { success: false, error: "Please enter an Admin ID or Recovery ID." };
-  }
-  if (!cleanPin) {
-    return { success: false, error: "Please enter your PIN." };
-  }
-
-  const creds = getStoredAdminCredentials();
-
-  // Match main ID or recovery ID (case-insensitive)
-  const matched = creds.find(
-    (c) => c.id.toUpperCase() === cleanId || c.recoveryId.toUpperCase() === cleanId
-  );
-
-  if (!matched) {
-    return { success: false, error: "Unrecognized Admin ID or Recovery ID." };
-  }
-
-  if (matched.pin !== cleanPin) {
-    return { success: false, error: "Invalid Security PIN. Please try again." };
-  }
-
-  // Create session
-  const mockToken = `seal_id_tk_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`;
-  const emailAlias = `${matched.position.toLowerCase().replace(/[^a-z0-9]/g, ".")}@amineva.com`;
-  setSealSession(mockToken, emailAlias, matched.position, matched.id);
-
-  return { success: true, credential: matched };
-}
-
-async function callSealFunction(body: Record<string, string>): Promise<any> {
+async function callSealFunction(body: Record<string, unknown>): Promise<any> {
   const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-seal-auth`, {
     method: "POST",
     headers: {
@@ -176,6 +86,84 @@ async function callSealFunction(body: Record<string, string>): Promise<any> {
     body: JSON.stringify(body),
   });
   return res.json();
+}
+
+/**
+ * One-time migration: push any legacy browser-stored admin credentials to the
+ * backend (where PINs are hashed), then wipe them from this device.
+ */
+async function migrateLegacyCredentials(): Promise<void> {
+  try {
+    const data = localStorage.getItem(STORAGE_CREDS_KEY);
+    if (!data) return;
+    const parsed = JSON.parse(data);
+    if (!Array.isArray(parsed) || parsed.length === 0) {
+      localStorage.removeItem(STORAGE_CREDS_KEY);
+      return;
+    }
+    const result = await callSealFunction({ action: "id-migrate", credentials: parsed });
+    if (result?.success) {
+      localStorage.removeItem(STORAGE_CREDS_KEY);
+    }
+  } catch {
+    /* best-effort */
+  }
+}
+
+/**
+ * Create a new Admin Credential server-side. The PIN is hashed in the backend
+ * and never stored in the browser.
+ */
+export async function createAdminCredential(
+  position: string,
+  pin: string
+): Promise<{ success: boolean; credential?: AdminCredential; error?: string }> {
+  try {
+    const data = await callSealFunction({
+      action: "id-create",
+      position: position.trim() || "System Administrator",
+      pin: pin.trim(),
+    });
+    if (data?.error || !data?.credential) {
+      return { success: false, error: data?.error || "Could not create credential." };
+    }
+    return { success: true, credential: { ...data.credential, pin: "" } as AdminCredential };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Network error." };
+  }
+}
+
+/**
+ * Authenticate via Admin ID or Recovery ID and PIN — verified server-side.
+ */
+export async function verifyAdminCredentials(
+  idOrRecoveryId: string,
+  pin: string
+): Promise<{ success: boolean; credential?: AdminCredential; error?: string }> {
+  const cleanId = idOrRecoveryId.trim().toUpperCase();
+  const cleanPin = pin.trim();
+
+  if (!cleanId) return { success: false, error: "Please enter an Admin ID or Recovery ID." };
+  if (!cleanPin) return { success: false, error: "Please enter your PIN." };
+
+  await migrateLegacyCredentials();
+
+  try {
+    const data = await callSealFunction({ action: "id-login", identifier: cleanId, pin: cleanPin });
+    if (data?.error || !data?.success) {
+      return { success: false, error: data?.error || "Authentication failed." };
+    }
+
+    const cred = data.credential || {};
+    const emailAlias = `${String(cred.position || "system.administrator")
+      .toLowerCase()
+      .replace(/[^a-z0-9]/g, ".")}@amineva.com`;
+    setSealSession(data.token, emailAlias, cred.position, cred.id);
+
+    return { success: true, credential: { ...cred, pin: "" } as AdminCredential };
+  } catch (err: any) {
+    return { success: false, error: err?.message || "Network error." };
+  }
 }
 
 export async function requestSealOTP(email: string): Promise<{ success: boolean; error?: string }> {
