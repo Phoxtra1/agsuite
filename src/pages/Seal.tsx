@@ -77,18 +77,18 @@ export default function Seal() {
   const POSITION_PRESETS = ["System Administrator"];
 
   // Handle Login submission
-  const handleLoginSubmit = (e: React.FormEvent) => {
+  const handleLoginSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     setLoading(true);
 
-    const result = verifyAdminCredentials(loginId, loginPin);
+    const result = await verifyAdminCredentials(loginId, loginPin);
     setLoading(false);
 
     if (result.success && result.credential) {
       setSuccessMsg("Authenticated. Redirecting...");
       setTimeout(() => {
-        navigate("/suite", { replace: true });
+        navigate("/suite/console", { replace: true });
       }, 400);
     } else {
       setError(result.error || "Authentication failed.");
@@ -96,7 +96,7 @@ export default function Seal() {
   };
 
   // Handle Creation submission
-  const handleCreateSubmit = (e: React.FormEvent) => {
+  const handleCreateSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
 
@@ -112,12 +112,21 @@ export default function Seal() {
       return;
     }
 
-    const cred = createAdminCredential(cleanPos, cleanPin);
-    setCreatedCred(cred);
+    setLoading(true);
+    const res = await createAdminCredential(cleanPos, cleanPin);
+    setLoading(false);
+
+    if (!res.success || !res.credential) {
+      setError(res.error || "Could not create credential.");
+      return;
+    }
+
+    setCreatedCred(res.credential);
     setShowModal(true);
     setCreatePin("");
     setConfirmPin("");
   };
+
 
   // Copy handlers
   const handleCopy = (text: string, type: "id" | "recovery" | "all") => {
@@ -141,7 +150,7 @@ export default function Seal() {
     const emailAlias = `${createdCred.position.toLowerCase().replace(/[^a-z0-9]/g, ".")}@amineva.com`;
     setSealSession(mockToken, emailAlias, createdCred.position, createdCred.id);
     setShowModal(false);
-    navigate("/suite", { replace: true });
+    navigate("/suite/console", { replace: true });
   };
 
   // Switch to login tab and pre-fill created ID
