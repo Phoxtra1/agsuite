@@ -150,7 +150,7 @@ export default function Seal() {
     const emailAlias = `${createdCred.position.toLowerCase().replace(/[^a-z0-9]/g, ".")}@amineva.com`;
     setSealSession(mockToken, emailAlias, createdCred.position, createdCred.id);
     setShowModal(false);
-    navigate("/suite", { replace: true });
+    navigate("/suite/console", { replace: true });
   };
 
   // Switch to login tab and pre-fill created ID
