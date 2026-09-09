@@ -50,7 +50,12 @@ export function isAlreadyRegisteredError(err: unknown): boolean {
 export function formatAuthError(err: unknown): string {
   if (err && typeof err === "object" && "message" in err) {
     const msg = (err as any).message as string;
-    if (msg.includes("Invalid login") || msg.includes("Invalid credentials")) return "Invalid email or password.";
+    if (msg.includes("Resource limit") || msg.includes("billing cycle") || msg.includes("exceeded")) {
+      return "Unable to connect to authentication server. Please verify your connection.";
+    }
+    if (msg.includes("Invalid login") || msg.includes("Invalid credentials") || msg.includes("user_invalid_credentials")) {
+      return "Invalid email or password.";
+    }
     if (msg.includes("Email not confirmed")) return "Please verify your email before signing in.";
     if (isAlreadyRegisteredError(err)) return "This email is already registered. Please sign in.";
     return msg;

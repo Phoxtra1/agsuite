@@ -25,14 +25,22 @@ function toError(err: unknown): { error: Error; appwrite?: AppwriteErrorLike } {
 
 export function formatAuthError(err: unknown): string {
   const { error, appwrite } = toError(err);
+  const msg = error?.message || "Authentication failed";
+
+  if (msg.includes("Resource limit") || msg.includes("billing cycle") || msg.includes("exceeded")) {
+    return "Unable to connect to authentication server. Please verify your connection.";
+  }
 
   // Browser/network/CORS failures typically show as TypeError: Failed to fetch
-  const msg = error?.message || "Authentication failed";
   if (msg.toLowerCase().includes("failed to fetch")) {
     return [
       "Network/CORS error: Appwrite could not be reached (Failed to fetch).",
       "Verify this preview domain is added in Appwrite Console → Platforms (Web) and that the endpoint/projectId are correct.",
     ].join(" ");
+  }
+
+  if (msg.includes("Invalid credentials") || msg.includes("user_invalid_credentials")) {
+    return "Invalid email or password.";
   }
 
   const code = appwrite?.code;
