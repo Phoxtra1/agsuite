@@ -1,9 +1,9 @@
 // src/data/products.ts
-import { databases } from "@/lib/appwrite";
+import { databases, APPWRITE_DB_ID } from "@/lib/appwrite";
 import { ID, Query } from "appwrite";
 import type { ProductData } from "@/types/product";
 
-const DB_ID = (import.meta as any).env?.VITE_DB_ID || "agsuite-db2";
+const DB_ID = APPWRITE_DB_ID;
 const PRODUCTS_COLLECTION_ID = "products";
 
 export const DEFAULT_ADMIN_PRODUCTS: ProductData[] = [

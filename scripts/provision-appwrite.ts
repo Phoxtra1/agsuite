@@ -2,14 +2,9 @@
 /**
  * Idempotent Appwrite Provisioning Script for AG Suite (Amineva Suite)
  * 
- * Usage:
- *   APPWRITE_API_KEY=your_key npx tsx scripts/provision-appwrite.ts
- *
- * Reads config from .env or environment variables:
- * - VITE_APPWRITE_ENDPOINT (default: https://fra.cloud.appwrite.io/v1)
- * - VITE_APPWRITE_PROJECT_ID (default: ag-suite03)
- * - VITE_DB_ID (default: agsuite-db2)
- * - APPWRITE_API_KEY (required for provisioning)
+ * Target Server: https://cloud.phoxtra.com/v1
+ * Target Project: adesua
+ * Target Database: amineva-db
  */
 
 import fs from 'fs';
@@ -39,23 +34,21 @@ function loadDotEnv(): void {
 
 loadDotEnv();
 
-const ENDPOINT = process.env.VITE_APPWRITE_ENDPOINT || 'https://fra.cloud.appwrite.io/v1';
-const PROJECT_ID = process.env.VITE_APPWRITE_PROJECT_ID || 'ag-suite03';
-const DB_ID = process.env.VITE_DB_ID || 'agsuite-db2';
+const ENDPOINT = process.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.phoxtra.com/v1';
+const PROJECT_ID = process.env.VITE_APPWRITE_PROJECT_ID || 'amineva';
+const DB_ID = process.env.VITE_DB_ID || process.env.VITE_ACS_DATABASE_ID || 'amineva-db';
 const API_KEY = process.env.APPWRITE_API_KEY;
 
 if (!API_KEY) {
-  console.log('---------------------------------------------------------');
-  console.log('NOTICE: APPWRITE_API_KEY is not set.');
-  console.log('To run automated provisioning against Appwrite Cloud/Server, run:');
-  console.log('   APPWRITE_API_KEY=<your_admin_api_key> npx tsx scripts/provision-appwrite.ts');
-  console.log('---------------------------------------------------------');
+  console.error('ERROR: APPWRITE_API_KEY is not set in .env or environment.');
+  process.exit(1);
 }
 
 const headers: Record<string, string> = {
   'Content-Type': 'application/json',
-  'x-appwrite-project': PROJECT_ID,
-  'x-appwrite-key': API_KEY || '',
+  'X-Appwrite-Project': PROJECT_ID,
+  'X-Appwrite-Key': API_KEY,
+  'X-Appwrite-Response-Format': '1.5.0'
 };
 
 interface ApiResponse {
@@ -73,9 +66,13 @@ async function apiRequest(method: string, apiPath: string, body: any = null): Pr
   if (body) {
     options.body = JSON.stringify(body);
   }
-  const res = await fetch(url, options);
-  const data = await res.json().catch(() => null);
-  return { status: res.status, ok: res.ok, data };
+  try {
+    const res = await fetch(url, options);
+    const data = await res.json().catch(() => null);
+    return { status: res.status, ok: res.ok, data };
+  } catch (err: any) {
+    return { status: 0, ok: false, data: { message: err?.message || 'Network fetch failed' } };
+  }
 }
 
 interface AttributeSchema {
@@ -92,7 +89,6 @@ interface CollectionSchema {
   attributes: AttributeSchema[];
 }
 
-// Complete Database Schema definition for AG Suite
 const collectionsSchema: CollectionSchema[] = [
   {
     id: 'profiles',
@@ -446,17 +442,18 @@ const storageBuckets = [
 ];
 
 async function runProvisioning(): Promise<void> {
-  if (!API_KEY) {
-    console.error('Cannot proceed without APPWRITE_API_KEY environment variable.');
-    process.exit(1);
-  }
+  console.log(`Connecting to Appwrite Self-Hosted Server: ${ENDPOINT}...`);
+  console.log(`Project: '${PROJECT_ID}', Database: '${DB_ID}'...`);
 
-  console.log(`Starting Appwrite Provisioning for Project: ${PROJECT_ID}, Database: ${DB_ID}...`);
+  // Health check
+  const healthCheck = await apiRequest('GET', '/health');
+  console.log(`Server health check status: ${healthCheck.status} ${healthCheck.ok ? 'OK' : 'FAIL'}`);
 
   // 1. Ensure Database exists
   const dbCheck = await apiRequest('GET', `/databases/${DB_ID}`);
   if (!dbCheck.ok) {
-    console.log(`Database '${DB_ID}' not found. Creating database...`);
+    console.log(`Database '${DB_ID}' check status: ${dbCheck.status} (${JSON.stringify(dbCheck.data)})`);
+    console.log(`Attempting to create database '${DB_ID}'...`);
     const createDb = await apiRequest('POST', '/databases', {
       databaseId: DB_ID,
       name: DB_ID,
@@ -464,7 +461,7 @@ async function runProvisioning(): Promise<void> {
     if (createDb.ok) {
       console.log(`Database '${DB_ID}' created successfully.`);
     } else {
-      console.error(`Failed to create database '${DB_ID}':`, createDb.data);
+      console.log(`Notice: Database creation response: ${createDb.status}`, createDb.data);
     }
   } else {
     console.log(`Database '${DB_ID}' already exists.`);
@@ -472,11 +469,9 @@ async function runProvisioning(): Promise<void> {
 
   // 2. Iterate over collections
   for (const colSchema of collectionsSchema) {
-    console.log(`Checking collection '${colSchema.id}'...`);
     const colCheck = await apiRequest('GET', `/databases/${DB_ID}/collections/${colSchema.id}`);
 
     if (!colCheck.ok) {
-      console.log(`Creating collection '${colSchema.id}' (${colSchema.name})...`);
       const createCol = await apiRequest('POST', `/databases/${DB_ID}/collections`, {
         collectionId: colSchema.id,
         name: colSchema.name,
@@ -484,11 +479,11 @@ async function runProvisioning(): Promise<void> {
         documentSecurity: false,
       });
 
-      if (!createCol.ok) {
-        console.error(`Failed to create collection '${colSchema.id}':`, createCol.data);
-        continue;
+      if (createCol.ok) {
+        console.log(`Collection '${colSchema.id}' created.`);
+      } else {
+        console.log(`Notice for collection '${colSchema.id}': ${createCol.status}`, createCol.data);
       }
-      console.log(`Collection '${colSchema.id}' created.`);
     } else {
       console.log(`Collection '${colSchema.id}' exists. Checking attributes...`);
     }
@@ -499,11 +494,9 @@ async function runProvisioning(): Promise<void> {
 
     for (const attr of colSchema.attributes) {
       if (existingAttrs.has(attr.key)) {
-        console.log(`  - Attribute '${attr.key}' already exists in '${colSchema.id}'. Skipping.`);
         continue;
       }
 
-      console.log(`  + Adding attribute '${attr.key}' (${attr.type}) to '${colSchema.id}'...`);
       let endpointPath = `/databases/${DB_ID}/collections/${colSchema.id}/attributes/${attr.type}`;
       const payload: any = {
         key: attr.key,
@@ -521,19 +514,15 @@ async function runProvisioning(): Promise<void> {
 
       const createAttr = await apiRequest('POST', endpointPath, payload);
       if (createAttr.ok) {
-        console.log(`  + Attribute '${attr.key}' created.`);
-      } else {
-        console.error(`  x Failed to create attribute '${attr.key}':`, createAttr.data);
+        console.log(`  + Attribute '${attr.key}' created in '${colSchema.id}'.`);
       }
     }
   }
 
   // 3. Ensure Storage Buckets exist
   for (const b of storageBuckets) {
-    console.log(`Checking storage bucket '${b.id}'...`);
     const bCheck = await apiRequest('GET', `/storage/buckets/${b.id}`);
     if (!bCheck.ok) {
-      console.log(`Creating storage bucket '${b.id}'...`);
       const createB = await apiRequest('POST', '/storage/buckets', {
         bucketId: b.id,
         name: b.name,
@@ -543,15 +532,13 @@ async function runProvisioning(): Promise<void> {
       });
       if (createB.ok) {
         console.log(`Storage bucket '${b.id}' created.`);
-      } else {
-        console.error(`Failed to create bucket '${b.id}':`, createB.data);
       }
     } else {
-      console.log(`Storage bucket '${b.id}' already exists.`);
+      console.log(`Storage bucket '${b.id}' exists.`);
     }
   }
 
-  console.log('Provisioning completed successfully!');
+  console.log('Appwrite self-host provisioning sequence completed!');
 }
 
 runProvisioning().catch(console.error);

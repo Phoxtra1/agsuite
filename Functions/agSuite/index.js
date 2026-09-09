@@ -5,7 +5,7 @@ export default async ({ req, res, log, error }) => {
     const endpoint = process.env.APPWRITE_ENDPOINT || "https://fra.cloud.appwrite.io/v1";
     const projectId = process.env.APPWRITE_FUNCTION_PROJECT_ID || process.env.VITE_APPWRITE_PROJECT_ID || "ag-suite03";
     const apiKey = process.env.APPWRITE_API_KEY;
-    const dbId = process.env.SUITE_DB_ID || process.env.VITE_DB_ID || "agsuite-db2";
+    const dbId = process.env.SUITE_DB_ID || process.env.VITE_DB_ID || "amineva-db";
 
     const client = new Client()
       .setEndpoint(endpoint)

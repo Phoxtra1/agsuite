@@ -4,10 +4,10 @@
  * Authentication verifies WHO the user is.
  * This module verifies WHICH modules/apps they may enter.
  */
-import { databases } from "@/lib/appwrite";
+import { databases, APPWRITE_DB_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
 
-const DB_ID = (import.meta as any).env?.VITE_DB_ID || "agsuite-db2";
+const DB_ID = APPWRITE_DB_ID;
 const MODULE_ACCESS_COLLECTION_ID = "module_access";
 
 export interface AppAccess {

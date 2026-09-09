@@ -1,4 +1,42 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+
+// Mock Supabase/Appwrite client for Drive unit testing
+vi.mock("@/integrations/supabase/client", () => {
+  const queryBuilder = {
+    select: vi.fn().mockReturnThis(),
+    eq: vi.fn().mockReturnThis(),
+    is: vi.fn().mockReturnThis(),
+    insert: vi.fn().mockReturnValue({
+      select: vi.fn().mockReturnValue({
+        single: vi.fn().mockResolvedValue({ data: null, error: { message: "Mock offline" } }),
+      }),
+    }),
+    update: vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }),
+    delete: vi.fn().mockReturnValue({
+      eq: vi.fn().mockResolvedValue({ data: null, error: null }),
+    }),
+    then: (resolve: any) => Promise.resolve({ data: null, error: { message: "Mock offline" } }).then(resolve),
+  };
+
+  return {
+    supabase: {
+      from: () => queryBuilder,
+      auth: {
+        getUser: async () => ({ data: { user: { id: "usr-demo", email: "demo@amineva.com" } }, error: null }),
+      },
+      storage: {
+        from: () => ({
+          upload: async () => ({ data: null, error: null }),
+          remove: async () => ({ data: true, error: null }),
+          createSignedUrl: async () => ({ data: { signedUrl: "https://mock.url" }, error: null }),
+        }),
+      },
+    },
+  };
+});
+
 import { createFolder, listFolder, uploadFile, trashItem, restoreItem, purgeItem, storageUsage } from "@/lib/workspace/drive/documents";
 
 describe("Amineva Drive storage service test suite", () => {

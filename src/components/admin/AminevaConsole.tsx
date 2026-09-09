@@ -5,7 +5,6 @@ import { CategoryManager } from './CategoryManager';
 import { AuthDiagnosticsPanel } from './AuthDiagnosticsPanel';
 import { EmailDeliveryPanel } from './EmailDeliveryPanel';
 import UserAppAccessManager from './UserAppAccessManager';
-import SubProductReleaseChecklist from './SubProductReleaseChecklist';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -18,7 +17,6 @@ import {
   ShieldCheck,
   Mail,
   KeyRound,
-  Rocket,
   Boxes,
   CircleDot,
   Clock,
@@ -30,17 +28,15 @@ type SectionId =
   | 'categories'
   | 'auth-diagnostics'
   | 'email-delivery'
-  | 'app-access'
-  | 'release-checklist';
+  | 'app-access';
 
 const SECTIONS: { id: SectionId; label: string; icon: React.ElementType; hint: string }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, hint: 'Live snapshot' },
   { id: 'products', label: 'Product Registry', icon: Settings, hint: 'Internal registry' },
   { id: 'categories', label: 'Category Management', icon: FolderTree, hint: 'Homepage listing' },
-  { id: 'auth-diagnostics', label: 'Auth Diagnostics', icon: ShieldCheck, hint: 'Session health' },
+  { id: 'auth-diagnostics', label: 'Live Auth Diagnostics', icon: ShieldCheck, hint: 'Real-time telemetry' },
   { id: 'email-delivery', label: 'Email Delivery', icon: Mail, hint: 'Delivery statuses' },
   { id: 'app-access', label: 'User Access', icon: KeyRound, hint: 'Per-app grants' },
-  { id: 'release-checklist', label: 'Release Checklist', icon: Rocket, hint: 'Pre-launch gates' },
 ];
 
 function StatCard({
@@ -91,7 +87,7 @@ export function AminevaConsole() {
     [categoryProducts]
   );
 
-  const active = SECTIONS.find((s) => s.id === section)!;
+  const active = SECTIONS.find((s) => s.id === section) || SECTIONS[0];
 
   return (
     <div className="space-y-6">
@@ -100,7 +96,7 @@ export function AminevaConsole() {
         <div>
           <h2 className="text-2xl font-bold text-foreground">Amineva Console</h2>
           <p className="text-sm text-muted-foreground">
-            Central control for products, access, diagnostics and delivery
+            Central control for products, access, real-time diagnostics and delivery
           </p>
         </div>
         <div className="flex items-center gap-2">
@@ -168,10 +164,7 @@ export function AminevaConsole() {
           {section === 'overview' && (
             <div className="space-y-4">
               <AdminProductLinks />
-              <div className="grid gap-4 xl:grid-cols-2 items-start">
-                <AuthDiagnosticsPanel />
-                <SubProductReleaseChecklist />
-              </div>
+              <AuthDiagnosticsPanel />
             </div>
           )}
           {section === 'products' && <AdminPanel />}
@@ -179,7 +172,6 @@ export function AminevaConsole() {
           {section === 'auth-diagnostics' && <AuthDiagnosticsPanel />}
           {section === 'email-delivery' && <EmailDeliveryPanel />}
           {section === 'app-access' && <UserAppAccessManager />}
-          {section === 'release-checklist' && <SubProductReleaseChecklist />}
         </div>
       </div>
     </div>

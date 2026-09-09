@@ -9,10 +9,10 @@
  * Products handle their own permissions internally.
  */
 
-import { databases } from '@/lib/appwrite';
+import { databases, APPWRITE_DB_ID } from '@/lib/appwrite';
 import { ID, Query } from 'appwrite';
 
-const DB_ID = import.meta.env.VITE_DB_ID || 'agsuite-db2';
+const DB_ID = APPWRITE_DB_ID;
 const PROFILES_COLLECTION_ID = import.meta.env.VITE_APPWRITE_PROFILES_COLLECTION_ID || 'profiles';
 
 export interface SuiteProfile {
