@@ -587,7 +587,10 @@ const functionsAdapter = {
       if (!functionId) {
         return { data: null, error: null };
       }
-      const payload = typeof options?.body === "string" ? options.body : JSON.stringify(options?.body || {});
+      // Route by function name so the self-hosted `agSuite` function knows
+      // which action to run.
+      const rawBody = typeof options?.body === "string" ? JSON.parse(options.body || "{}") : (options?.body || {});
+      const payload = JSON.stringify({ action: functionName, ...rawBody });
       const execution = await appwriteFunctions.createExecution(functionId, payload);
       let data = null;
       try {
