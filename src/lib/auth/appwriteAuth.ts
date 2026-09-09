@@ -27,10 +27,6 @@ export function formatAuthError(err: unknown): string {
   const { error, appwrite } = toError(err);
   const msg = error?.message || "Authentication failed";
 
-  if (msg.includes("Resource limit") || msg.includes("billing cycle") || msg.includes("exceeded")) {
-    return "Unable to connect to authentication server. Please verify your connection.";
-  }
-
   // Browser/network/CORS failures typically show as TypeError: Failed to fetch
   if (msg.toLowerCase().includes("failed to fetch")) {
     return [
