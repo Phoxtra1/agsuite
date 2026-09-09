@@ -107,7 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // previous account/app dashboard from being reused while credentials swap.
       resetClientState(queryClient);
       if (lastUserIdRef.current) {
-        await supabase.auth.signOut();
+        await supabase.auth.signOut().catch(() => null);
         lastUserIdRef.current = null;
       }
       const { data, error } = await supabase.auth.signInWithPassword({ email, password });

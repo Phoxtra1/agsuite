@@ -337,10 +337,7 @@ const authAdapter = {
 
   async signInWithPassword({ email, password }: { email: string; password: string }) {
     try {
-      // Clear existing session if any
-      try { await account.deleteSession("current"); } catch {}
-
-      const session = await account.createEmailPasswordSession(email, password);
+      const session = await account.createEmailPasswordSession(email.trim(), password);
       const user = await account.get();
 
       return {
