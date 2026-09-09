@@ -33,6 +33,105 @@ export default async ({ req, res, log, error }) => {
     }
 
     const action = body.action || req.path?.replace("/", "") || "get-user-modules";
+
+    // ──────── Admin Seal: IDs + PINs (hashed, self-hosted only) ────────
+    if (body.scope === "admin-seal-auth") {
+      const COL = "admin_credentials";
+
+      const findByIdentifier = async (identifier) => {
+        const upper = String(identifier || "").toUpperCase();
+        for (const field of ["adminId", "recoveryId"]) {
+          try {
+            const found = await db.listDocuments(dbId, COL, [Query.equal(field, upper), Query.limit(1)]);
+            if (found.documents.length) return found.documents[0];
+          } catch {}
+        }
+        return null;
+      };
+
+      const createCredential = async (position, pin, adminId, recoveryId) => {
+        const salt = randomSalt();
+        return db.createDocument(dbId, COL, ID.unique(), {
+          adminId: adminId || `AMV-SEC-${randomCode(6)}`,
+          recoveryId: recoveryId || `AMV-REC-${randomCode(8)}`,
+          position: position || "System Administrator",
+          pinSalt: salt,
+          pinHash: hashPin(salt, String(pin || "")),
+          failedAttempts: 0,
+          lockedUntil: "",
+          createdAt: new Date().toISOString(),
+        });
+      };
+
+      if (action === "id-create") {
+        if (!body.pin || String(body.pin).length < 4) {
+          return res.json({ error: "PIN must be at least 4 digits." }, 400);
+        }
+        const doc = await createCredential(body.position, body.pin);
+        return res.json({
+          success: true,
+          credential: {
+            id: doc.adminId,
+            recoveryId: doc.recoveryId,
+            position: doc.position,
+            createdAt: doc.createdAt,
+          },
+        });
+      }
+
+      if (action === "id-migrate") {
+        const list = Array.isArray(body.credentials) ? body.credentials : [];
+        for (const c of list) {
+          const existing = await findByIdentifier(c.id);
+          if (!existing) {
+            await createCredential(c.position, c.pin, String(c.id || "").toUpperCase(), String(c.recoveryId || "").toUpperCase())
+              .catch(() => null);
+          }
+        }
+        return res.json({ success: true, migrated: list.length });
+      }
+
+      if (action === "id-login") {
+        const doc = await findByIdentifier(body.identifier);
+        if (!doc) return res.json({ success: false, error: "Unrecognised Admin ID." }, 401);
+
+        if (doc.lockedUntil && new Date(doc.lockedUntil).getTime() > Date.now()) {
+          return res.json({ success: false, error: "Locked after too many attempts. Try again later." }, 423);
+        }
+
+        const ok = doc.pinHash === hashPin(doc.pinSalt, String(body.pin || ""));
+        if (!ok) {
+          const attempts = (doc.failedAttempts || 0) + 1;
+          await db.updateDocument(dbId, COL, doc.$id, {
+            failedAttempts: attempts,
+            lockedUntil: attempts >= 5 ? new Date(Date.now() + 15 * 60 * 1000).toISOString() : "",
+          }).catch(() => null);
+          return res.json({
+            success: false,
+            error: attempts >= 5 ? "Locked for 15 minutes after 5 failed attempts." : "Incorrect PIN.",
+          }, 401);
+        }
+
+        await db.updateDocument(dbId, COL, doc.$id, {
+          failedAttempts: 0,
+          lockedUntil: "",
+          lastLoginAt: new Date().toISOString(),
+        }).catch(() => null);
+
+        return res.json({
+          success: true,
+          token: crypto.randomBytes(24).toString("hex"),
+          credential: {
+            id: doc.adminId,
+            recoveryId: doc.recoveryId,
+            position: doc.position,
+            createdAt: doc.createdAt,
+          },
+        });
+      }
+
+      return res.json({ error: "Unsupported admin action." }, 400);
+    }
     log(`[agSuite Function] Executing action: ${action}`);
 
     // Action 1: get-user-modules / default
