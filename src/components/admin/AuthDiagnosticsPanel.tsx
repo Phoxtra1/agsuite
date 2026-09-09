@@ -77,7 +77,7 @@ const initial: DiagnosticState = {
 export function AuthDiagnosticsPanel() {
   const [state, setState] = useState<DiagnosticState>(initial);
   const [refreshing, setRefreshing] = useState(false);
-  const [autoRefresh, setAutoRefresh] = useState(true);
+  const [autoRefresh, setAutoRefresh] = useState(false);
   const autoRefreshTimer = useRef<NodeJS.Timeout | null>(null);
 
   const addLog = useCallback((type: DiagnosticLog["type"], message: string) => {

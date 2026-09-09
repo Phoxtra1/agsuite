@@ -283,13 +283,26 @@ class AppwriteQueryBuilder {
   }
 }
 
+// Session cache to prevent redundant Appwrite calls and avoid rate limits
+let cachedAuthSession: { data: any; timestamp: number } | null = null;
+const AUTH_CACHE_TTL_MS = 5000; // 5 seconds cache
+
+function invalidateAuthCache() {
+  cachedAuthSession = null;
+}
+
 // Appwrite Auth Adapter conforming to Supabase auth interface
 const authAdapter = {
   async getSession() {
+    const now = Date.now();
+    if (cachedAuthSession && now - cachedAuthSession.timestamp < AUTH_CACHE_TTL_MS) {
+      return cachedAuthSession.data;
+    }
+
     try {
       const sess = await account.getSession("current");
       const user = await account.get();
-      return {
+      const result = {
         data: {
           session: {
             access_token: sess.$id,
@@ -309,38 +322,28 @@ const authAdapter = {
         },
         error: null,
       };
+      cachedAuthSession = { data: result, timestamp: now };
+      return result;
     } catch {
-      return { data: { session: null }, error: null };
+      const emptyResult = { data: { session: null }, error: null };
+      cachedAuthSession = { data: emptyResult, timestamp: now };
+      return emptyResult;
     }
   },
 
   async getUser() {
-    try {
-      const user = await account.get();
-      return {
-        data: {
-          user: {
-            id: user.$id,
-            email: user.email,
-            user_metadata: {
-              name: user.name,
-              ...(user.prefs || {}),
-            },
-          },
-        },
-        error: null,
-      };
-    } catch {
-      return { data: { user: null }, error: null };
-    }
+    const sessionRes = await this.getSession();
+    const user = sessionRes?.data?.session?.user ?? null;
+    return { data: { user }, error: null };
   },
 
   async signInWithPassword({ email, password }: { email: string; password: string }) {
     try {
+      invalidateAuthCache();
       const session = await account.createEmailPasswordSession(email.trim(), password);
       const user = await account.get();
 
-      return {
+      const successResult = {
         data: {
           session,
           user: {
@@ -351,13 +354,49 @@ const authAdapter = {
         },
         error: null,
       };
+      
+      cachedAuthSession = {
+        data: {
+          data: {
+            session: {
+              access_token: session.$id,
+              expires_at: Math.floor(new Date(session.expire).getTime() / 1000),
+              user: {
+                id: user.$id,
+                email: user.email,
+                user_metadata: { name: user.name, ...(user.prefs || {}) },
+                app_metadata: { provider: "email" },
+              },
+            },
+          },
+          error: null,
+        },
+        timestamp: Date.now(),
+      };
+
+      return successResult;
     } catch (err: any) {
-      return { data: { session: null, user: null }, error: { message: err?.message || "Sign in failed" } };
+      invalidateAuthCache();
+      const code = err?.code;
+      const type = err?.type;
+      const rawMsg = err?.message || "";
+
+      let friendlyMsg = rawMsg || "Sign in failed";
+      if (code === 401 || type === "user_invalid_credentials" || rawMsg.includes("Invalid credentials")) {
+        friendlyMsg = "Invalid email or password.";
+      } else if (code === 429 || type === "rate_limit_exceeded" || rawMsg.toLowerCase().includes("rate limit") || rawMsg.toLowerCase().includes("exceeded")) {
+        friendlyMsg = "Too many login attempts. Please wait 1-2 minutes and try again.";
+      } else if (code === 404 || type === "user_not_found" || rawMsg.includes("user_not_found")) {
+        friendlyMsg = "No account found with this email. Please register first.";
+      }
+
+      return { data: { session: null, user: null }, error: { message: friendlyMsg } };
     }
   },
 
   async signUp({ email, password, options }: { email: string; password: string; options?: any }) {
     try {
+      invalidateAuthCache();
       const name = options?.data?.name || email.split("@")[0];
       const userId = ID.unique();
       await account.create(userId, email, password, name);
@@ -378,8 +417,11 @@ const authAdapter = {
         error: null,
       };
     } catch (err: any) {
+      invalidateAuthCache();
+      const code = err?.code;
+      const type = err?.type;
       const msg = err?.message || "";
-      if (err?.code === 409 || err?.type === "user_already_exists" || msg.includes("already exists")) {
+      if (code === 409 || type === "user_already_exists" || msg.includes("already exists")) {
         // Attempt login if user is registering again with matching credentials
         try {
           const session = await account.createEmailPasswordSession(email, password);
@@ -395,15 +437,23 @@ const authAdapter = {
           return { data: { user: null, session: null }, error: { message: "An account with this email already exists. Please sign in." } };
         }
       }
-      return { data: { user: null, session: null }, error: { message: msg || "Sign up failed" } };
+      
+      let friendlyMsg = msg || "Sign up failed";
+      if (code === 429 || type === "rate_limit_exceeded" || msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("exceeded")) {
+        friendlyMsg = "Too many registration attempts. Please wait 1-2 minutes and try again.";
+      }
+
+      return { data: { user: null, session: null }, error: { message: friendlyMsg } };
     }
   },
 
   async signOut() {
     try {
+      invalidateAuthCache();
       await account.deleteSession("current");
       return { error: null };
     } catch (err: any) {
+      invalidateAuthCache();
       return { error: { message: err?.message || "Sign out failed" } };
     }
   },
