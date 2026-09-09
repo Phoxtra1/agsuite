@@ -1,9 +1,16 @@
 import { Client, Databases, Users, Storage, Query, ID } from "node-appwrite";
+import crypto from "node:crypto";
+
+const ID_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const randomCode = (len) =>
+  Array.from(crypto.randomBytes(len)).map((b) => ID_CHARS[b % ID_CHARS.length]).join("");
+const randomSalt = () => crypto.randomBytes(16).toString("hex");
+const hashPin = (salt, pin) => crypto.createHash("sha256").update(`${salt}${pin}`).digest("hex");
 
 export default async ({ req, res, log, error }) => {
   try {
-    const endpoint = process.env.APPWRITE_ENDPOINT || "https://fra.cloud.appwrite.io/v1";
-    const projectId = process.env.APPWRITE_FUNCTION_PROJECT_ID || process.env.VITE_APPWRITE_PROJECT_ID || "ag-suite03";
+    const endpoint = process.env.APPWRITE_ENDPOINT || "https://cloud.phoxtra.com/v1";
+    const projectId = process.env.APPWRITE_FUNCTION_PROJECT_ID || process.env.VITE_APPWRITE_PROJECT_ID || "amineva";
     const apiKey = process.env.APPWRITE_API_KEY;
     const dbId = process.env.SUITE_DB_ID || process.env.VITE_DB_ID || "amineva-db";
 
