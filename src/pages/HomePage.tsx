@@ -6,6 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Clock, XCircle, ArrowRight, Grid3X3, ChevronDown, Settings, Sun, Moon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 import amvLogo from "@/assets/amv_global_logo.png";
 import AuthCard from "@/components/home/AuthCard";
 
@@ -113,6 +114,7 @@ export default function HomePage() {
   const navigate = useNavigate();
   const { products } = useCategoryProducts();
   const { theme, setTheme } = useTheme();
+  const { isAuthenticated } = useAuth();
 
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
   const [authTab, setAuthTab] = useState<"signin" | "register">("signin");
@@ -159,7 +161,7 @@ export default function HomePage() {
   const selectedAgOption = useMemo(() => countryCurrencyOptions.find((o) => o.id === agCountry) || null, [agCountry, countryCurrencyOptions]);
   const effectiveCountryLabel = useMemo(() => selectedAgOption?.label || displayCountryLabel || "Ghana", [selectedAgOption, displayCountryLabel]);
 
-  // Homepage categories are driven entirely by Category Management data.
+  // Homepage categories are driven by Category Management data.
   // A product appears once, in exactly one category — no duplicates, no "other" bucket.
   const allCategories = useMemo(() => {
     const fallbackCategoryOf = (id: string) =>
@@ -173,7 +175,7 @@ export default function HomePage() {
           return catId === cat.id;
         })
         .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-    })).map((cat) => ({ ...cat, products: cat.products.slice(0, 1) }));
+    })).filter((cat) => cat.products.length > 0);
   }, [products]);
 
 
@@ -203,14 +205,22 @@ export default function HomePage() {
       return;
     }
 
-    // Workspace uses its own authentication surface
+    // Workspace: if unauthenticated, show AuthCard so user can sign in or register.
+    // If authenticated, navigate straight to /workspace.
     if (pid.includes("workspace") || pname.includes("workspace")) {
-      navigate("/workspace");
+      if (isAuthenticated) {
+        navigate("/workspace");
+      } else {
+        setSelectedProduct(p);
+        setAuthTab("signin");
+        setEmail("");
+        setPassword("");
+        setAgCountry("");
+        setAgCurrencyCode("USD");
+        setAgStepConfirmed(false);
+      }
       return;
     }
-
-
-
 
     setSelectedProduct(p);
     setAuthTab("signin");

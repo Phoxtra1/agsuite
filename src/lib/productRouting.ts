@@ -1,6 +1,4 @@
-/**
- * Product Routing Configuration
- */
+import { isSealAuthenticated } from '@/lib/sealAuth';
 
 export interface ProductRouteConfig {
   baseUrl: string;
@@ -9,6 +7,11 @@ export interface ProductRouteConfig {
 }
 
 export const PRODUCT_ROUTES: Record<string, ProductRouteConfig> = {
+  workspace: {
+    baseUrl: '',
+    defaultPath: '/workspace',
+    requiresCountry: false,
+  },
   agstock: {
     baseUrl: 'https://stock.amineva.com',
     defaultPath: '/shop',
@@ -34,12 +37,28 @@ export const PRODUCT_ROUTES: Record<string, ProductRouteConfig> = {
     defaultPath: '/',
     requiresCountry: false,
   },
+  adesua: {
+    baseUrl: 'https://as.amineva.com',
+    defaultPath: '/',
+    requiresCountry: false,
+  },
+  datalens: {
+    baseUrl: 'https://datalens.amineva.com',
+    defaultPath: '/',
+    requiresCountry: false,
+  },
+  abi: {
+    baseUrl: 'https://abi.amineva.com',
+    defaultPath: '/',
+    requiresCountry: false,
+  },
 };
 
 export function getProductRedirectUrl(productKey: string, path?: string): string {
   const config = PRODUCT_ROUTES[productKey];
-  if (!config) return '/suite';
+  if (!config) return '/workspace';
   const targetPath = path || config.defaultPath;
+  if (!config.baseUrl) return targetPath;
   return `${config.baseUrl}${targetPath}`;
 }
 
@@ -48,5 +67,8 @@ export function productRequiresCountry(productKey: string): boolean {
 }
 
 export function shouldRouteToSuite(userRole?: string): boolean {
-  return userRole === 'super_admin' || userRole === 'manager';
+  if (typeof window !== 'undefined' && isSealAuthenticated()) {
+    return userRole === 'super_admin' || userRole === 'manager';
+  }
+  return false;
 }

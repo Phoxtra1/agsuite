@@ -138,8 +138,23 @@ export function getDashboardForRole(product: string, role?: string | null): stri
       }
       return 'https://amniva.com/dashboard';
 
+    case 'workspace':
+      return '/workspace';
+
+    case 'adesua':
+      return 'https://as.amineva.com';
+
+    case 'agroclimate':
+      return 'https://agro.amineva.com';
+
+    case 'datalens':
+      return 'https://datalens.amineva.com';
+
+    case 'abi':
+      return 'https://abi.amineva.com';
+
     default:
-      return '/suite';
+      return '/workspace';
   }
 }
 
