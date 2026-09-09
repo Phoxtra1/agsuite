@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { functions as appwriteFunctions } from "@/lib/appwrite";
 
 /**
  * Seal Auth — covert admin session manager.
@@ -11,8 +11,8 @@ const SEAL_POSITION_KEY = "__s_pos";
 const SEAL_ADMIN_ID_KEY = "__s_aid";
 const STORAGE_CREDS_KEY = "__seal_admin_creds";
 
-const SUPABASE_URL = import.meta.env.VITE_SUPABASE_URL;
-const SUPABASE_ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+const SUITE_FUNCTION_ID =
+  (import.meta as any).env?.VITE_SUITE_FUNCTION_ID || "69689f59003426b9e5e3";
 
 const ADMIN_EMAILS = [
   "admin@amineva.com",
@@ -76,16 +76,27 @@ export function isSealAuthenticated(): boolean {
   return !!getSealSession();
 }
 
+/**
+ * All Seal admin calls run on the self-hosted Appwrite function `agSuite`.
+ * No third-party backend is contacted.
+ */
 async function callSealFunction(body: Record<string, unknown>): Promise<any> {
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/admin-seal-auth`, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      apikey: SUPABASE_ANON_KEY,
-    },
-    body: JSON.stringify(body),
-  });
-  return res.json();
+  try {
+    const execution = await appwriteFunctions.createExecution(
+      SUITE_FUNCTION_ID,
+      JSON.stringify({ scope: "admin-seal-auth", ...body })
+    );
+    if (execution.status === "failed") {
+      return { error: "Admin service unavailable. Please try again." };
+    }
+    try {
+      return JSON.parse(execution.responseBody || "{}");
+    } catch {
+      return { error: "Unexpected response from admin service." };
+    }
+  } catch (err: any) {
+    return { error: err?.message || "Could not reach the admin service." };
+  }
 }
 
 /**
