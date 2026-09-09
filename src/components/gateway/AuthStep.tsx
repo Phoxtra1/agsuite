@@ -188,28 +188,31 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Authentication failed";
 
-      // Record failed attempt for rate limiting (only for sign-in)
-      if (!isRegister) {
-        const result = recordFailedAttempt();
-        if (result.locked) {
-          setIsLockedOut(true);
-          setLockoutRemaining(result.remainingMs);
-          setError(`Account temporarily locked. Try again in ${formatLockoutTime(result.remainingMs)}.`);
-          return;
+      if (isRegister) {
+        if (isAlreadyRegisteredError(err)) {
+          setError("This email is already registered.");
+          setShowSwitchHint(true);
+        } else {
+          setError(msg);
         }
-        const status = checkLockout();
-        setAttemptsLeft(status.attemptsLeft);
+        return;
       }
 
-      if (isRegister && isAlreadyRegisteredError(err)) {
-        setError("This email is already registered.");
-        setShowSwitchHint(true);
-      } else if (msg.includes("Invalid credentials") || msg.includes("Invalid email or password")) {
+      // Record failed attempt for rate limiting (only for sign-in)
+      const result = recordFailedAttempt();
+      if (result.locked) {
+        setIsLockedOut(true);
+        setLockoutRemaining(result.remainingMs);
+        setError(`Account temporarily locked. Try again in ${formatLockoutTime(result.remainingMs)}.`);
+        return;
+      }
+      const status = checkLockout();
+      setAttemptsLeft(status.attemptsLeft);
+
+      if (msg.includes("Invalid credentials") || msg.includes("Invalid email or password")) {
         setError(`Invalid email or password.${attemptsLeft > 1 ? ` ${attemptsLeft - 1} attempts remaining.` : ""}`);
       } else if (msg.includes("User not found") || msg.includes("user_not_found")) {
         setError("No account found with this email. Please register first.");
-      } else if (msg.includes("too many requests") || msg.includes("Rate limit")) {
-        setError("Too many login attempts. Please wait a moment and try again.");
       } else {
         setError(msg);
       }

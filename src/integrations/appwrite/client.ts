@@ -377,20 +377,7 @@ const authAdapter = {
       return successResult;
     } catch (err: any) {
       invalidateAuthCache();
-      const code = err?.code;
-      const type = err?.type;
-      const rawMsg = err?.message || "";
-
-      let friendlyMsg = rawMsg || "Sign in failed";
-      if (code === 401 || type === "user_invalid_credentials" || rawMsg.includes("Invalid credentials")) {
-        friendlyMsg = "Invalid email or password.";
-      } else if (code === 429 || type === "rate_limit_exceeded" || rawMsg.toLowerCase().includes("rate limit") || rawMsg.toLowerCase().includes("exceeded")) {
-        friendlyMsg = "Too many login attempts. Please wait 1-2 minutes and try again.";
-      } else if (code === 404 || type === "user_not_found" || rawMsg.includes("user_not_found")) {
-        friendlyMsg = "No account found with this email. Please register first.";
-      }
-
-      return { data: { session: null, user: null }, error: { message: friendlyMsg } };
+      return { data: { session: null, user: null }, error: { message: err?.message || "Sign in failed" } };
     }
   },
 
@@ -438,12 +425,7 @@ const authAdapter = {
         }
       }
       
-      let friendlyMsg = msg || "Sign up failed";
-      if (code === 429 || type === "rate_limit_exceeded" || msg.toLowerCase().includes("rate limit") || msg.toLowerCase().includes("exceeded")) {
-        friendlyMsg = "Too many registration attempts. Please wait 1-2 minutes and try again.";
-      }
-
-      return { data: { user: null, session: null }, error: { message: friendlyMsg } };
+      return { data: { user: null, session: null }, error: { message: msg || "Registration failed" } };
     }
   },
 
