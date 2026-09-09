@@ -6,7 +6,7 @@ export const APPWRITE_ENDPOINT =
   (import.meta as any).env?.VITE_APPWRITE_ENDPOINT || "https://cloud.phoxtra.com/v1";
 
 export const APPWRITE_PROJECT_ID =
-  (import.meta as any).env?.VITE_APPWRITE_PROJECT_ID || "aamineva";
+  (import.meta as any).env?.VITE_APPWRITE_PROJECT_ID || "amineva";
 
 export const APPWRITE_DB_ID =
   (import.meta as any).env?.VITE_DB_ID || "amineva-db";
