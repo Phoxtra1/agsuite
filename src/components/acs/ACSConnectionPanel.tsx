@@ -9,8 +9,12 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { CheckCircle2, XCircle, RefreshCw, Copy, Plug, Terminal } from 'lucide-react';
 import { toast } from 'sonner';
 
-const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID as string;
-const INGEST_URL = `https://${PROJECT_ID}.supabase.co/functions/v1/acs-ingest`;
+const APPWRITE_ENDPOINT =
+  ((import.meta as any).env?.VITE_APPWRITE_ENDPOINT as string) || "https://cloud.phoxtra.com/v1";
+const SUITE_FUNCTION_ID =
+  ((import.meta as any).env?.VITE_SUITE_FUNCTION_ID as string) || "69689f59003426b9e5e3";
+const PROJECT_ID = ((import.meta as any).env?.VITE_APPWRITE_PROJECT_ID as string) || "amineva";
+const INGEST_URL = `${APPWRITE_ENDPOINT}/functions/${SUITE_FUNCTION_ID}/executions`;
 
 interface HealthResult {
   status: 'online' | 'offline' | 'checking';

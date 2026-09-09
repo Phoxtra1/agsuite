@@ -422,6 +422,21 @@ const collectionsSchema: CollectionSchema[] = [
     ],
   },
   {
+    id: 'admin_credentials',
+    name: 'Admin Seal Credentials',
+    attributes: [
+      { key: 'adminId', type: 'string', size: 100, required: true },
+      { key: 'recoveryId', type: 'string', size: 100, required: true },
+      { key: 'position', type: 'string', size: 255, required: false },
+      { key: 'pinSalt', type: 'string', size: 100, required: true },
+      { key: 'pinHash', type: 'string', size: 500, required: true },
+      { key: 'failedAttempts', type: 'integer', required: false, default: 0 },
+      { key: 'lockedUntil', type: 'string', size: 255, required: false },
+      { key: 'lastLoginAt', type: 'string', size: 255, required: false },
+      { key: 'createdAt', type: 'string', size: 255, required: false },
+    ],
+  },
+  {
     id: 'pins',
     name: 'Security PINs & Credentials',
     attributes: [
