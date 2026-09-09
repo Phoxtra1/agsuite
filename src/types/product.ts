@@ -48,46 +48,28 @@ export interface ProductCategory {
 
 export const DEFAULT_CATEGORIES: ProductCategory[] = [
   {
-    id: "workspace",
-    name: "Workspace & Collaboration",
+    id: "data-intelligence",
+    name: "Data Intelligence",
     order: 1,
-    products: ["workspace"],
-  },
-  {
-    id: "spatial-intelligence",
-    name: "Spatial & Data Intelligence",
-    order: 2,
-    products: ["agis", "datalens"],
-  },
-  {
-    id: "supply-chain",
-    name: "Inventory & Supply Chain",
-    order: 3,
-    products: ["agstock"],
+    products: ["datalens"],
   },
   {
     id: "financial-operations",
     name: "Financial Operations",
-    order: 4,
+    order: 2,
     products: ["aminevaops"],
-  },
-  {
-    id: "climate-agriculture",
-    name: "Climate & Agriculture",
-    order: 5,
-    products: ["agroclimate"],
-  },
-  {
-    id: "education-career",
-    name: "Education & Career Intel",
-    order: 6,
-    products: ["adesua"],
   },
   {
     id: "business-intelligence",
     name: "Business Intelligence",
-    order: 7,
+    order: 3,
     products: ["abi"],
+  },
+  {
+    id: "workspace",
+    name: "Workspace",
+    order: 4,
+    products: ["workspace"],
   },
 ];
 
