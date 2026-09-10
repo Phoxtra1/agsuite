@@ -2,11 +2,23 @@ import { Client, Account, Databases, Storage, Teams, Functions, ID } from "appwr
 
 const client = new Client();
 
-export const APPWRITE_ENDPOINT =
-  (import.meta as any).env?.VITE_APPWRITE_ENDPOINT || "https://cloud.phoxtra.com/v1";
+const SELF_HOST_ENDPOINT = "https://cloud.phoxtra.com/v1";
 
-export const APPWRITE_PROJECT_ID =
+const configuredEndpoint =
+  (import.meta as any).env?.VITE_APPWRITE_ENDPOINT || SELF_HOST_ENDPOINT;
+
+// Hard guard: never talk to Appwrite Cloud, even if a stale deploy variable
+// points there — that is what caused the old billing/auth failures.
+export const APPWRITE_ENDPOINT = /appwrite\.io/i.test(configuredEndpoint)
+  ? SELF_HOST_ENDPOINT
+  : configuredEndpoint;
+
+const configuredProject =
   (import.meta as any).env?.VITE_APPWRITE_PROJECT_ID || "amineva";
+
+export const APPWRITE_PROJECT_ID = /ag-suite/i.test(configuredProject)
+  ? "amineva"
+  : configuredProject;
 
 export const APPWRITE_DB_ID =
   (import.meta as any).env?.VITE_DB_ID || "amineva-db";
