@@ -22,7 +22,7 @@ import {
   CircleDot, Send, Filter, History, Paperclip, X, TimerReset,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/appwrite/client';
 import { SupportComs } from '@/core/coms/hooks';
 import { ComsSDK, ComsRoutingError, type TicketAttachmentInput } from '@/core/coms/sdk';
 import { firstResponseSLA, resolutionSLA, formatRemaining, slaStateColor } from '@/core/coms/sla';

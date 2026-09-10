@@ -5,7 +5,7 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { handleComms } from "@/core/coms";
 import { ComsSDK } from "@/core/coms/sdk";
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/appwrite/client';
 import {
   Inbox, Send, Megaphone, FileText, Activity, Clock, TrendingUp, Plus, Settings,
   TicketCheck, BarChart3,

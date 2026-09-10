@@ -11,7 +11,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { Navigate, useLocation } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 import { loadAppProfile, type AppProfile } from "@/lib/auth/appProfile";
 import { setWorkspaceUser } from "@/lib/workspace/scope";
 

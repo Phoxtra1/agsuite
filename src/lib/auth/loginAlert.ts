@@ -3,7 +3,7 @@
  * Non-blocking: failures are silently logged, never interrupting the user.
  */
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 
 /** Generate a simple device fingerprint from browser properties */
 function getDeviceFingerprint(): string {

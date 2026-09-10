@@ -15,7 +15,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { wsKey } from "@/lib/workspace/scope";
 import { saveDriveToDatabase, loadDriveFromDatabase } from "@/lib/workspace/drive/sync";
 import { listQueuedDriveUploads, queueDriveUpload, removeQueuedDriveUpload } from "@/lib/workspace/drive/offlineFiles";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 import { toast } from "@/hooks/use-toast";
 
 export interface DriveUploadedFile {

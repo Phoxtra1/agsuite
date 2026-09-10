@@ -18,7 +18,7 @@ import {
 import { toast } from "@/hooks/use-toast";
 import { dispatchSyncStatus } from "@/components/workspace/OfflineIndicator";
 import { useTheme } from "@/contexts/ThemeContext";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 
 export default function DocsEditor() {
   const { id } = useParams();

@@ -3,7 +3,7 @@
 // import { ComsSDK } from "@/core/coms/sdk" and use it to send emails, log events,
 // create support tickets, and push in-app notifications centrally.
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 
 export type ComsChannel = "email" | "in-app" | "sms";
 export type MessageType = "transactional" | "marketing" | "support" | "system";

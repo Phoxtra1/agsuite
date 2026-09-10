@@ -1,9 +1,9 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { invalidateShareToken } from "@/lib/workspace/documents";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 
 // Mock Supabase client
-vi.mock("@/integrations/supabase/client", () => {
+vi.mock("@/integrations/appwrite/client", () => {
   const updateMock = vi.fn().mockReturnValue({
     eq: vi.fn().mockResolvedValue({ data: null, error: null }),
   });

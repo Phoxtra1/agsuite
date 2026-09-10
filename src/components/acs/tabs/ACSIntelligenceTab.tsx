@@ -8,7 +8,7 @@ import { Brain, Sparkles, RefreshCw, TrendingUp, AlertTriangle, Lightbulb, FileT
 import { toast } from 'sonner';
 import { acs } from '@/core/backend';
 import type { ACSIntelligenceOutput } from '@/core/backend/acs';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/appwrite/client';
 import { notifyIntelligenceOutput } from '@/core/acs/notifications';
 
 const CATEGORIES = [

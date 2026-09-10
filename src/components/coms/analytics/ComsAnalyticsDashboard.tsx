@@ -15,7 +15,7 @@ import {
 import {
   TrendingUp, Mail, Bell, MessageSquare, CheckCircle2, XCircle, Clock,
 } from 'lucide-react';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/appwrite/client';
 
 interface LogRow {
   id: string;
