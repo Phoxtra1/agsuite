@@ -18,7 +18,7 @@ import {
   Mail, Bell, AlertCircle, CheckCircle, MailOpen, Forward, Send
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/appwrite/client';
 import { ComsSDK, ComsRoutingError } from '@/core/coms/sdk';
 
 interface Message {

@@ -3,7 +3,7 @@
 // (page views, feature usage, session activity) from live user sessions.
 // No dummy/simulated data — only real usage telemetry.
 
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 
 type PlatformEvent = {
   platform: string;

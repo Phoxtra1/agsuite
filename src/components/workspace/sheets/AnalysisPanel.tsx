@@ -7,7 +7,7 @@ import {
 } from "@/lib/workspace/sheets/stats";
 import type { SheetPage } from "@/lib/workspace/sheets/documents";
 import { cellId, parseCell } from "@/lib/workspace/sheets/documents";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 import { toast } from "@/hooks/use-toast";
 import {
   BarChart, Bar, LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,

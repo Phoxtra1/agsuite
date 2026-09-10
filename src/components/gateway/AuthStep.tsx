@@ -20,7 +20,7 @@ import {
 } from "@/lib/auth/rateLimiter";
 
 import { loadAppAccess } from "@/lib/auth/appAccess";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 
 // Social login button component
 const SocialButton = React.forwardRef<

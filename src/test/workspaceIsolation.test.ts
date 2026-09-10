@@ -52,7 +52,7 @@ function makeQuery(table: string) {
   return api;
 }
 
-vi.mock("@/integrations/supabase/client", () => ({
+vi.mock("@/integrations/appwrite/client", () => ({
   supabase: {
     from: (table: string) => makeQuery(String(table)),
     auth: {

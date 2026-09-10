@@ -7,7 +7,7 @@ import {
   Volume2
 } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 import {
   getDeck, updateDeck, type WorkspaceSlideDoc,
   type Deck, type Slide, type SlideElement, type SlideLayout,

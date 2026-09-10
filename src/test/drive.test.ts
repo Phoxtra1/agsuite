@@ -1,7 +1,7 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
 // Mock Supabase/Appwrite client for Drive unit testing
-vi.mock("@/integrations/supabase/client", () => {
+vi.mock("@/integrations/appwrite/client", () => {
   const queryBuilder = {
     select: vi.fn().mockReturnThis(),
     eq: vi.fn().mockReturnThis(),

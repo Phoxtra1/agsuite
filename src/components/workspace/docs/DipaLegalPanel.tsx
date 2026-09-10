@@ -6,7 +6,7 @@ import {
   FileSearch, ShieldCheck, AlertCircle, ExternalLink
 } from "lucide-react";
 import type { Editor } from "@tiptap/react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 import { toast } from "@/hooks/use-toast";
 
 export interface LegalAuthority {

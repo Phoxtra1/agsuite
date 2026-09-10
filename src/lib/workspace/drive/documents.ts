@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 import { wsKey } from "@/lib/workspace/scope";
 
 export type DriveKind = "upload" | "doc" | "sheet" | "slide" | "form";

@@ -13,7 +13,7 @@ import {
   Send, Users, FileText, Bold, Italic, Underline, List, Link2, Image, X, Mail, Bell, MessageSquare,
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { supabase } from '@/integrations/supabase/client';
+import { supabase } from '@/integrations/appwrite/client';
 import { ComsSDK } from '@/core/coms/sdk';
 
 interface ComposeMessageModalProps {

@@ -3,7 +3,7 @@
 // so they land in the admin's ComsSystem inbox (not the sender's).
 
 import { ComsSDK } from "@/core/coms/sdk";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase } from "@/integrations/appwrite/client";
 
 const SOURCE = "ComsSystem";
 
