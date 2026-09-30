@@ -343,31 +343,31 @@ const authAdapter = {
       const session = await account.createEmailPasswordSession(email.trim(), password);
       const user = await account.get();
 
+      const formattedUser = {
+        id: user.$id,
+        email: user.email,
+        user_metadata: { name: user.name, ...(user.prefs || {}) },
+        app_metadata: { provider: "email" },
+      };
+
+      const formattedSession = {
+        access_token: session.$id,
+        expires_at: Math.floor(new Date(session.expire).getTime() / 1000),
+        user: formattedUser,
+      };
+
       const successResult = {
         data: {
-          session,
-          user: {
-            id: user.$id,
-            email: user.email,
-            user_metadata: { name: user.name, ...(user.prefs || {}) },
-          },
+          session: formattedSession,
+          user: formattedUser,
         },
         error: null,
       };
-      
+
       cachedAuthSession = {
         data: {
           data: {
-            session: {
-              access_token: session.$id,
-              expires_at: Math.floor(new Date(session.expire).getTime() / 1000),
-              user: {
-                id: user.$id,
-                email: user.email,
-                user_metadata: { name: user.name, ...(user.prefs || {}) },
-                app_metadata: { provider: "email" },
-              },
-            },
+            session: formattedSession,
           },
           error: null,
         },
@@ -396,10 +396,41 @@ const authAdapter = {
       const session = await account.createEmailPasswordSession(email, password);
       const user = await account.get();
 
+      const formattedUser = {
+        id: user.$id,
+        email: user.email,
+        user_metadata: { name: user.name, ...options?.data },
+        app_metadata: { provider: "email" },
+      };
+
+      const formattedSession = {
+        access_token: session.$id,
+        expires_at: Math.floor(new Date(session.expire).getTime() / 1000),
+        user: formattedUser,
+      };
+
+      cachedAuthSession = {
+        data: {
+          data: {
+            session: formattedSession,
+          },
+          error: null,
+        },
+        timestamp: Date.now(),
+      };
+
+      // Best effort non-blocking profile creation in profiles collection
+      databases.createDocument(APPWRITE_DB_ID, "profiles", ID.unique(), {
+        userId: user.$id,
+        email: user.email,
+        full_name: name,
+        onboardingComplete: true,
+      }).catch(() => null);
+
       return {
         data: {
-          user: { id: user.$id, email: user.email, user_metadata: { name: user.name, ...options?.data } },
-          session,
+          user: formattedUser,
+          session: formattedSession,
         },
         error: null,
       };
@@ -413,10 +444,30 @@ const authAdapter = {
         try {
           const session = await account.createEmailPasswordSession(email, password);
           const user = await account.get();
+          const formattedUser = {
+            id: user.$id,
+            email: user.email,
+            user_metadata: { name: user.name, ...(options?.data || {}) },
+            app_metadata: { provider: "email" },
+          };
+          const formattedSession = {
+            access_token: session.$id,
+            expires_at: Math.floor(new Date(session.expire).getTime() / 1000),
+            user: formattedUser,
+          };
+          cachedAuthSession = {
+            data: {
+              data: {
+                session: formattedSession,
+              },
+              error: null,
+            },
+            timestamp: Date.now(),
+          };
           return {
             data: {
-              user: { id: user.$id, email: user.email, user_metadata: { name: user.name, ...(options?.data || {}) } },
-              session,
+              user: formattedUser,
+              session: formattedSession,
             },
             error: null,
           };
@@ -424,7 +475,7 @@ const authAdapter = {
           return { data: { user: null, session: null }, error: { message: "An account with this email already exists. Please sign in." } };
         }
       }
-      
+
       return { data: { user: null, session: null }, error: { message: msg || "Registration failed" } };
     }
   },
