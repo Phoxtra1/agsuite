@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useAuth } from "@/contexts/AuthContext";
 import { loadAppAccess } from "@/lib/auth/appAccess";
+import { formatAuthError } from "@/lib/auth";
 import { supabase } from "@/integrations/appwrite/client";
 import { Mail } from "lucide-react";
 
@@ -76,7 +77,7 @@ export default function AuthCard({
 
       navigate(`/client`, { replace: true });
     } catch (e: any) {
-      setErrMsg(e?.message || "Authentication failed.");
+      setErrMsg(formatAuthError(e));
     }
   };
 

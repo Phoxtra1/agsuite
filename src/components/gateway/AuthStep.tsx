@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/contexts/AuthContext";
-import { isAlreadyRegisteredError } from "@/lib/auth";
+import { isAlreadyRegisteredError, formatAuthError } from "@/lib/auth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -186,14 +186,14 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
       // Success — clear attempts
       clearAttempts();
     } catch (err) {
-      const msg = err instanceof Error ? err.message : "Authentication failed";
+      const formatted = formatAuthError(err);
 
       if (isRegister) {
         if (isAlreadyRegisteredError(err)) {
           setError("This email is already registered.");
           setShowSwitchHint(true);
         } else {
-          setError(msg);
+          setError(formatted);
         }
         return;
       }
@@ -209,12 +209,13 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
       const status = checkLockout();
       setAttemptsLeft(status.attemptsLeft);
 
+      const msg = err instanceof Error ? err.message : String(err);
       if (msg.includes("Invalid credentials") || msg.includes("Invalid email or password")) {
         setError(`Invalid email or password.${attemptsLeft > 1 ? ` ${attemptsLeft - 1} attempts remaining.` : ""}`);
       } else if (msg.includes("User not found") || msg.includes("user_not_found")) {
         setError("No account found with this email. Please register first.");
       } else {
-        setError(msg);
+        setError(formatted);
       }
     }
   };
