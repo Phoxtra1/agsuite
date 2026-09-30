@@ -202,8 +202,8 @@ export const DEFAULT_THEME: DeckTheme = {
   accent: "#2563eb",
   background: "#ffffff",
   text: "#0f172a",
-  font: "Inter",
-  headerFont: "Inter",
+  font: "Amineva Leta",
+  headerFont: "Amineva Leta",
   colorScheme: ["#1E2761", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd"],
 };
 

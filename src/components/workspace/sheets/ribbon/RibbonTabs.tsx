@@ -100,10 +100,11 @@ function HomeTab({ actions: a }: { actions: RibbonActions }) {
       <RibbonGroup label="Font">
         <select
           onChange={(e) => a.format({ fontFamily: e.target.value })}
-          className="h-8 text-[11px] border border-border rounded bg-background px-1 focus:outline-none focus:ring-1 focus:ring-accent font-medium text-foreground max-w-[80px]"
+          className="h-8 text-[11px] border border-border rounded bg-background px-1 focus:outline-none focus:ring-1 focus:ring-accent font-medium text-foreground max-w-[110px]"
           title="Font family"
-          defaultValue="Inter"
+          defaultValue="'Amineva Leta', sans-serif"
         >
+          <option value="'Amineva Leta', sans-serif">Amineva Leta</option>
           <option value="sans-serif">Sans-Serif</option>
           <option value="serif">Serif</option>
           <option value="monospace">Monospace</option>

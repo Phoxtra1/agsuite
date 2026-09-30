@@ -35,8 +35,8 @@ export function RibbonDesignTab({
       accent: "#2563eb",
       background: "#ffffff",
       text: "#0f172a",
-      font: "Inter",
-      headerFont: "Inter",
+      font: "Amineva Leta",
+      headerFont: "Amineva Leta",
       colorScheme: ["#1E2761", "#2563eb", "#3b82f6", "#60a5fa", "#93c5fd"]
     },
     {
@@ -45,8 +45,8 @@ export function RibbonDesignTab({
       accent: "#38BDF8",
       background: "#0F172A",
       text: "#F8FAFC",
-      font: "Inter",
-      headerFont: "Inter",
+      font: "Amineva Leta",
+      headerFont: "Amineva Leta",
       colorScheme: ["#0F172A", "#1E293B", "#334155", "#475569", "#38BDF8"]
     },
     {

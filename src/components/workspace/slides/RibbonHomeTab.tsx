@@ -176,10 +176,11 @@ export function RibbonHomeTab({
         <div className="flex items-center gap-1 mb-1">
           <select
             disabled={!selectedElement || selectedElement.kind !== "text"}
-            value={selectedElement?.fontFamily ?? "Inter"}
+            value={selectedElement?.fontFamily ?? "Amineva Leta"}
             onChange={(e) => onUpdateElement({ fontFamily: e.target.value })}
-            className="text-xs border border-border bg-background rounded px-1 py-1 w-24 h-7 disabled:opacity-50"
+            className="text-xs border border-border bg-background rounded px-1 py-1 w-28 h-7 disabled:opacity-50"
           >
+            <option value="Amineva Leta">Amineva Leta</option>
             <option value="Inter">Inter</option>
             <option value="Georgia">Georgia</option>
             <option value="Arial">Arial</option>
@@ -244,7 +245,7 @@ export function RibbonHomeTab({
           <button
             disabled={!selectedElement || selectedElement.kind !== "text"}
             onClick={() => onUpdateElement({
-              fontFamily: "Inter",
+              fontFamily: "Amineva Leta",
               fontSize: 32,
               fontWeight: 400,
               italic: false,
