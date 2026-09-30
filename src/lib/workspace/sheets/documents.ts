@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/appwrite/client";
-import { wsKey } from "@/lib/workspace/scope";
+import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
 
 export interface WorkspaceSheet {
   id: string;
@@ -100,10 +100,18 @@ function saveLocalSheets(sheets: WorkspaceSheet[]) {
   }
 }
 
-async function getAuthenticatedUserId(): Promise<string | null> {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) return null;
-  return data.user.id;
+async function getAuthenticatedUserId(): Promise<string> {
+  try {
+    const getUserPromise = supabase.auth.getUser();
+    const timeoutPromise = new Promise<{ data: { user: null }; error: any }>((resolve) =>
+      setTimeout(() => resolve({ data: { user: null }, error: new Error("Timeout") }), 600)
+    );
+    const { data } = await Promise.race([getUserPromise, timeoutPromise]);
+    if (data?.user?.id) return data.user.id;
+  } catch {}
+  const scopeUser = getWorkspaceUser();
+  if (scopeUser && scopeUser !== "anon") return scopeUser;
+  return "local-user";
 }
 
 export async function listSheets(): Promise<WorkspaceSheet[]> {
@@ -113,8 +121,11 @@ export async function listSheets(): Promise<WorkspaceSheet[]> {
   }
   try {
     const userId = await getAuthenticatedUserId();
-    if (!userId) return [];
-    const { data, error } = await supabase.from("workspace_sheets" as any).select("*").eq("owner_id", userId).order("updated_at", { ascending: false });
+    const queryPromise = supabase.from("workspace_sheets" as any).select("*").eq("owner_id", userId).order("updated_at", { ascending: false });
+    const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: new Error("Timeout") }), 2500)
+    );
+    const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
       const remote = data as any as WorkspaceSheet[];
       const merged = [...local];
@@ -130,8 +141,7 @@ export async function listSheets(): Promise<WorkspaceSheet[]> {
   } catch (e) {
     console.warn("[sheets] Offline fetch fallback", e);
   }
-  if (local.length > 0) return local;
-  return [];
+  return local;
 }
 
 export async function getSheet(id: string): Promise<WorkspaceSheet | null> {
@@ -159,9 +169,8 @@ export async function getSheet(id: string): Promise<WorkspaceSheet | null> {
   return null;
 }
 
-export async function createSheet(title = "Untitled sheet"): Promise<WorkspaceSheet | null> {
+export async function createSheet(title = "Untitled sheet"): Promise<WorkspaceSheet> {
   const userId = await getAuthenticatedUserId();
-  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `sheet-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -179,24 +188,22 @@ export async function createSheet(title = "Untitled sheet"): Promise<WorkspaceSh
   local.unshift(newSheet);
   saveLocalSheets(local);
 
-  try {
-    const { data, error } = await supabase.from("workspace_sheets" as any)
-      .insert({ title, owner_id: userId, workbook_json: EMPTY_WORKBOOK, content_text: "" })
-      .select().single();
-    if (!error && data) {
-      const updatedLocal = getLocalSheets();
-      const idx = updatedLocal.findIndex((s) => s.id === localId);
-      if (idx >= 0) {
-        updatedLocal[idx] = data as any;
-      } else {
-        updatedLocal.unshift(data as any);
+  supabase.from("workspace_sheets" as any)
+    .insert({ title, owner_id: userId, workbook_json: EMPTY_WORKBOOK, content_text: "" })
+    .select().single()
+    .then(({ data }) => {
+      if (data) {
+        const updatedLocal = getLocalSheets();
+        const idx = updatedLocal.findIndex((s) => s.id === localId);
+        if (idx >= 0) {
+          updatedLocal[idx] = data as any;
+          saveLocalSheets(updatedLocal);
+        }
       }
-      saveLocalSheets(updatedLocal);
-      return data as any;
-    }
-  } catch (e) {
-    console.warn("[sheets] Failed to create sheet in Supabase, using offline fallback", e);
-  }
+    })
+    .catch((e) => {
+      console.warn("[sheets] Failed to create sheet in Supabase, using offline fallback", e);
+    });
 
   return newSheet;
 }
@@ -231,9 +238,8 @@ export async function deleteSheet(id: string): Promise<boolean> {
   return true;
 }
 
-export async function duplicateSheet(s: WorkspaceSheet): Promise<WorkspaceSheet | null> {
+export async function duplicateSheet(s: WorkspaceSheet): Promise<WorkspaceSheet> {
   const userId = await getAuthenticatedUserId();
-  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `sheet-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

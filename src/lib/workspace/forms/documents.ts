@@ -427,9 +427,9 @@ export async function getFormByCode(code: string): Promise<FormDocument | null> 
   return getFormById(code);
 }
 
-export async function createForm(title: string, templateId?: string): Promise<FormDocument | null> {
-  const userId = getWorkspaceUser();
-  if (userId === "anon") return null;
+export async function createForm(title: string, templateId?: string): Promise<FormDocument> {
+  const scopeUser = getWorkspaceUser();
+  const userId = scopeUser && scopeUser !== "anon" ? scopeUser : "local-user";
   const list = await listForms();
   const now = new Date().toISOString();
   const code = generateFormCode();
