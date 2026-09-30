@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/appwrite/client";
-import { wsKey } from "@/lib/workspace/scope";
+import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
 
 export interface WorkspaceDocument {
   id: string;
@@ -44,10 +44,18 @@ function saveLocalDocs(docs: WorkspaceDocument[]) {
   }
 }
 
-async function getAuthenticatedUserId(): Promise<string | null> {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) return null;
-  return data.user.id;
+async function getAuthenticatedUserId(): Promise<string> {
+  try {
+    const getUserPromise = supabase.auth.getUser();
+    const timeoutPromise = new Promise<{ data: { user: null }; error: any }>((resolve) =>
+      setTimeout(() => resolve({ data: { user: null }, error: new Error("Timeout") }), 600)
+    );
+    const { data } = await Promise.race([getUserPromise, timeoutPromise]);
+    if (data?.user?.id) return data.user.id;
+  } catch {}
+  const scopeUser = getWorkspaceUser();
+  if (scopeUser && scopeUser !== "anon") return scopeUser;
+  return "local-user";
 }
 
 export async function listDocuments(): Promise<WorkspaceDocument[]> {
@@ -55,12 +63,18 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
   if (typeof navigator !== "undefined" && !navigator.onLine) return local;
   try {
     const userId = await getAuthenticatedUserId();
-    if (!userId) return [];
-    const { data, error } = await supabase
+    const queryPromise = supabase
       .from("workspace_documents" as any)
       .select("*")
       .eq("owner_id", userId)
       .order("updated_at", { ascending: false });
+
+    const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: new Error("Timeout") }), 2500)
+    );
+
+    const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
+
     if (!error && data && Array.isArray(data)) {
       const remote = data as any as WorkspaceDocument[];
       const merged = [...local];
@@ -76,8 +90,7 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
   } catch (e) {
     console.warn("[ag-docs] Supabase unreachable, using offline storage", e);
   }
-  if (local.length > 0) return local;
-  return [];
+  return local;
 }
 
 export async function getDocument(id: string): Promise<WorkspaceDocument | null> {
@@ -110,9 +123,8 @@ export async function getDocument(id: string): Promise<WorkspaceDocument | null>
   return null;
 }
 
-export async function createDocument(title = "Untitled document"): Promise<WorkspaceDocument | null> {
+export async function createDocument(title = "Untitled document"): Promise<WorkspaceDocument> {
   const userId = await getAuthenticatedUserId();
-  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `doc-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -130,27 +142,24 @@ export async function createDocument(title = "Untitled document"): Promise<Works
   local.unshift(newDoc);
   saveLocalDocs(local);
 
-  try {
-    const { data, error } = await supabase
-      .from("workspace_documents" as any)
-      .insert({ title, owner_id: userId, content_json: EMPTY_DOC, content_text: "" })
-      .select()
-      .single();
-
-    if (!error && data) {
-      const updatedLocal = getLocalDocs();
-      const idx = updatedLocal.findIndex((d) => d.id === localId);
-      if (idx >= 0) {
-        updatedLocal[idx] = data as any;
-      } else {
-        updatedLocal.unshift(data as any);
+  supabase
+    .from("workspace_documents" as any)
+    .insert({ title, owner_id: userId, content_json: EMPTY_DOC, content_text: "" })
+    .select()
+    .single()
+    .then(({ data }) => {
+      if (data) {
+        const updatedLocal = getLocalDocs();
+        const idx = updatedLocal.findIndex((d) => d.id === localId);
+        if (idx >= 0) {
+          updatedLocal[idx] = data as any;
+          saveLocalDocs(updatedLocal);
+        }
       }
-      saveLocalDocs(updatedLocal);
-      return data as any;
-    }
-  } catch (e) {
-    console.warn("[ag-docs] Failed to create document in Supabase, using offline fallback", e);
-  }
+    })
+    .catch((e) => {
+      console.warn("[ag-docs] Failed to create document in Supabase, using offline fallback", e);
+    });
 
   return newDoc;
 }
@@ -190,9 +199,8 @@ export async function deleteDocument(id: string): Promise<boolean> {
   return true;
 }
 
-export async function duplicateDocument(doc: WorkspaceDocument): Promise<WorkspaceDocument | null> {
+export async function duplicateDocument(doc: WorkspaceDocument): Promise<WorkspaceDocument> {
   const userId = await getAuthenticatedUserId();
-  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `doc-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
