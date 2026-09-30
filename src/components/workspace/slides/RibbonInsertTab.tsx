@@ -36,7 +36,7 @@ export function RibbonInsertTab({ onAddElement, themeAccent }: RibbonInsertTabPr
       h: 150,
       text: "Click double to edit text",
       fontSize: 32,
-      fontFamily: "Amineva Leta",
+      fontFamily: "Inter",
       color: "#0f172a"
     });
   };
@@ -52,7 +52,7 @@ export function RibbonInsertTab({ onAddElement, themeAccent }: RibbonInsertTabPr
       text: wordArtText,
       fontSize: 80,
       fontWeight: 900,
-      fontFamily: "Amineva Leta",
+      fontFamily: "Inter",
       color: themeAccent,
       align: "center",
       wordArt: true,
@@ -71,7 +71,7 @@ export function RibbonInsertTab({ onAddElement, themeAccent }: RibbonInsertTabPr
       h: 50,
       text: "Amineva Presentation Suite | Confidential",
       fontSize: 18,
-      fontFamily: "Amineva Leta",
+      fontFamily: "Inter",
       color: "#64748b"
     });
     onAddElement({
@@ -83,7 +83,7 @@ export function RibbonInsertTab({ onAddElement, themeAccent }: RibbonInsertTabPr
       h: 50,
       text: "Page 1",
       fontSize: 18,
-      fontFamily: "Amineva Leta",
+      fontFamily: "Inter",
       color: "#64748b",
       align: "right"
     });

@@ -307,7 +307,7 @@ export function SheetGrid({
       tabIndex={0}
       onKeyDown={onKeyDown}
       className="flex-1 overflow-auto bg-white outline-none focus:ring-0 relative"
-      style={{ fontSize: 13 * scale, fontFamily: "'Amineva Leta', 'Inter', system-ui, sans-serif" }}
+      style={{ fontSize: 13 * scale, fontFamily: "'Inter', system-ui, sans-serif" }}
     >
       <table
         className={`border-separate ${gridlines ? "" : ""} select-none`}

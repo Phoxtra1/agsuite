@@ -382,7 +382,7 @@ function HomeTab({ editor, onAction }: { editor: Editor; onAction: (a: string, p
         <DropBtn label="Font" icon={Type} width="w-44">
           {(close) => (
             <>
-              {["Amineva Leta", "Inter", "Arial", "Roboto", "Times New Roman", "Georgia", "Verdana", "Courier New"].map((f) => (
+              {["Inter", "Arial", "Roboto", "Times New Roman", "Georgia", "Verdana", "Courier New"].map((f) => (
                 <button key={f} onClick={() => { setFontFamily(f); close(); }}
                   className="w-full text-left px-3 py-1.5 text-xs hover:bg-muted text-foreground"
                   style={{ fontFamily: f }}>{f}</button>

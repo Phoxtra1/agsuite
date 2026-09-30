@@ -314,7 +314,7 @@ function ElementView({ el, editable, selected, onSelect, onChange }: {
           />
         ) : (
           <div style={{
-            fontFamily: el.fontFamily ?? "Amineva Leta", fontSize: el.fontSize ?? 32, fontWeight: el.fontWeight ?? 400,
+            fontFamily: el.fontFamily ?? "Inter", fontSize: el.fontSize ?? 32, fontWeight: el.fontWeight ?? 400,
             color: el.color ?? "#0f172a", textAlign: el.align ?? "left",
             fontStyle: el.italic ? "italic" : undefined, textDecoration: el.underline ? "underline" : undefined,
             whiteSpace: "pre-wrap", width: "100%", height: "100%", overflow: "hidden", lineHeight: el.lineSpacing ?? 1.25,

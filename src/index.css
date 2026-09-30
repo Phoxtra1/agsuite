@@ -2,57 +2,6 @@
 @tailwind components;
 @tailwind utilities;
 
-/* Amineva Leta Font Declarations */
-@font-face {
-  font-family: 'Amineva Leta';
-  src: url('/fonts/amineva-leta/AminevaLeta-Light.woff2') format('woff2'),
-       url('/fonts/amineva-leta/AminevaLeta-Light.woff') format('woff'),
-       url('/fonts/amineva-leta/AminevaLeta-Light.ttf') format('truetype');
-  font-weight: 300;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Amineva Leta';
-  src: url('/fonts/amineva-leta/AminevaLeta-Regular.woff2') format('woff2'),
-       url('/fonts/amineva-leta/AminevaLeta-Regular.woff') format('woff'),
-       url('/fonts/amineva-leta/AminevaLeta-Regular.ttf') format('truetype');
-  font-weight: 400;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Amineva Leta';
-  src: url('/fonts/amineva-leta/AminevaLeta-Medium.woff2') format('woff2'),
-       url('/fonts/amineva-leta/AminevaLeta-Medium.woff') format('woff'),
-       url('/fonts/amineva-leta/AminevaLeta-Medium.ttf') format('truetype');
-  font-weight: 500;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Amineva Leta';
-  src: url('/fonts/amineva-leta/AminevaLeta-SemiBold.woff2') format('woff2'),
-       url('/fonts/amineva-leta/AminevaLeta-SemiBold.woff') format('woff'),
-       url('/fonts/amineva-leta/AminevaLeta-SemiBold.ttf') format('truetype');
-  font-weight: 600;
-  font-style: normal;
-  font-display: swap;
-}
-
-@font-face {
-  font-family: 'Amineva Leta';
-  src: url('/fonts/amineva-leta/AminevaLeta-Bold.woff2') format('woff2'),
-       url('/fonts/amineva-leta/AminevaLeta-Bold.woff') format('woff'),
-       url('/fonts/amineva-leta/AminevaLeta-Bold.ttf') format('truetype');
-  font-weight: 700;
-  font-style: normal;
-  font-display: swap;
-}
-
 /* Amineva Suite Design System
    Premium, enterprise-grade digital workspace aesthetic.
    Corporate, technical, authoritative.
@@ -216,7 +165,7 @@
 
   body {
     @apply bg-background text-foreground antialiased;
-    font-family: "Amineva Leta", "Inter", system-ui, -apple-system, sans-serif;
+    font-family: "Inter", system-ui, -apple-system, sans-serif;
     text-rendering: geometricPrecision;
   }
 

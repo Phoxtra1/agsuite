@@ -176,7 +176,7 @@ function Sep() {
 }
 
 function FontFamilyPicker({ editor }: { editor: Editor }) {
-  const fonts = ["Amineva Leta", "Inter", "Arial", "Roboto", "Times New Roman", "Georgia", "Verdana"];
+  const fonts = ["Inter", "Arial", "Roboto", "Times New Roman", "Georgia", "Verdana"];
   const [open, setOpen] = useState(false);
   
   return (

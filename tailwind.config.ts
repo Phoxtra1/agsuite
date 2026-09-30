@@ -106,8 +106,8 @@ export default {
         "glow-pulse": "glow-pulse 2s ease-in-out infinite",
       },
       fontFamily: {
-        sans: ['"Amineva Leta"', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
-        display: ['"Amineva Leta"', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
+        display: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
     },
   },
