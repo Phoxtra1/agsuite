@@ -177,7 +177,7 @@ export function generateFormCode(length = 6): string {
 export const DEFAULT_THEME: FormTheme = {
   primary: "#1E2761", // Classic rich Amineva dark blue
   background: "#F5F7FA",
-  font: "Amineva Leta",
+  font: "Inter",
   borderRadius: "md",
   buttonStyle: "solid",
   darkMode: false,

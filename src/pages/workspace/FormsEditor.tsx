@@ -576,7 +576,6 @@ export default function FormsEditor() {
                       onChange={(e) => saveWithHistory({ ...form, theme: { ...form.theme, font: e.target.value } })}
                       className="w-full p-2 border border-border bg-background text-xs rounded-lg focus:outline-none"
                     >
-                      <option value="Amineva Leta">Amineva Leta</option>
                       <option value="Inter">Sans Serif (Inter)</option>
                       <option value="Georgia">Classic Serif (Georgia)</option>
                       <option value="monospace">Developer Mono (Space Mono)</option>
