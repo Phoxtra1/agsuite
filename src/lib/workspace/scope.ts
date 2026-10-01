@@ -74,5 +74,8 @@ export function setWorkspaceUser(uid: string | null) {
   } catch {
     /* ignore */
   }
-  purgeForeignWorkspaceCaches(uid || "anon");
+  // Only purge on a switch to a different REAL account. Placeholder ids
+  // (used briefly while sign-in is still restoring after a browser restart)
+  // must never wipe the signed-in user's saved work.
+  if (uid && uid !== "anon" && uid !== "local-user") purgeForeignWorkspaceCaches(uid);
 }

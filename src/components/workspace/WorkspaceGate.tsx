@@ -43,6 +43,7 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
     let cancelled = false;
 
     async function resolve() {
+      if (isLoading) return; // wait for the saved sign-in to be restored
       setSession(null);
       if (!effectiveUserId) {
         setResolving(false);
@@ -81,7 +82,7 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [effectiveUserId, user?.id, user?.email]);
+  }, [isLoading, effectiveUserId, user?.id, user?.email]);
 
   if (isLoading || (effectiveUserId && resolving && !session)) {
     return (

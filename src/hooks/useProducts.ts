@@ -35,15 +35,28 @@ export function useAdminProducts() {
 // CATEGORY PRODUCTS HOOK (HOMEPAGE)
 // ============================================
 
+const HOME_CACHE_KEY = "amineva_home_products_cache_v1";
+
+function readHomeCache(): ProductData[] {
+  try {
+    const raw = localStorage.getItem(HOME_CACHE_KEY);
+    const parsed = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
 export function useCategoryProducts() {
-  const [products, setProducts] = useState<ProductData[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Render instantly from the last known list, then refresh quietly.
+  const [products, setProducts] = useState<ProductData[]>(() => readHomeCache());
+  const [loading, setLoading] = useState(() => readHomeCache().length === 0);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
     const data = await fetchCategoryProducts();
     setProducts(data);
     setLoading(false);
+    try { localStorage.setItem(HOME_CACHE_KEY, JSON.stringify(data)); } catch {}
   }, []);
 
   useEffect(() => {
