@@ -33,7 +33,10 @@ type AuthContextValue = {
   logout: () => Promise<void>;
 };
 
-const AuthContext = createContext<AuthContextValue | null>(null);
+// Keep a single context instance across hot reloads so provider and consumers never mismatch.
+const g = globalThis as any;
+const AuthContext: React.Context<AuthContextValue | null> =
+  g.__AMINEVA_AUTH_CTX__ ?? (g.__AMINEVA_AUTH_CTX__ = createContext<AuthContextValue | null>(null));
 
 function mapUser(supaUser: any): AuthUser | null {
   if (!supaUser) return null;

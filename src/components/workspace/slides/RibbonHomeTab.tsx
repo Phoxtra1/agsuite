@@ -178,7 +178,7 @@ export function RibbonHomeTab({
             disabled={!selectedElement || selectedElement.kind !== "text"}
             value={selectedElement?.fontFamily ?? "Inter"}
             onChange={(e) => onUpdateElement({ fontFamily: e.target.value })}
-            className="text-xs border border-border bg-background rounded px-1 py-1 w-24 h-7 disabled:opacity-50"
+            className="text-xs border border-border bg-background rounded px-1 py-1 w-28 h-7 disabled:opacity-50"
           >
             <option value="Inter">Inter</option>
             <option value="Georgia">Georgia</option>

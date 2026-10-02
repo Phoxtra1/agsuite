@@ -12,7 +12,7 @@ const SEAL_ADMIN_ID_KEY = "__s_aid";
 const STORAGE_CREDS_KEY = "__seal_admin_creds";
 
 const SUITE_FUNCTION_ID =
-  (import.meta as any).env?.VITE_SUITE_FUNCTION_ID || "69689f59003426b9e5e3";
+  (import.meta as any).env?.VITE_SUITE_FUNCTION_ID || "agsuite";
 
 const ADMIN_EMAILS = [
   "admin@amineva.com",

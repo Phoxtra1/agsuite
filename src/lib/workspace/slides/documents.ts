@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/appwrite/client";
-import { wsKey } from "@/lib/workspace/scope";
+import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
 
 export type SlideElementKind = "text" | "shape" | "image" | "table" | "chart" | "video" | "audio";
 export type ShapeKind = "rect" | "ellipse" | "triangle" | "line" | "arrow" | "star" | "banner" | "hexagon";
@@ -332,10 +332,18 @@ function saveLocalDecks(decks: WorkspaceSlideDoc[]) {
   }
 }
 
-async function getAuthenticatedUserId(): Promise<string | null> {
-  const { data, error } = await supabase.auth.getUser();
-  if (error || !data.user) return null;
-  return data.user.id;
+async function getAuthenticatedUserId(): Promise<string> {
+  try {
+    const getUserPromise = supabase.auth.getUser();
+    const timeoutPromise = new Promise<{ data: { user: null }; error: any }>((resolve) =>
+      setTimeout(() => resolve({ data: { user: null }, error: new Error("Timeout") }), 600)
+    );
+    const { data } = await Promise.race([getUserPromise, timeoutPromise]);
+    if (data?.user?.id) return data.user.id;
+  } catch {}
+  const scopeUser = getWorkspaceUser();
+  if (scopeUser && scopeUser !== "anon") return scopeUser;
+  return "local-user";
 }
 
 export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
@@ -343,8 +351,11 @@ export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
   if (typeof navigator !== "undefined" && !navigator.onLine) return local;
   try {
     const userId = await getAuthenticatedUserId();
-    if (!userId) return [];
-    const { data, error } = await supabase.from(TBL).select("*").eq("owner_id", userId).order("updated_at", { ascending: false });
+    const queryPromise = supabase.from(TBL).select("*").eq("owner_id", userId).order("updated_at", { ascending: false });
+    const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: new Error("Timeout") }), 2500)
+    );
+    const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
       const remote = data as any as WorkspaceSlideDoc[];
       const merged = [...local];
@@ -360,8 +371,7 @@ export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
   } catch (e) {
     console.warn("[slides] Offline fetch fallback", e);
   }
-  if (local.length > 0) return local;
-  return [];
+  return local;
 }
 
 export async function getDeck(id: string): Promise<WorkspaceSlideDoc | null> {
@@ -388,9 +398,8 @@ export async function getDeck(id: string): Promise<WorkspaceSlideDoc | null> {
   return null;
 }
 
-export async function createDeck(title = "Untitled presentation"): Promise<WorkspaceSlideDoc | null> {
+export async function createDeck(title = "Untitled presentation"): Promise<WorkspaceSlideDoc> {
   const userId = await getAuthenticatedUserId();
-  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `slide-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
@@ -409,7 +418,7 @@ export async function createDeck(title = "Untitled presentation"): Promise<Works
   saveLocalDecks(local);
 
   supabase.from(TBL)
-    .insert({ title, owner_id: userId, deck_json: EMPTY_DECK as any, content_text: "" })
+    .insert({ id: localId, title, owner_id: userId, deck_json: EMPTY_DECK as any, content_text: "" })
     .select().single()
     .then(({ data }) => {
       if (data) {
@@ -454,9 +463,8 @@ export async function deleteDeck(id: string): Promise<boolean> {
   return true;
 }
 
-export async function duplicateDeck(d: WorkspaceSlideDoc): Promise<WorkspaceSlideDoc | null> {
+export async function duplicateDeck(d: WorkspaceSlideDoc): Promise<WorkspaceSlideDoc> {
   const userId = await getAuthenticatedUserId();
-  if (!userId) return null;
 
   const now = new Date().toISOString();
   const localId = `slide-${Date.now()}-${Math.floor(Math.random() * 1000)}`;

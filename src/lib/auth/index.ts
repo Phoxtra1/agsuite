@@ -49,13 +49,37 @@ export function isAlreadyRegisteredError(err: unknown): boolean {
 
 export function formatAuthError(err: unknown): string {
   if (err && typeof err === "object" && "message" in err) {
-    const msg = (err as any).message as string;
-    if (msg.includes("Invalid login") || msg.includes("Invalid credentials") || msg.includes("user_invalid_credentials")) {
+    const rawMsg = (err as any).message as string;
+    const lower = rawMsg.toLowerCase();
+
+    if (
+      lower.includes("failed to fetch") ||
+      lower.includes("networkerror") ||
+      lower.includes("network error") ||
+      lower.includes("load failed") ||
+      lower.includes("connection refused")
+    ) {
+      return "Unable to connect to authentication server. Please check your internet connection and try again.";
+    }
+
+    if (
+      lower.includes("invalid login") ||
+      lower.includes("invalid credentials") ||
+      lower.includes("user_invalid_credentials") ||
+      lower.includes("invalid password")
+    ) {
       return "Invalid email or password.";
     }
-    if (msg.includes("Email not confirmed")) return "Please verify your email before signing in.";
-    if (isAlreadyRegisteredError(err)) return "This email is already registered. Please sign in.";
-    return msg;
+
+    if (lower.includes("email not confirmed") || lower.includes("unverified")) {
+      return "Please verify your email address before signing in.";
+    }
+
+    if (isAlreadyRegisteredError(err)) {
+      return "This email is already registered. Please sign in.";
+    }
+
+    return rawMsg;
   }
-  return "An unexpected error occurred.";
+  return "An unexpected error occurred. Please try again.";
 }

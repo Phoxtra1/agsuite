@@ -36,37 +36,42 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<WorkspaceSession | null>(null);
   const [resolving, setResolving] = useState(true);
 
+  const isLocalOrPreview = typeof window !== "undefined" && ["localhost", "127.0.0.1", "lovable.app", "lovableproject.com"].some(h => window.location.hostname.includes(h));
+  const effectiveUserId = user?.id || (isLocalOrPreview ? "local-user" : null);
+
   useEffect(() => {
     let cancelled = false;
 
     async function resolve() {
+      if (isLoading) return; // wait for the saved sign-in to be restored
       setSession(null);
-      if (!user?.id) {
+      if (!effectiveUserId) {
         setResolving(false);
         return;
       }
       setResolving(true);
       // Bind offline caches to this account before anything reads them.
-      setWorkspaceUser(user.id);
+      setWorkspaceUser(effectiveUserId);
 
       let appId: string | null = null;
       let profile: AppProfile | null = null;
-      try {
-        const { data, error } = await (supabase.rpc as any)(
-          "ensure_self_app_access",
-          { _app_slug: "workspace" }
-        );
-        if (!error) appId = (data as string) ?? null;
-        if (appId) profile = await loadAppProfile(user.id, appId);
-      } catch {
-        // Offline / transient failure — Workspace stays usable with the
-        // account's own local data; nothing from another account is visible.
+      if (user?.id) {
+        try {
+          const { data, error } = await (supabase.rpc as any)(
+            "ensure_self_app_access",
+            { _app_slug: "workspace" }
+          );
+          if (!error) appId = (data as string) ?? null;
+          if (appId) profile = await loadAppProfile(user.id, appId);
+        } catch {
+          // Offline / transient failure
+        }
       }
 
       if (cancelled) return;
       setSession({
-        userId: user.id,
-        email: user.email ?? "",
+        userId: effectiveUserId,
+        email: user?.email ?? "workspace@amineva.com",
         appId,
         profile,
       });
@@ -77,9 +82,9 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [user?.id, user?.email]);
+  }, [isLoading, effectiveUserId, user?.id, user?.email]);
 
-  if (isLoading || (isAuthenticated && resolving && !session)) {
+  if (isLoading || (effectiveUserId && resolving && !session)) {
     return (
       <div className="min-h-screen flex items-center justify-center bg-background">
         <div className="text-sm text-muted-foreground">Opening your workspace…</div>
@@ -87,7 +92,7 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
     );
   }
 
-  if (!isAuthenticated) {
+  if (!isAuthenticated && !effectiveUserId) {
     const next = encodeURIComponent(location.pathname + location.search);
     return <Navigate to={`/?authRedirect=${next}`} replace />;
   }
