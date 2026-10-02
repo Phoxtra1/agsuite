@@ -418,7 +418,7 @@ export async function createDeck(title = "Untitled presentation"): Promise<Works
   saveLocalDecks(local);
 
   supabase.from(TBL)
-    .insert({ title, owner_id: userId, deck_json: EMPTY_DECK as any, content_text: "" })
+    .insert({ id: localId, title, owner_id: userId, deck_json: EMPTY_DECK as any, content_text: "" })
     .select().single()
     .then(({ data }) => {
       if (data) {
