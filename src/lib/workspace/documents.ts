@@ -144,7 +144,7 @@ export async function createDocument(title = "Untitled document"): Promise<Works
 
   supabase
     .from("workspace_documents" as any)
-    .insert({ title, owner_id: userId, content_json: EMPTY_DOC, content_text: "" })
+    .insert({ id: localId, title, owner_id: userId, content_json: EMPTY_DOC, content_text: "" })
     .select()
     .single()
     .then(({ data }) => {
@@ -222,6 +222,7 @@ export async function duplicateDocument(doc: WorkspaceDocument): Promise<Workspa
     const { data, error } = await supabase
       .from("workspace_documents" as any)
       .insert({
+        id: localId,
         title: `${doc.title} (copy)`,
         owner_id: userId,
         content_json: doc.content_json,

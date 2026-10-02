@@ -189,7 +189,7 @@ export async function createSheet(title = "Untitled sheet"): Promise<WorkspaceSh
   saveLocalSheets(local);
 
   supabase.from("workspace_sheets" as any)
-    .insert({ title, owner_id: userId, workbook_json: EMPTY_WORKBOOK, content_text: "" })
+    .insert({ id: localId, title, owner_id: userId, workbook_json: EMPTY_WORKBOOK, content_text: "" })
     .select().single()
     .then(({ data }) => {
       if (data) {

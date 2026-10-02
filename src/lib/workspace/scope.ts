@@ -77,5 +77,44 @@ export function setWorkspaceUser(uid: string | null) {
   // Only purge on a switch to a different REAL account. Placeholder ids
   // (used briefly while sign-in is still restoring after a browser restart)
   // must never wipe the signed-in user's saved work.
-  if (uid && uid !== "anon" && uid !== "local-user") purgeForeignWorkspaceCaches(uid);
+  if (uid && uid !== "anon" && uid !== "local-user") {
+    adoptPlaceholderCaches(uid);
+    purgeForeignWorkspaceCaches(uid);
+  }
+}
+
+/**
+ * Work typed while sign-in was still restoring is saved under a placeholder
+ * id ("anon" / "local-user"). Fold it into the real account so it isn't lost.
+ */
+function adoptPlaceholderCaches(uid: string) {
+  try {
+    for (const base of LEGACY_KEYS) {
+      for (const ph of ["anon", "local-user"]) {
+        const phKey = `${base}::${ph}`;
+        const raw = localStorage.getItem(phKey);
+        if (!raw) continue;
+        const realKey = `${base}::${uid}`;
+        const existingRaw = localStorage.getItem(realKey);
+        const a = JSON.parse(raw);
+        const b = existingRaw ? JSON.parse(existingRaw) : null;
+        let merged: any = a;
+        if (Array.isArray(a) && (Array.isArray(b) || b == null)) {
+          const map = new Map<string, any>();
+          for (const it of [...(b || []), ...a]) {
+            const id = it?.id ?? JSON.stringify(it);
+            const prev = map.get(id);
+            if (!prev || new Date(it?.updated_at || 0).getTime() >= new Date(prev?.updated_at || 0).getTime()) map.set(id, it);
+          }
+          merged = Array.from(map.values());
+        } else if (b != null) {
+          merged = b;
+        }
+        localStorage.setItem(realKey, JSON.stringify(merged));
+        localStorage.removeItem(phKey);
+      }
+    }
+  } catch {
+    /* ignore */
+  }
 }
