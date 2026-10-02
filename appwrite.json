@@ -2,44 +2,6 @@
     "projectId": "amineva",
     "projectName": "",
     "endpoint": "https://cloud.phoxtra.com/v1",
-    "functions": [
-        {
-            "$id": "69689f59003426b9e5e3",
-            "name": "agSuite",
-            "runtime": "node-18.0",
-            "path": "Functions/agSuite",
-            "entrypoint": "index.js",
-            "commands": "npm install",
-            "ignore": [
-                "node_modules",
-                ".git"
-            ],
-            "execute": [
-                "any"
-            ],
-            "events": [],
-            "schedule": "",
-            "timeout": 15
-        },
-        {
-            "$id": "agStock",
-            "name": "agStock",
-            "runtime": "node-18.0",
-            "path": "Functions/agStock",
-            "entrypoint": "index.js",
-            "commands": "npm install",
-            "ignore": [
-                "node_modules",
-                ".git"
-            ],
-            "execute": [
-                "any"
-            ],
-            "events": [],
-            "schedule": "",
-            "timeout": 15
-        }
-    ],
     "databases": [
         {
             "$id": "amineva-db",

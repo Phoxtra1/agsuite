@@ -1,9 +1,0 @@
-{
-  "name": "agstock-bulk-import-products",
-  "version": "1.0.0",
-  "description": "AGStock Appwrite Function - Bulk Import Products",
-  "main": "index.js",
-  "dependencies": {
-    "node-appwrite": "^13.0.0"
-  }
-}
