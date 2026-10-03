@@ -1,4 +1,6 @@
+import { supabase } from "@/integrations/appwrite/client";
 import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
+
 export interface FormTheme {
   primary: string;
   background: string;
@@ -81,8 +83,8 @@ export interface Question {
     | "signature"
     | "location_picker"
     | "address"
-    | "matrix_mc" // Multiple Choice Grid
-    | "matrix_cb" // Checkbox Grid
+    | "matrix_mc"
+    | "matrix_cb"
     | "ranking"
     | "consent"
     | "rich_text"
@@ -93,15 +95,15 @@ export interface Question {
     | "page_break";
   title: string;
   description?: string;
-  options?: string[]; // Used for MC, Checkboxes, Dropdowns, Ranking, Grid Rows
-  gridColumns?: string[]; // Used only for Matrix MC and Checkbox Grid
+  options?: string[];
+  gridColumns?: string[];
   required: boolean;
   validation?: QuestionValidation;
   logic?: ConditionalLogic;
 
   // Quiz Mode properties
   points?: number;
-  correctAnswer?: string | string[]; // Single option string or array of correct checkbox answers
+  correctAnswer?: string | string[];
   feedback?: {
     correct?: string;
     incorrect?: string;
@@ -112,7 +114,7 @@ export interface FormResponse {
   id: string;
   formId: string;
   respondentId: string;
-  answers: Record<string, any>; // maps questionId to actual answer values
+  answers: Record<string, any>;
   submittedAt: string;
   completionTimeSeconds?: number;
   score?: {
@@ -146,7 +148,6 @@ export interface FormDocument {
   createdAt: string;
   updatedAt: string;
 
-  // Collaborative comments
   comments?: Array<{
     id: string;
     author: string;
@@ -155,7 +156,6 @@ export interface FormDocument {
     createdAt: string;
   }>;
 
-  // Simple activity audit log
   auditLogs?: Array<{
     id: string;
     user: string;
@@ -164,7 +164,6 @@ export interface FormDocument {
   }>;
 }
 
-// Generates a random alphanumeric code of specified length
 export function generateFormCode(length = 6): string {
   const chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
   let code = "";
@@ -175,7 +174,7 @@ export function generateFormCode(length = 6): string {
 }
 
 export const DEFAULT_THEME: FormTheme = {
-  primary: "#1E2761", // Classic rich Amineva dark blue
+  primary: "#1E2761",
   background: "#F5F7FA",
   font: "Inter",
   borderRadius: "md",
@@ -203,7 +202,6 @@ export const DEFAULT_QUIZ_SETTINGS: QuizSettings = {
   certificates: false,
 };
 
-// Seeding standard templates
 export const FORM_TEMPLATES: Array<Partial<FormDocument> & { id: string; category: string }> = [
   {
     id: "tpl-scholarship",
@@ -212,7 +210,7 @@ export const FORM_TEMPLATES: Array<Partial<FormDocument> & { id: string; categor
     description: "Amineva Academic Merit and Leadership Scholarship Application.",
     theme: {
       ...DEFAULT_THEME,
-      primary: "#10B981", // Emerald green theme
+      primary: "#10B981",
       borderRadius: "lg",
       buttonStyle: "pill",
     },
@@ -223,62 +221,14 @@ export const FORM_TEMPLATES: Array<Partial<FormDocument> & { id: string; categor
     },
     quizSettings: DEFAULT_QUIZ_SETTINGS,
     questions: [
-      {
-        id: "q-name",
-        type: "short_answer",
-        title: "Full Legal Name",
-        description: "Please enter your legal first, middle, and last names.",
-        required: true,
-      },
-      {
-        id: "q-email",
-        type: "email",
-        title: "Email Address",
-        required: true,
-      },
-      {
-        id: "q-phone",
-        type: "phone",
-        title: "Contact Phone Number",
-        required: true,
-      },
-      {
-        id: "q-address",
-        type: "address",
-        title: "Current Physical Address",
-        required: true,
-      },
-      {
-        id: "q-gpa",
-        type: "number",
-        title: "Cumulative GPA",
-        description: "Must be on a 4.0 weighted scale.",
-        required: true,
-        validation: { min: 0, max: 4 },
-      },
-      {
-        id: "q-essay",
-        type: "long_answer",
-        title: "Statement of Purpose & Career Objectives",
-        description: "Describe how this scholarship will impact your goals (max 500 words).",
-        required: true,
-        validation: { maxLength: 3000 },
-      },
-      {
-        id: "q-upload",
-        type: "file_upload",
-        title: "Academic Transcript & Recommendation Letters",
-        description: "Combine files into a single PDF (maximum size 10MB).",
-        required: true,
-        validation: { fileTypes: ["application/pdf"], maxFileSize: 10 },
-      },
-      {
-        id: "q-sig",
-        type: "signature",
-        title: "Applicant Digital Signature",
-        description: "By signing, you attest that all information is completely truthful.",
-        required: true,
-      },
+      { id: "q-name", type: "short_answer", title: "Full Legal Name", required: true },
+      { id: "q-email", type: "email", title: "Email Address", required: true },
+      { id: "q-phone", type: "phone", title: "Contact Phone Number", required: true },
+      { id: "q-address", type: "address", title: "Current Physical Address", required: true },
+      { id: "q-gpa", type: "number", title: "Cumulative GPA", required: true, validation: { min: 0, max: 4 } },
+      { id: "q-essay", type: "long_answer", title: "Statement of Purpose & Career Objectives", required: true, validation: { maxLength: 3000 } },
+      { id: "q-upload", type: "file_upload", title: "Academic Transcript & Recommendation Letters", required: true, validation: { fileTypes: ["application/pdf"], maxFileSize: 10 } },
+      { id: "q-sig", type: "signature", title: "Applicant Digital Signature", required: true },
     ],
   },
   {
@@ -288,46 +238,18 @@ export const FORM_TEMPLATES: Array<Partial<FormDocument> & { id: string; categor
     description: "Help us refine our products and services. Your honest feedback is invaluable.",
     theme: {
       ...DEFAULT_THEME,
-      primary: "#2563EB", // Blue theme
+      primary: "#2563EB",
       borderRadius: "xl",
       buttonStyle: "solid",
     },
     settings: DEFAULT_SETTINGS,
     quizSettings: DEFAULT_QUIZ_SETTINGS,
     questions: [
-      {
-        id: "q-rating",
-        type: "rating_star",
-        title: "How would you rate your overall experience with our service?",
-        required: true,
-      },
-      {
-        id: "q-emoji",
-        type: "rating_emoji",
-        title: "How did you feel about the checkout process?",
-        required: false,
-      },
-      {
-        id: "q-features",
-        type: "checkboxes",
-        title: "Which aspects did you find most satisfying?",
-        options: ["Product Quality", "Fast Shipping", "Customer Support", "Competitive Pricing", "Website Usability"],
-        required: true,
-      },
-      {
-        id: "q-recommend",
-        type: "linear_scale",
-        title: "How likely are you to recommend us to a colleague or friend?",
-        description: "Scale from 0 (Not likely at all) to 10 (Extremely likely)",
-        required: true,
-        validation: { min: 0, max: 10 },
-      },
-      {
-        id: "q-comments",
-        type: "long_answer",
-        title: "Any additional suggestions or comments for us?",
-        required: false,
-      },
+      { id: "q-rating", type: "rating_star", title: "How would you rate your overall experience with our service?", required: true },
+      { id: "q-emoji", type: "rating_emoji", title: "How did you feel about the checkout process?", required: false },
+      { id: "q-features", type: "checkboxes", title: "Which aspects did you find most satisfying?", options: ["Product Quality", "Fast Shipping", "Customer Support", "Competitive Pricing", "Website Usability"], required: true },
+      { id: "q-recommend", type: "linear_scale", title: "How likely are you to recommend us to a colleague or friend?", required: true, validation: { min: 0, max: 10 } },
+      { id: "q-comments", type: "long_answer", title: "Any additional suggestions or comments for us?", required: false },
     ],
   },
   {
@@ -337,7 +259,7 @@ export const FORM_TEMPLATES: Array<Partial<FormDocument> & { id: string; categor
     description: "Test your familiarity with the Amineva Workspace, core modules, and AI capabilities.",
     theme: {
       ...DEFAULT_THEME,
-      primary: "#8B5CF6", // Purple theme
+      primary: "#8B5CF6",
       borderRadius: "md",
       buttonStyle: "sharp",
     },
@@ -395,42 +317,122 @@ export const FORM_TEMPLATES: Array<Partial<FormDocument> & { id: string; categor
   },
 ];
 
-// Seed initial forms in local storage if empty
-export async function listForms(): Promise<FormDocument[]> {
-  if (typeof window === "undefined") return [];
+const TBL = "workspace_forms" as any;
+const CACHE_BASE = "amineva_forms";
+const CACHE_KEY = () => wsKey(CACHE_BASE);
 
-  const raw = localStorage.getItem(wsKey("amineva_forms"));
-  if (!raw) {
+function getLocalForms(): FormDocument[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = localStorage.getItem(CACHE_KEY());
+    return raw ? JSON.parse(raw) : [];
+  } catch {
     return [];
   }
+}
+
+function saveLocalForms(forms: FormDocument[]) {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(CACHE_KEY(), JSON.stringify(forms));
+  } catch (e) {
+    console.error("[forms] Failed to save local forms", e);
+  }
+}
+
+async function getAuthenticatedUserId(): Promise<string> {
+  try {
+    const getUserPromise = supabase.auth.getUser();
+    const timeoutPromise = new Promise<{ data: { user: null }; error: any }>((resolve) =>
+      setTimeout(() => resolve({ data: { user: null }, error: new Error("Timeout") }), 600)
+    );
+    const { data } = await Promise.race([getUserPromise, timeoutPromise]);
+    if (data?.user?.id) return data.user.id;
+  } catch {}
+  const scopeUser = getWorkspaceUser();
+  if (scopeUser && scopeUser !== "anon") return scopeUser;
+  return "local-user";
+}
+
+function mapRemoteRowToForm(row: any): FormDocument {
+  const schema = typeof row.schema_json === "string" ? JSON.parse(row.schema_json || "{}") : (row.schema_json || {});
+  return {
+    id: row.id || row.form_id || schema.id,
+    ownerId: row.owner_id || schema.ownerId || "local-user",
+    title: row.title || schema.title || "Untitled Form",
+    description: schema.description || "",
+    theme: schema.theme || DEFAULT_THEME,
+    settings: schema.settings || DEFAULT_SETTINGS,
+    quizSettings: schema.quizSettings || DEFAULT_QUIZ_SETTINGS,
+    formCode: schema.formCode || row.form_id || generateFormCode(),
+    status: row.status || schema.status || "draft",
+    questions: schema.questions || [],
+    responses: schema.responses || [],
+    createdAt: row.created_at || schema.createdAt || new Date().toISOString(),
+    updatedAt: row.updated_at || schema.updatedAt || new Date().toISOString(),
+    comments: schema.comments || [],
+    auditLogs: schema.auditLogs || [],
+  };
+}
+
+export async function listForms(): Promise<FormDocument[]> {
+  const local = getLocalForms();
+  if (typeof navigator !== "undefined" && !navigator.onLine) return local;
 
   try {
-    return JSON.parse(raw);
+    const userId = await getAuthenticatedUserId();
+    const queryPromise = supabase.from(TBL).select("*").eq("owner_id", userId).order("updated_at", { ascending: false });
+    const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) =>
+      setTimeout(() => resolve({ data: null, error: new Error("Timeout") }), 2500)
+    );
+    const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
+    if (!error && data && Array.isArray(data)) {
+      const remote = data.map(mapRemoteRowToForm);
+      const merged = [...local];
+      for (const form of remote) {
+        const idx = merged.findIndex((item) => item.id === form.id);
+        if (idx < 0) merged.push(form);
+        else if (new Date(form.updatedAt).getTime() > new Date(merged[idx].updatedAt).getTime()) merged[idx] = form;
+      }
+      merged.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+      saveLocalForms(merged);
+      return merged;
+    }
   } catch (e) {
-    console.error("Failed to parse amineva_forms localstorage", e);
-    return [];
+    console.warn("[forms] Offline fetch fallback", e);
   }
+  return local;
 }
 
 export async function getFormById(id: string): Promise<FormDocument | null> {
-  const list = await listForms();
-  const found = list.find((f) => f.id === id || f.formCode === id);
-  if (found) return found;
+  const local = getLocalForms();
+  const cached = local.find((f) => f.id === id || f.formCode === id);
+  if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
 
-  return null;
+  try {
+    const userId = await getAuthenticatedUserId();
+    const { data, error } = await supabase.from(TBL).select("*").eq("id", id).eq("owner_id", userId).maybeSingle();
+    if (!error && data) {
+      const form = mapRemoteRowToForm(data);
+      const idx = local.findIndex((f) => f.id === id);
+      if (idx >= 0) local[idx] = form;
+      else local.unshift(form);
+      saveLocalForms(local);
+      return form;
+    }
+  } catch (e) {
+    console.warn("[forms] Offline get form", e);
+  }
+
+  return local.find((f) => f.id === id || f.formCode === id) ?? null;
 }
 
 export async function getFormByCode(code: string): Promise<FormDocument | null> {
-  const list = await listForms();
-  const found = list.find((f) => f.formCode === code || f.id === code);
-  if (found) return found;
   return getFormById(code);
 }
 
 export async function createForm(title: string, templateId?: string): Promise<FormDocument> {
-  const scopeUser = getWorkspaceUser();
-  const userId = scopeUser && scopeUser !== "anon" ? scopeUser : "local-user";
-  const list = await listForms();
+  const userId = await getAuthenticatedUserId();
   const now = new Date().toISOString();
   const code = generateFormCode();
 
@@ -450,15 +452,7 @@ export async function createForm(title: string, templateId?: string): Promise<Fo
       quizSettings = found.quizSettings ? { ...found.quizSettings } : quizSettings;
     }
   } else {
-    // default blank form starts with 1 template short answer question
-    questions = [
-      {
-        id: "q-first",
-        type: "short_answer",
-        title: "Untitled Question 1",
-        required: false,
-      },
-    ];
+    questions = [{ id: "q-first", type: "short_answer", title: "Untitled Question 1", required: false }];
   }
 
   const newDoc: FormDocument = {
@@ -482,100 +476,139 @@ export async function createForm(title: string, templateId?: string): Promise<Fo
         user: userId,
         action: `Form created ${templateId ? `from preset template '${templateId}'` : "as blank canvas"}`,
         timestamp: now,
-      }
+      },
     ],
   };
 
-  list.unshift(newDoc);
-  localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(list));
+  const local = getLocalForms();
+  local.unshift(newDoc);
+  saveLocalForms(local);
+
+  try {
+    await supabase.from(TBL).insert({
+      id: newDoc.id,
+      form_id: newDoc.formCode,
+      title: newDoc.title,
+      owner_id: userId,
+      schema_json: JSON.stringify(newDoc),
+    });
+  } catch (e) {
+    console.warn("[forms] Failed to create form in Supabase, using offline fallback", e);
+  }
+
   return newDoc;
 }
 
 export async function updateForm(id: string, updates: Partial<FormDocument>): Promise<boolean> {
-  const list = await listForms();
-  const index = list.findIndex((f) => f.id === id);
+  const local = getLocalForms();
+  const index = local.findIndex((f) => f.id === id);
   if (index === -1) return false;
 
-  const original = list[index];
+  const original = local[index];
   const now = new Date().toISOString();
 
-  // Create audit trail for meaningful changes
   const logs = [...(original.auditLogs || [])];
   if (updates.status && updates.status !== original.status) {
     logs.push({
       id: `log-${Date.now()}`,
-      user: "Workspace Demo Owner",
+      user: "Workspace Owner",
       action: `Published state changed to: ${updates.status.toUpperCase()}`,
       timestamp: now,
     });
   }
-  if (updates.questions && updates.questions.length !== original.questions.length) {
-    logs.push({
-      id: `log-${Date.now()}`,
-      user: "Workspace Demo Owner",
-      action: `Question structures updated. Total count: ${updates.questions.length}`,
-      timestamp: now,
-    });
-  }
 
-  list[index] = {
+  const updatedDoc: FormDocument = {
     ...original,
     ...updates,
     auditLogs: logs,
     updatedAt: now,
   };
 
-  localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(list));
+  local[index] = updatedDoc;
+  saveLocalForms(local);
+
+  try {
+    await supabase
+      .from(TBL)
+      .update({
+        title: updatedDoc.title,
+        schema_json: JSON.stringify(updatedDoc),
+      })
+      .eq("id", id);
+  } catch (e) {
+    console.warn("[forms] Offline update queued locally", e);
+  }
+
   return true;
 }
 
 export async function deleteForm(id: string): Promise<boolean> {
-  const list = await listForms();
-  const filtered = list.filter((f) => f.id !== id);
-  if (list.length === filtered.length) return false;
+  const local = getLocalForms();
+  const filtered = local.filter((f) => f.id !== id);
+  saveLocalForms(filtered);
 
-  localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(filtered));
+  try {
+    await supabase.from(TBL).delete().eq("id", id);
+  } catch {}
   return true;
 }
 
 export async function duplicateForm(form: FormDocument): Promise<FormDocument | null> {
-  const list = await listForms();
+  const userId = await getAuthenticatedUserId();
   const now = new Date().toISOString();
   const code = generateFormCode();
 
   const duplicated: FormDocument = {
     ...JSON.parse(JSON.stringify(form)),
     id: `form-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+    ownerId: userId,
     title: `${form.title} (Copy)`,
     formCode: code,
-    responses: [], // Clear out responses
+    responses: [],
     createdAt: now,
     updatedAt: now,
-    comments: [],
     auditLogs: [
       {
         id: "log-dup",
-        user: "Workspace Demo Owner",
+        user: userId,
         action: `Cloned from existing form: '${form.title}'`,
         timestamp: now,
-      }
+      },
     ],
   };
 
-  list.unshift(duplicated);
-  localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(list));
+  const local = getLocalForms();
+  local.unshift(duplicated);
+  saveLocalForms(local);
+
+  try {
+    await supabase.from(TBL).insert({
+      id: duplicated.id,
+      form_id: duplicated.formCode,
+      title: duplicated.title,
+      owner_id: userId,
+      schema_json: JSON.stringify(duplicated),
+    });
+  } catch (e) {
+    console.warn("[forms] Failed to insert duplicated form in Supabase", e);
+  }
+
   return duplicated;
 }
 
-export async function submitFormResponse(formId: string, respondentId: string, answers: Record<string, any>, metadata?: any): Promise<FormResponse | null> {
-  const list = await listForms();
-  const index = list.findIndex((f) => f.id === formId);
+export async function submitFormResponse(
+  formId: string,
+  respondentId: string,
+  answers: Record<string, any>,
+  metadata?: any
+): Promise<FormResponse | null> {
+  const local = getLocalForms();
+  const index = local.findIndex((f) => f.id === formId);
   if (index === -1) return null;
 
-  const form = list[index];
+  const form = local[index];
   const now = new Date().toISOString();
 
-  // Evaluate scores if Quiz Mode is enabled
   let scoreInfo: any = undefined;
   if (form.quizSettings.enabled) {
     let earnedPoints = 0;
@@ -587,16 +620,17 @@ export async function submitFormResponse(formId: string, respondentId: string, a
         const answer = answers[q.id];
 
         if (q.type === "checkboxes") {
-          // Multiple correct checkbox selections
-          const correctOnes = Array.isArray(q.correctAnswer) ? q.correctAnswer : [q.correctAnswer].filter(Boolean) as string[];
+          const correctOnes = Array.isArray(q.correctAnswer)
+            ? q.correctAnswer
+            : [q.correctAnswer].filter(Boolean) as string[];
           const answersArr = Array.isArray(answer) ? answer : [answer].filter(Boolean);
 
-          const correctAndMatches = correctOnes.length === answersArr.length && correctOnes.every(val => answersArr.includes(val));
+          const correctAndMatches =
+            correctOnes.length === answersArr.length && correctOnes.every((val) => answersArr.includes(val));
           if (correctAndMatches) {
             earnedPoints += q.points;
           }
         } else {
-          // Standard single value
           if (answer && String(answer).trim().toLowerCase() === String(q.correctAnswer).trim().toLowerCase()) {
             earnedPoints += q.points;
           }
@@ -629,12 +663,25 @@ export async function submitFormResponse(formId: string, respondentId: string, a
   };
 
   const updatedResponses = [...(form.responses || []), newResponse];
-  list[index] = {
+  const updatedForm = {
     ...form,
     responses: updatedResponses,
     updatedAt: now,
   };
 
-  localStorage.setItem(wsKey("amineva_forms"), JSON.stringify(list));
+  local[index] = updatedForm;
+  saveLocalForms(local);
+
+  try {
+    await supabase
+      .from(TBL)
+      .update({
+        schema_json: JSON.stringify(updatedForm),
+      })
+      .eq("id", formId);
+  } catch (e) {
+    console.warn("[forms] Failed to record response in Supabase", e);
+  }
+
   return newResponse;
 }
