@@ -44,6 +44,7 @@ export default function SheetsEditor() {
   const { id } = useParams();
   const navigate = useNavigate();
   const [doc, setDoc] = useState<WorkspaceSheet | null>(null);
+  const [loading, setLoading] = useState(true);
   const wbUR = useUndoRedo<Workbook>(EMPTY_WORKBOOK, 50);
   const wb = wbUR.state;
   const [activeSheetIdx, setActiveSheetIdx] = useState(0);
@@ -76,15 +77,31 @@ export default function SheetsEditor() {
   }, [title]);
 
   useEffect(() => {
-    if (!id) return;
+    if (!id) {
+      setLoading(false);
+      return;
+    }
+    let isMounted = true;
     (async () => {
+      setLoading(true);
       const d = await getSheet(id);
-      if (!d) { toast({ title: "Sheet not found", variant: "destructive" as any }); navigate("/workspace/sheets"); return; }
-      setDoc(d); setTitle(d.title);
+      if (!isMounted) return;
+      if (!d) {
+        toast({ title: "Sheet not found", variant: "destructive" as any });
+        navigate("/workspace/sheets");
+        setLoading(false);
+        return;
+      }
+      setDoc(d);
+      setTitle(d.title);
       const workbook = d.workbook_json && (d.workbook_json as any).sheets ? d.workbook_json : EMPTY_WORKBOOK;
       wbUR.reset(workbook);
       document.title = `${d.title} — Amineva Sheets`;
+      setLoading(false);
     })();
+    return () => {
+      isMounted = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, navigate]);
 
@@ -856,7 +873,32 @@ export default function SheetsEditor() {
     return `${cellId(n.r1, n.c1)}:${cellId(n.r2, n.c2)}`;
   }, [selection]);
 
-  if (!doc) return null;
+  if (loading) {
+    return (
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-background text-muted-foreground gap-3">
+        <Loader2 className="h-8 w-8 animate-spin text-emerald-600" />
+        <p className="text-sm font-medium">Loading Amineva Sheet…</p>
+      </div>
+    );
+  }
+
+  if (!doc) {
+    return (
+      <div className="h-[100dvh] flex flex-col items-center justify-center bg-background text-muted-foreground gap-4">
+        <AlertCircle className="h-10 w-10 text-destructive" />
+        <div className="text-center">
+          <p className="text-base font-semibold text-foreground">Sheet Not Found</p>
+          <p className="text-xs text-muted-foreground mt-1">The requested sheet could not be loaded or may have been deleted.</p>
+        </div>
+        <button
+          onClick={() => navigate("/workspace/sheets")}
+          className="px-4 py-2 rounded-md bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition"
+        >
+          Return to Amineva Sheets
+        </button>
+      </div>
+    );
+  }
 
   return (
     <div className="h-[100dvh] flex flex-col bg-muted/30 overflow-hidden">
