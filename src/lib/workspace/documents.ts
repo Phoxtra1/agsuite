@@ -59,10 +59,12 @@ async function getAuthenticatedUserId(): Promise<string> {
 }
 
 export async function listDocuments(): Promise<WorkspaceDocument[]> {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return [];
+
   const local = getLocalDocs();
   if (typeof navigator !== "undefined" && !navigator.onLine) return local;
   try {
-    const userId = await getAuthenticatedUserId();
     const queryPromise = supabase
       .from("workspace_documents" as any)
       .select("*")

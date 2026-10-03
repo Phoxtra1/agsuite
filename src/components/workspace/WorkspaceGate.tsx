@@ -36,8 +36,7 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
   const [session, setSession] = useState<WorkspaceSession | null>(null);
   const [resolving, setResolving] = useState(true);
 
-  const isLocalOrPreview = typeof window !== "undefined" && ["localhost", "127.0.0.1", "lovable.app", "lovableproject.com"].some(h => window.location.hostname.includes(h));
-  const effectiveUserId = user?.id || (isLocalOrPreview ? "local-user" : null);
+  const effectiveUserId = user?.id || null;
 
   useEffect(() => {
     let cancelled = false;
