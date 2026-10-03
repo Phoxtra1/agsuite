@@ -81,6 +81,9 @@ function CellInput({
     <input
       ref={inputRef}
       value={val}
+      onMouseDown={(e) => {
+        e.stopPropagation();
+      }}
       onChange={(e) => {
         const next = e.target.value;
         setVal(next);
@@ -103,8 +106,8 @@ function CellInput({
           e.preventDefault();
         }
       }}
-      className="absolute inset-0 w-full h-full outline-none bg-white text-foreground border-2 border-accent px-1.5 z-50 shadow-md animate-in fade-in-50 duration-75"
-      style={{ fontSize: 13 * scale }}
+      className="absolute inset-0 w-full h-full outline-none bg-white text-foreground border-2 border-accent px-1.5 z-50 shadow-md select-text cursor-text animate-in fade-in-50 duration-75"
+      style={{ fontSize: 13 * scale, userSelect: "text", caretColor: "hsl(var(--foreground))" }}
     />
   );
 }
