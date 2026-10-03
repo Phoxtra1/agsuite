@@ -358,7 +358,7 @@ function mapRemoteRowToForm(row: any): FormDocument {
   const schema = typeof row.schema_json === "string" ? JSON.parse(row.schema_json || "{}") : (row.schema_json || {});
   return {
     id: row.id || row.form_id || schema.id,
-    ownerId: row.owner_id || schema.ownerId || "local-user",
+    ownerId: row.owner_id || schema.ownerId || "",
     title: row.title || schema.title || "Untitled Form",
     description: schema.description || "",
     theme: schema.theme || DEFAULT_THEME,
@@ -376,11 +376,13 @@ function mapRemoteRowToForm(row: any): FormDocument {
 }
 
 export async function listForms(): Promise<FormDocument[]> {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return [];
+
   const local = getLocalForms();
   if (typeof navigator !== "undefined" && !navigator.onLine) return local;
 
   try {
-    const userId = await getAuthenticatedUserId();
     const queryPromise = supabase.from(TBL).select("*").eq("owner_id", userId).order("updated_at", { ascending: false });
     const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) =>
       setTimeout(() => resolve({ data: null, error: new Error("Timeout") }), 2500)

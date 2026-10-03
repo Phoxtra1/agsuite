@@ -347,10 +347,12 @@ async function getAuthenticatedUserId(): Promise<string> {
 }
 
 export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
+  const userId = await getAuthenticatedUserId();
+  if (!userId) return [];
+
   const local = getLocalDecks();
   if (typeof navigator !== "undefined" && !navigator.onLine) return local;
   try {
-    const userId = await getAuthenticatedUserId();
     const queryPromise = supabase.from(TBL).select("*").eq("owner_id", userId).order("updated_at", { ascending: false });
     const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) =>
       setTimeout(() => resolve({ data: null, error: new Error("Timeout") }), 2500)

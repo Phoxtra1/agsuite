@@ -169,6 +169,16 @@ export async function createAdminCredential(
     return { success: false, error: "PIN must be 4–12 digits." };
   }
 
+  // Always pre-generate client side Web Crypto SHA-256 credential for instant local persistence
+  const salt = Array.from(crypto.getRandomValues(new Uint8Array(16)))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+  const pinHash = await hashPinClient(salt, cleanPin);
+  const now = new Date().toISOString();
+
+  let adminId = `SM-${generateAlphaNumeric(3)}-${generateAlphaNumeric(4)}`;
+  let recoveryId = `RC-${generateAlphaNumeric(3)}-${generateAlphaNumeric(3)}`;
+
   try {
     const data = await callSealFunction({
       action: "id-create",
@@ -176,22 +186,18 @@ export async function createAdminCredential(
       pin: cleanPin,
     });
     if (data?.credential && !data?.error) {
-      return { success: true, credential: { ...data.credential, pin: "" } as AdminCredential };
+      adminId = data.credential.id || adminId;
+      recoveryId = data.credential.recoveryId || recoveryId;
     }
   } catch {
     /* Fallback to local crypto store */
   }
 
-  // Web Crypto SHA-256 Client Fallback
-  const adminId = `SM-${generateAlphaNumeric(3)}-${generateAlphaNumeric(4)}`;
-  const recoveryId = `RC-${generateAlphaNumeric(3)}-${generateAlphaNumeric(3)}`;
-  const salt = Array.from(crypto.getRandomValues(new Uint8Array(16)))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
-  const pinHash = await hashPinClient(salt, cleanPin);
-  const now = new Date().toISOString();
-
   const db = getClientCredsDb();
+  const existingIdx = db.findIndex(
+    (c) => c.adminId.toUpperCase() === adminId.toUpperCase() || c.recoveryId.toUpperCase() === recoveryId.toUpperCase()
+  );
+
   const record: StoredClientCred = {
     adminId,
     recoveryId,
@@ -200,7 +206,12 @@ export async function createAdminCredential(
     pinHash,
     createdAt: now,
   };
-  db.unshift(record);
+
+  if (existingIdx >= 0) {
+    db[existingIdx] = record;
+  } else {
+    db.unshift(record);
+  }
   saveClientCredsDb(db);
 
   return {
