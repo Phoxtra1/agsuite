@@ -116,10 +116,21 @@ export function SheetGrid({
   copiedRange, contextActions, onUpdateChart, onDeleteChart,
 }: Props) {
   const [editing, setEditing] = useState<{ id: string; value: string; selectOnFocus: boolean } | null>(null);
+  const editingRef = useRef<{ id: string; value: string; selectOnFocus: boolean } | null>(null);
+  editingRef.current = editing;
+
   const containerRef = useRef<HTMLDivElement | null>(null);
   const dragStart = useRef<{ r: number; c: number } | null>(null);
   const [resizing, setResizing] = useState<{ type: "col" | "row"; index: number; start: number; origin: number } | null>(null);
   const [fillDrag, setFillDrag] = useState<{ toRow: number } | null>(null);
+
+  const commitCurrentEdit = useCallback(() => {
+    if (editingRef.current) {
+      onCellEdit(editingRef.current.id, editingRef.current.value);
+      setEditing(null);
+      editingRef.current = null;
+    }
+  }, [onCellEdit]);
 
   const scale = zoom / 100;
   const rowH = (r: number) => (sheet.rowHeights?.[r] ?? DEFAULT_ROW_H) * scale;
@@ -215,16 +226,23 @@ export function SheetGrid({
   function beginEdit(r: number, c: number, initial?: string) {
     const id = cellId(r, c);
     const raw = sheet.cells[id];
-    setEditing({
+    const initialVal = initial ?? (raw == null ? "" : String(raw));
+    const editObj = {
       id,
-      value: initial ?? (raw == null ? "" : String(raw)),
+      value: initialVal,
       selectOnFocus: initial === undefined,
-    });
+    };
+    editingRef.current = editObj;
+    setEditing(editObj);
   }
   function commitEdit(val: string, next?: { r: number; c: number }) {
-    if (!editing) return;
-    onCellEdit(editing.id, val);
+    if (!editingRef.current && !editing) return;
+    const targetId = editingRef.current?.id ?? editing?.id;
+    if (targetId) {
+      onCellEdit(targetId, val);
+    }
     setEditing(null);
+    editingRef.current = null;
     if (next) onSelect({ r1: next.r, c1: next.c, r2: next.r, c2: next.c });
   }
 
@@ -301,6 +319,9 @@ export function SheetGrid({
   const frozenRows = sheet.frozenRows ?? 0;
   const frozenCols = sheet.frozenCols ?? 0;
 
+  const isFullRowSel = n.c1 === 0 && n.c2 === colCount - 1;
+  const isFullColSel = n.r1 === 0 && n.r2 === rowCount - 1;
+
   return (
     <div
       ref={containerRef}
@@ -317,40 +338,57 @@ export function SheetGrid({
           <thead className="sticky top-0 z-20">
             <tr>
               <th
-                className="bg-muted border-r border-b border-border sticky left-0 z-30"
+                onMouseDown={() => {
+                  commitCurrentEdit();
+                  onSelect({ r1: 0, c1: 0, r2: rowCount - 1, c2: colCount - 1 });
+                }}
+                className="bg-muted border-r border-b border-border sticky left-0 z-30 cursor-pointer hover:bg-accent/20 transition"
                 style={{ width: ROW_HEADER_W, minWidth: ROW_HEADER_W, height: HEADER_H }}
+                title="Select All"
               />
-              {Array.from({ length: colCount }).map((_, c) => (
-                <ColContextMenu key={c} actions={contextActions.col(c)}>
-                  <th
-                    onMouseDown={() => onSelect({ r1: 0, c1: c, r2: rowCount - 1, c2: c })}
-                    className={`bg-muted border-r border-b border-border font-medium text-[11px] text-muted-foreground cursor-pointer relative
-                      ${c >= n.c1 && c <= n.c2 ? "!bg-accent/15 !text-accent" : ""}
-                      ${frozenCols > 0 && c === frozenCols - 1 ? "border-r-2 border-r-accent/60" : ""}`}
-                    style={{ width: colW(c), minWidth: colW(c), height: HEADER_H }}
-                  >
-                    {colToLetter(c)}
-                    <div
-                      onMouseDown={(e) => { e.stopPropagation(); setResizing({ type: "col", index: c, start: e.clientX, origin: colW(c) / scale }); }}
-                      className="absolute top-0 right-0 h-full w-1 cursor-col-resize hover:bg-accent"
-                    />
-                  </th>
-                </ColContextMenu>
-              ))}
+              {Array.from({ length: colCount }).map((_, c) => {
+                const isColInSel = c >= n.c1 && c <= n.c2;
+                const isColActive = isColInSel && !isFullRowSel;
+                return (
+                  <ColContextMenu key={c} actions={contextActions.col(c)}>
+                    <th
+                      onMouseDown={() => {
+                        commitCurrentEdit();
+                        onSelect({ r1: 0, c1: c, r2: rowCount - 1, c2: c });
+                      }}
+                      className={`bg-muted border-r border-b border-border font-medium text-[11px] text-muted-foreground cursor-pointer relative select-none
+                        ${isColActive ? (isFullColSel ? "!bg-accent/25 !text-accent font-bold" : "!bg-accent/15 !text-accent") : ""}
+                        ${frozenCols > 0 && c === frozenCols - 1 ? "border-r-2 border-r-accent/60" : ""}`}
+                      style={{ width: colW(c), minWidth: colW(c), height: HEADER_H }}
+                    >
+                      {colToLetter(c)}
+                      <div
+                        onMouseDown={(e) => { e.stopPropagation(); setResizing({ type: "col", index: c, start: e.clientX, origin: colW(c) / scale }); }}
+                        className="absolute top-0 right-0 h-full w-1 cursor-col-resize hover:bg-accent"
+                      />
+                    </th>
+                  </ColContextMenu>
+                );
+              })}
             </tr>
           </thead>
         )}
         <tbody>
           {Array.from({ length: rowCount }).map((_, r) => {
             if (sheet.hiddenRows?.includes(r)) return null;
+            const isRowInSel = r >= n.r1 && r <= n.r2;
+            const isRowActive = isRowInSel && !isFullColSel;
             return (
               <tr key={r} style={{ height: rowH(r) }}>
                 {showHeaders && (
                   <RowContextMenu actions={contextActions.row(r)}>
                     <th
-                      onMouseDown={() => onSelect({ r1: r, c1: 0, r2: r, c2: colCount - 1 })}
-                      className={`bg-muted border-r border-b border-border text-[11px] text-muted-foreground font-medium sticky left-0 z-10 cursor-pointer relative
-                        ${r >= n.r1 && r <= n.r2 ? "!bg-accent/15 !text-accent" : ""}
+                      onMouseDown={() => {
+                        commitCurrentEdit();
+                        onSelect({ r1: r, c1: 0, r2: r, c2: colCount - 1 });
+                      }}
+                      className={`bg-muted border-r border-b border-border text-[11px] text-muted-foreground font-medium sticky left-0 z-20 cursor-pointer relative select-none
+                        ${isRowActive ? (isFullRowSel ? "!bg-accent/25 !text-accent font-bold" : "!bg-accent/15 !text-accent font-semibold") : ""}
                         ${frozenRows > 0 && r === frozenRows - 1 ? "border-b-2 border-b-accent/60" : ""}`}
                       style={{ width: ROW_HEADER_W, minWidth: ROW_HEADER_W, height: rowH(r) }}
                     >
@@ -403,6 +441,7 @@ export function SheetGrid({
                       rowSpan={mergeDetails?.rowSpan}
                       colSpan={mergeDetails?.colSpan}
                       onMouseDown={(e) => {
+                        commitCurrentEdit();
                         dragStart.current = { r, c };
                         if (e.shiftKey) onSelect({ ...selection, r2: r, c2: c });
                         else onSelect({ r1: r, c1: c, r2: r, c2: c });
@@ -449,8 +488,14 @@ export function SheetGrid({
                           initialValue={editing!.value}
                           selectOnFocus={editing!.selectOnFocus}
                           onCommit={(val, next) => commitEdit(val, next)}
-                          onDraft={(val) => onCellEdit(id, val)}
-                          onCancel={() => setEditing(null)}
+                          onDraft={(val) => {
+                            if (editingRef.current) editingRef.current.value = val;
+                            onCellEdit(id, val);
+                          }}
+                          onCancel={() => {
+                            editingRef.current = null;
+                            setEditing(null);
+                          }}
                           row={r}
                           col={c}
                           scale={scale}

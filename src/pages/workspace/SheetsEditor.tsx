@@ -980,7 +980,7 @@ export default function SheetsEditor() {
         <FormulaBar
           activeCell={activeId}
           value={formulaBarValue}
-          onCommit={(v) => setCell(activeId, v)}
+          onCommit={(v, cellId) => setCell(cellId ?? activeId, v)}
           onNameBox={jumpToCell}
           onOpenFxPicker={() => insertFormulaFn("SUM")}
         />

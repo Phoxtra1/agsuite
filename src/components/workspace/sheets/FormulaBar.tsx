@@ -5,7 +5,7 @@ import { searchFunctions, FUNCTION_BY_NAME } from "@/lib/workspace/sheets/functi
 interface Props {
   activeCell: string;
   value: string;
-  onCommit: (v: string) => void;
+  onCommit: (v: string, targetCell?: string) => void;
   onNameBox?: (v: string) => void; // jump to A1 or named range
   onOpenFxPicker?: () => void;
 }
@@ -16,11 +16,30 @@ export function FormulaBar({ activeCell, value, onCommit, onNameBox, onOpenFxPic
   const [focused, setFocused] = useState(false);
   const [showSuggest, setShowSuggest] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement | null>(null);
+
+  const prevActiveCellRef = useRef(activeCell);
+  const vRef = useRef(v);
+  vRef.current = v;
+  const isDirtyRef = useRef(false);
+
+  // Sync value & activeCell while safely preserving uncommitted edits on cell change
+  useEffect(() => {
+    if (prevActiveCellRef.current !== activeCell) {
+      if (isDirtyRef.current) {
+        onCommit(vRef.current, prevActiveCellRef.current);
+        isDirtyRef.current = false;
+      }
+      prevActiveCellRef.current = activeCell;
+      setV(value);
+      setName(activeCell);
+    } else if (!focused) {
+      setV(value);
+      setName(activeCell);
+    }
+  }, [value, activeCell, focused, onCommit]);
+
   // Reverse logic: expand ONLY while typing/focused, collapse when done
   const expanded = focused && (v.length > 60 || v.includes("\n"));
-
-  useEffect(() => setV(value), [value, activeCell]);
-  useEffect(() => setName(activeCell), [activeCell]);
 
   const currentToken = useMemo(() => {
     if (!v.startsWith("=")) return "";
@@ -37,7 +56,11 @@ export function FormulaBar({ activeCell, value, onCommit, onNameBox, onOpenFxPic
     return meta ?? null;
   }, [v]);
 
-  function commit() { onCommit(v); setShowSuggest(false); }
+  function commit(targetCell?: string) {
+    onCommit(vRef.current, targetCell ?? activeCell);
+    isDirtyRef.current = false;
+    setShowSuggest(false);
+  }
   function insertSuggestion(fn: string) {
     const next = v.replace(/([A-Z][A-Z0-9_.]*)$/i, "") + fn + "(";
     setV(next); setShowSuggest(false);
@@ -72,12 +95,18 @@ export function FormulaBar({ activeCell, value, onCommit, onNameBox, onOpenFxPic
           <textarea
             ref={inputRef}
             value={v}
-            onChange={(e) => { setV(e.target.value); setShowSuggest(e.target.value.startsWith("=")); }}
+            onChange={(e) => {
+              const next = e.target.value;
+              setV(next);
+              vRef.current = next;
+              isDirtyRef.current = true;
+              setShowSuggest(next.startsWith("="));
+            }}
             onFocus={() => { setFocused(true); setShowSuggest(v.startsWith("=")); }}
             onBlur={() => { setFocused(false); setTimeout(() => setShowSuggest(false), 150); commit(); }}
             onKeyDown={(e) => {
               if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); commit(); (e.target as HTMLTextAreaElement).blur(); }
-              else if (e.key === "Escape") { setV(value); setShowSuggest(false); (e.target as HTMLTextAreaElement).blur(); }
+              else if (e.key === "Escape") { isDirtyRef.current = false; setV(value); setShowSuggest(false); (e.target as HTMLTextAreaElement).blur(); }
               else if (e.key === "Tab" && suggestions[0]) { e.preventDefault(); insertSuggestion(suggestions[0].name); }
             }}
             placeholder="Enter a value or a formula starting with ="
