@@ -106,14 +106,26 @@ export default function SheetsEditor() {
   }, [id, navigate]);
 
   useEffect(() => {
-    if (!wb.sheets.length) return;
-    engineRef.current?.destroy();
-    engineRef.current = buildEngine(wb);
-    setEngineTick((t) => t + 1);
-    return () => { engineRef.current?.destroy(); engineRef.current = null; };
+    if (!wb || !Array.isArray(wb.sheets) || !wb.sheets.length) return;
+    try {
+      engineRef.current?.destroy();
+      engineRef.current = buildEngine(wb);
+      setEngineTick((t) => t + 1);
+    } catch (err) {
+      console.warn("[SheetsEditor] Error initializing calculation engine:", err);
+    }
+    return () => {
+      try {
+        engineRef.current?.destroy();
+      } catch {}
+      engineRef.current = null;
+    };
   }, [wb]);
 
-  const activeSheet = wb.sheets[activeSheetIdx] ?? wb.sheets[0];
+  const activeSheet = (wb && Array.isArray(wb.sheets) && (wb.sheets[activeSheetIdx] ?? wb.sheets[0])) || {
+    name: "Sheet1",
+    cells: {},
+  };
 
   const persist = useCallback((nextWb: Workbook, nextTitle = titleRef.current) => {
     latestWorkbookRef.current = nextWb;

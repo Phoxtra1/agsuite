@@ -27,19 +27,60 @@ export function buildEngine(wb: Workbook): EngineHandle {
   });
 
   const sheetIds: Record<string, number> = {};
-  for (const sheet of wb.sheets) {
-    const id = hf.addSheet(sheet.name);
-    const idx = hf.getSheetId(id)!;
-    sheetIds[sheet.name] = idx;
-    // Determine size from cell ids
-    const grid: any[][] = [];
-    for (const [key, value] of Object.entries(sheet.cells)) {
-      const pos = parseCell(key);
-      if (!pos) continue;
-      if (!grid[pos.row]) grid[pos.row] = [];
-      grid[pos.row][pos.col] = value ?? null;
+  const sheets = Array.isArray(wb?.sheets) ? wb.sheets : [];
+
+  for (let sIdx = 0; sIdx < sheets.length; sIdx++) {
+    const sheet = sheets[sIdx];
+    if (!sheet) continue;
+    const sheetName = (sheet.name && sheet.name.trim()) ? sheet.name.trim() : `Sheet${sIdx + 1}`;
+
+    try {
+      let id: string;
+      let actualKey = sheetName;
+      try {
+        id = hf.addSheet(sheetName);
+      } catch {
+        // Fallback for name collisions
+        actualKey = `${sheetName}_${sIdx + 1}`;
+        id = hf.addSheet(actualKey);
+      }
+
+      const idx = hf.getSheetId(id);
+      if (idx == null) continue;
+      sheetIds[actualKey] = idx;
+      if (sheetIds[sheetName] === undefined) sheetIds[sheetName] = idx;
+
+      // Determine bounds to construct a dense 2D matrix
+      let maxRow = -1;
+      let maxCol = -1;
+      const cells = sheet.cells || {};
+
+      for (const key of Object.keys(cells)) {
+        const pos = parseCell(key);
+        if (!pos) continue;
+        if (pos.row > maxRow) maxRow = pos.row;
+        if (pos.col > maxCol) maxCol = pos.col;
+      }
+
+      if (maxRow >= 0 && maxCol >= 0) {
+        // Create dense 2D matrix filled with null to prevent sparse array undefined issues in HyperFormula
+        const grid: any[][] = Array.from({ length: maxRow + 1 }, () => Array(maxCol + 1).fill(null));
+
+        for (const [key, value] of Object.entries(cells)) {
+          const pos = parseCell(key);
+          if (!pos) continue;
+          grid[pos.row][pos.col] = value ?? null;
+        }
+
+        try {
+          hf.setSheetContent(idx, grid);
+        } catch (err) {
+          console.warn(`[buildEngine] Could not set content for sheet "${sheetName}":`, err);
+        }
+      }
+    } catch (err) {
+      console.warn(`[buildEngine] Error building engine sheet "${sheetName}":`, err);
     }
-    if (grid.length) hf.setSheetContent(idx, grid);
   }
 
   return {
@@ -48,9 +89,13 @@ export function buildEngine(wb: Workbook): EngineHandle {
     getCell(name, row, col) {
       const id = sheetIds[name];
       if (id == null) return null;
-      const v = hf.getCellValue({ sheet: id, row, col });
-      if (v && typeof v === "object" && "type" in v) return `#${(v as any).type}!`;
-      return v as any;
+      try {
+        const v = hf.getCellValue({ sheet: id, row, col });
+        if (v && typeof v === "object" && "type" in v) return `#${(v as any).type}!`;
+        return v as any;
+      } catch {
+        return null;
+      }
     },
     setCell(name, row, col, raw) {
       const id = sheetIds[name];
@@ -58,15 +103,27 @@ export function buildEngine(wb: Workbook): EngineHandle {
       let val: any = raw;
       if (raw === "") val = null;
       else if (!raw.startsWith("=") && !isNaN(Number(raw))) val = Number(raw);
-      hf.setCellContents({ sheet: id, row, col }, [[val]]);
+      try {
+        hf.setCellContents({ sheet: id, row, col }, [[val]]);
+      } catch (err) {
+        console.warn(`[buildEngine] setCell error at ${name} (${row}, ${col}):`, err);
+      }
     },
     getFormula(name, row, col) {
       const id = sheetIds[name];
       if (id == null) return null;
-      const f = hf.getCellFormula({ sheet: id, row, col });
-      return f ?? null;
+      try {
+        const f = hf.getCellFormula({ sheet: id, row, col });
+        return f ?? null;
+      } catch {
+        return null;
+      }
     },
-    destroy() { hf.destroy(); },
+    destroy() {
+      try {
+        hf.destroy();
+      } catch {}
+    },
   };
 }
 
