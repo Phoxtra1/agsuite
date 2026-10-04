@@ -1,5 +1,5 @@
 import client, { account, databases, storage as appwriteStorage, functions as appwriteFunctions, APPWRITE_DB_ID, ID } from "@/lib/appwrite";
-import { Query } from "appwrite";
+import { Query, Permission, Role } from "appwrite";
 
 // Helper: Convert Appwrite document -> standard shape with id, created_at, updated_at
 function mapAppwriteDoc(doc: any): any {
@@ -24,6 +24,65 @@ function cleanPayload(data: any): any {
   delete copy.$collectionId;
   delete copy.$permissions;
   return copy;
+}
+
+/**
+ * Workspace collections on the self-hosted server store a few plain columns
+ * plus one text "blob" column. Everything else the app keeps on a record
+ * (content_json, workbook_json, deck_json, content_text, …) is packed into
+ * that blob as JSON on write and unpacked on read, so the app's record shape
+ * and the server schema always line up.
+ */
+const WORKSPACE_SCHEMAS: Record<string, { idField: string; blob: string; cols: string[] }> = {
+  workspace_documents: { idField: "document_id", blob: "content", cols: ["title", "owner_id", "created_at", "updated_at"] },
+  workspace_sheets: { idField: "sheet_id", blob: "data", cols: ["title", "owner_id", "updated_at"] },
+  workspace_slides: { idField: "slide_id", blob: "slides_data", cols: ["title", "owner_id", "updated_at"] },
+};
+const META_KEYS = new Set(["id", "$id", "$createdAt", "$updatedAt", "$databaseId", "$collectionId", "$permissions", "$sequence"]);
+
+function parseBlob(raw: any): Record<string, any> {
+  if (!raw) return {};
+  if (typeof raw === "object") return raw;
+  try { const v = JSON.parse(raw); return v && typeof v === "object" ? v : {}; } catch { return {}; }
+}
+
+function workspaceToRemote(collection: string, item: any, existingBlob?: any, isInsert = false): any {
+  const s = WORKSPACE_SCHEMAS[collection];
+  const extras = parseBlob(existingBlob);
+  const row: any = {};
+  for (const [k, v] of Object.entries(item || {})) {
+    if (META_KEYS.has(k) || k === s.idField || k === s.blob) continue;
+    if (s.cols.includes(k)) row[k] = v;
+    else extras[k] = v;
+  }
+  const now = new Date().toISOString();
+  if (s.cols.includes("updated_at")) row.updated_at = item?.updated_at || now;
+  if (isInsert) {
+    row[s.idField] = item?.id || item?.$id || "";
+    if (!row.title) row.title = "Untitled";
+    if (s.cols.includes("created_at") && !row.created_at) row.created_at = now;
+    if (!extras.created_at) extras.created_at = row.created_at || now;
+  }
+  if (row.title && String(row.title).length > 255) row.title = String(row.title).slice(0, 255);
+  row[s.blob] = JSON.stringify(extras);
+  return row;
+}
+
+function workspaceFromRemote(collection: string, doc: any): any {
+  const s = WORKSPACE_SCHEMAS[collection];
+  if (!doc) return doc;
+  const extras = parseBlob(doc[s.blob]);
+  const out: any = { ...extras };
+  for (const c of s.cols) if (doc[c] !== undefined && doc[c] !== null) out[c] = doc[c];
+  out.id = doc.$id;
+  out.created_at = extras.created_at || doc.created_at || doc.$createdAt;
+  out.updated_at = doc.updated_at || doc.$updatedAt;
+  return out;
+}
+
+function ownerPermissions(ownerId: any): string[] | undefined {
+  if (!ownerId || typeof ownerId !== "string" || ownerId === "local-user" || ownerId === "anon") return undefined;
+  return [Permission.read(Role.user(ownerId)), Permission.update(Role.user(ownerId)), Permission.delete(Role.user(ownerId))];
 }
 
 // Query builder implementing PostgREST/Supabase chainable shape
@@ -175,10 +234,13 @@ class AppwriteQueryBuilder {
   }
 
   async execute(): Promise<{ data: any; error: any; count?: number | null }> {
+    const ws = WORKSPACE_SCHEMAS[this.collection] ? this.collection : null;
     try {
       if (this.operation === "select") {
-        const res = await databases.listDocuments(APPWRITE_DB_ID, this.collection, this.queries);
-        const mapped = res.documents.map(mapAppwriteDoc);
+        const queries = [...this.queries];
+        if (ws && !queries.some((q) => q.includes('"limit"'))) queries.push(Query.limit(200));
+        const res = await databases.listDocuments(APPWRITE_DB_ID, this.collection, queries);
+        const mapped = res.documents.map((d: any) => (ws ? workspaceFromRemote(ws, d) : mapAppwriteDoc(d)));
 
         if (this.isSingle) {
           if (mapped.length === 0) {
@@ -200,6 +262,20 @@ class AppwriteQueryBuilder {
 
         for (const item of items) {
           const docId = item.id || item.$id || ID.unique();
+          if (ws) {
+            const row = workspaceToRemote(ws, item, undefined, true);
+            row[WORKSPACE_SCHEMAS[ws].idField] = docId;
+            const perms = ownerPermissions(item.owner_id);
+            let doc: any;
+            try {
+              doc = await databases.createDocument(APPWRITE_DB_ID, this.collection, docId, row, perms);
+            } catch (e: any) {
+              if (!perms || e?.code === 409) throw e;
+              doc = await databases.createDocument(APPWRITE_DB_ID, this.collection, docId, row);
+            }
+            inserted.push(workspaceFromRemote(ws, doc));
+            continue;
+          }
           const clean = cleanPayload(item);
           delete clean.id;
 
@@ -218,6 +294,12 @@ class AppwriteQueryBuilder {
         delete clean.id;
 
         for (const doc of list.documents) {
+          if (ws) {
+            const row = workspaceToRemote(ws, clean, (doc as any)[WORKSPACE_SCHEMAS[ws].blob]);
+            const res = await databases.updateDocument(APPWRITE_DB_ID, this.collection, doc.$id, row);
+            updated.push(workspaceFromRemote(ws, res));
+            continue;
+          }
           const res = await databases.updateDocument(APPWRITE_DB_ID, this.collection, doc.$id, clean);
           updated.push(mapAppwriteDoc(res));
         }
