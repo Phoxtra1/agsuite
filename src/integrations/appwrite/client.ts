@@ -234,10 +234,13 @@ class AppwriteQueryBuilder {
   }
 
   async execute(): Promise<{ data: any; error: any; count?: number | null }> {
+    const ws = WORKSPACE_SCHEMAS[this.collection] ? this.collection : null;
     try {
       if (this.operation === "select") {
-        const res = await databases.listDocuments(APPWRITE_DB_ID, this.collection, this.queries);
-        const mapped = res.documents.map(mapAppwriteDoc);
+        const queries = [...this.queries];
+        if (ws && !queries.some((q) => q.includes('"limit"'))) queries.push(Query.limit(200));
+        const res = await databases.listDocuments(APPWRITE_DB_ID, this.collection, queries);
+        const mapped = res.documents.map((d: any) => (ws ? workspaceFromRemote(ws, d) : mapAppwriteDoc(d)));
 
         if (this.isSingle) {
           if (mapped.length === 0) {
@@ -259,6 +262,20 @@ class AppwriteQueryBuilder {
 
         for (const item of items) {
           const docId = item.id || item.$id || ID.unique();
+          if (ws) {
+            const row = workspaceToRemote(ws, item, undefined, true);
+            row[WORKSPACE_SCHEMAS[ws].idField] = docId;
+            const perms = ownerPermissions(item.owner_id);
+            let doc: any;
+            try {
+              doc = await databases.createDocument(APPWRITE_DB_ID, this.collection, docId, row, perms);
+            } catch (e: any) {
+              if (!perms || e?.code === 409) throw e;
+              doc = await databases.createDocument(APPWRITE_DB_ID, this.collection, docId, row);
+            }
+            inserted.push(workspaceFromRemote(ws, doc));
+            continue;
+          }
           const clean = cleanPayload(item);
           delete clean.id;
 
@@ -277,6 +294,12 @@ class AppwriteQueryBuilder {
         delete clean.id;
 
         for (const doc of list.documents) {
+          if (ws) {
+            const row = workspaceToRemote(ws, clean, (doc as any)[WORKSPACE_SCHEMAS[ws].blob]);
+            const res = await databases.updateDocument(APPWRITE_DB_ID, this.collection, doc.$id, row);
+            updated.push(workspaceFromRemote(ws, res));
+            continue;
+          }
           const res = await databases.updateDocument(APPWRITE_DB_ID, this.collection, doc.$id, clean);
           updated.push(mapAppwriteDoc(res));
         }
