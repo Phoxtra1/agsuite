@@ -12,16 +12,23 @@ export function AdminProductLinks() {
   const { products } = useAdminProducts();
   const navigate = useNavigate();
 
-  const categoryOf = (id: string) =>
-    DEFAULT_CATEGORIES.find(c => c.products.includes(id))?.name ?? 'Other Applications';
+  const categoryOf = (id: string, productCategory?: string) => {
+    if (productCategory) {
+      const match = DEFAULT_CATEGORIES.find(c => c.id === productCategory);
+      if (match) return match.name;
+    }
+    return DEFAULT_CATEGORIES.find(c => c.products.includes(id))?.name ?? 'Other Applications';
+  };
 
   const manageable = products
-    .filter(p => !!p.adminUrl)
+    .filter(p => !!(p.adminUrl || p.url))
     .sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
   const handleOpenAdmin = (product: ProductData) => {
+    const targetUrl = product.adminUrl || product.url;
+    if (!targetUrl) return;
     navigate(
-      `/suite?viewport=${encodeURIComponent(product.adminUrl!)}&name=${encodeURIComponent(
+      `/suite?viewport=${encodeURIComponent(targetUrl)}&name=${encodeURIComponent(
         product.name
       )}&app=${encodeURIComponent(product.id)}`
     );
@@ -68,14 +75,14 @@ export function AdminProductLinks() {
                     )}
                   </div>
                   <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {categoryOf(product.id)}
+                    {categoryOf(product.id, product.category)}
                   </p>
                   <div className="mt-2 flex items-center gap-2">
                     <Badge className={cn('text-[10px]', STATUS_COLORS[product.status])}>
                       {STATUS_LABELS[product.status]}
                     </Badge>
                     <span className="truncate text-[11px] text-muted-foreground">
-                      {product.adminUrl?.replace(/^https?:\/\//, '')}
+                      {(product.adminUrl || product.url)?.replace(/^https?:\/\//, '')}
                     </span>
                   </div>
                 </div>
