@@ -24,8 +24,17 @@ export function useAdminProducts() {
 
   useEffect(() => {
     refresh();
-    window.addEventListener("adminProductsUpdated", refresh);
-    return () => window.removeEventListener("adminProductsUpdated", refresh);
+    const handleUpdate = () => {
+      refresh();
+    };
+    window.addEventListener("adminProductsUpdated", handleUpdate);
+    window.addEventListener("categoryProductsUpdated", handleUpdate);
+    window.addEventListener("storage", handleUpdate);
+    return () => {
+      window.removeEventListener("adminProductsUpdated", handleUpdate);
+      window.removeEventListener("categoryProductsUpdated", handleUpdate);
+      window.removeEventListener("storage", handleUpdate);
+    };
   }, [refresh]);
 
   return { products, loading, refresh };

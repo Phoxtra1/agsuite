@@ -169,7 +169,7 @@ function clearDeleted(type: "admin" | "category", id: string) {
   } catch {}
 }
 
-function notifyProductsUpdated(productType: "admin" | "category") {
+function notifyProductsUpdated(productType?: "admin" | "category") {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(productType === "category" ? "categoryProductsUpdated" : "adminProductsUpdated"));
   window.dispatchEvent(new Event("storage"));
