@@ -119,6 +119,8 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
 // Local cache keys
 const LOCAL_ADMIN_KEY = "amineva_admin_products_v8";
 const LOCAL_CATEGORY_KEY = "amineva_category_products_v8";
+const HOME_CACHE_KEY = "amineva_home_products_cache_v1";
+
 const deletedKey = (type: "admin" | "category") => `amineva_${type}_products_deleted_v2`;
 const pendingKey = (type: "admin" | "category") => `amineva_${type}_products_pending_v2`;
 
@@ -170,6 +172,7 @@ function clearDeleted(type: "admin" | "category", id: string) {
 function notifyProductsUpdated(productType: "admin" | "category") {
   if (typeof window === "undefined") return;
   window.dispatchEvent(new Event(productType === "category" ? "categoryProductsUpdated" : "adminProductsUpdated"));
+  window.dispatchEvent(new Event("storage"));
 }
 
 function readLocal(key: string, fallback: ProductData[]): ProductData[] {
@@ -187,6 +190,22 @@ function writeLocal(key: string, data: ProductData[]) {
   try {
     localStorage.setItem(key, JSON.stringify(data));
   } catch {}
+}
+
+function isMatchingProduct(a: ProductData, b: ProductData): boolean {
+  if (!a || !b) return false;
+  if (a.id && b.id && a.id.toLowerCase() === b.id.toLowerCase()) return true;
+
+  const norm = (s?: string) => (s || "").toLowerCase().replace(/[^a-z0-9]/g, "");
+  const normAId = norm(a.id);
+  const normBId = norm(b.id);
+  if (normAId && normBId && (normAId === normBId || normAId.includes(normBId) || normBId.includes(normAId))) return true;
+
+  const normAName = norm(a.shortName || a.name);
+  const normBName = norm(b.shortName || b.name);
+  if (normAName && normBName && normAName === normBName) return true;
+
+  return false;
 }
 
 function docToProduct(doc: any): ProductData {
@@ -226,7 +245,6 @@ function productToDocPayload(p: ProductData, productType: "admin" | "category") 
 // FETCH ADMIN PRODUCTS
 // ===========================
 export async function fetchAdminProducts(): Promise<ProductData[]> {
-  // Workspace is a homepage/category product only — never an admin console entry
   const deleted = new Set([...readDeleted("admin"), "workspace"]);
   const cached = readLocal(LOCAL_ADMIN_KEY, DEFAULT_ADMIN_PRODUCTS).filter((p) => !deleted.has(p.id));
 
@@ -244,20 +262,31 @@ export async function fetchAdminProducts(): Promise<ProductData[]> {
     }
 
     if (docs.length === 0) {
+      if (cached.length > 0) return cached;
       seedDefaults("admin", DEFAULT_ADMIN_PRODUCTS);
       return cached;
     }
 
     const fetched = docs.map(docToProduct);
-    const pending = new Set(readPending("admin"));
+    const cachedMap = new Map<string, ProductData>();
+    cached.forEach((p) => cachedMap.set(p.id, p));
+
     const mergedMap = new Map<string, ProductData>();
-    // Start from cached so locally-known items survive, then let the server win
-    cached.forEach((p) => mergedMap.set(p.id, p));
     fetched.forEach((p) => {
-      // Only unsynced local edits may override the server copy
-      if (pending.has(p.id) && mergedMap.has(p.id)) return;
-      mergedMap.set(p.id, p);
+      const localItem = cachedMap.get(p.id);
+      if (localItem && localItem.status && localItem.status !== p.status) {
+        mergedMap.set(p.id, { ...p, status: localItem.status });
+      } else {
+        mergedMap.set(p.id, p);
+      }
     });
+
+    cached.forEach((p) => {
+      if (!mergedMap.has(p.id)) {
+        mergedMap.set(p.id, p);
+      }
+    });
+
     deleted.forEach((id) => mergedMap.delete(id));
     const merged = Array.from(mergedMap.values()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
@@ -290,24 +319,36 @@ export async function fetchCategoryProducts(): Promise<ProductData[]> {
     }
 
     if (docs.length === 0) {
+      if (cached.length > 0) return cached;
       seedDefaults("category", DEFAULT_CATEGORY_PRODUCTS);
       return cached;
     }
 
     const fetched = docs.map(docToProduct);
-    const pending = new Set(readPending("category"));
+    const cachedMap = new Map<string, ProductData>();
+    cached.forEach((p) => cachedMap.set(p.id, p));
+
     const mergedMap = new Map<string, ProductData>();
-    // Start from cached so locally-known items survive, then let the server win
-    cached.filter((p) => pending.has(p.id)).forEach((p) => mergedMap.set(p.id, p));
     fetched.forEach((p) => {
-      // Only unsynced local edits may override the server copy
-      if (pending.has(p.id) && mergedMap.has(p.id)) return;
-      mergedMap.set(p.id, p);
+      const localItem = cachedMap.get(p.id);
+      if (localItem && localItem.status && localItem.status !== p.status) {
+        mergedMap.set(p.id, { ...p, status: localItem.status });
+      } else {
+        mergedMap.set(p.id, p);
+      }
     });
+
+    cached.forEach((p) => {
+      if (!mergedMap.has(p.id)) {
+        mergedMap.set(p.id, p);
+      }
+    });
+
     deleted.forEach((id) => mergedMap.delete(id));
     const merged = Array.from(mergedMap.values()).sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
 
     writeLocal(LOCAL_CATEGORY_KEY, merged);
+    writeLocal(HOME_CACHE_KEY, merged);
     return merged;
   } catch (error) {
     console.warn("[Appwrite Products] Using cached category products due to fetch error:", error);
@@ -316,16 +357,19 @@ export async function fetchCategoryProducts(): Promise<ProductData[]> {
 }
 
 // ===========================
-// UPSERT PRODUCT
+// UPSERT PRODUCT (CROSS-SURFACE SYNC)
 // ===========================
 export async function upsertProduct(
   product: ProductData,
   productType: "admin" | "category"
 ): Promise<boolean> {
   const primaryCacheKey = productType === "admin" ? LOCAL_ADMIN_KEY : LOCAL_CATEGORY_KEY;
+  const siblingCacheKey = productType === "admin" ? LOCAL_CATEGORY_KEY : LOCAL_ADMIN_KEY;
+  const primaryFallback = productType === "admin" ? DEFAULT_ADMIN_PRODUCTS : DEFAULT_CATEGORY_PRODUCTS;
+  const siblingFallback = productType === "admin" ? DEFAULT_CATEGORY_PRODUCTS : DEFAULT_ADMIN_PRODUCTS;
 
   // 1. Update primary local cache immediately
-  const primaryLocal = readLocal(primaryCacheKey, productType === "admin" ? DEFAULT_ADMIN_PRODUCTS : DEFAULT_CATEGORY_PRODUCTS);
+  const primaryLocal = readLocal(primaryCacheKey, primaryFallback);
   const existingIdx = primaryLocal.findIndex((p) => p.id === product.id);
   let updatedPrimary: ProductData[];
   if (existingIdx >= 0) {
@@ -336,14 +380,43 @@ export async function upsertProduct(
   }
   writeLocal(primaryCacheKey, updatedPrimary);
 
-  // Re-saving a previously deleted product resurrects it
+  // 2. Update sibling local cache if a matching product exists
+  const siblingLocal = readLocal(siblingCacheKey, siblingFallback);
+  let siblingUpdated = false;
+  const updatedSibling = siblingLocal.map((sibling) => {
+    if (isMatchingProduct(product, sibling)) {
+      siblingUpdated = true;
+      return {
+        ...sibling,
+        status: product.status,
+        name: sibling.name || product.name,
+        description: product.description || sibling.description,
+        ...(product.adminUrl ? { adminUrl: product.adminUrl } : {}),
+        ...(product.url ? { url: product.url } : {}),
+      };
+    }
+    return sibling;
+  });
+
+  if (siblingUpdated) {
+    writeLocal(siblingCacheKey, updatedSibling);
+    const siblingType = productType === "admin" ? "category" : "admin";
+    clearDeleted(siblingType, product.id);
+    addPending(siblingType, product.id);
+  }
+
+  // Sync to home cache key for homepage instant rendering
+  const currentCategoryProds = readLocal(LOCAL_CATEGORY_KEY, DEFAULT_CATEGORY_PRODUCTS);
+  writeLocal(HOME_CACHE_KEY, currentCategoryProds);
+
   clearDeleted(productType, product.id);
   addPending(productType, product.id);
 
-  // Notify active components immediately (both surfaces stay in sync)
-  notifyProductsUpdated(productType);
+  // Notify active components immediately across all surfaces
+  notifyProductsUpdated("admin");
+  notifyProductsUpdated("category");
 
-  // 2. Sync to Appwrite for this product type, then mirror status onto the sibling doc
+  // 3. Sync to Appwrite for this product type and sibling doc if matched
   const syncOne = async (p: ProductData, type: "admin" | "category") => {
     const payload = productToDocPayload(p, type);
     let docId: string | null = null;
@@ -371,8 +444,16 @@ export async function upsertProduct(
 
   try {
     await syncOne(product, productType);
-    // Server now holds the truth — stop overriding it locally
     clearPending(productType, product.id);
+
+    if (siblingUpdated) {
+      const siblingType = productType === "admin" ? "category" : "admin";
+      const siblingProd = updatedSibling.find((s) => isMatchingProduct(product, s));
+      if (siblingProd) {
+        await syncOne(siblingProd, siblingType).catch(() => null);
+        clearPending(siblingType, siblingProd.id);
+      }
+    }
     return true;
   } catch (error) {
     console.warn("[Appwrite Products] Appwrite upsert deferred, saved locally:", error);
@@ -380,16 +461,22 @@ export async function upsertProduct(
   }
 }
 
-
 // ===========================
 // DELETE PRODUCT
 // ===========================
 export async function deleteProduct(id: string, productType: "admin" | "category"): Promise<boolean> {
   const cacheKey = productType === "admin" ? LOCAL_ADMIN_KEY : LOCAL_CATEGORY_KEY;
   const fallback = productType === "admin" ? DEFAULT_ADMIN_PRODUCTS : DEFAULT_CATEGORY_PRODUCTS;
-  writeLocal(cacheKey, readLocal(cacheKey, fallback).filter((p) => p.id !== id));
+  const updated = readLocal(cacheKey, fallback).filter((p) => p.id !== id);
+  writeLocal(cacheKey, updated);
+
+  if (productType === "category") {
+    writeLocal(HOME_CACHE_KEY, updated);
+  }
+
   addDeleted(productType, id);
-  notifyProductsUpdated(productType);
+  notifyProductsUpdated("admin");
+  notifyProductsUpdated("category");
 
   try {
     let docId: string | null = null;
@@ -427,8 +514,26 @@ async function seedDefaults(productType: "admin" | "category", items: ProductDat
 }
 
 // Legacy sync helpers
-export function loadAdminProducts(): ProductData[] { return readLocal(LOCAL_ADMIN_KEY, DEFAULT_ADMIN_PRODUCTS); }
-export function loadCategoryProducts(): ProductData[] { return readLocal(LOCAL_CATEGORY_KEY, DEFAULT_CATEGORY_PRODUCTS); }
-export function saveCategoryProducts(_products: ProductData[]) {}
-export function deleteCategoryProduct(_id: string) {}
-export function resetCategoryProductsToDefault() {}
+export function loadAdminProducts(): ProductData[] {
+  return readLocal(LOCAL_ADMIN_KEY, DEFAULT_ADMIN_PRODUCTS);
+}
+
+export function loadCategoryProducts(): ProductData[] {
+  return readLocal(LOCAL_CATEGORY_KEY, DEFAULT_CATEGORY_PRODUCTS);
+}
+
+export function saveCategoryProducts(products: ProductData[]) {
+  writeLocal(LOCAL_CATEGORY_KEY, products);
+  writeLocal(HOME_CACHE_KEY, products);
+  notifyProductsUpdated("category");
+}
+
+export function deleteCategoryProduct(id: string) {
+  deleteProduct(id, "category");
+}
+
+export function resetCategoryProductsToDefault() {
+  writeLocal(LOCAL_CATEGORY_KEY, DEFAULT_CATEGORY_PRODUCTS);
+  writeLocal(HOME_CACHE_KEY, DEFAULT_CATEGORY_PRODUCTS);
+  notifyProductsUpdated("category");
+}

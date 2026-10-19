@@ -4,7 +4,6 @@ import { DEFAULT_CATEGORIES, ProductData, STATUS_COLORS, STATUS_LABELS, ProductS
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -49,6 +48,17 @@ export function CategoryManager() {
     setFormData({ name: p.name, shortName: p.shortName || "", description: p.description || "", url: p.url || "", category: p.category || DEFAULT_CATEGORIES[0].id, status: p.status });
     setEditingId(id);
     setIsDialogOpen(true);
+  };
+
+  const handleStatusChange = async (p: ProductData, newStatus: ProductStatus) => {
+    const updated: ProductData = { ...p, status: newStatus };
+    const ok = await save(updated);
+    if (ok) {
+      toast.success(`${p.name} status updated to ${STATUS_LABELS[newStatus]}`);
+      await refresh();
+    } else {
+      toast.error("Failed to update status");
+    }
   };
 
   const handleSave = async () => {
@@ -113,7 +123,7 @@ export function CategoryManager() {
               <TableRow>
                 <TableHead>Name</TableHead>
                 <TableHead>Category</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Status Switch</TableHead>
                 <TableHead>URL</TableHead>
                 <TableHead className="w-24">Actions</TableHead>
               </TableRow>
@@ -133,7 +143,16 @@ export function CategoryManager() {
                     </span>
                   </TableCell>
                   <TableCell>
-                    <Badge className={cn("text-xs", STATUS_COLORS[p.status])}>{STATUS_LABELS[p.status]}</Badge>
+                    <Select value={p.status} onValueChange={(val) => handleStatusChange(p, val as ProductStatus)}>
+                      <SelectTrigger className={cn("h-7 w-[130px] text-xs font-semibold rounded-full border-0 shadow-none px-3", STATUS_COLORS[p.status])}>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="live">Live</SelectItem>
+                        <SelectItem value="offline">Offline</SelectItem>
+                        <SelectItem value="coming_soon">Coming Soon</SelectItem>
+                      </SelectContent>
+                    </Select>
                   </TableCell>
                   <TableCell>
                     <span className="text-sm text-muted-foreground">{p.url || "—"}</span>
@@ -227,4 +246,3 @@ export function CategoryManager() {
     </div>
   );
 }
-

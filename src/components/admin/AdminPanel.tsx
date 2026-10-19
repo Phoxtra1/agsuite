@@ -13,7 +13,6 @@ import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
 import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -113,6 +112,17 @@ export function AdminPanel() {
     setIsDialogOpen(true);
   };
 
+  const handleStatusChange = async (product: ProductData, newStatus: ProductStatus) => {
+    const updated: ProductData = { ...product, status: newStatus };
+    const ok = await save(updated);
+    if (ok) {
+      toast.success(`${product.name} status updated to ${STATUS_LABELS[newStatus]}`);
+      await refresh();
+    } else {
+      toast.error("Failed to update status");
+    }
+  };
+
   const handleSave = async () => {
     const name = formData.name.trim();
     const shortName = formData.shortName.trim();
@@ -192,7 +202,7 @@ export function AdminPanel() {
               <TableRow>
                 <TableHead className="w-12">Icon</TableHead>
                 <TableHead>Name</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>Status Switch</TableHead>
                 <TableHead>Admin Portal</TableHead>
                 <TableHead className="w-24">Actions</TableHead>
               </TableRow>
@@ -210,7 +220,16 @@ export function AdminPanel() {
                       </div>
                     </TableCell>
                     <TableCell>
-                      <Badge className={cn("text-xs", STATUS_COLORS[product.status])}>{STATUS_LABELS[product.status]}</Badge>
+                      <Select value={product.status} onValueChange={(val) => handleStatusChange(product, val as ProductStatus)}>
+                        <SelectTrigger className={cn("h-7 w-[130px] text-xs font-semibold rounded-full border-0 shadow-none px-3", STATUS_COLORS[product.status])}>
+                          <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="live">Live</SelectItem>
+                          <SelectItem value="offline">Offline</SelectItem>
+                          <SelectItem value="coming_soon">Coming Soon</SelectItem>
+                        </SelectContent>
+                      </Select>
                     </TableCell>
                     <TableCell>
                       {product.adminUrl ? (
