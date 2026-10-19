@@ -160,9 +160,11 @@ export default function SheetsEditor() {
         title: titleRef.current,
       });
     };
+    window.addEventListener("beforeunload", flush);
     window.addEventListener("pagehide", flush);
     document.addEventListener("visibilitychange", flush);
     return () => {
+      window.removeEventListener("beforeunload", flush);
       window.removeEventListener("pagehide", flush);
       document.removeEventListener("visibilitychange", flush);
       flush();

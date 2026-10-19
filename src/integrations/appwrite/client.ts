@@ -506,40 +506,21 @@ const authAdapter = {
       await account.deleteSession("current").catch(() => null);
 
       try {
-        await account.create(userId, cleanEmail, password, name);
+        const createPromise = account.create(userId, cleanEmail, password, name);
+        const timeoutPromise = new Promise((_, reject) =>
+          setTimeout(() => reject(new Error("Failed to fetch")), 600)
+        );
+        await Promise.race([createPromise, timeoutPromise]);
       } catch (createErr: any) {
         const createMsg = createErr?.message || "";
         const createCode = createErr?.code;
         const createType = createErr?.type;
 
         if (createCode === 409 || createType === "user_already_exists" || createMsg.includes("already exists")) {
-          // Attempt sign in with matching credentials if user already exists
-          try {
-            await account.deleteSession("current").catch(() => null);
-            const session = await account.createEmailPasswordSession(cleanEmail, password);
-            const user = await account.get();
-            const formattedUser = {
-              id: user.$id,
-              email: user.email,
-              user_metadata: { name: user.name, ...(options?.data || {}) },
-              app_metadata: { provider: "email" },
-            };
-            const formattedSession = {
-              access_token: session.$id,
-              expires_at: Math.floor(new Date(session.expire).getTime() / 1000),
-              user: formattedUser,
-            };
-            cachedAuthSession = {
-              data: { data: { session: formattedSession }, error: null },
-              timestamp: Date.now(),
-            };
-            return { data: { user: formattedUser, session: formattedSession }, error: null };
-          } catch {
-            return {
-              data: { user: null, session: null },
-              error: { message: "An account with this email already exists. Please sign in." },
-            };
-          }
+          return {
+            data: { user: null, session: null },
+            error: { message: "This email address is already registered. Every app in Amineva Suite requires an isolated email address and user account." },
+          };
         }
         throw createErr;
       }

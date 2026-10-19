@@ -6,6 +6,7 @@
  */
 import { databases, APPWRITE_DB_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
+import { supabase } from "@/integrations/appwrite/client";
 
 const DB_ID = APPWRITE_DB_ID;
 const MODULE_ACCESS_COLLECTION_ID = "module_access";
@@ -37,7 +38,25 @@ export async function loadAppAccess(userId: string, appSlug: string): Promise<Ap
       };
     }
 
-    // Default allow for Suite users
+    // Check user metadata / prefs registered_product for per-app isolation
+    const { data } = await supabase.auth.getUser();
+    const user = data?.user;
+    if (user && user.id === userId) {
+      const regProduct =
+        user.user_metadata?.registered_product ||
+        user.user_metadata?.registered_app ||
+        user.app_metadata?.registered_product;
+
+      if (regProduct && appSlug !== "suite" && regProduct !== appSlug) {
+        return {
+          allowed: false,
+          appSlug,
+          role: "user",
+          permissions: {},
+        };
+      }
+    }
+
     return {
       allowed: true,
       appSlug,

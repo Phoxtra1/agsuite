@@ -77,7 +77,7 @@ export default function AuthCard({
           const access = await loadAppAccess(session.user.id, product.id);
           if (!access.allowed) {
             await supabase.auth.signOut();
-            setError(`This account is not authorized for ${product.name}. Please sign in with a ${product.name} account or request access.`);
+            setError(`This email address is registered under another application. Every app in Amineva Suite requires an isolated email address and user account.`);
             return;
           }
         }

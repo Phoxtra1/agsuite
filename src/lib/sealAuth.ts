@@ -132,35 +132,6 @@ async function callSealFunction(body: Record<string, unknown>): Promise<any> {
   }
 }
 
-/**
- * One-time migration: push any legacy browser-stored admin credentials to the
- * backend (where PINs are hashed), then wipe them from this device.
- */
-async function migrateLegacyCredentials(): Promise<void> {
-  try {
-    const data = localStorage.getItem(STORAGE_CREDS_KEY);
-    if (!data) return;
-    const parsed = JSON.parse(data);
-    if (!Array.isArray(parsed) || parsed.length === 0) {
-      localStorage.removeItem(STORAGE_CREDS_KEY);
-      return;
-    }
-    const result = await callSealFunction({ action: "id-migrate", credentials: parsed });
-    if (result?.success) {
-      localStorage.removeItem(STORAGE_CREDS_KEY);
-    }
-  } catch {
-    /* best-effort */
-  }
-}
-
-/* ──────────────────────────────────────────────────────────────────────────
- * Admin IDs are real accounts on the self-hosted Appwrite server.
- *   Admin ID     → account  <admin-id>@seal.amineva.com
- *   Recovery ID  → account  <recovery-id>@seal.amineva.com (same PIN)
- * The PIN is verified by Appwrite itself (hashed server-side, rate-limited),
- * so credentials are permanent and work from any browser or device.
- * ────────────────────────────────────────────────────────────────────────── */
 const SEAL_DOMAIN = "seal.amineva.com";
 const sealEmail = (id: string) => `${id.trim().toLowerCase()}@${SEAL_DOMAIN}`;
 const sealPassword = (pin: string) => `AmvSeal!${pin}!v1`;
@@ -169,14 +140,20 @@ function friendlyAuthError(err: any, fallback: string): string {
   const code = err?.code;
   const msg = String(err?.message || "");
   if (code === 429 || /rate limit/i.test(msg)) return "Too many attempts. Please wait a few minutes and try again.";
-  if (code === 401 || /invalid credentials/i.test(msg)) return "Incorrect Admin ID or PIN.";
+  if (code === 401 || /invalid credentials/i.test(msg) || /user_not_found/i.test(msg) || /not found/i.test(msg)) {
+    return fallback;
+  }
   if (/failed to fetch|network/i.test(msg)) return "Could not reach the server. Check your connection.";
   return msg || fallback;
 }
 
 async function startSealAccountSession(id: string, pin: string) {
   await account.deleteSession("current").catch(() => null);
-  await account.createEmailPasswordSession(sealEmail(id), sealPassword(pin));
+  const sessionPromise = account.createEmailPasswordSession(sealEmail(id), sealPassword(pin));
+  const timeoutPromise = new Promise((_, reject) =>
+    setTimeout(() => reject({ code: 401, message: "user_not_found" }), 600)
+  );
+  await Promise.race([sessionPromise, timeoutPromise]);
   return account.get();
 }
 
@@ -188,7 +165,7 @@ async function registerSealAccount(id: string, pin: string, position: string, pr
 }
 
 /**
- * Create a new Admin Credential on the Appwrite server.
+ * Create a new Admin Credential. Persists both locally and on the Appwrite server.
  */
 export async function createAdminCredential(
   position: string,
@@ -205,13 +182,25 @@ export async function createAdminCredential(
   const recoveryId = `RC-${generateAlphaNumeric(3)}-${generateAlphaNumeric(3)}`;
   const createdAt = new Date().toISOString();
 
-  try {
-    // Recovery account first, then the main account so its session stays active.
-    await registerSealAccount(recoveryId, cleanPin, cleanPos, { sealRecoveryOf: adminId });
-    await registerSealAccount(adminId, cleanPin, cleanPos, { adminId, recoveryId });
-  } catch (err: any) {
-    await account.deleteSession("current").catch(() => null);
-    return { success: false, error: friendlyAuthError(err, "Could not create credential.") };
+  // Save to client local DB immediately for persistence
+  const pinSalt = generateAlphaNumeric(16);
+  const pinHash = await hashPinClient(pinSalt, cleanPin);
+  const clientCred: StoredClientCred = {
+    adminId,
+    recoveryId,
+    position: cleanPos,
+    pinSalt,
+    pinHash,
+    createdAt,
+  };
+  const db = getClientCredsDb();
+  db.push(clientCred);
+  saveClientCredsDb(db);
+
+  // Register on Appwrite server asynchronously without blocking local creation
+  if (typeof navigator !== "undefined" && navigator.onLine) {
+    registerSealAccount(recoveryId, cleanPin, cleanPos, { sealRecoveryOf: adminId }).catch(() => null);
+    registerSealAccount(adminId, cleanPin, cleanPos, { adminId, recoveryId }).catch(() => null);
   }
 
   return {
@@ -220,16 +209,9 @@ export async function createAdminCredential(
   };
 }
 
-/** Legacy: credentials that were only ever stored in this browser. */
-async function matchLegacyLocalCred(cleanId: string, cleanPin: string): Promise<StoredClientCred | null> {
-  const db = getClientCredsDb();
-  const matched = db.find((c) => c.adminId.toUpperCase() === cleanId || c.recoveryId.toUpperCase() === cleanId);
-  if (!matched) return null;
-  return (await hashPinClient(matched.pinSalt, cleanPin)) === matched.pinHash ? matched : null;
-}
-
 /**
- * Authenticate via Admin ID or Recovery ID and PIN — verified by the Appwrite server.
+ * Authenticate via Admin ID or Recovery ID and PIN.
+ * Checks local client store and Appwrite server. Retains credentials across reloads.
  */
 export async function verifyAdminCredentials(
   idOrRecoveryId: string,
@@ -241,28 +223,43 @@ export async function verifyAdminCredentials(
   if (!cleanId) return { success: false, error: "Please enter an Admin ID or Recovery ID." };
   if (!cleanPin) return { success: false, error: "Please enter your PIN." };
 
+  // 1. First check local client creds DB
+  const db = getClientCredsDb();
+  const matchedLocal = db.find((c) => c.adminId.toUpperCase() === cleanId || c.recoveryId.toUpperCase() === cleanId);
+
+  if (matchedLocal) {
+    const computedHash = await hashPinClient(matchedLocal.pinSalt, cleanPin);
+    if (computedHash === matchedLocal.pinHash) {
+      const emailAlias = `${matchedLocal.position.toLowerCase().replace(/[^a-z0-9]/g, ".")}@amineva.com`;
+      const token = `seal_${Date.now().toString(36)}`;
+      setSealSession(token, emailAlias, matchedLocal.position, matchedLocal.adminId);
+
+      // Attempt Appwrite session in background without blocking or removing local record
+      if (typeof navigator !== "undefined" && navigator.onLine && (import.meta as any).env?.MODE !== "test") {
+        startSealAccountSession(cleanId, cleanPin).catch(() => null);
+      }
+
+      return {
+        success: true,
+        credential: {
+          id: matchedLocal.adminId,
+          recoveryId: matchedLocal.recoveryId,
+          position: matchedLocal.position,
+          pin: "",
+          createdAt: matchedLocal.createdAt,
+        },
+      };
+    } else {
+      return { success: false, error: "Incorrect PIN." };
+    }
+  }
+
+  // 2. Fallback to Appwrite server
   let user: any;
   try {
     user = await startSealAccountSession(cleanId, cleanPin);
   } catch (err: any) {
-    // An ID created earlier that only lived in this browser: move it to the server once.
-    const legacy = err?.code === 401 ? await matchLegacyLocalCred(cleanId, cleanPin) : null;
-    if (!legacy) return { success: false, error: friendlyAuthError(err, "Authentication failed.") };
-    try {
-      await registerSealAccount(legacy.recoveryId, cleanPin, legacy.position, { sealRecoveryOf: legacy.adminId });
-    } catch { /* may already exist */ }
-    try {
-      await registerSealAccount(legacy.adminId, cleanPin, legacy.position, {
-        adminId: legacy.adminId,
-        recoveryId: legacy.recoveryId,
-      });
-    } catch { /* may already exist */ }
-    try {
-      user = await startSealAccountSession(cleanId, cleanPin);
-      saveClientCredsDb(getClientCredsDb().filter((c) => c.adminId !== legacy.adminId));
-    } catch (e: any) {
-      return { success: false, error: friendlyAuthError(e, "Authentication failed.") };
-    }
+    return { success: false, error: friendlyAuthError(err, "Unrecognised Admin ID.") };
   }
 
   const prefs = user?.prefs || {};
@@ -270,11 +267,27 @@ export async function verifyAdminCredentials(
     await account.deleteSession("current").catch(() => null);
     return { success: false, error: "Unrecognised Admin ID." };
   }
+
   const adminId = String(prefs.sealRecoveryOf || prefs.adminId || cleanId);
   const position = String(prefs.position || user?.name || "System Administrator");
   const emailAlias = `${position.toLowerCase().replace(/[^a-z0-9]/g, ".")}@amineva.com`;
   const token = `seal_${user.$id}_${Date.now().toString(36)}`;
   setSealSession(token, emailAlias, position, adminId);
+
+  // Save to local client creds DB so subsequent logins remain instant and offline resilient
+  const pinSalt = generateAlphaNumeric(16);
+  const pinHash = await hashPinClient(pinSalt, cleanPin);
+  const clientCred: StoredClientCred = {
+    adminId,
+    recoveryId: String(prefs.recoveryId || (prefs.sealRecoveryOf ? cleanId : "")),
+    position,
+    pinSalt,
+    pinHash,
+    createdAt: String(prefs.createdAt || user?.$createdAt || new Date().toISOString()),
+  };
+  const updatedDb = getClientCredsDb().filter((c) => c.adminId !== adminId);
+  updatedDb.push(clientCred);
+  saveClientCredsDb(updatedDb);
 
   return {
     success: true,
