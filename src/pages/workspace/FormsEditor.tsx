@@ -132,6 +132,11 @@ export default function FormsEditor() {
   const [aiPrompt, setAiPrompt] = useState("");
   const [aiGenerating, setAiGenerating] = useState(false);
 
+  const latestFormRef = useRef(form);
+  useEffect(() => {
+    latestFormRef.current = form;
+  }, [form]);
+
   useEffect(() => {
     async function loadForm() {
       if (!id) return;
@@ -146,6 +151,22 @@ export default function FormsEditor() {
     }
     loadForm();
   }, [id, navigate]);
+
+  useEffect(() => {
+    const flush = () => {
+      if (!latestFormRef.current) return;
+      void updateForm(latestFormRef.current.id, latestFormRef.current);
+    };
+    window.addEventListener("beforeunload", flush);
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", flush);
+    return () => {
+      window.removeEventListener("beforeunload", flush);
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", flush);
+      flush();
+    };
+  }, []);
 
   function saveWithHistory(newDoc: FormDocument) {
     if (form) {

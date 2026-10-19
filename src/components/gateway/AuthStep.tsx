@@ -177,7 +177,7 @@ export function AuthStep({ selectedProductKey, onBack, onAuthSuccess }: AuthStep
             const access = await loadAppAccess(session.user.id, selectedProductKey);
             if (!access.allowed) {
               await supabase.auth.signOut();
-              setError(`This account is not authorized for ${productLabel}. Please sign in with a ${productLabel} account or request access.`);
+              setError(`This email address is registered under another application. Every app in Amineva Suite requires an isolated email address and user account.`);
               return;
             }
           }

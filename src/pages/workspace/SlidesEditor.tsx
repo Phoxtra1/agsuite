@@ -465,7 +465,12 @@ export default function SlidesEditor() {
     return Math.max(0.1, zoomPercent / 100);
   }, [zoomPercent]);
 
-  /* Autosave */
+  const latestDeckRef = useRef(deck);
+  useEffect(() => {
+    latestDeckRef.current = deck;
+  }, [deck]);
+
+  /* Autosave & Reload Flush */
   useEffect(() => {
     if (!doc) return;
     void updateDeck(doc.id, {
@@ -487,7 +492,26 @@ export default function SlidesEditor() {
         dispatchSyncStatus("slides", "queued");
       }
     }, 800);
-    return () => clearTimeout(timer);
+
+    const flush = () => {
+      if (!doc) return;
+      void updateDeck(doc.id, {
+        deck_json: latestDeckRef.current,
+        content_text: flattenDeckText(latestDeckRef.current),
+        title: doc.title,
+      } as any);
+    };
+    window.addEventListener("beforeunload", flush);
+    window.addEventListener("pagehide", flush);
+    document.addEventListener("visibilitychange", flush);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("beforeunload", flush);
+      window.removeEventListener("pagehide", flush);
+      document.removeEventListener("visibilitychange", flush);
+      flush();
+    };
   }, [deck, doc]);
 
   /* Mutations */
