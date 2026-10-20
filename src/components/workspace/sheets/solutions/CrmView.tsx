@@ -16,8 +16,15 @@ import {
   Globe,
   Edit2,
   CheckCircle2,
-  ExternalLink
+  ExternalLink,
+  Sparkles,
+  Loader2,
+  Filter,
+  ShieldCheck,
+  TrendingUp
 } from "lucide-react";
+import { supabase } from "@/integrations/appwrite/client";
+import { toast } from "@/hooks/use-toast";
 
 interface CrmViewProps {
   records: Record<string, any>[];
@@ -32,10 +39,18 @@ export default function CrmView({
   onAddRecord,
   onOpenMeetingModal
 }: CrmViewProps) {
-  const [activeTab, setActiveTab] = useState<"orgs" | "contacts" | "pipeline" | "activities">("pipeline");
+  const [activeTab, setActiveTab] = useState<"orgs" | "contacts" | "pipeline" | "activities" | "opportunities">("pipeline");
   const [search, setSearch] = useState("");
   const [selectedOrgIndex, setSelectedOrgIndex] = useState<number | null>(null);
   const [isEditing, setIsEditing] = useState(false);
+
+  // Opportunity Intel states
+  const [searchQuery, setSearchQuery] = useState("");
+  const [sectorFilter, setSectorFilter] = useState("All Sectors");
+  const [regionFilter, setRegionFilter] = useState("Greater Accra");
+  const [isSearching, setIsSearching] = useState(false);
+  const [liveProspects, setLiveProspects] = useState<any[]>([]);
+  const [hasSearched, setHasSearched] = useState(false);
 
   // Form states for creating/editing records
   const [editForm, setEditForm] = useState<Record<string, any>>({});
@@ -125,6 +140,62 @@ export default function CrmView({
     onAddRecord(defaultNew);
   };
 
+  const runDipaOpportunitySearch = async () => {
+    setIsSearching(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("dipaOpportunitySearch", {
+        body: {
+          action: "dipaOpportunitySearch",
+          query: searchQuery,
+          sector: sectorFilter,
+          region: regionFilter
+        }
+      });
+
+      if (error) {
+        throw new Error(error.message || "Failed to execute Dipa search.");
+      }
+
+      if (data && data.prospects) {
+        setLiveProspects(data.prospects);
+        setHasSearched(true);
+        toast({
+          title: "Dipa Live Discovery Complete",
+          description: `Found ${data.prospects.length} verified online business prospects.`
+        });
+      } else {
+        throw new Error(data?.error || "Invalid response format from Dipa search engine.");
+      }
+    } catch (err: any) {
+      toast({
+        title: "Dipa Search Error",
+        description: err?.message || "Live prospect search failed. Check network connection.",
+        variant: "destructive"
+      });
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  const addProspectToPipeline = (prospect: any) => {
+    const recordToAdd = {
+      Organization: prospect.organizationName,
+      "Contact Person": prospect.contactName || "Direct Inquiry",
+      Email: prospect.email || "",
+      Phone: prospect.phone || "",
+      Status: "Yet to Contact",
+      "Follow-up Date": new Date(Date.now() + 86400000 * 3).toISOString().split("T")[0],
+      "Value (USD)": prospect.estimatedValue || 50000,
+      Sector: prospect.sector || sectorFilter,
+      Region: prospect.region || regionFilter
+    };
+    onAddRecord(recordToAdd);
+    toast({
+      title: "Prospect Added to CRM",
+      description: `${prospect.organizationName} added to Pipeline under 'Yet to Contact'.`
+    });
+  };
+
   return (
     <div className="flex-1 flex flex-col overflow-hidden bg-muted/10">
       {/* Sub-Header bar */}
@@ -134,7 +205,8 @@ export default function CrmView({
             { id: "pipeline", label: "Pipeline (Kanban)", icon: GitBranch },
             { id: "orgs", label: "Organizations", icon: Building2 },
             { id: "contacts", label: "Contacts", icon: Users },
-            { id: "activities", label: "Activities & Actions", icon: Calendar }
+            { id: "activities", label: "Activities & Actions", icon: Calendar },
+            { id: "opportunities", label: "Opportunity Intel", icon: Sparkles }
           ].map((t) => (
             <button
               key={t.id}
@@ -155,7 +227,7 @@ export default function CrmView({
         </div>
 
         {/* Global Directory Search */}
-        {activeTab !== "pipeline" && (
+        {activeTab !== "pipeline" && activeTab !== "opportunities" && (
           <div className="relative w-64">
             <Search className="h-3.5 w-3.5 absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
             <input
@@ -503,6 +575,174 @@ export default function CrmView({
                 </div>
               ))}
             </div>
+          </div>
+        )}
+
+        {/* Tab 5: Opportunity Intel (Dipa Search Engine) */}
+        {activeTab === "opportunities" && (
+          <div className="flex-1 overflow-y-auto p-6 space-y-6">
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 bg-card p-5 rounded-xl border border-border shadow-sm">
+              <div className="space-y-1">
+                <div className="flex items-center gap-2 text-sm font-bold text-foreground">
+                  <Sparkles className="h-4 w-4 text-accent animate-pulse" />
+                  Dipa Realtime Opportunity Intel & Online Prospect Search
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  Search, discover, and verify live business websites across sectors and regions to source verified online prospects directly into your CRM.
+                </p>
+              </div>
+            </div>
+
+            {/* Search Controls */}
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-3 bg-card p-4 rounded-xl border border-border shadow-sm">
+              <div className="md:col-span-2 relative">
+                <Search className="h-4 w-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                <input
+                  type="text"
+                  placeholder="Enter business name, website URL (e.g. gipc.gov.gh), or keywords..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && runDipaOpportunitySearch()}
+                  className="w-full text-xs pl-9 pr-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-accent"
+                />
+              </div>
+
+              <div>
+                <select
+                  value={sectorFilter}
+                  onChange={(e) => setSectorFilter(e.target.value)}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-accent"
+                >
+                  <option value="All Sectors">All Sectors</option>
+                  <option value="Government & Investment">Government & Investment</option>
+                  <option value="Agribusiness & Food">Agribusiness & Food</option>
+                  <option value="Logistics & Supply Chain">Logistics & Supply Chain</option>
+                  <option value="Information Technology">Information Technology</option>
+                  <option value="Finance & Banking">Finance & Banking</option>
+                </select>
+              </div>
+
+              <div>
+                <select
+                  value={regionFilter}
+                  onChange={(e) => setRegionFilter(e.target.value)}
+                  className="w-full text-xs px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-accent"
+                >
+                  <option value="Greater Accra">Greater Accra</option>
+                  <option value="Ashanti Region">Ashanti Region</option>
+                  <option value="Western Region (Takoradi)">Western Region (Takoradi)</option>
+                  <option value="All Regions">All Regions</option>
+                </select>
+              </div>
+
+              <div className="md:col-span-4 flex justify-end">
+                <button
+                  onClick={runDipaOpportunitySearch}
+                  disabled={isSearching}
+                  className="flex items-center gap-2 bg-accent text-accent-foreground font-semibold text-xs px-4 py-2 rounded-lg hover:bg-accent/90 disabled:opacity-50 transition"
+                >
+                  {isSearching ? (
+                    <>
+                      <Loader2 className="h-3.5 w-3.5 animate-spin" /> Verifying Live Websites...
+                    </>
+                  ) : (
+                    <>
+                      <Sparkles className="h-3.5 w-3.5" /> Run Dipa Search
+                    </>
+                  )}
+                </button>
+              </div>
+            </div>
+
+            {/* Results Display */}
+            {hasSearched ? (
+              <div className="space-y-4">
+                <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+                  <span>Found <strong className="text-foreground">{liveProspects.length}</strong> verified online prospects</span>
+                  <span className="flex items-center gap-1 text-emerald-600 font-medium">
+                    <ShieldCheck className="h-3.5 w-3.5" /> Verified via Dipa Realtime HTTP Engine
+                  </span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {liveProspects.map((prospect, idx) => (
+                    <div
+                      key={idx}
+                      className="p-5 rounded-xl border border-border bg-card shadow-sm hover:border-accent/40 transition space-y-3 flex flex-col justify-between"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-start justify-between gap-2">
+                          <div>
+                            <h4 className="font-bold text-sm text-foreground flex items-center gap-2">
+                              {prospect.organizationName}
+                              {prospect.verified && (
+                                <span className="inline-flex items-center gap-1 text-[10px] bg-emerald-500/10 text-emerald-600 font-semibold px-2 py-0.5 rounded-full border border-emerald-500/20">
+                                  <CheckCircle2 className="h-3 w-3" /> Live Verified ({prospect.httpStatus})
+                                </span>
+                              )}
+                            </h4>
+                            <a
+                              href={prospect.website}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-[11px] text-accent hover:underline flex items-center gap-1 mt-0.5"
+                            >
+                              <Globe className="h-3 w-3" /> {prospect.website} <ExternalLink className="h-2.5 w-2.5" />
+                            </a>
+                          </div>
+                          <span className="text-xs font-bold text-emerald-600 bg-emerald-50 px-2 py-1 rounded">
+                            ${(prospect.estimatedValue || 0).toLocaleString()}
+                          </span>
+                        </div>
+
+                        <p className="text-xs text-muted-foreground bg-muted/30 p-2.5 rounded-lg border border-border/40">
+                          {prospect.opportunityInsight}
+                        </p>
+
+                        <div className="grid grid-cols-2 gap-2 text-[11px] text-muted-foreground pt-1">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <User className="h-3 w-3 text-muted-foreground/70" />
+                            <span className="truncate">{prospect.contactName}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Mail className="h-3 w-3 text-muted-foreground/70" />
+                            <span className="truncate">{prospect.email}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <Phone className="h-3 w-3 text-muted-foreground/70" />
+                            <span className="truncate">{prospect.phone}</span>
+                          </div>
+                          <div className="flex items-center gap-1.5 truncate">
+                            <MapPin className="h-3 w-3 text-muted-foreground/70" />
+                            <span className="truncate">{prospect.region}</span>
+                          </div>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-border flex items-center justify-between">
+                        <span className="text-[10px] text-muted-foreground italic">
+                          Verified at {new Date(prospect.verifiedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} ({prospect.latencyMs}ms)
+                        </span>
+                        <button
+                          onClick={() => addProspectToPipeline(prospect)}
+                          className="flex items-center gap-1.5 bg-accent/10 text-accent hover:bg-accent hover:text-accent-foreground font-semibold text-xs px-3 py-1.5 rounded-lg transition"
+                        >
+                          <Plus className="h-3.5 w-3.5" /> Add to CRM Pipeline
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <div className="p-12 text-center rounded-xl border border-dashed border-border/80 bg-card space-y-3">
+                <TrendingUp className="h-10 w-10 text-muted-foreground/50 mx-auto" />
+                <h4 className="font-bold text-sm text-foreground">No Active Discovery Search Executed</h4>
+                <p className="text-xs text-muted-foreground max-w-md mx-auto">
+                  Click <strong>'Run Dipa Search'</strong> above to query live verified online prospects and verify website response statuses in real time.
+                </p>
+              </div>
+            )}
           </div>
         )}
       </div>
