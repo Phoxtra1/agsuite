@@ -16,9 +16,11 @@ export function useAdminProducts() {
   const [loading, setLoading] = useState(true);
 
   const refresh = useCallback(async () => {
-    setLoading(true);
     const data = await fetchAdminProducts();
-    setProducts(data);
+    setProducts((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
+      return data;
+    });
     setLoading(false);
   }, []);
 
@@ -63,7 +65,10 @@ export function useCategoryProducts() {
 
   const refresh = useCallback(async () => {
     const data = await fetchCategoryProducts();
-    setProducts(data);
+    setProducts((prev) => {
+      if (JSON.stringify(prev) === JSON.stringify(data)) return prev;
+      return data;
+    });
     setLoading(false);
     try { localStorage.setItem(HOME_CACHE_KEY, JSON.stringify(data)); } catch {}
   }, []);

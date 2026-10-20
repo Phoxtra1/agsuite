@@ -67,17 +67,28 @@ export function CategoryManager() {
 
     setSaving(true);
 
+    const existing = products.find((p) => p.id === editingId);
     const product: ProductData = editingId
-      ? { ...products.find(p => p.id === editingId)!, name, shortName: formData.shortName, description: formData.description, url: formData.url, category: formData.category, status: formData.status }
+      ? {
+          ...(existing || {}),
+          id: editingId,
+          name,
+          shortName: formData.shortName.trim(),
+          description: formData.description.trim(),
+          url: formData.url.trim(),
+          category: formData.category,
+          status: formData.status,
+        }
       : {
           id: `cat-${Date.now()}`,
           name,
-          shortName: formData.shortName,
-          description: formData.description,
-          url: formData.url,
+          shortName: formData.shortName.trim(),
+          description: formData.description.trim(),
+          url: formData.url.trim(),
           category: formData.category,
           status: formData.status,
           order: products.length + 1,
+          isPublic: true,
         };
 
     const ok = await save(product);
