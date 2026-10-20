@@ -40,12 +40,20 @@ const PRODUCT_INFO: Record<string, {
     description: "Welcome to AGStock! Your smart inventory, shop management, and point-of-sale system is fully configured and ready.",
   },
   agis: {
-    name: "AGIS",
-    tagline: "Integrated Field & Client Analytics Dashboard",
+    name: "DataLens",
+    tagline: "IT & Data Services Platform",
     gradient: "from-blue-950 via-slate-950 to-blue-950",
     accentClass: "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500",
     textMuted: "text-blue-400/80",
-    description: "Welcome to AGIS! Your field visit maps, client history records, and analytic dashboards are now fully operational.",
+    description: "Welcome to DataLens! Your IT and data services account is active and ready for custom engagements.",
+  },
+  datalens: {
+    name: "DataLens",
+    tagline: "IT & Data Services Platform",
+    gradient: "from-blue-950 via-slate-950 to-blue-950",
+    accentClass: "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500",
+    textMuted: "text-blue-400/80",
+    description: "Welcome to DataLens! Your IT and data services account is active and ready for custom engagements.",
   },
   amniva: {
     name: "Amniva",

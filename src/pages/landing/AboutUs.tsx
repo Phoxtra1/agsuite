@@ -28,7 +28,7 @@ const platformEcosystem = [
   { icon: Sparkles, title: "Dipa AI", role: "Intelligent companion for research, writing, planning, knowledge systems, and storytelling." },
   { icon: CloudSun, title: "AgroClimate", role: "Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, and operational risk." },
   { icon: BarChart3, title: "Inventra", role: "AI-backed inventory, commerce, and operational management infrastructure for smart business systems." },
-  { icon: ShieldCheck, title: "DataLens", role: "Strategic assessment, field inspection, verification, and documentation infrastructure." },
+  { icon: ShieldCheck, title: "DataLens", role: "IT and data services provider offering data insights, field project inspection, strategic assessment, business documentation, and IT services." },
   { icon: LineChart, title: "Sikasɛm", role: "AI-backed financial operations, monitoring, and oversight infrastructure." },
   { icon: Eye, title: "ABI", role: "Amineva Business Intelligence — unified BI infrastructure for dashboards, KPIs, market analytics, and data-driven decision support." },
   { icon: Compass, title: "Adesua", role: "Career development platform — career pathways, professional skill advancement, institutional discovery, and scholarship opportunities." },

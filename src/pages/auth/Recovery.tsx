@@ -37,8 +37,15 @@ const PRODUCT_INFO: Record<string, {
     textMuted: "text-amber-400/80",
   },
   agis: {
-    name: "AGIS",
-    tagline: "Integrated Field & Client Analytics Dashboard",
+    name: "DataLens",
+    tagline: "IT & Data Services Platform",
+    gradient: "from-blue-950 via-slate-950 to-blue-950",
+    accentClass: "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500",
+    textMuted: "text-blue-400/80",
+  },
+  datalens: {
+    name: "DataLens",
+    tagline: "IT & Data Services Platform",
     gradient: "from-blue-950 via-slate-950 to-blue-950",
     accentClass: "bg-blue-600 text-white hover:bg-blue-700 focus-visible:ring-blue-500",
     textMuted: "text-blue-400/80",

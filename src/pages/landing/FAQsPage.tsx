@@ -56,7 +56,7 @@ const categories: { title: string; faqs: FAQItem[] }[] = [
   {
     title: "DataLens & Sikasɛm",
     faqs: [
-      { q: "What is DataLens?", a: "DataLens is the strategic assessment, field inspection, verification, operational intelligence, and documentation infrastructure of the ecosystem." },
+      { q: "What is DataLens?", a: "DataLens is an IT and data services provider offering data and insight, field project inspection, strategic assessment, business and project documentation, and IT services tailored to client requirements." },
       { q: "What is Sikasɛm?", a: "Sikasɛm is the AI-backed financial operations, monitoring, workflow intelligence, and operational oversight infrastructure for African financial networks." },
     ],
   },

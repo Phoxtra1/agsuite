@@ -40,7 +40,7 @@ const DEFAULT_APPS: AppRow[] = [
   { id: "workspace", app_slug: "workspace", app_name: "Amineva Workspace", status: "active" },
   { id: "agroclimate", app_slug: "agroclimate", app_name: "AgroClimate", status: "active" },
   { id: "adesua", app_slug: "adesua", app_name: "Adesua Learning", status: "active" },
-  { id: "datalens", app_slug: "datalens", app_name: "DataLens Intel", status: "active" },
+  { id: "datalens", app_slug: "datalens", app_name: "DataLens", status: "active" },
   { id: "amniva", app_slug: "amniva", app_name: "Amniva Intelligence", status: "active" },
 ];
 
