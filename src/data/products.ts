@@ -241,6 +241,14 @@ function productToDocPayload(p: ProductData, productType: "admin" | "category") 
   };
 }
 
+function withTimeout<T>(promise: Promise<T>, ms = 800): Promise<T> {
+  let timeoutId: any;
+  const timeoutPromise = new Promise<never>((_, reject) => {
+    timeoutId = setTimeout(() => reject(new Error("Timeout")), ms);
+  });
+  return Promise.race([promise, timeoutPromise]).finally(() => clearTimeout(timeoutId));
+}
+
 // ===========================
 // FETCH ADMIN PRODUCTS
 // ===========================
@@ -251,14 +259,22 @@ export async function fetchAdminProducts(): Promise<ProductData[]> {
   try {
     let docs: any[] = [];
     try {
-      const res = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [
-        Query.equal("product_type", "admin"),
-        Query.limit(100),
-      ]);
+      const res = await withTimeout(
+        databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [
+          Query.equal("product_type", "admin"),
+          Query.limit(100),
+        ])
+      );
       docs = res.documents;
     } catch {
-      const res = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [Query.limit(100)]);
-      docs = res.documents.filter((d: any) => d.product_type === "admin" || !d.product_type);
+      try {
+        const res = await withTimeout(
+          databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [Query.limit(100)])
+        );
+        docs = res.documents.filter((d: any) => d.product_type === "admin" || !d.product_type);
+      } catch {
+        docs = [];
+      }
     }
 
     if (docs.length === 0) {
@@ -274,8 +290,9 @@ export async function fetchAdminProducts(): Promise<ProductData[]> {
     const mergedMap = new Map<string, ProductData>();
     fetched.forEach((p) => {
       const localItem = cachedMap.get(p.id);
-      if (localItem && localItem.status && localItem.status !== p.status) {
-        mergedMap.set(p.id, { ...p, status: localItem.status });
+      if (localItem) {
+        // Merge server document with local item, preserving user's saved local edits over stale server fields
+        mergedMap.set(p.id, { ...p, ...localItem });
       } else {
         mergedMap.set(p.id, p);
       }
@@ -308,14 +325,22 @@ export async function fetchCategoryProducts(): Promise<ProductData[]> {
   try {
     let docs: any[] = [];
     try {
-      const res = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [
-        Query.equal("product_type", "category"),
-        Query.limit(100),
-      ]);
+      const res = await withTimeout(
+        databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [
+          Query.equal("product_type", "category"),
+          Query.limit(100),
+        ])
+      );
       docs = res.documents;
     } catch {
-      const res = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [Query.limit(100)]);
-      docs = res.documents.filter((d: any) => d.product_type === "category");
+      try {
+        const res = await withTimeout(
+          databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [Query.limit(100)])
+        );
+        docs = res.documents.filter((d: any) => d.product_type === "category");
+      } catch {
+        docs = [];
+      }
     }
 
     if (docs.length === 0) {
@@ -331,8 +356,9 @@ export async function fetchCategoryProducts(): Promise<ProductData[]> {
     const mergedMap = new Map<string, ProductData>();
     fetched.forEach((p) => {
       const localItem = cachedMap.get(p.id);
-      if (localItem && localItem.status && localItem.status !== p.status) {
-        mergedMap.set(p.id, { ...p, status: localItem.status });
+      if (localItem) {
+        // Merge server document with local item, preserving user's saved local edits over stale server fields
+        mergedMap.set(p.id, { ...p, ...localItem });
       } else {
         mergedMap.set(p.id, p);
       }
@@ -421,24 +447,30 @@ export async function upsertProduct(
     const payload = productToDocPayload(p, type);
     let docId: string | null = null;
     try {
-      const existing = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [
-        Query.equal("id", p.id),
-        Query.equal("product_type", type),
-        Query.limit(1),
-      ]);
+        const existing = await withTimeout(
+          databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [
+            Query.equal("id", p.id),
+            Query.equal("product_type", type),
+            Query.limit(1),
+          ])
+        );
       if (existing.documents.length > 0) docId = existing.documents[0].$id;
     } catch {
-      const all = await databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [Query.limit(100)]);
-      const match = all.documents.find(
-        (d: any) => (d.id === p.id || d.$id === p.id) && (d.product_type === type || !d.product_type)
-      );
-      if (match) docId = match.$id;
+        try {
+          const all = await withTimeout(
+            databases.listDocuments(DB_ID, PRODUCTS_COLLECTION_ID, [Query.limit(100)])
+          );
+          const match = all.documents.find(
+            (d: any) => (d.id === p.id || d.$id === p.id) && (d.product_type === type || !d.product_type)
+          );
+          if (match) docId = match.$id;
+        } catch {}
     }
 
     if (docId) {
-      await databases.updateDocument(DB_ID, PRODUCTS_COLLECTION_ID, docId, payload);
+        await withTimeout(databases.updateDocument(DB_ID, PRODUCTS_COLLECTION_ID, docId, payload));
     } else {
-      await databases.createDocument(DB_ID, PRODUCTS_COLLECTION_ID, ID.unique(), payload);
+        await withTimeout(databases.createDocument(DB_ID, PRODUCTS_COLLECTION_ID, ID.unique(), payload));
     }
   };
 
