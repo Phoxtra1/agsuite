@@ -99,7 +99,7 @@ export function OverviewPage() {
               <EcoCard icon={Shield} title="Inventra"
                 desc="AI-backed inventory, commerce, sales, and operational management infrastructure for smart business systems." />
               <EcoCard icon={CheckCircle} title="DataLens"
-                desc="Strategic assessment, field inspection, verification, operational intelligence, and documentation infrastructure." />
+                desc="IT and data services initiative providing data and insight, field project inspection, strategic assessment, business documentation, and IT services." />
               <EcoCard icon={TrendingUp} title="Sikasɛm"
                 desc="AI-backed financial operations, monitoring systems, workflow intelligence, and operational oversight infrastructure." />
               <EcoCard icon={Eye} title="ABI"
@@ -149,4 +149,3 @@ function EcoCard({ icon: Icon, title, desc }: { icon: any; title: string; desc: 
     </div>
   );
 }
-
