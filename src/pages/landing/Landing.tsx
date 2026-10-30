@@ -22,6 +22,7 @@ const explainerItems = [
 
 const navLinks = [
   { label: "About Us", to: "/about-us" },
+  { label: "Amineva Impact", to: "/impact" },
   { label: "FAQs", to: "/faqs" },
   { label: "Support", to: "/support" },
 ];
@@ -203,6 +204,7 @@ export default function Landing() {
                 <h4 className="font-semibold text-foreground mb-3 text-sm">Company</h4>
                 <div className="space-y-2">
                   <Link to="/about-us" className="block text-sm text-muted-foreground hover:text-foreground transition">About Us</Link>
+                  <Link to="/impact" className="block text-sm text-muted-foreground hover:text-foreground transition">Amineva Impact</Link>
                   <Link to="/support" className="block text-sm text-muted-foreground hover:text-foreground transition">Support</Link>
                   <Link to="/faqs" className="block text-sm text-muted-foreground hover:text-foreground transition">FAQs</Link>
                 </div>

@@ -228,6 +228,68 @@ const About: FC = () => {
         </div>
       </section>
 
+      {/* Community Initiatives & Amineva Impact */}
+      <section id="amineva-impact" className="bg-secondary/60 py-20 px-6 border-y border-border">
+        <div className="max-w-7xl mx-auto grid lg:grid-cols-12 gap-12 items-center">
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+            custom={0}
+            className="lg:col-span-7 space-y-4"
+          >
+            <span className="text-sm font-semibold text-accent uppercase tracking-wider">
+              Social & Community Initiatives
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-foreground">
+              Amineva Impact — Educational, Social & Community Initiatives
+            </h2>
+            <p className="text-muted-foreground leading-relaxed">
+              Alongside its core technology development, digital infrastructure, and IT services, Amineva Global organizes and manages its corporate social responsibility, educational development, and community engagements through <strong>Amineva Impact</strong>.
+            </p>
+            <p className="text-muted-foreground leading-relaxed">
+              Amineva Impact operates as an initiative platform under Amineva Global—not as an independent legal entity, NGO, or charity. It serves as an umbrella framework that presents, manages, and documents structured initiatives across career awareness, youth empowerment, skills development, and community growth while maintaining our institutional IT identity.
+            </p>
+            <div className="pt-2">
+              <Link
+                to="/impact"
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-accent text-accent-foreground font-semibold text-sm hover:bg-accent/90 transition"
+              >
+                Explore Amineva Impact Initiatives <ArrowRight className="h-4 w-4" />
+              </Link>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={fadeUp}
+            custom={1}
+            className="lg:col-span-5 p-6 rounded-2xl border border-border bg-card space-y-4"
+          >
+            <h3 className="text-lg font-semibold text-foreground flex items-center gap-2">
+              <Sparkles className="h-5 w-5 text-accent" /> Platform Commitment
+            </h3>
+            <ul className="space-y-3 text-sm text-muted-foreground">
+              <li className="flex items-start gap-2">
+                <span className="h-2 w-2 rounded-full bg-accent mt-1.5 flex-shrink-0" />
+                <span><strong>Targeted Community Engagements:</strong> Structured programmes supporting basic schools, youth, and local organizations.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="h-2 w-2 rounded-full bg-accent mt-1.5 flex-shrink-0" />
+                <span><strong>Multi-Initiative Design:</strong> Built to house diverse present and future programmes beyond career exploration.</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="h-2 w-2 rounded-full bg-accent mt-1.5 flex-shrink-0" />
+                <span><strong>Institutional Integrity:</strong> Verifiable documentation and authentic engagements directly aligned with corporate standards.</span>
+              </li>
+            </ul>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Startup & Innovation Collaboration */}
       <section id="startup-collab" className="max-w-7xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
