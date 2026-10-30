@@ -386,6 +386,7 @@ export default function HomePage() {
              </HomeDropdown>
 
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
+            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/impact")}>Amineva Impact</button>
             {/* Insight & Report */}
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>

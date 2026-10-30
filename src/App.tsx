@@ -19,6 +19,7 @@ import { useIdleSignout } from "@/hooks/useIdleSignout";
 const Landing = lazyWithRetry(() => import("./pages/landing/Landing"));
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const AboutUs = lazyWithRetry(() => import("./pages/landing/AboutUs"));
+const AminevaImpactPage = lazyWithRetry(() => import("./pages/landing/AminevaImpactPage"));
 const DipaAIPage = lazyWithRetry(() => import("./pages/landing/DipaAIPage"));
 const InventraPage = lazyWithRetry(() => import("./pages/landing/InventraPage"));
 const DataLensPage = lazyWithRetry(() => import("./pages/landing/DataLensPage"));
@@ -185,6 +186,8 @@ function AppRoutes() {
         <Route path="/" element={<Landing />}>
           <Route index element={<PublicHome />} />
           <Route path="about-us" element={<AboutUs />} />
+          <Route path="impact" element={<AminevaImpactPage />} />
+          <Route path="impact/:initiativeId" element={<AminevaImpactPage />} />
           <Route path="apps/dipa-ai" element={<DipaAIPage />} />
           <Route path="/apps/inventra" element={<InventraPage />} />
           <Route path="/apps/agroclimate" element={<AgroClimatePage />} />
