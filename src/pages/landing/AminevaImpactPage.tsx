@@ -15,6 +15,7 @@ import {
   ExternalLink,
   ShieldCheck,
   Briefcase,
+  School,
   BookOpen,
   Award,
   Globe,
@@ -32,6 +33,7 @@ import {
   FOCUS_AREAS,
   INITIATIVES,
   COLLABORATION_CATEGORIES,
+  SCHOOL_ACTIVITY_IMAGES,
   Initiative,
 } from "@/data/impact";
 
@@ -121,15 +123,7 @@ export const AminevaImpactPage: FC = () => {
               {IMPACT_INTRO.positioning}
             </p>
 
-            <div className="p-4 md:p-6 rounded-2xl border border-border bg-card/60 backdrop-blur text-left max-w-3xl mx-auto space-y-2">
-              <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-accent">
-                <ShieldCheck className="w-4 h-4" />
-                <span>Relationship with Amineva Global</span>
-              </div>
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {IMPACT_INTRO.relationship}
-              </p>
-            </div>
+
           </motion.div>
         </div>
       </section>
@@ -316,7 +310,7 @@ export const AminevaImpactPage: FC = () => {
             On-Ground Documentation
           </span>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">
-            Activities & Documented Engagements
+            Activities & Engagements
           </h2>
           <p className="text-muted-foreground max-w-2xl mx-auto mt-3 text-sm md:text-base">
             Transparent reporting of actual school outreach sessions, topics covered, progress updates, and verified outcomes.
@@ -332,14 +326,64 @@ export const AminevaImpactPage: FC = () => {
               <TabsTrigger value="updates" className="text-xs md:text-sm">
                 Progress Updates
               </TabsTrigger>
-              <TabsTrigger value="outcomes" className="text-xs md:text-sm">
-                Outcomes & Achievements
+              <TabsTrigger value="achievements" className="text-xs md:text-sm">
+                Achievements
               </TabsTrigger>
             </TabsList>
           </div>
 
-          <TabsContent value="engagements">
-            <div className="grid lg:grid-cols-2 gap-6">
+          <TabsContent value="engagements" className="space-y-10">
+            {/* Gallery of Activity Images */}
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <div>
+                  <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                    <School className="w-5 h-5 text-accent" /> Activity Photo Gallery
+                  </h3>
+                  <p className="text-xs text-muted-foreground">
+                    Photographic documentation captured during our active basic school outreach sessions.
+                  </p>
+                </div>
+                <Badge variant="outline" className="text-xs text-accent border-accent/30">
+                  Regularly Updated
+                </Badge>
+              </div>
+
+              <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
+                {SCHOOL_ACTIVITY_IMAGES.map((img, idx) => (
+                  <motion.div
+                    key={img.url}
+                    initial="hidden"
+                    whileInView="visible"
+                    viewport={{ once: true }}
+                    variants={fadeUp}
+                    custom={idx}
+                    className="group rounded-2xl border border-border bg-card overflow-hidden hover:border-accent/50 transition-all duration-300 shadow-sm flex flex-col"
+                  >
+                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+                      <img
+                        src={img.url}
+                        alt={img.altText}
+                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                    </div>
+                    <div className="p-4 flex-1 flex flex-col justify-between">
+                      <div>
+                        <h4 className="text-sm font-semibold text-foreground line-clamp-1 mb-1">
+                          {img.title}
+                        </h4>
+                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">
+                          {img.caption}
+                        </p>
+                      </div>
+                    </div>
+                  </motion.div>
+                ))}
+              </div>
+            </div>
+
+            <div className="grid lg:grid-cols-2 gap-6 pt-4">
               {INITIATIVES.flatMap((init) => init.schoolEngagements || []).map(
                 (se, idx) => (
                   <Card key={idx} className="border border-border">
@@ -415,19 +459,47 @@ export const AminevaImpactPage: FC = () => {
             </div>
           </TabsContent>
 
-          <TabsContent value="outcomes">
-            <div className="max-w-3xl mx-auto space-y-3">
-              {INITIATIVES.flatMap((init) => init.outcomes || []).map(
-                (out, idx) => (
-                  <div
-                    key={idx}
-                    className="p-4 rounded-xl border border-border bg-card flex items-center gap-3 text-xs md:text-sm text-foreground"
-                  >
-                    <CheckCircle2 className="w-5 h-5 text-accent flex-shrink-0" />
-                    <span>{out}</span>
-                  </div>
-                )
-              )}
+          <TabsContent value="achievements">
+            <div className="max-w-4xl mx-auto space-y-6">
+              {/* Highlight Banner */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 rounded-2xl bg-accent/10 border border-accent/20 text-center">
+                <div className="p-2">
+                  <div className="text-2xl font-bold text-foreground">3</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Schools Engaged</div>
+                </div>
+                <div className="p-2">
+                  <div className="text-2xl font-bold text-foreground">Over 600</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Students Participated</div>
+                </div>
+                <div className="p-2">
+                  <div className="text-2xl font-bold text-foreground">Foundations</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Career Importance</div>
+                </div>
+                <div className="p-2">
+                  <div className="text-2xl font-bold text-foreground">Capacity</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Pathways for Better Future</div>
+                </div>
+              </div>
+
+              {/* Achievements Detail Cards */}
+              <div className="space-y-3">
+                {INITIATIVES.flatMap((init) => init.achievements || []).map(
+                  (ach, idx) => (
+                    <motion.div
+                      key={idx}
+                      initial="hidden"
+                      whileInView="visible"
+                      viewport={{ once: true }}
+                      variants={fadeUp}
+                      custom={idx}
+                      className="p-5 rounded-2xl border border-border bg-card flex items-start gap-4 text-xs md:text-sm text-foreground hover:border-accent/30 transition shadow-sm"
+                    >
+                      <CheckCircle2 className="w-5 h-5 text-accent flex-shrink-0 mt-0.5" />
+                      <span className="leading-relaxed">{ach}</span>
+                    </motion.div>
+                  )
+                )}
+              </div>
             </div>
           </TabsContent>
         </Tabs>

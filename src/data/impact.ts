@@ -63,7 +63,7 @@ export interface Initiative {
   schoolEngagements?: SchoolEngagement[];
   media: MediaItem[];
   progressUpdates: ProgressUpdate[];
-  outcomes: string[];
+  achievements: string[];
   verifiedMetrics?: VerifiedMetric[];
   collaborationOpportunities: string[];
   contactLink: string;
@@ -79,8 +79,6 @@ export const IMPACT_INTRO = {
   headline: "Educational, Social and Community Initiatives by Amineva Global",
   positioning:
     "Amineva Impact represents Amineva Global's commitment to supporting meaningful educational, social and community development initiatives. Through targeted programmes and collaborative activities, it seeks to create opportunities, encourage personal development and contribute positively to communities.",
-  relationship:
-    "Amineva Impact operates as an initiative platform under Amineva Global. It is not an independent legal entity, NGO, or charity, but a structured framework through which Amineva Global organizes, documents, and scales its corporate social responsibility and community engagements.",
 };
 
 export const FOCUS_AREAS: FocusArea[] = [
@@ -125,6 +123,45 @@ export const FOCUS_AREAS: FocusArea[] = [
     description:
       "Collaborating with local and continental partners to address broader social challenges and support developmental growth.",
     icon: Globe,
+  },
+];
+
+export const SCHOOL_ACTIVITY_IMAGES: MediaItem[] = [
+  {
+    type: "image",
+    url: "/images/impact/IMG_20261028_084846.jpg",
+    title: "Basic School Interactive Career Session",
+    caption:
+      "Students actively engaged in group discussions on emerging careers and future educational planning.",
+    altText:
+      "Learners participating in a structured career awareness outreach conducted by Amineva Impact.",
+  },
+  {
+    type: "image",
+    url: "/images/impact/IMG_20261028_084908.jpg",
+    title: "Classroom Workshop & Practical Guidance",
+    caption:
+      "Facilitators sharing foundational career pathways, vocational skills, and self-discovery concepts.",
+    altText:
+      "Classroom workshop introducing students to career awareness and foundational goals.",
+  },
+  {
+    type: "image",
+    url: "/images/impact/IMG_20261028_090003.jpg",
+    title: "Student Engagement & Self-Discovery",
+    caption:
+      "Learners reflecting on their personal talents, technical curiosity, and academic strengths.",
+    altText:
+      "Basic school students engaged in self-discovery and career development activities.",
+  },
+  {
+    type: "image",
+    url: "/images/impact/IMG_20261028_090243.jpg",
+    title: "Collaborative Career Mentorship",
+    caption:
+      "Interactive questions and answers guiding students toward meaningful educational choices.",
+    altText:
+      "Students and facilitators during an Amineva Impact career mentorship session.",
   },
 ];
 
@@ -188,54 +225,54 @@ export const INITIATIVES: Initiative[] = [
           "Combining practical skills with classroom learning",
           "How to talk to parents about career goals",
         ],
-        beneficiariesCount: 180,
+        beneficiariesCount: 600,
       },
     ],
-    media: [
-      {
-        type: "image",
-        url: "/placeholder.svg",
-        title: "Basic School Classroom Workshop",
-        caption:
-          "Students participating in interactive career discovery exercises and self-assessment worksheets.",
-        altText:
-          "Basic school learners during a career development workshop conducted under Amineva Impact.",
-      },
-      {
-        type: "image",
-        url: "/placeholder.svg",
-        title: "Career Guidance Session",
-        caption:
-          "Facilitators explaining diverse career paths in technology, agriculture, science, and trade.",
-        altText:
-          "Facilitator sharing career insights with basic-school students.",
-      },
-    ],
+    media: SCHOOL_ACTIVITY_IMAGES,
     progressUpdates: [
       {
-        date: "Q4 2024",
-        title: "Inaugural School Outreach Successfully Conducted",
+        date: "Active Outreach",
+        title: "Schools Interest & Direct Engagement",
         summary:
-          "Successfully launched the first school engagement series engaging basic-school students with interactive career discovery materials.",
+          "Strong enthusiasm and active participation from school heads and teachers eager to integrate structured career exploration sessions into their institutional programs.",
       },
       {
-        date: "Q1 2025",
-        title: "Expansion of Learning Materials & Institutional Outreach",
+        date: "High Participation",
+        title: "Learners Interest & Practical Discovery",
         summary:
-          "Developing structured career exploration worksheets and expanding invitations to additional basic schools.",
+          "Over 600 learners actively participating in discovery exercises, asking proactive questions about modern careers, and showing keen curiosity toward hands-on skills.",
+      },
+      {
+        date: "Next Quarter",
+        title: "Upcoming Programs & Workshops",
+        summary:
+          "Scheduled rollout of advanced career workbooks, interactive discovery toolkits, and mentor-led interactive workshops across participating schools.",
+      },
+      {
+        date: "In Pipeline",
+        title: "Pending Invitations & Partner Requests",
+        summary:
+          "Reviewing invitations from additional schools and community educational coordinators seeking to host the Amineva Impact career exploration program.",
       },
     ],
-    outcomes: [
-      "Over 180 basic-school learners directly engaged in initial career awareness workshops.",
-      "High level of student engagement with self-discovery exercises and career research prompts.",
-      "Positive feedback from school heads and educators regarding the clarity and relevance of basic-level career guidance.",
-      "Framework established for continuous school visits and institutional collaborations.",
+    achievements: [
+      "Number of schools engaged: 3 basic schools successfully reached through direct on-ground sessions.",
+      "Students participated: Over 600 learners actively involved in career discovery workshops.",
+      "Realization of career foundation and importance: Students developed early understanding of how academic focus connects directly to life goals.",
+      "Discovery of practical abilities: Learners identified personal strengths, hands-on talents, and vocational curiosity beyond conventional textbooks.",
+      "Career alignment & capacity building: Established foundational frameworks guiding students toward purposeful career selection and skills building.",
+      "Pathways for a better future: Instilled confidence, clarity, and motivation for students to pursue lifelong educational and professional opportunities.",
     ],
     verifiedMetrics: [
       {
-        label: "Learners Engaged",
-        figure: "180+",
-        description: "Basic-school students reached during initial outreach",
+        label: "Schools Engaged",
+        figure: "3",
+        description: "Basic schools directly engaged with structured outreach",
+      },
+      {
+        label: "Students Participated",
+        figure: "Over 600",
+        description: "Learners empowered through career workshops",
       },
       {
         label: "Active Focus",
@@ -243,16 +280,16 @@ export const INITIATIVES: Initiative[] = [
         description: "Primary & Junior High School level outreach focus",
       },
       {
-        label: "Programme Status",
+        label: "Program Status",
         figure: "Active",
-        description: "Ongoing initiative under Amineva Impact",
+        description: "Ongoing initiative under Amineva Global",
       },
     ],
     collaborationOpportunities: [
       "School Administration Invitations: Invite Amineva Impact to host career exploration sessions at your basic school.",
-      "Logistical & Mobility Support: Assist with transportation and venue setup for school outreach visits.",
-      "Educational Materials & Printing: Support the production and printing of career exploration workbooks for learners.",
-      "Guest Mentorship: Professional guest speakers willing to share real-world career experiences with students.",
+      "Educational Materials & Workbooks: Support the production and distribution of career exploration workbooks for learners.",
+      "Guest Mentorship & Role Modeling: Professional guest speakers sharing real-world career journeys with students.",
+      "Institutional Co-development: Partnering with educational boards and organizations to scale career awareness curricula.",
     ],
     contactLink: "/support",
   },
@@ -260,43 +297,43 @@ export const INITIATIVES: Initiative[] = [
 
 export const COLLABORATION_CATEGORIES: CollaborationCategory[] = [
   {
-    title: "Operational & Logistical Support",
-    description:
-      "Assisting with event organization, venue arrangements, and on-ground coordination during school and community outreach visits.",
-    examples: [
-      "Outreach venue coordination",
-      "Equipment and AV setup support",
-      "Volunteer coordination",
-    ],
-  },
-  {
-    title: "Transportation & Mobility",
-    description:
-      "Providing or supporting travel arrangements for facilitators and outreach materials to reach underserved community basic schools.",
-    examples: [
-      "Facilitator transportation",
-      "Material dispatch and distribution",
-      "Inter-district outreach logistics",
-    ],
-  },
-  {
-    title: "Educational Materials & Printing",
+    title: "Educational Materials & Workbooks",
     description:
       "Supporting the printing and distribution of career workbooks, educational charts, and student discovery worksheets.",
     examples: [
-      "Printing student workbooks",
-      "Providing stationery supplies",
-      "Publishing guidance brochures",
+      "Student career workbook distribution",
+      "Essential stationery supplies",
+      "Structured career exploration guides",
     ],
   },
   {
-    title: "Professional Mentorship & Expertise",
+    title: "Professional Mentorship & Role Modeling",
     description:
       "Experienced professionals and educators joining outreach sessions as guest mentors or subject-matter advisors.",
     examples: [
-      "Guest speaker roles at school visits",
-      "Technical skills demonstration",
-      "Curriculum review and advisory",
+      "Guest speaker sessions at school visits",
+      "Practical skills demonstrations",
+      "Mentorship and student guidance",
+    ],
+  },
+  {
+    title: "Institutional & School Partnerships",
+    description:
+      "Partnering with school administrations, educational directorates, and community organizations to expand career awareness.",
+    examples: [
+      "School outreach invitations",
+      "Curriculum alignment sessions",
+      "Cross-school workshops",
+    ],
+  },
+  {
+    title: "Program Development & Capacity Building",
+    description:
+      "Collaborating on the design, enhancement, and scaling of impactful youth development modules.",
+    examples: [
+      "Workshop content enrichment",
+      "Teacher and counselor support materials",
+      "Student development tracking",
     ],
   },
 ];

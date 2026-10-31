@@ -7,11 +7,10 @@ import {
 } from "../data/impact";
 
 describe("Amineva Impact Data Layer", () => {
-  it("defines the introductory positioning and relationship with Amineva Global", () => {
+  it("defines the introductory positioning of Amineva Impact", () => {
     expect(IMPACT_INTRO.headline).toBeDefined();
     expect(IMPACT_INTRO.positioning).toContain("Amineva Impact represents Amineva Global");
-    expect(IMPACT_INTRO.relationship).toContain("initiative platform under Amineva Global");
-  });
+    });
 
   it("contains all broad focus areas", () => {
     expect(FOCUS_AREAS.length).toBeGreaterThanOrEqual(6);
@@ -45,7 +44,7 @@ describe("Amineva Impact Data Layer", () => {
     expect(careerDev?.schoolEngagements).toBeDefined();
     expect(careerDev?.schoolEngagements?.length).toBeGreaterThan(0);
     const engagement = careerDev?.schoolEngagements?.[0];
-    expect(engagement?.beneficiariesCount).toBeGreaterThan(0);
+    expect(engagement?.beneficiariesCount).toBe(600);
     expect(engagement?.topicsCovered.length).toBeGreaterThan(0);
   });
 
