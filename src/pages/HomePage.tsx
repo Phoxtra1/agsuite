@@ -162,7 +162,7 @@ export default function HomePage() {
   const effectiveCountryLabel = useMemo(() => selectedAgOption?.label || displayCountryLabel || "Ghana", [selectedAgOption, displayCountryLabel]);
 
   // Homepage categories are driven by Category Management data.
-  // A product appears once, in exactly one category — no duplicates, no "other" bucket.
+  // A product appears once, in exactly one category without duplicates or arbitrary buckets.
   const allCategories = useMemo(() => {
     const fallbackCategoryOf = (id: string) =>
       DEFAULT_CATEGORIES.find((c) => c.products.includes(id))?.id;
@@ -347,46 +347,47 @@ export default function HomePage() {
       {/* RIGHT PANEL */}
       <div className="relative flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
         <div className="w-full max-w-xl">
-          {/* TOP RIGHT CTAs */}
-          <div className="w-full flex justify-end gap-6 text-base font-semibold text-muted-foreground flex-wrap">
-            {/* Apps dropdown - same behavior as Explainer */}
-           <HomeDropdown label="Apps">
-             <div className="p-2">
-              <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                Our Platforms
-              </p>
+          {/* TOP RIGHT CTAs - Amineva Impact comes first */}
+          <div className="w-full flex justify-end gap-6 text-base font-semibold text-muted-foreground flex-wrap items-center">
+            <button type="button" className="hover:text-foreground transition cursor-pointer text-accent font-bold" onClick={() => navigate("/impact")}>Amineva Impact</button>
 
-               <a
-                href="https://stock.amineva.com"
-                 target="_blank"
-                 rel="noreferrer"
+            {/* Apps dropdown */}
+            <HomeDropdown label="Apps">
+              <div className="p-2">
+                <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
+                  Our Platforms
+                </p>
+
+                <a
+                  href="https://stock.amineva.com"
+                  target="_blank"
+                  rel="noreferrer"
                   className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
-                 >
-                    Inventra
-                   </a>
+                >
+                  Inventra
+                </a>
 
-                    <a
-                      href="https://agro.amineva.com"
-                      target="_blank"
-                     rel="noreferrer"
-                     className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
-                   >
-                     AgroClimate
-                  </a>
+                <a
+                  href="https://agro.amineva.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
+                >
+                  AgroClimate
+                </a>
 
-                    <a
-                      href="https://as.amineva.com"
-                      target="_blank"
-                     rel="noreferrer"
-                     className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
-                   >
-                     Adesua
-                  </a>
-                </div>
-             </HomeDropdown>
+                <a
+                  href="https://as.amineva.com"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
+                >
+                  Adesua
+                </a>
+              </div>
+            </HomeDropdown>
 
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/impact")}>Amineva Impact</button>
             {/* Insight & Report */}
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>

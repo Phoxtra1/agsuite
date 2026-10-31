@@ -13,6 +13,14 @@ const apps: Array<{ label: string; to: string; external?: boolean }> = [
 
 const explainerItems = [
   { label: "Innovation Ecosystem", to: "/about-us" },
+  { label: "DataLens", to: "/explainer/datalens" },
+  { label: "ABI", to: "/explainer/abi" },
+  { label: "Sikasɛm", to: "/explainer/sikasɛm" },
+];
+
+const footerProductItems = [
+  { label: "Technology", to: "/about-us" },
+  { label: "Human Development", to: "/impact" },
   { label: "AgroClimate", to: "/explainer/agroclimate" },
   { label: "Adesua", to: "/explainer/adesua" },
   { label: "DataLens", to: "/explainer/datalens" },
@@ -195,7 +203,7 @@ export default function Landing() {
               <div>
                 <h4 className="font-semibold text-foreground mb-3 text-sm">Products</h4>
                 <div className="space-y-2">
-                  {explainerItems.map((item) => (
+                  {footerProductItems.map((item) => (
                     <Link key={item.label} to={item.to} className="block text-sm text-muted-foreground hover:text-foreground transition">{item.label}</Link>
                   ))}
                 </div>
