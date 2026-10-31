@@ -21,11 +21,7 @@ const explainerItems = [
 const footerProductItems = [
   { label: "Technology", to: "/about-us" },
   { label: "Human Development", to: "/impact" },
-  { label: "AgroClimate", to: "/explainer/agroclimate" },
-  { label: "Adesua", to: "/explainer/adesua" },
-  { label: "DataLens", to: "/explainer/datalens" },
-  { label: "ABI", to: "/explainer/abi" },
-  { label: "Sikasɛm", to: "/explainer/sikasɛm" },
+  { label: "Innovation", to: "/about-us" },
 ];
 
 const navLinks = [

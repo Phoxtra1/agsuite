@@ -23,13 +23,13 @@ const categories: { title: string; faqs: FAQItem[] }[] = [
   {
     title: "About Amineva Global",
     faqs: [
-      { q: "What is Amineva Global?", a: "Amineva Global is a technology and innovation company building intelligent digital systems and infrastructure that power operational intelligence, predictive analytics, environmental monitoring, research, and verification across critical African sectors." },
-      { q: "Is Amineva Global a software company?", a: "Amineva Global is an innovation ecosystem rather than a single software vendor. We design and operate connected platforms, intelligence systems, and digital infrastructure that scale across sectors and partners." },
-      { q: "What sectors does Amineva Global operate in?", a: "Agriculture, climate resilience, transport, commerce, digital trade, financial operations, research, and operational intelligence — with continued expansion into adjacent African sectors." },
-      { q: "How are the platforms connected?", a: "Each platform is a division of one ecosystem. They share identity, intelligence pipelines, communication systems, and analytics — so insight, verification, and operations flow across the network." },
-      { q: "Does Amineva Global support innovation and startup collaboration?", a: "Yes. We support accelerator partnerships, sector-focused innovation programs, technology experimentation, and institutional collaborations across the continent." },
-      { q: "What is the company's long-term vision?", a: "To build the digital infrastructure layer for Africa's future — an interconnected innovation ecosystem powering intelligent operations, climate resilience, and scalable transformation." },
-      { q: "What makes Amineva Global different?", a: "Ecosystem architecture over isolated apps, African-focused intelligence over generic tools, and infrastructure-grade design built for institutions, partners, and scale." },
+      { q: "What is Amineva Global?", a: "Amineva Global is an enterprise technology entity defined by two interconnected pillars: pioneering digital systems, cloud infrastructure, and IT services on one hand, and structured human and community development through Amineva Impact on the other." },
+      { q: "Is Amineva Global a software company?", a: "Amineva Global is an innovation ecosystem and digital infrastructure provider. We design and operate connected platforms, cloud systems, and specialized IT services that scale across organizations and institutional partners." },
+      { q: "What sectors does Amineva Global operate in?", a: "Enterprise IT services, cloud infrastructure, climate intelligence, commerce, financial systems, educational development, and operational technology." },
+      { q: "How are the platforms connected?", a: "Each platform shares unified architecture, identity, communication protocols, and security standards so that workflows and operations flow seamlessly across the network." },
+      { q: "Does Amineva Global support innovation and institutional collaboration?", a: "Yes. We support accelerator partnerships, sector-focused innovation programs, technology experimentation, and community impact initiatives globally." },
+      { q: "What is the company's long-term vision?", a: "To build reliable, intelligent digital infrastructure and expand human capability through structured education and career exploration." },
+      { q: "What makes Amineva Global different?", a: "Unified digital architecture, dedicated IT service execution, and a dual commitment to high-uptime technology innovation and grassroots human development." },
     ],
   },
   {
@@ -56,8 +56,8 @@ const categories: { title: string; faqs: FAQItem[] }[] = [
   {
     title: "DataLens & Sikasɛm",
     faqs: [
-      { q: "What is DataLens?", a: "DataLens is an IT and data services provider offering data and insight, field project inspection, strategic assessment, business and project documentation, and IT services tailored to client requirements." },
-      { q: "What is Sikasɛm?", a: "Sikasɛm is the AI-backed financial operations, monitoring, workflow intelligence, and operational oversight infrastructure for African financial networks." },
+      { q: "What is DataLens?", a: "DataLens is an IT services provider offering website and application maintenance, custom software development, cloud infrastructure and deployment, IT support and troubleshooting, database management, and business process automation." },
+      { q: "What is Sikasɛm?", a: "Sikasɛm is the AI-backed financial operations, monitoring, workflow intelligence, and operational oversight infrastructure for enterprise financial operations." },
     ],
   },
   {
