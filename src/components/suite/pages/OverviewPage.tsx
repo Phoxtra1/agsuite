@@ -99,13 +99,13 @@ export function OverviewPage() {
               <EcoCard icon={Shield} title="Inventra"
                 desc="AI-backed inventory, commerce, sales, and operational management infrastructure for smart business systems." />
               <EcoCard icon={CheckCircle} title="DataLens"
-                desc="IT and data services initiative providing data and insight, field project inspection, strategic assessment, business documentation, and IT services." />
+                desc="Enterprise IT services providing website maintenance, custom software development, cloud infrastructure, IT support, database management, and process automation." />
               <EcoCard icon={TrendingUp} title="Sikasɛm"
                 desc="AI-backed financial operations, monitoring systems, workflow intelligence, and operational oversight infrastructure." />
               <EcoCard icon={Eye} title="ABI"
-                desc="Amineva Business Intelligence — unified BI infrastructure for dashboards, KPIs, market analytics, and data-driven decision support across the ecosystem." />
+                desc="Amineva Business Intelligence: unified BI infrastructure for dashboards, KPIs, market analytics, and data-driven decision support across the ecosystem." />
               <EcoCard icon={Compass} title="Adesua"
-                desc="Career development platform — career pathways, professional skill advancement, institutional discovery, and scholarship opportunities." />
+                desc="Career development platform: career pathways, professional skill advancement, institutional discovery, and scholarship opportunities." />
             </div>
           </CardContent>
         </Card>

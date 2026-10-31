@@ -2,8 +2,8 @@ import { FC } from "react";
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
 import {
-  Search, FileText, MapPin, Shield, Wrench, Globe, Server,
-  ArrowRight, ClipboardList, Users, Eye, CheckCircle2, Mail,
+  Globe, Code, Server, Wrench, Database, Cpu,
+  ArrowRight, Users, CheckCircle2, Shield, Building2
 } from "lucide-react";
 
 const fadeUp = {
@@ -14,95 +14,79 @@ const fadeUp = {
 const DataLensPage: FC = () => {
   const serviceCategories = [
     {
-      icon: Search,
-      title: "Data and Insight",
-      desc: "Data-related services that help clients understand information, identify meaningful patterns, assess findings, and support informed decisions.",
+      icon: Globe,
+      title: "Website & Application Maintenance",
+      desc: "Full lifecycle maintenance, stability monitoring, performance optimization, and active security management for mission-critical web applications.",
       items: [
-        "Data analysis, interpretation, and trend identification",
-        "Preparation of analytical reports and actionable insights",
-        "Supporting evidence-based planning and strategic decisions",
-        "Supporting data preparation, organization, cleaning, and validation",
+        "Website and application troubleshooting, bug fixes, and performance optimization",
+        "Hosting and uptime management of existing web platforms where agreed and supported",
+        "Domain registration assistance, DNS record routing, and SSL certificate maintenance",
+        "Regular dependency updates, vulnerability patches, and scheduled code health audits",
       ],
     },
     {
-      icon: MapPin,
-      title: "Field Project Inspection",
-      desc: "Field-based project inspection and verification services to deliver independent on-ground monitoring and progress verification.",
+      icon: Code,
+      title: "Software & App Development",
+      desc: "Custom full-stack web and mobile application engineering built for performance, scale, resilience, and operational excellence.",
       items: [
-        "Conducting field observations and independent site inspections",
-        "Gathering and verifying on-ground project information with visual evidence",
-        "Documenting findings and structured field observations",
-        "Preparing inspection reports to support project monitoring",
+        "End-to-end custom application development tailored to unique organizational workflows",
+        "Modern frontend frameworks, responsive UI architecture, and robust backend engineering",
+        "REST and GraphQL API development, external service integrations, and webhooks",
+        "Scalable, maintainable codebases with comprehensive testing and documentation",
       ],
     },
     {
-      icon: Shield,
-      title: "Strategic Assessment",
-      desc: "Evaluating business situations, projects, operational challenges, and opportunities to support better planning and execution.",
+      icon: Server,
+      title: "Cloud Infrastructure & Deployment",
+      desc: "Scalable cloud architecture, continuous deployment pipelines, server provisioning, containerization, and high-availability operations.",
       items: [
-        "Evaluating current situations and operational challenges",
-        "Assessing project or business performance against agreed criteria",
-        "Identifying gaps, operational risks, and improvement opportunities",
-        "Preparing clear findings and practical strategic recommendations",
-      ],
-    },
-    {
-      icon: FileText,
-      title: "Business and Project Documentation",
-      desc: "Tailored documentation services to produce high-impact, professional business and technical deliverables.",
-      items: [
-        "Business and project reports tailored to client requirements",
-        "Project proposals, company profiles, and pitch documentation",
-        "Structured professional reports and technical briefs",
-        "Documentation of findings, assessments, and recommendations",
+        "Self-hosted and multi-cloud environment configuration and provisioning",
+        "Containerized application deployment with Docker, modern orchestration, and automated CI/CD",
+        "High availability, automated backups, fault tolerance, and disaster recovery planning",
+        "Performance tuning, server resource optimization, and infrastructure cost management",
       ],
     },
     {
       icon: Wrench,
-      title: "IT Services",
-      desc: "Comprehensive IT services covering website maintenance, cloud deployment, hosting where agreed, and technical troubleshooting.",
-      subAreas: [
-        {
-          subTitle: "Website and Application Maintenance",
-          icon: Globe,
-          points: [
-            "Website and application troubleshooting, bug fixes, and performance improvements",
-            "Hosting of existing websites and web applications where agreed and supported",
-            "Domain registration assistance, renewal coordination, and DNS configuration",
-            "HTTPS and SSL certificate configuration included in hosting setup",
-            "Software updates and ongoing technical maintenance tailored to client scope",
-          ],
-        },
-        {
-          subTitle: "Cloud, Server and Deployment",
-          icon: Server,
-          points: [
-            "Cloud and server environment configuration and setup",
-            "Application deployment and deployment troubleshooting",
-            "Environment configuration and operational reliability improvements",
-            "Technical assistance with supported cloud and server infrastructure",
-          ],
-        },
-        {
-          subTitle: "IT System Support and Technical Troubleshooting",
-          icon: Mail,
-          points: [
-            "IT system troubleshooting and technical problem diagnosis",
-            "Software installation, configuration, and application support",
-            "Business email setup, domain connection, and DNS record configuration",
-            "Basic network configuration and connectivity troubleshooting",
-          ],
-        },
+      title: "IT Support & Technical Troubleshooting",
+      desc: "Dedicated technical problem diagnosis, operational IT assistance, hardware/software configuration, and enterprise email connectivity.",
+      items: [
+        "Rapid diagnosis and resolution of system faults, hardware glitches, and application errors",
+        "Enterprise business email setup, SPF/DKIM/DMARC authentication, and domain routing",
+        "Operating system configuration, workstation setup, and software license management",
+        "Network connectivity diagnostics, secure remote access, and technical user support",
+      ],
+    },
+    {
+      icon: Database,
+      title: "Database & Data Management",
+      desc: "Enterprise data architecture, secure relational/NoSQL database management, schema migration, indexing, and backup automation.",
+      items: [
+        "Relational (PostgreSQL, MySQL) and NoSQL database installation, clustering, and tuning",
+        "Database schema design, query optimization, indexing strategies, and performance audits",
+        "Automated backup strategies, replication, point-in-time recovery, and data security",
+        "Data hygiene, automated ETL pipelines, migration, and secure data access governance",
+      ],
+    },
+    {
+      icon: Cpu,
+      title: "Business Process Automation & System Integration",
+      desc: "Connecting disparate platforms, automating recurring business tasks, syncing data across services, and eliminating operational friction.",
+      items: [
+        "Cross-platform integration between CRM, ERP, finance, communication, and storage systems",
+        "Workflow automation for repetitive manual tasks, ticket routing, and notification triggers",
+        "Custom API bridges, webhooks, and middleware connecting legacy systems to modern tools",
+        "Efficiency audits to identify operational bottlenecks and implement automated solutions",
       ],
     },
   ];
 
   const steps = [
-    { step: "1", title: "Submit Service Enquiry", desc: "Contact DataLens or submit your service request specifying your data, inspection, documentation, or IT service requirements." },
-    { step: "2", title: "Scope & Requirement Assessment", desc: "Our team evaluates your project needs, assesses technical or analytical scope, and determines clear deliverables." },
-    { step: "3", title: "Tailored Engagement Agreement", desc: "Agreements are structured according to project scope, price, duration, or ongoing maintenance arrangements." },
-    { step: "4", title: "Service Execution", desc: "DataLens carries out the agreed data analysis, site inspection, strategic review, documentation, or technical setup." },
-    { step: "5", title: "Delivery & Support", desc: "Receive detailed reports, verified insights, configured applications, or agreed ongoing IT maintenance." },
+    { step: "1", title: "Submit Service Enquiry", desc: "Contact DataLens or submit your service request specifying your IT service, software, cloud, or technical support requirements." },
+    { step: "2", title: "Scope & Requirement Assessment", desc: "Our technical team evaluates your system needs, audits technical requirements, and determines exact deliverables and milestones." },
+    { step: "3", title: "Tailored Engagement Agreement", desc: "Agreements are structured clearly according to project scope, milestone pricing, timeline, or ongoing maintenance SLAs." },
+    { step: "4", title: "Service Execution", desc: "DataLens engineers execute development, server configuration, database tuning, troubleshooting, or systems automation." },
+    { step: "5", title: "Delivery & Continuous Support", desc: "Receive fully configured systems, deployed applications, verification reports, and dedicated ongoing maintenance." },
   ];
 
   return (
@@ -113,21 +97,21 @@ const DataLensPage: FC = () => {
         <div className="relative z-10 max-w-5xl mx-auto text-center px-6">
           <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-medium mb-6">
-              <Eye className="h-4 w-4" /> Professional IT & Data Services
+              <Wrench className="h-4 w-4" /> Professional IT Services
             </div>
             <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6">
-              Data, Inspection & IT Services<br />
-              <span className="text-accent">Tailored to Your Scope</span>
+              Enterprise IT Services<br />
+              <span className="text-accent">Tailored to Your Operations</span>
             </h1>
             <p className="text-lg text-primary-foreground/80 max-w-3xl mx-auto mb-8 leading-relaxed">
-              DataLens provides data and insight, field project inspection, strategic assessment, business and project documentation, and IT services to help organizations understand information, assess projects, document findings, and address technical challenges.
+              DataLens provides comprehensive IT services covering website and application maintenance, custom software development, cloud infrastructure and deployment, IT support and troubleshooting, database management, and business process automation.
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link
                 to="/support"
                 className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg"
               >
-                Request Service <ArrowRight className="h-5 w-5" />
+                Request IT Service <ArrowRight className="h-5 w-5" />
               </Link>
             </div>
           </motion.div>
@@ -137,14 +121,14 @@ const DataLensPage: FC = () => {
       {/* Services Section */}
       <section className="max-w-7xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
-          <span className="text-sm font-semibold text-accent uppercase tracking-wider">Official Service Categories</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Services Provided by DataLens</h2>
+          <span className="text-sm font-semibold text-accent uppercase tracking-wider">Official IT Services</span>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">IT Services Provided by DataLens</h2>
           <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">
-            All engagements are delivered on a service basis, with scope, duration, deliverables, and terms tailored to each client's specific agreement.
+            All engagements are delivered on a dedicated service basis, with scope, SLA, deliverables, and terms tailored to each client's specific requirements.
           </p>
         </div>
 
-        <div className="space-y-12">
+        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
           {serviceCategories.map((s, i) => (
             <motion.div
               key={s.title}
@@ -153,49 +137,24 @@ const DataLensPage: FC = () => {
               viewport={{ once: true }}
               variants={fadeUp}
               custom={i}
-              className="p-8 rounded-2xl border border-border bg-card shadow-sm hover:border-accent/50 transition"
+              className="p-8 rounded-2xl border border-border bg-card shadow-sm hover:border-accent/50 transition flex flex-col justify-between"
             >
-              <div className="flex items-center gap-4 mb-4">
-                <div className="p-3 rounded-xl bg-accent/10 text-accent">
-                  <s.icon className="h-8 w-8" />
+              <div>
+                <div className="p-3 rounded-xl bg-accent/10 text-accent w-fit mb-5">
+                  <s.icon className="h-7 w-7" />
                 </div>
-                <div>
-                  <h3 className="text-2xl font-bold text-foreground">{s.title}</h3>
-                  <p className="text-muted-foreground text-sm mt-1">{s.desc}</p>
-                </div>
+                <h3 className="text-xl font-bold text-foreground mb-2">{s.title}</h3>
+                <p className="text-muted-foreground text-sm leading-relaxed mb-6">{s.desc}</p>
               </div>
 
-              {s.items && (
-                <div className="grid md:grid-cols-2 gap-3 mt-6 pt-6 border-t border-border/60">
-                  {s.items.map((item, idx) => (
-                    <div key={idx} className="flex items-start gap-2 text-sm text-foreground/90">
-                      <CheckCircle2 className="h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
-                      <span>{item}</span>
-                    </div>
-                  ))}
-                </div>
-              )}
-
-              {s.subAreas && (
-                <div className="grid lg:grid-cols-3 gap-6 mt-6 pt-6 border-t border-border/60">
-                  {s.subAreas.map((sub, sIdx) => (
-                    <div key={sIdx} className="p-5 rounded-xl bg-secondary/50 border border-border/80">
-                      <div className="flex items-center gap-2 mb-3">
-                        <sub.icon className="h-5 w-5 text-accent" />
-                        <h4 className="font-semibold text-foreground text-sm">{sub.subTitle}</h4>
-                      </div>
-                      <ul className="space-y-2">
-                        {sub.points.map((pt, ptIdx) => (
-                          <li key={ptIdx} className="flex items-start gap-2 text-xs text-muted-foreground">
-                            <span className="h-1.5 w-1.5 rounded-full bg-accent mt-1 flex-shrink-0" />
-                            <span>{pt}</span>
-                          </li>
-                        ))}
-                      </ul>
-                    </div>
-                  ))}
-                </div>
-              )}
+              <div className="space-y-2.5 pt-6 border-t border-border/60">
+                {s.items.map((item, idx) => (
+                  <div key={idx} className="flex items-start gap-2 text-xs text-foreground/90">
+                    <CheckCircle2 className="h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
+                    <span>{item}</span>
+                  </div>
+                ))}
+              </div>
             </motion.div>
           ))}
         </div>
@@ -204,10 +163,10 @@ const DataLensPage: FC = () => {
       {/* IT Service Summary Box */}
       <section className="bg-secondary/60 py-16 px-6 border-y border-border">
         <div className="max-w-4xl mx-auto text-center space-y-4">
-          <span className="text-xs font-bold text-accent uppercase tracking-widest">IT & Technical Services</span>
-          <h3 className="text-2xl font-bold text-foreground">Flexible Technical Support for Your Infrastructure</h3>
+          <span className="text-xs font-bold text-accent uppercase tracking-widest">IT & Technical Infrastructure</span>
+          <h3 className="text-2xl font-bold text-foreground">Flexible Technical Support for Your Organization</h3>
           <p className="text-muted-foreground leading-relaxed">
-            Our IT services cover website and application maintenance, hosting where required, domain and DNS configuration, deployment support, cloud and server management, email configuration, and technical troubleshooting. Services are tailored to each client's requirements and agreed scope.
+            Our IT services cover website and application maintenance, custom software development, cloud and server deployment, database and data architecture, business email configuration, and technical troubleshooting. Engagements are tailored directly to client requirements and agreed operational scope.
           </p>
         </div>
       </section>
@@ -217,7 +176,7 @@ const DataLensPage: FC = () => {
         <div className="text-center mb-14">
           <span className="text-sm font-semibold text-accent uppercase tracking-wider">How We Work</span>
           <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Service Delivery Workflow</h2>
-          <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">Engagements are structured around client needs, agreed pricing, clear scope, and verified execution.</p>
+          <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">Engagements are structured around client needs, agreed milestones, clear technical scope, and verified execution.</p>
         </div>
         <div className="space-y-4">
           {steps.map((s, i) => (
@@ -237,13 +196,13 @@ const DataLensPage: FC = () => {
       {/* Who Benefits */}
       <section className="max-w-7xl mx-auto py-20 px-6 border-t border-border">
         <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground">Who Benefits from DataLens Services?</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-foreground">Who Benefits from DataLens IT Services?</h2>
         </div>
         <div className="grid md:grid-cols-3 gap-6">
           {[
-            { icon: Users, title: "Investors & Decision Makers", desc: "Strategic assessment, feasibility reviews, risk evaluation, and due diligence reporting before making capital commitments." },
-            { icon: ClipboardList, title: "Institutions & Businesses", desc: "Data analysis, analytical report preparation, structured documentation, and tailored IT technical support." },
-            { icon: MapPin, title: "Project Owners & Developers", desc: "Independent field inspections, verified visual observations, progress monitoring, and cloud application maintenance." },
+            { icon: Building2, title: "Growing Enterprises & Businesses", desc: "Reliable application maintenance, business email setup, database management, and process automation to drive productivity." },
+            { icon: Users, title: "Institutions & Organizations", desc: "Secure cloud deployment, custom software development, system integrations, and dedicated technical troubleshooting." },
+            { icon: Shield, title: "Platform & Product Operators", desc: "High-uptime server infrastructure, containerized deployments, automated backups, and proactive technical maintenance." },
           ].map((b, i) => (
             <motion.div key={b.title} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="p-6 rounded-xl border border-border bg-card text-center">
               <b.icon className="h-10 w-10 text-accent mx-auto mb-4" />
@@ -257,9 +216,9 @@ const DataLensPage: FC = () => {
       {/* CTA */}
       <section className="py-20 px-6 bg-gradient-to-r from-primary to-primary/90 text-center">
         <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Discuss Your Engagement with DataLens</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Discuss Your IT Requirements with DataLens</h2>
           <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-            Reach out to our team to define your project scope, request data services, field inspections, documentation, or technical support.
+            Reach out to our engineering team to define your project scope, request software development, cloud infrastructure, or dedicated technical support.
           </p>
           <Link
             to="/support"
