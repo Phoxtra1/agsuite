@@ -1,3 +1,4 @@
+import ImportButton from "@/components/workspace/ImportButton";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, Sheet as SheetIcon, MoreVertical, Trash2, Copy, Pencil } from "lucide-react";
@@ -38,9 +39,9 @@ export default function SheetsList() {
           <h1 className="text-2xl font-bold text-foreground">Amineva Sheets</h1>
           <p className="text-sm text-muted-foreground">Intelligence-grade spreadsheets with SPSS-style analytics and Dipa-assisted insight.</p>
         </div>
-        <button onClick={onCreate} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground font-medium hover:bg-accent/90">
+        <div className="flex items-center gap-2"><ImportButton kind="sheets" /><button onClick={onCreate} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground font-medium hover:bg-accent/90">
           <Plus className="h-4 w-4" /> New Sheet
-        </button>
+        </button></div>
       </div>
 
       <div className="relative mb-6 max-w-md">

@@ -78,6 +78,7 @@ export function CategoryManager() {
           url: formData.url.trim(),
           category: formData.category,
           status: formData.status,
+          order: existing?.order ?? products.length + 1,
         }
       : {
           id: `cat-${Date.now()}`,

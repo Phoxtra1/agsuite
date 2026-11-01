@@ -1,3 +1,4 @@
+import ImportButton from "@/components/workspace/ImportButton";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
@@ -127,12 +128,12 @@ export default function FormsList() {
             Enterprise-grade data capture, surveys, and auto-graded assessments powered by Dipa AI. Custom styling, interactive grids, advanced logic skip triggers, and professional reporting dashboard.
           </p>
         </div>
-        <button
+        <div className="flex items-center gap-2"><ImportButton kind="forms" /><button
           onClick={() => handleCreateNew()}
           className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-fuchsia-600 text-white font-semibold hover:bg-fuchsia-700 shadow transition-all duration-150 self-start md:self-auto"
         >
           <Plus className="h-4 w-4" /> Create Form
-        </button>
+        </button></div>
       </div>
 
       {/* Template Gallery Header */}
