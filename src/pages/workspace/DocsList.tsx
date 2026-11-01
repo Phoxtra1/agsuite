@@ -1,3 +1,4 @@
+import ImportButton from "@/components/workspace/ImportButton";
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Plus, Search, FileText, MoreVertical, Trash2, Copy, Pencil, Share2 } from "lucide-react";
@@ -54,9 +55,9 @@ export default function DocsList() {
           <h1 className="text-2xl font-bold text-foreground">Amineva Docs</h1>
           <p className="text-sm text-muted-foreground">Professional document workspace with intelligence and Dipa assistance.</p>
         </div>
-        <button onClick={onCreate} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground font-medium hover:bg-accent/90">
+        <div className="flex items-center gap-2"><ImportButton kind="docs" /><button onClick={onCreate} className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-accent text-accent-foreground font-medium hover:bg-accent/90">
           <Plus className="h-4 w-4" /> New Document
-        </button>
+        </button></div>
       </div>
 
       <div className="relative mb-6 max-w-md">
