@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/appwrite/client";
 import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
+import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
 
 export interface FormTheme {
   primary: string;
@@ -318,6 +319,15 @@ export const FORM_TEMPLATES: Array<Partial<FormDocument> & { id: string; categor
 ];
 
 const TBL = "workspace_forms" as any;
+const toRow = (f: FormDocument, userId: string) => {
+  const owner = isRealUser(f.ownerId) ? f.ownerId : userId;
+  return { form_id: f.formCode || f.id, title: (f.title || "Untitled Form").slice(0, 255), owner_id: owner, schema_json: JSON.stringify({ ...f, ownerId: owner }) };
+};
+function pushForm(f: FormDocument) {
+  const owner = isRealUser(f.ownerId) ? f.ownerId : getWorkspaceUser();
+  if (!isRealUser(owner) || !isRemoteId(f.id)) return;
+  scheduleRemote(`${TBL}:${f.id}`, () => upsertRemote(TBL, f.id, toRow(f, owner)));
+}
 const CACHE_BASE = "amineva_forms";
 const CACHE_KEY = () => wsKey(CACHE_BASE);
 
@@ -357,7 +367,7 @@ async function getAuthenticatedUserId(): Promise<string> {
 function mapRemoteRowToForm(row: any): FormDocument {
   const schema = typeof row.schema_json === "string" ? JSON.parse(row.schema_json || "{}") : (row.schema_json || {});
   return {
-    id: row.id || row.form_id || schema.id,
+    id: schema.id || row.id || row.form_id,
     ownerId: row.owner_id || schema.ownerId || "",
     title: row.title || schema.title || "Untitled Form",
     description: schema.description || "",
@@ -368,8 +378,8 @@ function mapRemoteRowToForm(row: any): FormDocument {
     status: row.status || schema.status || "draft",
     questions: schema.questions || [],
     responses: schema.responses || [],
-    createdAt: row.created_at || schema.createdAt || new Date().toISOString(),
-    updatedAt: row.updated_at || schema.updatedAt || new Date().toISOString(),
+    createdAt: schema.createdAt || row.created_at || new Date().toISOString(),
+    updatedAt: schema.updatedAt || row.updated_at || new Date().toISOString(),
     comments: schema.comments || [],
     auditLogs: schema.auditLogs || [],
   };
@@ -389,14 +399,7 @@ export async function listForms(): Promise<FormDocument[]> {
     );
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
-      const remote = data.map(mapRemoteRowToForm);
-      const merged = [...local];
-      for (const form of remote) {
-        const idx = merged.findIndex((item) => item.id === form.id);
-        if (idx < 0) merged.push(form);
-        else if (new Date(form.updatedAt).getTime() > new Date(merged[idx].updatedAt).getTime()) merged[idx] = form;
-      }
-      merged.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
+      const merged = reconcile({ table: TBL, local: getLocalForms(), remote: data.map(mapRemoteRowToForm), userId, updatedAt: (f) => f.updatedAt, toRow });
       saveLocalForms(merged);
       return merged;
     }
@@ -485,19 +488,7 @@ export async function createForm(title: string, templateId?: string): Promise<Fo
   const local = getLocalForms();
   local.unshift(newDoc);
   saveLocalForms(local);
-
-  try {
-    await supabase.from(TBL).insert({
-      id: newDoc.id,
-      form_id: newDoc.formCode,
-      title: newDoc.title,
-      owner_id: userId,
-      schema_json: JSON.stringify(newDoc),
-    });
-  } catch (e) {
-    console.warn("[forms] Failed to create form in Supabase, using offline fallback", e);
-  }
-
+  pushForm(newDoc);
   return newDoc;
 }
 
@@ -528,19 +519,7 @@ export async function updateForm(id: string, updates: Partial<FormDocument>): Pr
 
   local[index] = updatedDoc;
   saveLocalForms(local);
-
-  try {
-    await supabase
-      .from(TBL)
-      .update({
-        title: updatedDoc.title,
-        schema_json: JSON.stringify(updatedDoc),
-      })
-      .eq("id", id);
-  } catch (e) {
-    console.warn("[forms] Offline update queued locally", e);
-  }
-
+  pushForm(updatedDoc);
   return true;
 }
 
@@ -548,10 +527,7 @@ export async function deleteForm(id: string): Promise<boolean> {
   const local = getLocalForms();
   const filtered = local.filter((f) => f.id !== id);
   saveLocalForms(filtered);
-
-  try {
-    await supabase.from(TBL).delete().eq("id", id);
-  } catch {}
+  deleteRemote(TBL, id);
   return true;
 }
 
@@ -582,19 +558,7 @@ export async function duplicateForm(form: FormDocument): Promise<FormDocument | 
   const local = getLocalForms();
   local.unshift(duplicated);
   saveLocalForms(local);
-
-  try {
-    await supabase.from(TBL).insert({
-      id: duplicated.id,
-      form_id: duplicated.formCode,
-      title: duplicated.title,
-      owner_id: userId,
-      schema_json: JSON.stringify(duplicated),
-    });
-  } catch (e) {
-    console.warn("[forms] Failed to insert duplicated form in Supabase", e);
-  }
-
+  pushForm(duplicated);
   return duplicated;
 }
 
