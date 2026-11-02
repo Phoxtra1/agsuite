@@ -279,7 +279,14 @@ class AppwriteQueryBuilder {
           const clean = cleanPayload(item);
           delete clean.id;
 
-          const doc = await databases.createDocument(APPWRITE_DB_ID, this.collection, docId, clean);
+          const ownPerms = this.collection === "workspace_forms" ? ownerPermissions(clean.owner_id) : undefined;
+          let doc: any;
+          try {
+            doc = await databases.createDocument(APPWRITE_DB_ID, this.collection, docId, clean, ownPerms);
+          } catch (e: any) {
+            if (!ownPerms || e?.code === 409) throw e;
+            doc = await databases.createDocument(APPWRITE_DB_ID, this.collection, docId, clean);
+          }
           inserted.push(mapAppwriteDoc(doc));
         }
 
