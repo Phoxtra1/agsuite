@@ -1,5 +1,14 @@
 import { supabase } from "@/integrations/appwrite/client";
 import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
+import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
+
+const TBL = "workspace_documents";
+const toRow = (d: WorkspaceDocument, userId: string) => ({ ...d, owner_id: isRealUser(d.owner_id) ? d.owner_id : userId });
+function pushDoc(d: WorkspaceDocument) {
+  const owner = isRealUser(d.owner_id) ? d.owner_id : getWorkspaceUser();
+  if (!isRealUser(owner) || !isRemoteId(d.id)) return;
+  scheduleRemote(`${TBL}:${d.id}`, () => upsertRemote(TBL, d.id, toRow(d, owner)));
+}
 
 export interface WorkspaceDocument {
   id: string;
@@ -78,14 +87,7 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
     if (!error && data && Array.isArray(data)) {
-      const remote = data as any as WorkspaceDocument[];
-      const merged = [...local];
-      for (const doc of remote) {
-        const idx = merged.findIndex((item) => item.id === doc.id);
-        if (idx < 0) merged.push(doc);
-        else if (new Date(doc.updated_at).getTime() > new Date(merged[idx].updated_at).getTime()) merged[idx] = doc;
-      }
-      merged.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      const merged = reconcile({ table: TBL, local: getLocalDocs(), remote: data as any as WorkspaceDocument[], userId, updatedAt: (d) => d.updated_at, toRow });
       saveLocalDocs(merged);
       return merged;
     }
@@ -144,25 +146,7 @@ export async function createDocument(title = "Untitled document"): Promise<Works
   local.unshift(newDoc);
   saveLocalDocs(local);
 
-  supabase
-    .from("workspace_documents" as any)
-    .insert({ id: localId, title, owner_id: userId, content_json: EMPTY_DOC, content_text: "" })
-    .select()
-    .single()
-    .then(({ data }) => {
-      if (data) {
-        const updatedLocal = getLocalDocs();
-        const idx = updatedLocal.findIndex((d) => d.id === localId);
-        if (idx >= 0) {
-          updatedLocal[idx] = data as any;
-          saveLocalDocs(updatedLocal);
-        }
-      }
-    })
-    .catch((e) => {
-      console.warn("[ag-docs] Failed to create document in Supabase, using offline fallback", e);
-    });
-
+  pushDoc(newDoc);
   return newDoc;
 }
 
@@ -176,16 +160,7 @@ export async function updateDocument(
   if (idx >= 0) {
     local[idx] = { ...local[idx], ...patch, updated_at: now };
     saveLocalDocs(local);
-  }
-
-  try {
-    const { error } = await supabase
-      .from("workspace_documents" as any)
-      .update(patch)
-      .eq("id", id);
-    if (!error) return true;
-  } catch (e) {
-    console.warn("[ag-docs] Offline update queued locally", e);
+    pushDoc(local[idx]);
   }
   return true;
 }
@@ -194,10 +169,7 @@ export async function deleteDocument(id: string): Promise<boolean> {
   const local = getLocalDocs();
   const filtered = local.filter((d) => d.id !== id);
   saveLocalDocs(filtered);
-
-  try {
-    await supabase.from("workspace_documents" as any).delete().eq("id", id);
-  } catch {}
+  deleteRemote(TBL, id);
   return true;
 }
 
@@ -219,35 +191,7 @@ export async function duplicateDocument(doc: WorkspaceDocument): Promise<Workspa
   const local = getLocalDocs();
   local.unshift(duplicated);
   saveLocalDocs(local);
-
-  try {
-    const { data, error } = await supabase
-      .from("workspace_documents" as any)
-      .insert({
-        id: localId,
-        title: `${doc.title} (copy)`,
-        owner_id: userId,
-        content_json: doc.content_json,
-        content_text: doc.content_text,
-      })
-      .select()
-      .single();
-
-    if (!error && data) {
-      const updatedLocal = getLocalDocs();
-      const idx = updatedLocal.findIndex((d) => d.id === localId);
-      if (idx >= 0) {
-        updatedLocal[idx] = data as any;
-      } else {
-        updatedLocal.unshift(data as any);
-      }
-      saveLocalDocs(updatedLocal);
-      return data as any;
-    }
-  } catch (e) {
-    console.warn("[ag-docs] Failed to duplicate document in Supabase, using offline fallback", e);
-  }
-
+  pushDoc(duplicated);
   return duplicated;
 }
 
