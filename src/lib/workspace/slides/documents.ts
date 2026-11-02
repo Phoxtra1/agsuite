@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/appwrite/client";
 import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
+import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
 
 export type SlideElementKind = "text" | "shape" | "image" | "table" | "chart" | "video" | "audio";
 export type ShapeKind = "rect" | "ellipse" | "triangle" | "line" | "arrow" | "star" | "banner" | "hexagon";
@@ -310,6 +311,12 @@ export function flattenDeckText(d: Deck): string {
 
 /* ------------------- CRUD ------------------- */
 const TBL = "workspace_slides" as any;
+const toRow = (d: WorkspaceSlideDoc, userId: string) => ({ ...d, owner_id: isRealUser(d.owner_id) ? d.owner_id : userId });
+function pushDeck(d: WorkspaceSlideDoc) {
+  const owner = isRealUser(d.owner_id) ? d.owner_id : getWorkspaceUser();
+  if (!isRealUser(owner) || !isRemoteId(d.id)) return;
+  scheduleRemote(`${TBL}:${d.id}`, () => upsertRemote(TBL, d.id, toRow(d, owner)));
+}
 const CACHE_BASE = "amineva_workspace_slides";
 const CACHE_KEY = () => wsKey(CACHE_BASE);
 
@@ -359,14 +366,7 @@ export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
     );
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
-      const remote = data as any as WorkspaceSlideDoc[];
-      const merged = [...local];
-      for (const deck of remote) {
-        const idx = merged.findIndex((item) => item.id === deck.id);
-        if (idx < 0) merged.push(deck);
-        else if (new Date(deck.updated_at).getTime() > new Date(merged[idx].updated_at).getTime()) merged[idx] = deck;
-      }
-      merged.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      const merged = reconcile({ table: TBL, local: getLocalDecks(), remote: data as any as WorkspaceSlideDoc[], userId, updatedAt: (d) => d.updated_at, toRow });
       saveLocalDecks(merged);
       return merged;
     }
@@ -419,20 +419,7 @@ export async function createDeck(title = "Untitled presentation"): Promise<Works
   local.unshift(newDeck);
   saveLocalDecks(local);
 
-  supabase.from(TBL)
-    .insert({ id: localId, title, owner_id: userId, deck_json: EMPTY_DECK as any, content_text: "" })
-    .select().single()
-    .then(({ data }) => {
-      if (data) {
-        const updatedLocal = getLocalDecks();
-        const idx = updatedLocal.findIndex((d) => d.id === localId);
-        if (idx >= 0) {
-          updatedLocal[idx] = data as any;
-          saveLocalDecks(updatedLocal);
-        }
-      }
-    });
-
+  pushDeck(newDeck);
   return newDeck;
 }
 
@@ -443,13 +430,7 @@ export async function updateDeck(id: string, patch: Partial<WorkspaceSlideDoc>):
   if (idx >= 0) {
     local[idx] = { ...local[idx], ...patch, updated_at: now };
     saveLocalDecks(local);
-  }
-
-  try {
-    const { error } = await supabase.from(TBL).update(patch as any).eq("id", id);
-    if (!error) return true;
-  } catch (e) {
-    console.warn("[slides] Offline update queued locally", e);
+    pushDeck(local[idx]);
   }
   return true;
 }
@@ -458,10 +439,7 @@ export async function deleteDeck(id: string): Promise<boolean> {
   const local = getLocalDecks();
   const filtered = local.filter((d) => d.id !== id);
   saveLocalDecks(filtered);
-
-  try {
-    await supabase.from(TBL).delete().eq("id", id);
-  } catch {}
+  deleteRemote(TBL, id);
   return true;
 }
 
@@ -483,5 +461,6 @@ export async function duplicateDeck(d: WorkspaceSlideDoc): Promise<WorkspaceSlid
   const local = getLocalDecks();
   local.unshift(duplicated);
   saveLocalDecks(local);
+  pushDeck(duplicated);
   return duplicated;
 }

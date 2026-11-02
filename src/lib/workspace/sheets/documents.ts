@@ -1,5 +1,14 @@
 import { supabase } from "@/integrations/appwrite/client";
 import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
+import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
+
+const TBL = "workspace_sheets";
+const toRow = (d: WorkspaceSheet, userId: string) => ({ ...d, owner_id: isRealUser(d.owner_id) ? d.owner_id : userId });
+function pushSheet(d: WorkspaceSheet) {
+  const owner = isRealUser(d.owner_id) ? d.owner_id : getWorkspaceUser();
+  if (!isRealUser(owner) || !isRemoteId(d.id)) return;
+  scheduleRemote(`${TBL}:${d.id}`, () => upsertRemote(TBL, d.id, toRow(d, owner)));
+}
 
 export interface WorkspaceSheet {
   id: string;
@@ -129,14 +138,7 @@ export async function listSheets(): Promise<WorkspaceSheet[]> {
     );
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
-      const remote = data as any as WorkspaceSheet[];
-      const merged = [...local];
-      for (const sheet of remote) {
-        const idx = merged.findIndex((item) => item.id === sheet.id);
-        if (idx < 0) merged.push(sheet);
-        else if (new Date(sheet.updated_at).getTime() > new Date(merged[idx].updated_at).getTime()) merged[idx] = sheet;
-      }
-      merged.sort((a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime());
+      const merged = reconcile({ table: TBL, local: getLocalSheets(), remote: data as any as WorkspaceSheet[], userId, updatedAt: (d) => d.updated_at, toRow });
       saveLocalSheets(merged);
       return merged;
     }
@@ -190,23 +192,7 @@ export async function createSheet(title = "Untitled sheet"): Promise<WorkspaceSh
   local.unshift(newSheet);
   saveLocalSheets(local);
 
-  supabase.from("workspace_sheets" as any)
-    .insert({ id: localId, title, owner_id: userId, workbook_json: EMPTY_WORKBOOK, content_text: "" })
-    .select().single()
-    .then(({ data }) => {
-      if (data) {
-        const updatedLocal = getLocalSheets();
-        const idx = updatedLocal.findIndex((s) => s.id === localId);
-        if (idx >= 0) {
-          updatedLocal[idx] = data as any;
-          saveLocalSheets(updatedLocal);
-        }
-      }
-    })
-    .catch((e) => {
-      console.warn("[sheets] Failed to create sheet in Supabase, using offline fallback", e);
-    });
-
+  pushSheet(newSheet);
   return newSheet;
 }
 
@@ -217,14 +203,7 @@ export async function updateSheet(id: string, patch: Partial<WorkspaceSheet>): P
   if (idx >= 0) {
     local[idx] = { ...local[idx], ...patch, updated_at: now };
     saveLocalSheets(local);
-  }
-
-  if (typeof navigator !== "undefined" && !navigator.onLine) return true;
-  try {
-    const { error } = await supabase.from("workspace_sheets" as any).update(patch).eq("id", id);
-    if (!error) return true;
-  } catch (e) {
-    console.warn("[sheets] Offline update queued locally", e);
+    pushSheet(local[idx]);
   }
   return true;
 }
@@ -233,10 +212,7 @@ export async function deleteSheet(id: string): Promise<boolean> {
   const local = getLocalSheets();
   const filtered = local.filter((s) => s.id !== id);
   saveLocalSheets(filtered);
-
-  try {
-    await supabase.from("workspace_sheets" as any).delete().eq("id", id);
-  } catch {}
+  deleteRemote(TBL, id);
   return true;
 }
 
@@ -257,6 +233,7 @@ export async function duplicateSheet(s: WorkspaceSheet): Promise<WorkspaceSheet>
   const local = getLocalSheets();
   local.unshift(duplicated);
   saveLocalSheets(local);
+  pushSheet(duplicated);
   return duplicated;
 }
 
