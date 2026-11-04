@@ -350,7 +350,12 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
   const activeRequest = useRef<AbortController | null>(null);
 
   useEffect(() => {
+    activeRequest.current?.abort();
     setQuery(initialQuery);
+    setRecords([]);
+    setRetrievedAt("");
+    setError("");
+    setLoading(false);
   }, [initialQuery]);
 
   useEffect(() => () => activeRequest.current?.abort(), []);
@@ -401,6 +406,7 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
           <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Publication year not supplied"}</Badge><span className="text-[11px] text-muted-foreground">{record.type}</span></div>
           <h3 className="mt-2 font-semibold leading-6">{record.url ? <a href={record.url} target="_blank" rel="noreferrer" className="hover:text-primary hover:underline">{record.title} <ExternalLink className="inline h-3.5 w-3.5" /></a> : record.title}</h3>
           {(record.authors || record.journal || record.publisher) && <p className="mt-1 text-xs leading-5 text-muted-foreground">{[record.authors, record.journal, record.publisher].filter(Boolean).join(" · ")}</p>}
+          {record.doi && <p className="mt-1 text-[11px] text-muted-foreground">DOI: <a href={"https://doi.org/" + record.doi} target="_blank" rel="noreferrer" className="font-mono text-primary underline underline-offset-2">{record.doi}</a></p>}
           {record.abstract && <p className="mt-3 text-sm leading-6 text-muted-foreground">{record.abstract}{record.abstract.length >= 620 ? "…" : ""}</p>}
           <p className="mt-3 border-t border-border pt-3 text-[11px] leading-5 text-muted-foreground">Provenance: metadata deposited with Crossref. Check the publisher's article page for corrections, retractions, study methods, full text and publication status before relying on its conclusions.</p>
         </article>)}
