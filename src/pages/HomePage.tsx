@@ -129,6 +129,19 @@ export default function HomePage() {
   const workspaceProduct = products.find((product) => product.id.toLowerCase().includes("workspace") || product.name.toLowerCase().includes("workspace")) || null;
   const WorkspaceIcon = getProductIconSafe(workspaceProduct?.id || "workspace");
 
+  // A direct /workspace visit returns here for authentication; restore the
+  // Workspace sign-in card instead of leaving the user at product selection.
+  useEffect(() => {
+    const requestedPath = new URLSearchParams(window.location.search).get("authRedirect");
+    if (!requestedPath || !decodeURIComponent(requestedPath).startsWith("/workspace") || !workspaceProduct) return;
+    if (isAuthenticated) {
+      navigate("/workspace", { replace: true });
+      return;
+    }
+    setSelectedProduct(workspaceProduct);
+    setAuthTab("signin");
+  }, [workspaceProduct, isAuthenticated, navigate]);
+
   const canShowAuthCard = useMemo(() => {
     const s = `${selectedProduct?.id || ""} ${selectedProduct?.name || ""} ${selectedProduct?.url || ""}`.toLowerCase();
     if (s.includes("sikas") || s.includes("aminevaops") || s.includes("ops.amineva.com")) return false;
@@ -303,7 +316,6 @@ export default function HomePage() {
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => workspaceProduct ? onPickProduct(workspaceProduct) : navigate("/workspace")}>Workspace</button>
 
             {/* Settings with theme toggle */}
             <div className="relative" ref={settingsRef}>
