@@ -188,6 +188,7 @@ function AppRoutes() {
           <Route index element={<PublicHome />} />
           <Route path="info-discovery" element={<InfoDiscoveryPage />} />
           <Route path="info-discovery/:categorySlug" element={<InfoDiscoveryPage />} />
+          <Route path="info-discovery/:categorySlug/:topicSlug" element={<InfoDiscoveryPage />} />
           <Route path="about-us" element={<AboutUs />} />
           <Route path="impact" element={<AminevaImpactPage />} />
           <Route path="impact/:initiativeId" element={<AminevaImpactPage />} />
