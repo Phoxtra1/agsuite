@@ -127,6 +127,7 @@ export default function HomePage() {
   const effectiveCountryLabel = useMemo(() => selectedAgOption?.label || displayCountryLabel || "Ghana", [selectedAgOption, displayCountryLabel]);
 
   const workspaceProduct = products.find((product) => product.id.toLowerCase().includes("workspace") || product.name.toLowerCase().includes("workspace")) || null;
+  const WorkspaceIcon = getProductIconSafe(workspaceProduct?.id || "workspace");
 
   const canShowAuthCard = useMemo(() => {
     const s = `${selectedProduct?.id || ""} ${selectedProduct?.name || ""} ${selectedProduct?.url || ""}`.toLowerCase();
@@ -392,7 +393,7 @@ export default function HomePage() {
               <section className="mt-5 rounded-xl border border-border bg-card p-5">
                 <div className="flex items-center gap-4">
                   <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
-                    {getProductIconSafe(workspaceProduct?.id || "workspace") && React.createElement(getProductIconSafe(workspaceProduct?.id || "workspace"), { className: "h-6 w-6" })}
+                    <WorkspaceIcon className="h-6 w-6" />
                   </div>
                   <div className="min-w-0 flex-1">
                     <h2 className="font-semibold text-foreground">Workspace</h2>
