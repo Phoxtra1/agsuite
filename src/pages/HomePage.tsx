@@ -302,6 +302,7 @@ export default function HomePage() {
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>
+            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => workspaceProduct ? onPickProduct(workspaceProduct) : navigate("/workspace")}>Workspace</button>
 
             {/* Settings with theme toggle */}
             <div className="relative" ref={settingsRef}>
@@ -403,6 +404,7 @@ export default function HomePage() {
                 </div>
               </section>
             </>
+          )}
         </div>
 
         <div className="absolute bottom-4 left-8 right-8 flex justify-between items-center text-xs text-muted-foreground">
