@@ -315,9 +315,9 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
     } finally { setLoading(false); }
   };
   return (
-    <section className="rounded-2xl border border-border bg-card p-5 md:p-6">
+    <section className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><BookOpen className="h-4 w-4 text-primary" /> Research publication search</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Search Crossref's public scholarly metadata index. Results are publication records—not proof that a paper's claims are correct or that its full text is freely available.</p></div>
+        <div><div className="flex items-center gap-2 text-sm font-semibold"><BookOpen className="h-4 w-4 text-accent" /> Research publication search</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Search Crossref's public scholarly metadata index. Results are publication records—not proof that a paper's claims are correct or that its full text is freely available.</p></div>
         <Badge variant="outline">Live public index</Badge>
       </div>
       <form onSubmit={runSearch} className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -378,9 +378,9 @@ function CountryExplorer() {
     { label: "Life expectancy", data: stats?.lifeExpectancy, suffix: " years", digits: 1 },
   ];
   return (
-    <section className="rounded-2xl border border-border bg-card p-5 md:p-6">
+    <section className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><Globe2 className="h-4 w-4 text-primary" /> Country profile and development indicators</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Choose a country to retrieve its profile and latest available World Bank indicators. These are country-level indicators, not city prices, visa rules or a guarantee of present-day conditions.</p></div>
+        <div><div className="flex items-center gap-2 text-sm font-semibold"><Globe2 className="h-4 w-4 text-accent" /> Country profile and development indicators</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Choose a country to retrieve its profile and latest available World Bank indicators. These are country-level indicators, not city prices, visa rules or a guarantee of present-day conditions.</p></div>
         <Badge variant="outline">Live API lookup</Badge>
       </div>
       <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
@@ -441,9 +441,9 @@ function ClimateExplorer() {
     finally { setLoading(false); }
   };
   return (
-    <section className="rounded-2xl border border-border bg-card p-5 md:p-6">
+    <section className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><CloudSun className="h-4 w-4 text-primary" /> Point-based climate normals</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Retrieve NASA POWER long-term monthly climatology for a coordinate. These are climate summaries, not a live weather forecast, farm inspection or crop-suitability verdict.</p></div>
+        <div><div className="flex items-center gap-2 text-sm font-semibold"><CloudSun className="h-4 w-4 text-accent" /> Point-based climate normals</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Retrieve NASA POWER long-term monthly climatology for a coordinate. These are climate summaries, not a live weather forecast, farm inspection or crop-suitability verdict.</p></div>
         <Badge variant="outline">NASA POWER API</Badge>
       </div>
       <form onSubmit={run} className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
@@ -462,8 +462,8 @@ function ClimateExplorer() {
 }
 
 function SourceDirectory({ sources }: { sources: Source[] }) {
-  return <section className="rounded-2xl border border-border bg-card p-5 md:p-6">
-    <div className="flex items-center justify-between gap-3"><div><div className="flex items-center gap-2 text-sm font-semibold"><FileCheck2 className="h-4 w-4 text-primary" /> Source directory</div><p className="mt-1 text-xs text-muted-foreground">Start with the source that has authority over the question.</p></div><Badge variant="outline">{sources.length} sources</Badge></div>
+  return <section className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-6">
+    <div className="flex items-center justify-between gap-3"><div><div className="flex items-center gap-2 text-sm font-semibold"><FileCheck2 className="h-4 w-4 text-accent" /> Source directory</div><p className="mt-1 text-xs text-muted-foreground">Start with the source that has authority over the question.</p></div><Badge variant="outline">{sources.length} sources</Badge></div>
     <div className="mt-4 grid gap-3 md:grid-cols-2">
       {sources.map(source => <article key={source.name} className="rounded-xl border border-border p-4">
         <h3 className="text-sm font-semibold">{source.name}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{source.scope}</p>
@@ -511,7 +511,7 @@ export default function InfoDiscoveryPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <section className="border-b border-border bg-gradient-to-b from-primary/[0.06] to-background">
+      <section className="discovery-hero relative overflow-hidden border-b border-border">
         <div className="mx-auto max-w-7xl px-5 py-9 md:px-8 md:py-12">
           <div className="mb-5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
             <Link to="/" className="hover:text-foreground">Amineva Global</Link><ChevronRight className="h-3.5 w-3.5" /><Link to="/info-discovery" className="hover:text-foreground">Info Discovery</Link>
@@ -519,18 +519,18 @@ export default function InfoDiscoveryPage() {
             {selectedTopic && <><ChevronRight className="h-3.5 w-3.5" /><span className="text-foreground">{selectedTopic.title}</span></>}
           </div>
           <div className="max-w-4xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-border bg-card px-3 py-1.5 text-[11px] font-semibold tracking-wide text-muted-foreground"><Globe2 className="h-3.5 w-3.5 text-primary" /> INFORMATION DISCOVERY SYSTEM</div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-accent"><Globe2 className="h-3.5 w-3.5" /> INFORMATION DISCOVERY SYSTEM</div>
             <h1 className="text-3xl font-semibold tracking-tight md:text-5xl">{selectedTopic ? selectedTopic.title : selected ? selected.title : "Discover information. Understand your options. Make informed decisions."}</h1>
             <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">{selectedTopic ? selectedTopic.description : selected ? selected.summary : "Search across career development, destinations, technology, business, agriculture and operational intelligence. Move from a broad question to a structured subject, then follow the evidence and sources relevant to your decision."}</p>
           </div>
           <div className="relative mt-7 max-w-4xl">
-            <form onSubmit={onSearchSubmit} className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-2 shadow-sm sm:flex-row sm:items-center">
+            <form onSubmit={onSearchSubmit} className="flex flex-col gap-2 rounded-2xl border border-border bg-card shadow-sm p-2 text-foreground shadow-xl sm:flex-row sm:items-center">
               <div className="flex min-w-0 flex-1 items-center gap-3 px-3"><Search className="h-5 w-5 shrink-0 text-muted-foreground" /><Input value={query} onChange={e => { setQuery(e.target.value); setShowSuggestions(true); }} onFocus={() => setShowSuggestions(true)} onBlur={() => window.setTimeout(() => setShowSuggestions(false), 160)} placeholder="Search areas, topics, questions and subjects" className="h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" aria-label="Search information discovery" /></div>
-              <Button type="submit" className="h-11 px-6" disabled={!searchResults.length}>Open result <ArrowRight className="ml-2 h-4 w-4" /></Button>
+              <Button type="submit" className="h-11 bg-accent px-6 text-accent-foreground hover:bg-accent/90" disabled={!searchResults.length}>Open result <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </form>
-            {showSuggestions && query.trim() && <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-96 overflow-y-auto rounded-xl border border-border bg-card p-2 shadow-xl">
+            {showSuggestions && query.trim() && <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-96 overflow-y-auto rounded-xl border border-border bg-card p-2 text-foreground shadow-xl">
               {searchResults.length ? searchResults.map((result, index) => <button key={result.category.slug + result.slug + index} type="button" onMouseDown={e => e.preventDefault()} onClick={() => result.kind === "area" ? goToCategory(result.category.slug) : goToTopic(result.category.slug, result.slug)} className="flex w-full items-start gap-3 rounded-lg p-3 text-left hover:bg-muted">
-                <span className="mt-0.5 rounded-lg bg-primary/10 p-2 text-primary">{result.kind === "area" ? <result.category.icon className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium">{result.label}</span><span className="mt-0.5 block text-xs text-muted-foreground">{result.category.title}{result.kind === "topic" ? " · " + result.detail.split(" · ")[0] : ""}</span></span><ChevronRight className="mt-1 h-4 w-4 text-muted-foreground" />
+                <span className="mt-0.5 rounded-lg bg-accent/15 p-2 text-accent">{result.kind === "area" ? <result.category.icon className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium">{result.label}</span><span className="mt-0.5 block text-xs text-muted-foreground">{result.category.title}{result.kind === "topic" ? " · " + result.detail.split(" · ")[0] : ""}</span></span><ChevronRight className="mt-1 h-4 w-4 text-muted-foreground" />
               </button>) : <p className="px-3 py-5 text-center text-sm text-muted-foreground">No matching area or topic. Try another phrase.</p>}
             </div>}
             <p className="mt-2 text-[11px] text-muted-foreground">Search opens a matching area or topic. Use the research index below to search indexed publications.</p>
@@ -540,21 +540,21 @@ export default function InfoDiscoveryPage() {
 
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="space-y-5">
-          <div className="rounded-2xl border border-border bg-card p-4">
+          <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
             <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><SlidersHorizontal className="h-4 w-4" /> Browse discovery areas</div>
             <nav className="space-y-1">
-              <button onClick={() => navigate("/info-discovery")} className={"flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm " + (!selected ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>All areas <span className="text-xs">06</span></button>
-              {categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className={"flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm " + (selected?.slug === category.slug ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground hover:bg-muted hover:text-foreground")}><category.icon className="h-4 w-4 shrink-0" /><span>{category.title}</span></button>)}
+              <button onClick={() => navigate("/info-discovery")} className={"flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm " + (!selected ? "bg-accent/15 font-semibold text-foreground shadow-[inset_3px_0_0_hsl(var(--accent))]" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>All areas <span className="text-xs">06</span></button>
+              {categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className={"flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm " + (selected?.slug === category.slug ? "bg-accent/15 font-semibold text-foreground shadow-[inset_3px_0_0_hsl(var(--accent))]" : "text-muted-foreground hover:bg-muted hover:text-foreground")}><category.icon className="h-4 w-4 shrink-0" /><span>{category.title}</span></button>)}
             </nav>
           </div>
-          <div className="rounded-2xl border border-border bg-card p-4">
-            <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="h-4 w-4 text-primary" /> Evidence and source standards</div>
+          <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="h-4 w-4 text-accent" /> Evidence and source standards</div>
             <ul className="space-y-2 text-xs leading-5 text-muted-foreground">
               <li>Identify the original source and its authority.</li><li>Record the jurisdiction, publication date and last update.</li><li>Separate observations, estimates, forecasts and interpretations.</li><li>Show uncertainty and missing evidence rather than filling gaps.</li>
             </ul>
           </div>
-          <div className="rounded-2xl border border-border bg-card p-4">
-            <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Compass className="h-4 w-4 text-primary" /> How to use this system</div>
+          <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Compass className="h-4 w-4 text-accent" /> How to use this system</div>
             <p className="text-xs leading-5 text-muted-foreground">Start with an area, narrow to a topic, compare evidence and follow the source links. Research metadata and public indicators are attributed to their providers and keep their own update dates.</p>
           </div>
         </aside>
@@ -562,42 +562,42 @@ export default function InfoDiscoveryPage() {
         <div className="min-w-0 space-y-7">
           {selectedTopic && selected && <section className="space-y-6">
             <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="ghost" size="sm" onClick={() => goToCategory(selected.slug)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to {selected.title}</Button><Badge variant="secondary">{selectedTopic.section}</Badge></div>
-            <article className="rounded-2xl border border-border bg-card p-5 md:p-7">
-              <div className="flex items-center gap-2 text-sm font-semibold text-primary"><Lightbulb className="h-4 w-4" /> What this topic helps you investigate</div>
+            <article className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-7">
+              <div className="flex items-center gap-2 text-sm font-semibold text-accent"><Lightbulb className="h-4 w-4" /> What this topic helps you investigate</div>
               <p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selectedTopic.description}</p>
-              <div className="mt-6"><h2 className="text-sm font-semibold">Questions to answer</h2><div className="mt-3 grid gap-2 md:grid-cols-2">{selectedTopic.questions.map(q => <div key={q} className="flex items-start gap-2 rounded-xl bg-muted/50 p-3 text-sm leading-6"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-primary" />{q}</div>)}</div></div>
-              <div className="mt-6 rounded-xl border border-border p-4"><div className="flex items-center gap-2 text-xs font-semibold"><Info className="h-4 w-4 text-primary" /> Evidence checklist</div><p className="mt-2 text-xs leading-5 text-muted-foreground">For any figure or rule, capture the publisher, the exact page or dataset, the geography and population it covers, the observation or publication date, the method used, and any caveats. An indexed item is a lead for investigation—not automatic confirmation.</p></div>
+              <div className="mt-6"><h2 className="text-sm font-semibold">Questions to answer</h2><div className="mt-3 grid gap-2 md:grid-cols-2">{selectedTopic.questions.map(q => <div key={q} className="flex items-start gap-2 rounded-xl bg-muted/50 p-3 text-sm leading-6"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-accent" />{q}</div>)}</div></div>
+              <div className="mt-6 rounded-xl border border-border p-4"><div className="flex items-center gap-2 text-xs font-semibold"><Info className="h-4 w-4 text-accent" /> Evidence checklist</div><p className="mt-2 text-xs leading-5 text-muted-foreground">For any figure or rule, capture the publisher, the exact page or dataset, the geography and population it covers, the observation or publication date, the method used, and any caveats. An indexed item is a lead for investigation—not automatic confirmation.</p></div>
             </article>
             <ResearchPanel initialQuery={selectedTopic.title} />
             <SourceDirectory sources={selected.sources} />
             {selected.slug === "travel-destination" && <CountryExplorer />}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
             {selected.product && <ProductConnection product={selected.product} />}
-            {selected.slug === "career-development-education" && <div className="rounded-2xl border border-border bg-card p-5"><h2 className="font-semibold">Amineva Impact</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">The existing school and community initiative material remains part of Career Development and Education.</p><Link to="/impact" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">View Amineva Impact engagements <ArrowUpRight className="h-4 w-4" /></Link></div>}
+            {selected.slug === "career-development-education" && <div className="rounded-2xl border border-border bg-card shadow-sm p-5"><h2 className="font-semibold">Amineva Impact</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">The existing school and community initiative material remains part of Career Development and Education.</p><Link to="/impact" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">View Amineva Impact engagements <ArrowUpRight className="h-4 w-4" /></Link></div>}
             <p className="text-[11px] text-muted-foreground">This topic guide is an investigation structure. It does not itself certify a current visa rule, price, job vacancy, crop condition or organisational finding.</p>
           </section>}
 
           {selected && !selectedTopic && <section className="space-y-6">
-            <div className="rounded-2xl border border-border bg-card p-5 md:p-7"><div className="flex items-center gap-2 text-sm font-semibold text-primary"><selected.icon className="h-4 w-4" /> Area overview</div><p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p><div className="mt-5 flex flex-wrap gap-2"><Badge variant="outline">{allTopics(selected).length} topics</Badge><Badge variant="outline">{selected.sections.length} subject groups</Badge><Badge variant="outline">{selected.sources.length} reference sources</Badge></div></div>
+            <div className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-7"><div className="flex items-center gap-2 text-sm font-semibold text-accent"><selected.icon className="h-4 w-4" /> Area overview</div><p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p><div className="mt-5 flex flex-wrap gap-2"><Badge variant="outline">{allTopics(selected).length} topics</Badge><Badge variant="outline">{selected.sections.length} subject groups</Badge><Badge variant="outline">{selected.sources.length} reference sources</Badge></div></div>
             <div><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Subject menu</h2><p className="mt-1 text-sm text-muted-foreground">Search within this area or filter by subject group.</p></div><Badge variant="outline">{filteredSections.reduce((count, section) => count + section.items.length, 0)} matching topics</Badge></div>
               <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={e => setTopicFilter(e.target.value)} placeholder="Filter topics and questions" aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={e => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
-              {filteredSections.length ? <div className="space-y-4">{filteredSections.map(section => <section key={section.title} className="rounded-2xl border border-border bg-card p-5"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div><div className="mt-4 grid gap-2 md:grid-cols-2">{section.items.map(item => <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className="group rounded-xl border border-border p-4 text-left transition hover:border-primary/40 hover:bg-muted/40"><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span><span className="mt-2 block text-xs leading-5 text-muted-foreground">{item.description}</span></button>)}</div></section>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
+              {filteredSections.length ? <div className="space-y-4">{filteredSections.map(section => <section key={section.title} className="rounded-2xl border border-border bg-card shadow-sm p-5"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div><div className="mt-4 grid gap-2 md:grid-cols-2">{section.items.map(item => <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className="group rounded-xl border border-border p-4 text-left transition hover:-translate-y-0.5 hover:border-accent/50 hover:bg-accent/5 hover:shadow-md"><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-accent" /></span><span className="mt-2 block text-xs leading-5 text-muted-foreground">{item.description}</span></button>)}</div></section>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
             </div>
             {selected.slug === "travel-destination" && <CountryExplorer />}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
             <ResearchPanel initialQuery={selected.title} />
             <SourceDirectory sources={selected.sources} />
             {selected.product && <ProductConnection product={selected.product} />}
-            {selected.slug === "career-development-education" && <div className="rounded-2xl border border-border bg-card p-5"><h2 className="font-semibold">Amineva Impact</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">School engagements and learner activities sit within this area rather than appearing as a separate discovery category.</p><Link to="/impact" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">Explore existing engagements <ArrowUpRight className="h-4 w-4" /></Link></div>}
-            {selected.slug === "operational-intelligence" && <div className="rounded-2xl border border-border bg-muted/40 p-5"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-4 w-4 text-primary" /> Authorised evidence only</div><p className="mt-2 text-xs leading-5 text-muted-foreground">Verification and anomaly detection require approved connections to source systems, documented permissions and review controls. This public information area explains the method; it does not claim access to private organisational records.</p></div>}
+            {selected.slug === "career-development-education" && <div className="rounded-2xl border border-border bg-card shadow-sm p-5"><h2 className="font-semibold">Amineva Impact</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">School engagements and learner activities sit within this area rather than appearing as a separate discovery category.</p><Link to="/impact" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">Explore existing engagements <ArrowUpRight className="h-4 w-4" /></Link></div>}
+            {selected.slug === "operational-intelligence" && <div className="rounded-2xl border border-border bg-muted/40 p-5"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-4 w-4 text-accent" /> Authorised evidence only</div><p className="mt-2 text-xs leading-5 text-muted-foreground">Verification and anomaly detection require approved connections to source systems, documented permissions and review controls. This public information area explains the method; it does not claim access to private organisational records.</p></div>}
           </section>}
 
           {!selected && <section className="space-y-7">
             <div><div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Explore the six areas</h2><p className="mt-1 text-sm text-muted-foreground">Each area has its own subject menu, reference sources and discovery workflow.</p></div><Badge variant="outline">6 areas</Badge></div>
-              <div className="grid gap-4 md:grid-cols-2">{categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className="group flex h-full flex-col rounded-2xl border border-border bg-card p-5 text-left transition hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"><div className="mb-4 flex items-start justify-between"><span className="rounded-xl border border-border bg-muted/50 p-3 text-primary"><category.icon className="h-6 w-6" /></span><ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary" /></div><h3 className="text-lg font-semibold">{category.title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{category.summary}</p><div className="mt-4 flex flex-wrap gap-1.5">{category.sections.slice(0, 3).map(section => <span key={section.title} className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{section.title}</span>)}</div><div className="mt-4 flex items-center border-t border-border pt-3 text-xs font-semibold text-primary">Open subject menu <ChevronRight className="ml-1 h-4 w-4" /></div></button>)}</div>
+              <div className="grid gap-4 md:grid-cols-2">{categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className="group flex h-full flex-col rounded-2xl border border-border bg-card shadow-sm p-5 text-left transition hover:-translate-y-1 hover:border-accent/50 hover:shadow-[var(--shadow-discovery)]"><div className="mb-4 flex items-start justify-between"><span className="rounded-xl bg-gradient-to-br from-accent/25 to-accent/5 p-3 text-accent ring-1 ring-accent/30"><category.icon className="h-6 w-6" /></span><ArrowRight className="h-5 w-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-accent" /></div><h3 className="text-lg font-semibold">{category.title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{category.summary}</p><div className="mt-4 flex flex-wrap gap-1.5">{category.sections.slice(0, 3).map(section => <span key={section.title} className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{section.title}</span>)}</div><div className="mt-4 flex items-center border-t border-border pt-3 text-xs font-semibold text-accent">Open subject menu <ChevronRight className="ml-1 h-4 w-4" /></div></button>)}</div>
             </div>
             <ResearchPanel />
-            <div className="rounded-2xl border border-border bg-card p-5"><div className="flex items-start gap-3"><FileCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-primary" /><div><h2 className="font-semibold">How information is classified</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Official records, statistical estimates, research publications, reported experiences and AI-generated interpretations are not interchangeable. Each displayed result should retain its source, update date, jurisdiction, method and verification status. The live connectors currently available here are identified on their individual panels.</p></div></div></div>
+            <div className="rounded-2xl border border-border bg-card shadow-sm p-5"><div className="flex items-start gap-3"><FileCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" /><div><h2 className="font-semibold">How information is classified</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Official records, statistical estimates, research publications, reported experiences and AI-generated interpretations are not interchangeable. Each displayed result should retain its source, update date, jurisdiction, method and verification status. The live connectors currently available here are identified on their individual panels.</p></div></div></div>
           </section>}
         </div>
       </div>
@@ -607,5 +607,5 @@ export default function InfoDiscoveryPage() {
 }
 
 function ProductConnection({ product }: { product: ProductLink }) {
-  return <div className="flex flex-col justify-between gap-4 rounded-2xl border border-primary/20 bg-primary/[0.04] p-5 sm:flex-row sm:items-center"><div><div className="mb-1 text-sm font-semibold">Continue with {product.label.replace("Explore ", "")}</div><p className="max-w-2xl text-sm leading-6 text-muted-foreground">{product.description}</p></div><a href={product.href} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center text-sm font-semibold text-primary hover:underline">{product.label} <ExternalLink className="ml-2 h-4 w-4" /></a></div>;
+  return <div className="flex flex-col justify-between gap-4 rounded-2xl border border-accent/30 bg-gradient-to-r from-accent/10 to-transparent p-5 sm:flex-row sm:items-center"><div><div className="mb-1 text-sm font-semibold">Continue with {product.label.replace("Explore ", "")}</div><p className="max-w-2xl text-sm leading-6 text-muted-foreground">{product.description}</p></div><a href={product.href} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center text-sm font-semibold text-primary hover:underline">{product.label} <ExternalLink className="ml-2 h-4 w-4" /></a></div>;
 }

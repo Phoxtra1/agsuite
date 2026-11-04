@@ -126,7 +126,7 @@ export default function HomePage() {
   const selectedAgOption = useMemo(() => countryCurrencyOptions.find((o) => o.id === agCountry) || null, [agCountry, countryCurrencyOptions]);
   const effectiveCountryLabel = useMemo(() => selectedAgOption?.label || displayCountryLabel || "Ghana", [selectedAgOption, displayCountryLabel]);
 
-  const workspaceProduct = products.find((product) => product.id.toLowerCase().includes("workspace") || product.name.toLowerCase().includes("workspace")) || null;
+  const workspaceProduct: ProductData = products.find((product) => product.id.toLowerCase().includes("workspace") || product.name.toLowerCase().includes("workspace")) || { id: "workspace", name: "Amineva Workspace", status: "live", order: 0 };
   const WorkspaceIcon = getProductIconSafe(workspaceProduct?.id || "workspace");
 
   const canShowAuthCard = useMemo(() => {
@@ -180,6 +180,16 @@ export default function HomePage() {
     setAgCurrencyCode("USD");
     setAgStepConfirmed(false);
   };
+
+  // Workspace sends signed-out visitors here with ?authRedirect=/workspace…
+  // Open the Workspace sign-in card instead of silently showing the homepage.
+  useEffect(() => {
+    const target = new URLSearchParams(window.location.search).get("authRedirect") || "";
+    if (!target.startsWith("/workspace")) return;
+    if (isAuthenticated) { navigate(target, { replace: true }); return; }
+    onPickProduct(workspaceProduct);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isAuthenticated]);
 
   const onChangeSelection = () => {
     setSelectedProduct(null);
@@ -303,7 +313,6 @@ export default function HomePage() {
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => workspaceProduct ? onPickProduct(workspaceProduct) : navigate("/workspace")}>Workspace</button>
 
             {/* Settings with theme toggle */}
             <div className="relative" ref={settingsRef}>
@@ -399,7 +408,7 @@ export default function HomePage() {
                     <h2 className="font-semibold text-foreground">Workspace</h2>
                     <p className="mt-1 text-xs leading-5 text-muted-foreground">Open your productivity workspace for documents, spreadsheets, presentations, forms and files.</p>
                   </div>
-                  <button type="button" onClick={() => workspaceProduct ? onPickProduct(workspaceProduct) : navigate("/workspace")} className="inline-flex shrink-0 items-center text-sm font-semibold text-primary hover:underline">
+                  <button type="button" onClick={() => onPickProduct(workspaceProduct)} className="inline-flex shrink-0 items-center text-sm font-semibold text-primary hover:underline">
                     Open <ArrowRight className="ml-1 h-4 w-4" />
                   </button>
                 </div>

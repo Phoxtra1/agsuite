@@ -343,3 +343,20 @@
 .itag-swatch.itag-summary   { background: hsl(38 92% 50%); }
 .itag-swatch.itag-evidence  { background: hsl(280 65% 60%); }
 .itag-swatch.itag-reference { background: hsl(0 0% 50%); }
+
+/* Info Discovery — shares the Suite navy gradient + amber accent */
+  .discovery-hero {
+    color: hsl(210 40% 98%);
+    background:
+      radial-gradient(60rem 24rem at 85% -10%, hsl(var(--accent) / 0.22), transparent 60%),
+      radial-gradient(40rem 20rem at 0% 110%, hsl(var(--accent) / 0.10), transparent 60%),
+      linear-gradient(135deg, hsl(var(--suite-gradient-start)) 0%, hsl(var(--suite-gradient-end)) 100%);
+  }
+  .discovery-hero > div > .text-muted-foreground,
+  .discovery-hero .max-w-4xl > p,
+  .discovery-hero > div > div > p.text-muted-foreground { color: hsl(210 40% 98% / 0.72); }
+  .discovery-hero > div > div > a:hover,
+  .discovery-hero > div > div > button:hover { color: hsl(var(--accent)); }
+  .discovery-hero > div > div:first-child { color: hsl(210 40% 98% / 0.72); }
+  .discovery-hero > div > div:first-child .text-foreground { color: hsl(210 40% 98%); }
+:root { --shadow-discovery: 0 18px 40px -18px hsl(var(--accent) / 0.45); }
