@@ -345,7 +345,6 @@
 .itag-swatch.itag-reference { background: hsl(0 0% 50%); }
 
 /* Info Discovery — shares the Suite navy gradient + amber accent */
-@layer components {
   .discovery-hero {
     color: hsl(210 40% 98%);
     background:
@@ -360,5 +359,4 @@
   .discovery-hero > div > div > button:hover { color: hsl(var(--accent)); }
   .discovery-hero > div > div:first-child { color: hsl(210 40% 98% / 0.72); }
   .discovery-hero > div > div:first-child .text-foreground { color: hsl(210 40% 98%); }
-}
 :root { --shadow-discovery: 0 18px 40px -18px hsl(var(--accent) / 0.45); }
