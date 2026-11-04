@@ -554,10 +554,10 @@ function CountryExplorer() {
                   <article key={item.key} className="rounded-xl border border-border bg-background/70 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <p className="text-xs font-semibold text-foreground">{item.label}</p>
-                      <Badge variant={observation ? "outline" : "secondary"}>{observation ? "Observation found" : "No value"}</Badge>
+                      <Badge variant={observation ? "outline" : "secondary"}>{observation ? "Observation found" : result.error?.startsWith("No non-empty observation") ? "No observation" : "Unavailable"}</Badge>
                     </div>
                     <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
-                      {observation ? formatNumber(observation.value, item.digits) + item.suffix : "Not reported"}
+                      {observation ? formatNumber(observation.value, item.digits) + item.suffix : "Unavailable"}
                     </p>
                     <p className="mt-1 text-[11px] text-muted-foreground">
                       {observation?.date ? "Observation year: " + observation.date : result.error || "No non-empty observation returned."}
