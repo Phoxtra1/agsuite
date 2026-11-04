@@ -48,18 +48,15 @@ export function wsKey(base: string): string {
 }
 
 /** Remove legacy unscoped caches and any cache belonging to another account. */
-export function purgeForeignWorkspaceCaches(uid: string) {
+/** Remove only legacy unscoped caches. Account-scoped caches belonging to
+ * other users are retained: wsKey() prevents cross-account reads, while
+ * retaining them prevents an account switch from destroying the previous
+ * user's offline work.
+ */
+export function purgeForeignWorkspaceCaches(_uid: string) {
   if (typeof window === "undefined") return;
   try {
-    LEGACY_KEYS.forEach((k) => localStorage.removeItem(k));
-    const doomed: string[] = [];
-    for (let i = 0; i < localStorage.length; i++) {
-      const k = localStorage.key(i);
-      if (!k) continue;
-      const base = LEGACY_KEYS.find((b) => k.startsWith(`${b}::`));
-      if (base && k !== `${base}::${uid}`) doomed.push(k);
-    }
-    doomed.forEach((k) => localStorage.removeItem(k));
+    LEGACY_KEYS.forEach((key) => localStorage.removeItem(key));
   } catch {
     /* ignore */
   }
