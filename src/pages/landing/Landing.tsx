@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Settings } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -14,7 +14,6 @@ const navLinks = [
 
 export default function Landing() {
   const location = useLocation();
-  const navigate = useNavigate();
   const isHome = location.pathname === "/";
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
