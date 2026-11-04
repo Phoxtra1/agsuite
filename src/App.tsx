@@ -19,6 +19,7 @@ import { useIdleSignout } from "@/hooks/useIdleSignout";
 const Landing = lazyWithRetry(() => import("./pages/landing/Landing"));
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const AboutUs = lazyWithRetry(() => import("./pages/landing/AboutUs"));
+const InfoDiscoveryPage = lazyWithRetry(() => import("./pages/landing/InfoDiscoveryPage"));
 const AminevaImpactPage = lazyWithRetry(() => import("./pages/landing/AminevaImpactPage"));
 const DipaAIPage = lazyWithRetry(() => import("./pages/landing/DipaAIPage"));
 const InventraPage = lazyWithRetry(() => import("./pages/landing/InventraPage"));
@@ -185,6 +186,8 @@ function AppRoutes() {
         {/* Landing pages */}
         <Route path="/" element={<Landing />}>
           <Route index element={<PublicHome />} />
+          <Route path="info-discovery" element={<InfoDiscoveryPage />} />
+          <Route path="info-discovery/:categorySlug" element={<InfoDiscoveryPage />} />
           <Route path="about-us" element={<AboutUs />} />
           <Route path="impact" element={<AminevaImpactPage />} />
           <Route path="impact/:initiativeId" element={<AminevaImpactPage />} />
