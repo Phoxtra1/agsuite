@@ -88,7 +88,9 @@ export default function AuthCard({
         }
       }
 
-      const productDestination = product.url
+      const productDestination = /workspace/i.test(`${product.id} ${product.name}`)
+        ? "/workspace"
+        : product.url
         ? `${product.url}${product.id === 'agstock' ? '/shop' : product.id === 'agis' ? '/client' : ''}`
         : getProductRedirectUrl(product.id);
       
