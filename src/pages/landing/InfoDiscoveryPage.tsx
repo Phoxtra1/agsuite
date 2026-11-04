@@ -414,7 +414,7 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
         <Badge variant="outline">Crossref metadata</Badge>
       </div>
       <form onSubmit={runSearch} className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search a subject, question or research topic" aria-label="Search research publications" />
+        <Input value={query} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)} placeholder="Search a subject, question or research topic" aria-label="Search research publications" />
         <Button type="submit" disabled={loading || query.trim().length < 3} className="sm:min-w-32">{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Search</Button>
       </form>
       {error && <p role="status" className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">{error}</p>}
@@ -681,8 +681,8 @@ function ClimateExplorer() {
           <Badge variant="outline">NASA POWER · Agroclimatology</Badge>
         </div>
         <form onSubmit={run} className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-          <div><label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="climate-lat">Latitude</label><Input id="climate-lat" value={latitude} onChange={e => setLatitude(e.target.value)} placeholder="e.g. 5.6037" inputMode="decimal" /></div>
-          <div><label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="climate-lon">Longitude</label><Input id="climate-lon" value={longitude} onChange={e => setLongitude(e.target.value)} placeholder="e.g. -0.1870" inputMode="decimal" /></div>
+          <div><label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="climate-lat">Latitude</label><Input id="climate-lat" value={latitude} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLatitude(e.target.value)} placeholder="e.g. 5.6037" inputMode="decimal" /></div>
+          <div><label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="climate-lon">Longitude</label><Input id="climate-lon" value={longitude} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setLongitude(e.target.value)} placeholder="e.g. -0.1870" inputMode="decimal" /></div>
           <Button type="submit" disabled={loading} className="sm:mt-6">{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Retrieve</Button>
         </form>
       </div>
@@ -864,7 +864,7 @@ export default function InfoDiscoveryPage() {
           </div>
           <div className="relative mt-7 max-w-4xl">
             <form onSubmit={onSearchSubmit} className="flex flex-col gap-2 rounded-2xl border border-border bg-card shadow-sm p-2 text-foreground shadow-xl sm:flex-row sm:items-center">
-              <div className="flex min-w-0 flex-1 items-center gap-3 px-3"><Search className="h-5 w-5 shrink-0 text-muted-foreground" /><Input value={query} onChange={e => { setQuery(e.target.value); setShowSuggestions(true); }} onFocus={() => setShowSuggestions(true)} onBlur={() => window.setTimeout(() => setShowSuggestions(false), 160)} placeholder="Search areas, topics, questions and subjects" className="h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" aria-label="Search information discovery" /></div>
+              <div className="flex min-w-0 flex-1 items-center gap-3 px-3"><Search className="h-5 w-5 shrink-0 text-muted-foreground" /><Input value={query} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setQuery(e.target.value); setShowSuggestions(true); }} onFocus={() => setShowSuggestions(true)} onBlur={() => window.setTimeout(() => setShowSuggestions(false), 160)} placeholder="Search areas, topics, questions and subjects" className="h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" aria-label="Search information discovery" /></div>
               <Button type="submit" className="h-11 bg-accent px-6 text-accent-foreground hover:bg-accent/90" disabled={!searchResults.length}>Open result <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </form>
             {showSuggestions && query.trim() && <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-96 overflow-y-auto rounded-xl border border-border bg-card p-2 text-foreground shadow-xl">
@@ -1067,7 +1067,7 @@ export default function InfoDiscoveryPage() {
           {selected && !selectedTopic && <section className="space-y-6">
             <div className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-7"><div className="flex items-center gap-2 text-sm font-semibold text-accent"><selected.icon className="h-4 w-4" /> Area overview</div><p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p><div className="mt-5 flex flex-wrap gap-2"><Badge variant="outline">{allTopics(selected).length} topics</Badge><Badge variant="outline">{selected.sections.length} subject groups</Badge><Badge variant="outline">{selected.sources.length} reference sources</Badge></div></div>
             <div><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Subject menu</h2><p className="mt-1 text-sm text-muted-foreground">Search within this area or filter by subject group.</p></div><Badge variant="outline">{filteredSections.reduce((count, section) => count + section.items.length, 0)} matching topics</Badge></div>
-              <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={e => setTopicFilter(e.target.value)} placeholder="Filter topics and questions" aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={e => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
+              <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTopicFilter(e.target.value)} placeholder="Filter topics and questions" aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
               {filteredSections.length ? <div className="space-y-4">{filteredSections.map(section => <section key={section.title} className="rounded-2xl border border-border bg-card p-5"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div><div className="mt-4 grid gap-2 md:grid-cols-2">{section.items.map(item => <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className="group rounded-xl border border-border bg-card p-4 text-left transition hover:border-accent/50 hover:bg-accent/5"><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span><span className="mt-2 block text-xs leading-5 text-muted-foreground">{item.description}</span></button>)}</div></section>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
             </div>
             {selected.slug === "travel-destination" && <CountryExplorer />}
@@ -1083,7 +1083,7 @@ export default function InfoDiscoveryPage() {
             {/* Popular Topics & Recently Viewed Quick-Start */}
             <PopularAndRecent
               recentTopics={recentTopicsList}
-              onSelectTopic={(catSlug, topSlug) => goToTopic(catSlug, topSlug)}
+              onSelectTopic={(catSlug: string, topSlug: string) => goToTopic(catSlug, topSlug)}
             />
 
             <div><div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Explore the six areas</h2><p className="mt-1 text-sm text-muted-foreground">Each area has its own subject menu, reference sources and discovery workflow.</p></div><Badge variant="outline">6 areas</Badge></div>
