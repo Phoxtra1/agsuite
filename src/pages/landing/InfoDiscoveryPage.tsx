@@ -3,9 +3,8 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness,
   Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink, FileCheck2,
-  ChevronRight, BookOpen, MapPin, CloudSun, Loader2, CalendarDays, Filter,
-  CircleHelp, CheckCircle2, Compass, Building2, Database, Scale, Activity,
-  AlertTriangle, Info, RefreshCw, ArrowUpRight, Landmark, Users, Lightbulb,
+  ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass,
+  AlertTriangle, Info, ArrowUpRight, Lightbulb,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
