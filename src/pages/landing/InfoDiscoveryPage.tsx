@@ -507,7 +507,7 @@ function CountryExplorer() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <div className="flex items-center gap-2 text-sm font-semibold"><Globe2 className="h-4 w-4 text-primary" /> Country and economy profile</div>
-            <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Retrieve selected country-directory details and the latest non-empty observation available for each indicator. The indicators can refer to different years and should not be read as one same-year snapshot.</p>
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Retrieve selected country-directory details and the latest non-empty observation available for each indicator. The indicators can refer to different years and should not be read as one same-year snapshot. Values are reproduced from the named source; they are not independently audited by Amineva Global.</p>
           </div>
           <Badge variant="outline">World Bank Indicators API</Badge>
         </div>
@@ -554,7 +554,7 @@ function CountryExplorer() {
                   <article key={item.key} className="rounded-xl border border-border bg-background/70 p-4">
                     <div className="flex flex-wrap items-start justify-between gap-2">
                       <p className="text-xs font-semibold text-foreground">{item.label}</p>
-                      <Badge variant={observation ? "outline" : "secondary"}>{observation ? "Data returned" : "No value"}</Badge>
+                      <Badge variant={observation ? "outline" : "secondary"}>{observation ? "Observation found" : "No value"}</Badge>
                     </div>
                     <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
                       {observation ? formatNumber(observation.value, item.digits) + item.suffix : "Not reported"}
