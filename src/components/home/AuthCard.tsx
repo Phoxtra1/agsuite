@@ -73,7 +73,10 @@ export default function AuthCard({
 
         // Security Access Control Check
         const { data: { session } } = await supabase.auth.getSession();
-        if (session?.user) {
+        // Workspace self-provisions each account on entry (WorkspaceGate),
+        // so it must not be blocked by a missing pre-existing grant.
+        const isWorkspace = /workspace/i.test(`${product.id} ${product.name}`);
+        if (session?.user && !isWorkspace) {
           const access = await loadAppAccess(session.user.id, product.id);
           if (!access.allowed) {
             await supabase.auth.signOut();
@@ -83,7 +86,9 @@ export default function AuthCard({
         }
       }
 
-      const productDestination = product.url
+      const productDestination = /workspace/i.test(`${product.id} ${product.name}`)
+        ? "/workspace"
+        : product.url
         ? `${product.url}${product.id === 'agstock' ? '/shop' : product.id === 'agis' ? '/client' : ''}`
         : getProductRedirectUrl(product.id);
       
