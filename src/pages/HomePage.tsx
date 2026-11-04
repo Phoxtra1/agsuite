@@ -1,9 +1,9 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { DEFAULT_CATEGORIES, ProductData } from "@/types/product";
+import { ProductData } from "@/types/product";
 import { useCategoryProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
-import { Clock, XCircle, ArrowRight, Grid3X3, ChevronDown, Settings, Sun, Moon } from "lucide-react";
+import { Clock, XCircle, ArrowRight, Search, Settings, Sun, Moon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -75,41 +75,6 @@ function getTimeZone(countryId: string): string {
   }
 }
 
-// Dropdown that auto-dismisses on click outside
-function HomeDropdown({ label, children }: { label: string; children: React.ReactNode }) {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
-    }
-    if (open) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
-
-  return (
-    <div className="relative" ref={ref} onMouseEnter={() => setOpen(true)} onMouseLeave={() => setOpen(false)}>
-      <button type="button" className="hover:text-foreground transition cursor-pointer flex items-center gap-1">
-        {label} <ChevronDown className={`h-3.5 w-3.5 transition-transform ${open ? "rotate-180" : ""}`} />
-      </button>
-      <AnimatePresence>
-        {open && (
-          <motion.div
-            initial={{ opacity: 0, y: 8 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: 8 }}
-            transition={{ duration: 0.15 }}
-            className="absolute right-0 mt-2 min-w-[220px] rounded-xl border border-border bg-card shadow-xl z-50 overflow-hidden"
-          >
-            {children}
-          </motion.div>
-        )}
-      </AnimatePresence>
-    </div>
-  );
-}
-
 export default function HomePage() {
   const navigate = useNavigate();
   const { products } = useCategoryProducts();
@@ -161,23 +126,7 @@ export default function HomePage() {
   const selectedAgOption = useMemo(() => countryCurrencyOptions.find((o) => o.id === agCountry) || null, [agCountry, countryCurrencyOptions]);
   const effectiveCountryLabel = useMemo(() => selectedAgOption?.label || displayCountryLabel || "Ghana", [selectedAgOption, displayCountryLabel]);
 
-  // Homepage categories are driven by Category Management data.
-  // A product appears once, in exactly one category without duplicates or arbitrary buckets.
-  const allCategories = useMemo(() => {
-    const fallbackCategoryOf = (id: string) =>
-      DEFAULT_CATEGORIES.find((c) => c.products.includes(id))?.id;
-
-    return DEFAULT_CATEGORIES.map((cat) => ({
-      ...cat,
-      products: products
-        .filter((p) => {
-          const catId = p.category || fallbackCategoryOf(p.id);
-          return catId === cat.id;
-        })
-        .sort((a, b) => (a.order ?? 0) - (b.order ?? 0)),
-    })).filter((cat) => cat.products.length > 0);
-  }, [products]);
-
+  const workspaceProduct = products.find((product) => product.id.toLowerCase().includes("workspace") || product.name.toLowerCase().includes("workspace")) || null;
 
   const canShowAuthCard = useMemo(() => {
     const s = `${selectedProduct?.id || ""} ${selectedProduct?.name || ""} ${selectedProduct?.url || ""}`.toLowerCase();
@@ -347,52 +296,13 @@ export default function HomePage() {
       {/* RIGHT PANEL */}
       <div className="relative flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
         <div className="w-full max-w-xl">
-          {/* TOP RIGHT CTAs - Amineva Impact comes first */}
+          {/* Primary navigation: preserve the existing homepage layout and settings. */}
           <div className="w-full flex justify-end gap-6 text-base font-semibold text-muted-foreground flex-wrap items-center">
-            <button type="button" className="hover:text-foreground transition cursor-pointer text-accent font-bold" onClick={() => navigate("/impact")}>Amineva Impact</button>
-
-            {/* Apps dropdown */}
-            <HomeDropdown label="Apps">
-              <div className="p-2">
-                <p className="px-3 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">
-                  Our Platforms
-                </p>
-
-                <a
-                  href="https://stock.amineva.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
-                >
-                  Inventra
-                </a>
-
-                <a
-                  href="https://agro.amineva.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
-                >
-                  AgroClimate
-                </a>
-
-                <a
-                  href="https://as.amineva.com"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
-                >
-                  Adesua
-                </a>
-              </div>
-            </HomeDropdown>
-
+            <button type="button" className="hover:text-foreground transition cursor-pointer text-accent font-bold" onClick={() => navigate("/info-discovery")}>Info Discovery</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
-            {/* Insight & Report */}
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>
 
-            
             {/* Settings with theme toggle */}
             <div className="relative" ref={settingsRef}>
               <button type="button" className="hover:text-foreground transition cursor-pointer flex items-center gap-1" onClick={() => setSettingsOpen(!settingsOpen)}>
@@ -467,55 +377,32 @@ export default function HomePage() {
             </>
           ) : (
             <>
-              <div className="mt-8 space-y-4">
-                {allCategories.map((cat) => (
-                  <details key={cat.id} className="group border border-border rounded-xl bg-card">
-                    <summary className="cursor-pointer list-none flex items-center justify-between p-5">
-                      <span className="text-lg font-semibold text-foreground">{cat.name}</span>
-                      <span className="text-muted-foreground group-open:rotate-180 transition">▾</span>
-                    </summary>
-                    <div className="px-5 pb-5 pt-1 space-y-2">
-                      {cat.products.length === 0 ? (
-                        <div className="text-sm text-muted-foreground">Coming soon</div>
-                      ) : (
-                        cat.products.map((p) => {
-                          const IconComponent = getProductIconSafe(p.id);
-                          const isDisabled = p.status === "coming_soon" || p.status === "offline";
-                          return (
-                            <button
-                              key={p.id}
-                              type="button"
-                              onClick={() => onPickProduct(p)}
-                              disabled={isDisabled}
-                              className={`w-full flex items-center gap-4 text-left border border-border rounded-lg px-4 py-3 transition-all ${
-                                isDisabled ? "opacity-50 cursor-not-allowed bg-muted/30" : "hover:bg-accent/10 hover:border-accent/50 cursor-pointer"
-                              }`}
-                            >
-                              <IconComponent className="w-8 h-8 flex-shrink-0" />
-                              <div className="flex-1 min-w-0">
-                                <div className="flex items-center gap-2">
-                                  <span className="font-medium text-foreground">{p.name}</span>
-                                  {getStatusBadge(p.status)}
-                                </div>
-                                {p.description && <p className="text-xs text-muted-foreground truncate mt-0.5">{p.description}</p>}
-                              </div>
-                              {!isDisabled && <ArrowRight className="w-4 h-4 text-muted-foreground" />}
-                            </button>
-                          );
-                        })
-                      )}
-                    </div>
-                  </details>
-                ))}
-              </div>
-
-              <div className="mt-10 flex justify-center text-sm text-muted-foreground">
-                <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>
-                  Explore More
+              <section className="mt-10 rounded-2xl border border-border bg-card p-6 md:p-7">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                  <Search className="h-4 w-4" /> Information Discovery
+                </div>
+                <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Discover information. Understand your options. Make informed decisions.</h1>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">Explore structured information across career development and education, travel and destinations, IT and innovation, business management, agriculture and climate intelligence, and operational intelligence.</p>
+                <button type="button" onClick={() => navigate("/info-discovery")} className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
+                  Explore Info Discovery <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
-              </div>
+              </section>
+
+              <section className="mt-5 rounded-xl border border-border bg-card p-5">
+                <div className="flex items-center gap-4">
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                    {getProductIconSafe(workspaceProduct?.id || "workspace") && React.createElement(getProductIconSafe(workspaceProduct?.id || "workspace"), { className: "h-6 w-6" })}
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <h2 className="font-semibold text-foreground">Workspace</h2>
+                    <p className="mt-1 text-xs leading-5 text-muted-foreground">Open your productivity workspace for documents, spreadsheets, presentations, forms and files.</p>
+                  </div>
+                  <button type="button" onClick={() => workspaceProduct ? onPickProduct(workspaceProduct) : navigate("/workspace")} className="inline-flex shrink-0 items-center text-sm font-semibold text-primary hover:underline">
+                    Open <ArrowRight className="ml-1 h-4 w-4" />
+                  </button>
+                </div>
+              </section>
             </>
-          )}
         </div>
 
         <div className="absolute bottom-4 left-8 right-8 flex justify-between items-center text-xs text-muted-foreground">
