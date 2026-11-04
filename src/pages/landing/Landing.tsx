@@ -1,15 +1,9 @@
 import React, { useState } from "react";
 import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
-import { Menu, X, Sun, Moon, Settings } from "lucide-react";
+import { Menu, X, Settings } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import amvLogo from "@/assets/amv_global_logo.png";
-
-const footerProductItems = [
-  { label: "Technology", to: "/about-us" },
-  { label: "Human Development", to: "/impact" },
-  { label: "Innovation", to: "/about-us" },
-];
 
 const navLinks = [
   { label: "Info Discovery", to: "/info-discovery" },
