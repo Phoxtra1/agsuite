@@ -4,11 +4,29 @@ import {
   ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness,
   Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink, FileCheck2,
   ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass,
-  AlertTriangle, Info, ArrowUpRight, Lightbulb,
+  AlertTriangle, Info, ArrowUpRight, Lightbulb, Bookmark, BookmarkCheck,
+  Printer, Download, FolderPlus,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { toast } from "sonner";
+import {
+  getSavedTopics,
+  saveTopicBookmark,
+  removeSavedTopic,
+  isTopicSaved,
+  sendTopicToWorkspace,
+  recordRecentTopic,
+  getRecentTopics,
+  type SavedTopicItem,
+  type RecentTopicItem,
+} from "@/lib/infoDiscovery/savedTopics";
+import { AskTopicPanel } from "@/components/infoDiscovery/AskTopicPanel";
+import { VisaChecker } from "@/components/infoDiscovery/VisaChecker";
+import { SavedTopicsDrawer } from "@/components/infoDiscovery/SavedTopicsDrawer";
+import { PopularAndRecent } from "@/components/infoDiscovery/PopularAndRecent";
+import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracker";
 
 type Topic = { title: string; description: string; questions: string[] };
 type Section = { title: string; description: string; items: Topic[] };
@@ -416,7 +434,7 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
   );
 }
 
-function CountryExplorer() {
+function CountryExplorer({ onCountriesLoaded }: { onCountriesLoaded?: (list: WBCountry[]) => void }) {
   const [countries, setCountries] = useState<WBCountry[]>([]);
   const [countryCode, setCountryCode] = useState("");
   const [stats, setStats] = useState<CountryStats | null>(null);
@@ -442,7 +460,10 @@ function CountryExplorer() {
         const list = (payload[1] as WBCountry[])
           .filter(item => item?.iso2Code && item?.region?.id && item.region.id !== "NA")
           .sort((a, b) => a.name.localeCompare(b.name));
-        if (active) setCountries(list);
+        if (active) {
+          setCountries(list);
+          onCountriesLoaded?.(list);
+        }
       })
       .catch(err => {
         if (active && err?.name !== "AbortError") setError(err?.message || "Could not load the World Bank country directory.");
@@ -707,9 +728,32 @@ export default function InfoDiscoveryPage() {
   const [topicFilter, setTopicFilter] = useState("");
   const [sectionFilter, setSectionFilter] = useState("all");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [savedDrawerOpen, setSavedDrawerOpen] = useState(false);
+  const [savedTopicsList, setSavedTopicsList] = useState<SavedTopicItem[]>(() => getSavedTopics());
+  const [recentTopicsList, setRecentTopicsList] = useState<RecentTopicItem[]>(() => getRecentTopics());
+  const [countryList, setCountryList] = useState<{ iso2Code: string; name: string }[]>([]);
+  const [mainGoal, setMainGoal] = useState("");
+  const [numberToTrack, setNumberToTrack] = useState("");
+  const [isExportingPDF, setIsExportingPDF] = useState(false);
+  const topicArticleRef = useRef<HTMLElement | null>(null);
+
   const selected = categories.find(category => category.slug === categorySlug);
   const topics = selected ? allTopics(selected) : [];
   const selectedTopic = topicSlug ? topics.find(item => item.slug === topicSlug) : undefined;
+
+  // Track recent topic view
+  useEffect(() => {
+    if (selected && selectedTopic) {
+      recordRecentTopic({
+        categorySlug: selected.slug,
+        categoryTitle: selected.title,
+        topicSlug: selectedTopic.slug,
+        topicTitle: selectedTopic.title,
+      });
+      setRecentTopicsList(getRecentTopics());
+    }
+  }, [selected, selectedTopic]);
+
   const filteredSections = useMemo(() => selected?.sections.map(section => ({ ...section, items: section.items.filter(item => (sectionFilter === "all" || section.title === sectionFilter) && normalise([item.title, item.description, ...item.questions].join(" ")).includes(normalise(topicFilter.trim()))) })).filter(section => section.items.length > 0) || [], [selected, sectionFilter, topicFilter]);
   const searchIndex = useMemo(() => categories.flatMap(category => [
     { kind: "area" as const, label: category.title, detail: category.summary, category, slug: category.slug },
@@ -729,6 +773,74 @@ export default function InfoDiscoveryPage() {
     const first = searchResults[0];
     if (first.kind === "area") goToCategory(first.category.slug);
     else goToTopic(first.category.slug, first.slug);
+  };
+
+  const isCurrentSaved = selected && selectedTopic ? isTopicSaved(selected.slug, selectedTopic.slug) : false;
+
+  const toggleBookmarkCurrent = () => {
+    if (!selected || !selectedTopic) return;
+    if (isCurrentSaved) {
+      const match = savedTopicsList.find(t => t.categorySlug === selected.slug && t.topicSlug === selectedTopic.slug);
+      if (match) removeSavedTopic(match.id);
+      toast.info("Topic removed from Saved Topics.");
+    } else {
+      saveTopicBookmark({
+        categorySlug: selected.slug,
+        categoryTitle: selected.title,
+        topicSlug: selectedTopic.slug,
+        topicTitle: selectedTopic.title,
+        description: selectedTopic.description,
+        questions: selectedTopic.questions,
+        sources: selected.sources,
+      });
+      toast.success("Topic bookmarked and saved in Workspace!");
+    }
+    setSavedTopicsList(getSavedTopics());
+  };
+
+  const handleExportToWorkspace = async () => {
+    if (!selected || !selectedTopic) return;
+    try {
+      const res = await sendTopicToWorkspace({
+        title: selectedTopic.title,
+        categoryTitle: selected.title,
+        description: selectedTopic.description,
+        questions: selectedTopic.questions,
+        sources: selected.sources,
+        mainGoal: mainGoal.trim() || undefined,
+        numberToTrack: numberToTrack.trim() || undefined,
+      });
+      toast.success(`Saved to Workspace Docs: ${res.title}`);
+      navigate(`/workspace/docs/${res.docId}`);
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to save topic in Workspace.");
+    }
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  const handleExportPDF = async () => {
+    if (!topicArticleRef.current || !selectedTopic) return;
+    setIsExportingPDF(true);
+    try {
+      // @ts-ignore
+      const html2pdf = (await import("html2pdf.js")).default;
+      const opt = {
+        margin: 12,
+        filename: `${selectedTopic.slug}-report.pdf`,
+        image: { type: "jpeg", quality: 0.98 },
+        html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+      };
+      await html2pdf().set(opt).from(topicArticleRef.current).save();
+      toast.success("PDF exported successfully!");
+    } catch (e: any) {
+      toast.error(e?.message || "Failed to generate PDF. You can also use Print.");
+    } finally {
+      setIsExportingPDF(false);
+    }
   };
 
   if (topicSlug && selected && !selectedTopic) {
@@ -768,7 +880,19 @@ export default function InfoDiscoveryPage() {
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="space-y-5">
           <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
-            <div className="mb-3 flex items-center gap-2 text-sm font-semibold"><SlidersHorizontal className="h-4 w-4" /> Browse discovery areas</div>
+            <div className="mb-3 flex items-center justify-between">
+              <div className="flex items-center gap-2 text-sm font-semibold"><SlidersHorizontal className="h-4 w-4" /> Browse areas</div>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setSavedDrawerOpen(true)}
+                className="h-8 gap-1.5 text-xs font-semibold"
+                title="View Saved Topics in Workspace"
+              >
+                <Bookmark className="h-3.5 w-3.5 text-accent" />
+                <span>Saved ({savedTopicsList.length})</span>
+              </Button>
+            </div>
             <nav className="space-y-1">
               <button onClick={() => navigate("/info-discovery")} className={"flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm " + (!selected ? "bg-accent/15 font-semibold text-foreground shadow-[inset_3px_0_0_hsl(var(--accent))]" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>All areas <span className="text-xs">06</span></button>
               {categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className={"flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm " + (selected?.slug === category.slug ? "bg-accent/15 font-semibold text-foreground shadow-[inset_3px_0_0_hsl(var(--accent))]" : "text-muted-foreground hover:bg-muted hover:text-foreground")}><category.icon className="h-4 w-4 shrink-0" /><span>{category.title}</span></button>)}
@@ -788,20 +912,156 @@ export default function InfoDiscoveryPage() {
 
         <div className="min-w-0 space-y-7">
           {selectedTopic && selected && <section className="space-y-6">
-            <div className="flex flex-wrap items-center justify-between gap-3"><Button variant="ghost" size="sm" onClick={() => goToCategory(selected.slug)}><ArrowLeft className="mr-2 h-4 w-4" /> Back to {selected.title}</Button><Badge variant="secondary">{selectedTopic.section}</Badge></div>
-            <article className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-7">
-              <div className="flex items-center gap-2 text-sm font-semibold text-accent"><Lightbulb className="h-4 w-4" /> What this topic helps you investigate</div>
-              <p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selectedTopic.description}</p>
-              <div className="mt-6"><h2 className="text-sm font-semibold">Questions to answer</h2><div className="mt-3 grid gap-2 md:grid-cols-2">{selectedTopic.questions.map(q => <div key={q} className="flex items-start gap-2 rounded-xl bg-muted/50 p-3 text-sm leading-6"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-accent" />{q}</div>)}</div></div>
-              <div className="mt-6 rounded-xl border border-border p-4"><div className="flex items-center gap-2 text-xs font-semibold"><Info className="h-4 w-4 text-accent" /> Evidence checklist</div><p className="mt-2 text-xs leading-5 text-muted-foreground">For any figure or rule, capture the publisher, the exact page or dataset, the geography and population it covers, the observation or publication date, the method used, and any caveats. An indexed item is a lead for investigation—not automatic confirmation.</p></div>
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <Button variant="ghost" size="sm" onClick={() => goToCategory(selected.slug)}>
+                <ArrowLeft className="mr-2 h-4 w-4" /> Back to {selected.title}
+              </Button>
+              <div className="flex flex-wrap items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={toggleBookmarkCurrent}
+                  className="h-8 text-xs font-medium gap-1.5"
+                  title="Bookmark and keep in Workspace"
+                >
+                  {isCurrentSaved ? (
+                    <>
+                      <BookmarkCheck className="h-3.5 w-3.5 text-accent" /> Bookmarked
+                    </>
+                  ) : (
+                    <>
+                      <Bookmark className="h-3.5 w-3.5" /> Bookmark
+                    </>
+                  )}
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportToWorkspace}
+                  className="h-8 text-xs font-medium gap-1.5"
+                  title="Keep this topic in Workspace Docs"
+                >
+                  <FolderPlus className="h-3.5 w-3.5 text-accent" /> Keep in Workspace
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handlePrint}
+                  className="h-8 text-xs font-medium gap-1.5"
+                  title="Print this shareable topic guide"
+                >
+                  <Printer className="h-3.5 w-3.5" /> Print
+                </Button>
+
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleExportPDF}
+                  disabled={isExportingPDF}
+                  className="h-8 text-xs font-medium gap-1.5"
+                  title="Export shareable PDF for schools and organisations"
+                >
+                  {isExportingPDF ? (
+                    <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                  ) : (
+                    <Download className="h-3.5 w-3.5" />
+                  )}
+                  Shareable PDF
+                </Button>
+
+                <Badge variant="secondary">{selectedTopic.section}</Badge>
+              </div>
+            </div>
+
+            <article ref={topicArticleRef} className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-7">
+              <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
+                <div className="flex items-center gap-2 text-sm font-semibold text-accent">
+                  <Lightbulb className="h-4 w-4" /> What this topic helps you investigate
+                </div>
+                <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
+                  Amineva Global Research Topic
+                </Badge>
+              </div>
+
+              <h2 className="text-xl md:text-2xl font-bold text-foreground mb-2">
+                {selectedTopic.title}
+              </h2>
+              <p className="mt-1 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">
+                {selectedTopic.description}
+              </p>
+
+              <div className="mt-6">
+                <h3 className="text-sm font-semibold text-foreground">Questions to answer</h3>
+                <div className="mt-3 grid gap-2 md:grid-cols-2">
+                  {selectedTopic.questions.map(q => (
+                    <div key={q} className="flex items-start gap-2 rounded-xl bg-muted/50 p-3 text-sm leading-6">
+                      <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-accent" />
+                      {q}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Ask about this topic alongside evidence checklist */}
+              <div className="mt-6 grid gap-4 md:grid-cols-2">
+                <AskTopicPanel
+                  topicTitle={selectedTopic.title}
+                  categoryTitle={selected.title}
+                  description={selectedTopic.description}
+                  questions={selectedTopic.questions}
+                  referenceSources={selected.sources}
+                />
+
+                <div className="rounded-xl border border-border p-4 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 text-xs font-semibold">
+                      <Info className="h-4 w-4 text-accent" /> Evidence checklist
+                    </div>
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">
+                      For any figure or rule, capture the publisher, the exact page or dataset, the geography and population it covers, the observation or publication date, the method used, and any caveats. An indexed item is a lead for investigation - not automatic confirmation.
+                    </p>
+                  </div>
+                  <div className="mt-3 pt-3 border-t border-border/50 text-[11px] text-muted-foreground">
+                    Checkpoints: Original Publisher · Jurisdiction & Scope · Observation Year · Methodology Note
+                  </div>
+                </div>
+              </div>
+
+              {/* Project main goal & number to track for schools & organisations */}
+              <ProjectGoalTracker
+                mainGoal={mainGoal}
+                onChangeMainGoal={setMainGoal}
+                numberToTrack={numberToTrack}
+                onChangeNumberToTrack={setNumberToTrack}
+              />
             </article>
+
             <ResearchPanel initialQuery={selectedTopic.title} />
             <SourceDirectory sources={selected.sources} />
-            {selected.slug === "travel-destination" && <CountryExplorer />}
+            {selected.slug === "travel-destination" && (
+              <>
+                <CountryExplorer onCountriesLoaded={setCountryList} />
+                <VisaChecker countries={countryList} />
+              </>
+            )}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
             {selected.product && <ProductConnection product={selected.product} />}
-            {selected.slug === "career-development-education" && <div className="rounded-2xl border border-border bg-card shadow-sm p-5"><h2 className="font-semibold">Amineva Impact</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">The existing school and community initiative material remains part of Career Development and Education.</p><Link to="/impact" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">View Amineva Impact engagements <ArrowUpRight className="h-4 w-4" /></Link></div>}
-            <p className="text-[11px] text-muted-foreground">This topic guide is an investigation structure. It does not itself certify a current visa rule, price, job vacancy, crop condition or organisational finding.</p>
+            {selected.slug === "career-development-education" && (
+              <div className="rounded-2xl border border-border bg-card shadow-sm p-5">
+                <h2 className="font-semibold">Amineva Impact</h2>
+                <p className="mt-1 text-sm leading-6 text-muted-foreground">
+                  The existing school and community initiative material remains part of Career Development and Education.
+                </p>
+                <Link to="/impact" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
+                  View Amineva Impact engagements <ArrowUpRight className="h-4 w-4" />
+                </Link>
+              </div>
+            )}
+            <p className="text-[11px] text-muted-foreground">
+              This topic guide is an investigation structure. It does not itself certify a current visa rule, price, job vacancy, crop condition or organisational finding.
+            </p>
           </section>}
 
           {selected && !selectedTopic && <section className="space-y-6">
@@ -820,6 +1080,12 @@ export default function InfoDiscoveryPage() {
           </section>}
 
           {!selected && <section className="space-y-7">
+            {/* Popular Topics & Recently Viewed Quick-Start */}
+            <PopularAndRecent
+              recentTopics={recentTopicsList}
+              onSelectTopic={(catSlug, topSlug) => goToTopic(catSlug, topSlug)}
+            />
+
             <div><div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Explore the six areas</h2><p className="mt-1 text-sm text-muted-foreground">Each area has its own subject menu, reference sources and discovery workflow.</p></div><Badge variant="outline">6 areas</Badge></div>
               <div className="grid gap-4 md:grid-cols-2">{categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className="group flex h-full flex-col rounded-2xl border border-t-4 border-t-accent/70 border-border bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-xl"><div className="mb-4 flex items-start justify-between"><span className="rounded-xl border border-primary/10 bg-primary/10 p-3 text-primary"><category.icon className="h-6 w-6" /></span><ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary" /></div><h3 className="text-lg font-semibold">{category.title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{category.summary}</p><div className="mt-4 flex flex-wrap gap-1.5">{category.sections.slice(0, 3).map(section => <span key={section.title} className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{section.title}</span>)}</div><div className="mt-4 flex items-center border-t border-border pt-3 text-xs font-semibold text-primary">Open subject menu <ChevronRight className="ml-1 h-4 w-4" /></div></button>)}</div>
             </div>
@@ -828,6 +1094,15 @@ export default function InfoDiscoveryPage() {
           </section>}
         </div>
       </div>
+
+      {/* Slide-over drawer for Saved Topics in Workspace */}
+      {savedDrawerOpen && (
+        <SavedTopicsDrawer
+          savedTopics={savedTopicsList}
+          onRefresh={() => setSavedTopicsList(getSavedTopics())}
+          onClose={() => setSavedDrawerOpen(false)}
+        />
+      )}
     </main>
   );
 }
