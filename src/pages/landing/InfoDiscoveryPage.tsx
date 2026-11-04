@@ -2,9 +2,8 @@ import React, { useMemo, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop,
-  BriefcaseBusiness, Sprout, ShieldCheck, BookOpen, Compass,
-  Globe2, SlidersHorizontal, ExternalLink, Clock3, FileCheck2,
-  MapPinned, Lightbulb, Network, ChevronRight
+  BriefcaseBusiness, Sprout, ShieldCheck, Globe2, SlidersHorizontal,
+  ExternalLink, FileCheck2, Lightbulb, ChevronRight
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
