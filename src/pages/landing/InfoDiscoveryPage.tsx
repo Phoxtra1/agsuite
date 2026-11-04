@@ -488,7 +488,7 @@ function CountryExplorer() {
     {
       key: "unemployment" as const, label: "Unemployment rate (ILO modelled estimate)", code: "SL.UEM.TOTL.ZS",
       suffix: "%", digits: 1, unit: "percentage of the labour force",
-      description: "People without work who are available for and seeking work. This modelled series may include imputed or projected observations; the World Bank warns that imputed observations have high uncertainty and should not be used for country rankings.",
+      description: "People without work who are available for and seeking work. This ILO modelled series combines nationally reported observations with adjusted, imputed and projected values. The value returned here does not identify which status applies to this country-year; consult ILOSTAT's country-year metadata or the national statistical authority before interpreting it. Imputed values carry high uncertainty and should not be used to rank or compare countries.",
       href: "https://data.worldbank.org/indicator/SL.UEM.TOTL.ZS",
       methodology: "https://ilostat.ilo.org/resources/concepts-and-definitions/ilo-modelled-estimates/",
     },
@@ -687,7 +687,10 @@ function SourceDirectory({ sources }: { sources: Source[] }) {
         <div className="mt-3 flex items-center justify-between gap-2"><span className="text-[10px] text-muted-foreground">{source.type}</span><a href={source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">Open source <ExternalLink className="h-3 w-3" /></a></div>
       </article>)}
     </div>
-    <p className="mt-4 text-[11px] leading-5 text-muted-foreground">A source's presence here does not mean every page or dataset it publishes has been reviewed. Check its jurisdiction, publication date, update date, methodology and limitations for each decision.</p>
+    <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
+      <p className="text-xs font-semibold text-foreground">How to use this directory</p>
+      <p className="mt-1 text-[11px] leading-5 text-muted-foreground">These are starting points, not a claim that every linked page or dataset has been checked for the current question. Match the source to the claim: use the responsible government authority for current law and entry rules; the originating statistical agency for official national statistics; and the named research publisher or repository for a publication. Confirm the exact jurisdiction, population, reference period, definition, methodology and revision date before relying on a figure. A source's institutional authority does not make every third-party interpretation of its data authoritative.</p>
+    </div>
   </section>;
 }
 
