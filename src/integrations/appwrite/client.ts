@@ -457,11 +457,10 @@ const authAdapter = {
         error: null,
       };
 
+      // Keep the cache response in the same shape as getSession().
       cachedAuthSession = {
         data: {
-          data: {
-            session: formattedSession,
-          },
+          data: { session: formattedSession },
           error: null,
         },
         timestamp: Date.now(),
