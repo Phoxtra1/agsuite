@@ -251,7 +251,7 @@ type WBIndicator = { value: number | null; date?: string };
 type WBCountry = { id: string; iso2Code: string; name: string; capitalCity: string; region: { id: string; value: string }; incomeLevel: { value: string } };
 type CountryStats = { population?: WBIndicator; gdp?: WBIndicator; unemployment?: WBIndicator; lifeExpectancy?: WBIndicator };
 async function fetchWorldBankIndicator(code: string, indicator: string, signal: AbortSignal): Promise<WBIndicator | undefined> {
-  const url = \`https://api.worldbank.org/v2/country/\${code}/indicator/\${indicator}?format=json&mrv=1&per_page=1\`;
+  const url = `https://api.worldbank.org/v2/country/${code}/indicator/${indicator}?format=json&mrv=1&per_page=1`;
   const response = await fetch(url, { signal, headers: { Accept: "application/json" } });
   if (!response.ok) return undefined;
   const data = await response.json();
