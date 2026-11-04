@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Outlet, Link, useLocation, useNavigate } from "react-router-dom";
+import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Settings } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
@@ -14,7 +14,6 @@ const navLinks = [
 
 export default function Landing() {
   const location = useLocation();
-  const navigate = useNavigate();
   const isHome = location.pathname === "/";
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
@@ -74,40 +73,6 @@ export default function Landing() {
 
       <Outlet />
 
-      {!isHome && (
-        <footer className="border-t border-border bg-card">
-          <div className="max-w-7xl mx-auto px-6 py-10">
-            <div className="grid md:grid-cols-3 gap-8">
-              <div>
-                <div className="flex items-center gap-2 mb-3">
-                  <img src={amvLogo} alt="Amineva Global" className="h-8 w-8 rounded-full" />
-                  <span className="font-semibold text-foreground">Amineva Global</span>
-                </div>
-                <p className="text-sm text-muted-foreground">An Information Discovery System for clearer understanding and informed decisions.</p>
-              </div>
-              <div>
-                <h4 className="font-semibold text-foreground mb-3 text-sm">Explore</h4>
-                <div className="space-y-2">
-                  <Link to="/info-discovery" className="block text-sm text-muted-foreground hover:text-foreground transition">Info Discovery</Link>
-                  <Link to="/about-us" className="block text-sm text-muted-foreground hover:text-foreground transition">About Us</Link>
-                  <Link to="/faqs" className="block text-sm text-muted-foreground hover:text-foreground transition">FAQs</Link>
-                  <Link to="/support" className="block text-sm text-muted-foreground hover:text-foreground transition">Support</Link>
-                </div>
-              </div>
-              <div>
-                <h4 className="font-semibold text-foreground mb-3 text-sm">Legal</h4>
-                <div className="space-y-2">
-                  <Link to="/terms" className="block text-sm text-muted-foreground hover:text-foreground transition">Terms of Service</Link>
-                  <Link to="/privacy" className="block text-sm text-muted-foreground hover:text-foreground transition">Privacy Policy</Link>
-                </div>
-              </div>
-            </div>
-            <div className="border-t border-border mt-8 pt-6 text-center text-xs text-muted-foreground">
-              © {new Date().getFullYear()} Amineva <span onClick={(e) => { if (e.detail === 3) navigate("/seal"); }} className="cursor-default select-none">Global</span>. All Rights Reserved.
-            </div>
-          </div>
-        </footer>
-      )}
     </div>
   );
 }

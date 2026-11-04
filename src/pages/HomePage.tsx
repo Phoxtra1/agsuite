@@ -129,6 +129,19 @@ export default function HomePage() {
   const workspaceProduct: ProductData = products.find((product) => product.id.toLowerCase().includes("workspace") || product.name.toLowerCase().includes("workspace")) || { id: "workspace", name: "Amineva Workspace", status: "live", order: 0 };
   const WorkspaceIcon = getProductIconSafe(workspaceProduct?.id || "workspace");
 
+  // A direct /workspace visit returns here for authentication; restore the
+  // Workspace sign-in card instead of leaving the user at product selection.
+  useEffect(() => {
+    const requestedPath = new URLSearchParams(window.location.search).get("authRedirect");
+    if (!requestedPath || !decodeURIComponent(requestedPath).startsWith("/workspace") || !workspaceProduct) return;
+    if (isAuthenticated) {
+      navigate("/workspace", { replace: true });
+      return;
+    }
+    setSelectedProduct(workspaceProduct);
+    setAuthTab("signin");
+  }, [workspaceProduct, isAuthenticated, navigate]);
+
   const canShowAuthCard = useMemo(() => {
     const s = `${selectedProduct?.id || ""} ${selectedProduct?.name || ""} ${selectedProduct?.url || ""}`.toLowerCase();
     if (s.includes("sikas") || s.includes("aminevaops") || s.includes("ops.amineva.com")) return false;
@@ -307,7 +320,7 @@ export default function HomePage() {
       {/* RIGHT PANEL */}
       <div className="relative flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
         <div className="w-full max-w-xl">
-          {/* Primary navigation: preserve the existing homepage layout and settings. */}
+          {/* Primary navigation and appearance settings. Workspace is accessed from its dedicated panel below. */}
           <div className="w-full flex justify-end gap-6 text-base font-semibold text-muted-foreground flex-wrap items-center">
             <button type="button" className="hover:text-foreground transition cursor-pointer text-accent font-bold" onClick={() => navigate("/info-discovery")}>Info Discovery</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>

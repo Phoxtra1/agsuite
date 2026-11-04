@@ -72,16 +72,18 @@ export default function AuthCard({
         await login(email.trim(), password);
 
         // Security Access Control Check
-        const { data: { session } } = await supabase.auth.getSession();
-        // Workspace self-provisions each account on entry (WorkspaceGate),
-        // so it must not be blocked by a missing pre-existing grant.
-        const isWorkspace = /workspace/i.test(`${product.id} ${product.name}`);
-        if (session?.user && !isWorkspace) {
-          const access = await loadAppAccess(session.user.id, product.id);
-          if (!access.allowed) {
-            await supabase.auth.signOut();
-            setError(`This email address is registered under another application. Every app in Amineva Suite requires an isolated email address and user account.`);
-            return;
+        // Workspace is the shared productivity environment. Its own
+        // WorkspaceGate provisions access after authentication; it must not
+        // be blocked by another product's registration metadata.
+        if (product.id !== "workspace") {
+          const { data: { session } } = await supabase.auth.getSession();
+          if (session?.user) {
+            const access = await loadAppAccess(session.user.id, product.id);
+            if (!access.allowed) {
+              await supabase.auth.signOut();
+              setError(`This email address is registered under another application. Every app in Amineva Suite requires an isolated email address and user account.`);
+              return;
+            }
           }
         }
       }

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness,
@@ -247,45 +247,93 @@ async function searchCrossref(query: string, signal: AbortSignal): Promise<Resea
   });
 }
 
-type WBIndicator = { value: number | null; date?: string };
-type WBCountry = { id: string; iso2Code: string; name: string; capitalCity: string; region: { id: string; value: string }; incomeLevel: { value: string } };
-type CountryStats = { population?: WBIndicator; gdp?: WBIndicator; unemployment?: WBIndicator; lifeExpectancy?: WBIndicator };
+type WBIndicator = { value: number; date: string; footnote?: string };
+type IndicatorResult = { data?: WBIndicator; error?: string };
+type WBCountry = {
+  id: string; iso2Code: string; name: string; capitalCity?: string;
+  region?: { id?: string; value?: string }; incomeLevel?: { id?: string; value?: string };
+};
+type CountryStats = {
+  population: IndicatorResult;
+  gdp: IndicatorResult;
+  unemployment: IndicatorResult;
+  lifeExpectancy: IndicatorResult;
+};
+
 async function fetchWorldBankIndicator(code: string, indicator: string, signal: AbortSignal): Promise<WBIndicator | undefined> {
-  const url = `https://api.worldbank.org/v2/country/${code}/indicator/${indicator}?format=json&mrv=1&per_page=1`;
+  // MRNEV means "most recent non-empty value". MRV=1 can return a null
+  // observation and hide an earlier valid year for countries with reporting gaps.
+  const url = "https://api.worldbank.org/v2/country/" + encodeURIComponent(code) + "/indicator/" + encodeURIComponent(indicator) + "?format=json&mrnev=1&per_page=1&footnote=y";
   const response = await fetch(url, { signal, headers: { Accept: "application/json" } });
-  if (!response.ok) return undefined;
-  const data = await response.json();
-  const row = Array.isArray(data?.[1]) ? data[1].find((item: any) => item.value !== null) : undefined;
-  return row ? { value: row.value, date: row.date } : undefined;
+  if (!response.ok) throw new Error("World Bank returned HTTP " + response.status + " for " + indicator + ".");
+  const payload = await response.json();
+  if (!Array.isArray(payload) || !Array.isArray(payload[1])) {
+    const apiMessage = payload?.[0]?.message?.[0]?.value || payload?.message || "Unexpected response from the World Bank Indicators API.";
+    throw new Error(String(apiMessage));
+  }
+  const row = payload[1].find((item: any) => item && item.value !== null && item.value !== undefined);
+  if (!row || !Number.isFinite(Number(row.value))) return undefined;
+  return {
+    value: Number(row.value),
+    date: String(row.date || ""),
+    footnote: row.footnote ? String(row.footnote) : undefined,
+  };
 }
+
 async function fetchCountryStats(code: string, signal: AbortSignal): Promise<CountryStats> {
-  const [population, gdp, unemployment, lifeExpectancy] = await Promise.all([
+  const requests = await Promise.allSettled([
     fetchWorldBankIndicator(code, "SP.POP.TOTL", signal),
     fetchWorldBankIndicator(code, "NY.GDP.PCAP.CD", signal),
     fetchWorldBankIndicator(code, "SL.UEM.TOTL.ZS", signal),
     fetchWorldBankIndicator(code, "SP.DYN.LE00.IN", signal),
   ]);
-  return { population, gdp, unemployment, lifeExpectancy };
+  const toResult = (result: PromiseSettledResult<WBIndicator | undefined>): IndicatorResult => {
+    if (result.status === "rejected") {
+      const reason = result.reason as Error | undefined;
+      return { error: reason?.message || "This indicator could not be retrieved." };
+    }
+    return result.value
+      ? { data: result.value }
+      : { error: "No non-empty observation is currently returned for this economy." };
+  };
+  return {
+    population: toResult(requests[0]),
+    gdp: toResult(requests[1]),
+    unemployment: toResult(requests[2]),
+    lifeExpectancy: toResult(requests[3]),
+  };
 }
 
 const monthOrder = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
 const monthLabels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 type ClimateMonth = { month: string; temperature?: number; precipitation?: number; humidity?: number };
-async function fetchClimateNormals(latitude: number, longitude: number, signal: AbortSignal): Promise<ClimateMonth[]> {
+type ClimateResult = { rows: ClimateMonth[]; period?: string; sources: string[]; gridResolution?: string };
+async function fetchClimateNormals(latitude: number, longitude: number, signal: AbortSignal): Promise<ClimateResult> {
   const params = new URLSearchParams({
     parameters: "T2M,PRECTOTCORR,RH2M", community: "AG",
     latitude: String(latitude), longitude: String(longitude), format: "JSON",
   });
   const response = await fetch("https://power.larc.nasa.gov/api/temporal/climatology/point?" + params.toString(), { signal });
-  if (!response.ok) throw new Error("NASA POWER could not return data for these coordinates (" + response.status + ").");
+  if (!response.ok) throw new Error("NASA POWER could not return data for these coordinates (HTTP " + response.status + ").");
   const payload = await response.json();
+  if (payload?.messages?.length) throw new Error(payload.messages.map((item: any) => item.message || String(item)).join(" "));
   const data = payload?.properties?.parameter || payload?.parameter || {};
-  return monthOrder.map((code, index) => ({
+  const cleanValue = (value: unknown): number | undefined => {
+    const parsed = Number(value);
+    // NASA POWER uses a fill value for missing grid-cell observations.
+    return value !== null && value !== undefined && Number.isFinite(parsed) && parsed > -900 ? parsed : undefined;
+  };
+  const rows = monthOrder.map((code, index) => ({
     month: monthLabels[index],
-    temperature: data.T2M?.[code],
-    precipitation: data.PRECTOTCORR?.[code],
-    humidity: data.RH2M?.[code],
-  })).filter(item => [item.temperature, item.precipitation, item.humidity].some(value => typeof value === "number"));
+    temperature: cleanValue(data.T2M?.[code]),
+    precipitation: cleanValue(data.PRECTOTCORR?.[code]),
+    humidity: cleanValue(data.RH2M?.[code]),
+  })).filter(item => [item.temperature, item.precipitation, item.humidity].some(value => value !== undefined));
+  const header = payload?.header || {};
+  const period = header.start && header.end ? String(header.start) + "–" + String(header.end) : undefined;
+  const sources = Array.isArray(header.sources) ? header.sources.map(String) : [];
+  const gridResolution = payload?.geometry?.coordinates ? "Nearest NASA POWER grid cell" : undefined;
+  return { rows, period, sources, gridResolution };
 }
 
 function formatNumber(value?: number | null, digits = 0) {
@@ -299,43 +347,71 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [retrievedAt, setRetrievedAt] = useState("");
+  const activeRequest = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    activeRequest.current?.abort();
+    setQuery(initialQuery);
+    setRecords([]);
+    setRetrievedAt("");
+    setError("");
+    setLoading(false);
+  }, [initialQuery]);
+
+  useEffect(() => () => activeRequest.current?.abort(), []);
+
   const runSearch = async (event?: React.FormEvent) => {
     event?.preventDefault();
     const clean = query.trim();
     if (clean.length < 3) { setError("Enter at least three characters to search research records."); return; }
-    setLoading(true); setError("");
+    activeRequest.current?.abort();
     const controller = new AbortController();
+    activeRequest.current = controller;
+    setLoading(true);
+    setError("");
+    setRecords([]);
+    setRetrievedAt("");
     try {
       const results = await searchCrossref(clean, controller.signal);
+      if (activeRequest.current !== controller) return;
       setRecords(results);
       setRetrievedAt(new Date().toISOString());
       if (!results.length) setError("No matching publication metadata was returned. Try different search terms.");
     } catch (err: any) {
-      if (err?.name !== "AbortError") setError(err?.message || "The research index could not be reached. Check the connection and try again.");
-    } finally { setLoading(false); }
+      if (err?.name !== "AbortError" && activeRequest.current === controller) {
+        setError(err?.message || "The research index could not be reached. Check the connection and try again.");
+      }
+    } finally {
+      if (activeRequest.current === controller) {
+        activeRequest.current = null;
+        setLoading(false);
+      }
+    }
   };
+
   return (
     <section className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><BookOpen className="h-4 w-4 text-accent" /> Research publication search</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Search Crossref's public scholarly metadata index. Results are publication records—not proof that a paper's claims are correct or that its full text is freely available.</p></div>
-        <Badge variant="outline">Live public index</Badge>
+        <div><div className="flex items-center gap-2 text-sm font-semibold"><BookOpen className="h-4 w-4 text-primary" /> Research publication search</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Search Crossref's publisher-deposited scholarly metadata. A DOI or Crossref record confirms that metadata was registered, not that the research findings are correct, independently replicated, peer-reviewed or freely accessible.</p></div>
+        <Badge variant="outline">Crossref metadata</Badge>
       </div>
       <form onSubmit={runSearch} className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search a subject, question or research topic" aria-label="Search research publications" />
         <Button type="submit" disabled={loading || query.trim().length < 3} className="sm:min-w-32">{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Search</Button>
       </form>
-      {error && <p role="status" className="mt-3 text-sm text-muted-foreground">{error}</p>}
-      {retrievedAt && <p className="mt-3 text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()} · Source: Crossref REST API</p>}
+      {error && <p role="status" className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">{error}</p>}
+      {retrievedAt && <p className="mt-3 text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()} · Metadata source: Crossref REST API · Retrieval time is not publication time.</p>}
       {records.length > 0 && <div className="mt-4 space-y-3">
-        {records.map((record, index) => <article key={record.doi || record.url || index} className="rounded-xl border border-border p-4">
-          <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Year not supplied"}</Badge><span className="text-[11px] text-muted-foreground">{record.type}</span></div>
+        {records.map((record, index) => <article key={record.doi || record.url || index} className="rounded-xl border border-border bg-background/60 p-4">
+          <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Publication year not supplied"}</Badge><span className="text-[11px] text-muted-foreground">{record.type}</span></div>
           <h3 className="mt-2 font-semibold leading-6">{record.url ? <a href={record.url} target="_blank" rel="noreferrer" className="hover:text-primary hover:underline">{record.title} <ExternalLink className="inline h-3.5 w-3.5" /></a> : record.title}</h3>
           {(record.authors || record.journal || record.publisher) && <p className="mt-1 text-xs leading-5 text-muted-foreground">{[record.authors, record.journal, record.publisher].filter(Boolean).join(" · ")}</p>}
+          {record.doi && <p className="mt-1 text-[11px] text-muted-foreground">DOI: <a href={"https://doi.org/" + record.doi} target="_blank" rel="noreferrer" className="font-mono text-primary underline underline-offset-2">{record.doi}</a></p>}
           {record.abstract && <p className="mt-3 text-sm leading-6 text-muted-foreground">{record.abstract}{record.abstract.length >= 620 ? "…" : ""}</p>}
-          <p className="mt-3 text-[11px] text-muted-foreground">Provenance: metadata deposited with Crossref · Content not independently verified by this search</p>
+          <p className="mt-3 border-t border-border pt-3 text-[11px] leading-5 text-muted-foreground">Provenance: metadata deposited with Crossref. Check the publisher's article page for corrections, retractions, study methods, full text and publication status before relying on its conclusions.</p>
         </article>)}
       </div>}
-      <p className="mt-4 text-[11px] text-muted-foreground">Crossref documents its public REST API and the publisher-deposited nature of its metadata at <a className="underline underline-offset-2" href="https://www.crossref.org/documentation/retrieve-metadata/rest-api/" target="_blank" rel="noreferrer">Crossref API documentation</a>.</p>
+      <p className="mt-4 text-[11px] text-muted-foreground">Crossref API documentation: <a className="underline underline-offset-2" href="https://www.crossref.org/documentation/retrieve-metadata/rest-api/" target="_blank" rel="noreferrer">publisher-deposited metadata and API use</a>.</p>
     </section>
   );
 }
@@ -348,72 +424,183 @@ function CountryExplorer() {
   const [loadingStats, setLoadingStats] = useState(false);
   const [error, setError] = useState("");
   const [retrievedAt, setRetrievedAt] = useState("");
+
   useEffect(() => {
     const controller = new AbortController();
+    let active = true;
     fetch("https://api.worldbank.org/v2/country?format=json&per_page=400", { signal: controller.signal })
-      .then(response => { if (!response.ok) throw new Error("Country directory is unavailable."); return response.json(); })
-      .then(payload => {
-        const list = (payload?.[1] || []).filter((item: WBCountry) => item.iso2Code && item.region?.id !== "NA" && item.capitalCity);
-        setCountries(list.sort((a: WBCountry, b: WBCountry) => a.name.localeCompare(b.name)));
+      .then(response => {
+        if (!response.ok) throw new Error("World Bank country directory returned HTTP " + response.status + ".");
+        return response.json();
       })
-      .catch(err => { if (err?.name !== "AbortError") setError(err?.message || "Could not load the country directory."); })
-      .finally(() => setLoadingCountries(false));
-    return () => controller.abort();
+      .then(payload => {
+        if (!Array.isArray(payload) || !Array.isArray(payload[1])) {
+          throw new Error("The World Bank country directory returned an unexpected response.");
+        }
+        // Keep economies even when a capital-city field is blank. The API also
+        // returns regional and income aggregates, which are excluded here.
+        const list = (payload[1] as WBCountry[])
+          .filter(item => item?.iso2Code && item?.region?.id && item.region.id !== "NA")
+          .sort((a, b) => a.name.localeCompare(b.name));
+        if (active) setCountries(list);
+      })
+      .catch(err => {
+        if (active && err?.name !== "AbortError") setError(err?.message || "Could not load the World Bank country directory.");
+      })
+      .finally(() => { if (active) setLoadingCountries(false); });
+    return () => { active = false; controller.abort(); };
   }, []);
+
   useEffect(() => {
-    if (!countryCode) { setStats(null); return; }
+    if (!countryCode) {
+      setStats(null);
+      setRetrievedAt("");
+      setLoadingStats(false);
+      return;
+    }
     const controller = new AbortController();
-    setLoadingStats(true); setError("");
+    let active = true;
+    setStats(null);
+    setRetrievedAt("");
+    setLoadingStats(true);
+    setError("");
     fetchCountryStats(countryCode, controller.signal)
-      .then(result => { setStats(result); setRetrievedAt(new Date().toISOString()); })
-      .catch(err => { if (err?.name !== "AbortError") setError(err?.message || "Could not retrieve country indicators."); })
-      .finally(() => setLoadingStats(false));
-    return () => controller.abort();
+      .then(result => {
+        if (!active) return;
+        setStats(result);
+        setRetrievedAt(new Date().toISOString());
+      })
+      .catch(err => {
+        if (active && err?.name !== "AbortError") setError(err?.message || "Could not retrieve country indicators.");
+      })
+      .finally(() => { if (active) setLoadingStats(false); });
+    return () => { active = false; controller.abort(); };
   }, [countryCode]);
+
   const country = countries.find(item => item.iso2Code === countryCode);
   const indicators = [
-    { label: "Population", data: stats?.population, suffix: "", digits: 0 },
-    { label: "GDP per person", data: stats?.gdp, suffix: " US$", digits: 0 },
-    { label: "Unemployment", data: stats?.unemployment, suffix: "%", digits: 1 },
-    { label: "Life expectancy", data: stats?.lifeExpectancy, suffix: " years", digits: 1 },
+    {
+      key: "population" as const, label: "Population", code: "SP.POP.TOTL",
+      suffix: "", digits: 0, unit: "people",
+      description: "Estimated total population. The World Bank series draws on UN population estimates and national statistical sources.",
+      href: "https://data.worldbank.org/indicator/SP.POP.TOTL",
+    },
+    {
+      key: "gdp" as const, label: "GDP per capita (current US$)", code: "NY.GDP.PCAP.CD",
+      suffix: " US$", digits: 0, unit: "current US dollars per person",
+      description: "GDP divided by population at current prices and exchange rates. This is not average salary, household income or a purchasing-power-adjusted figure.",
+      href: "https://data.worldbank.org/indicator/NY.GDP.PCAP.CD",
+    },
+    {
+      key: "unemployment" as const, label: "Unemployment rate (ILO modelled estimate)", code: "SL.UEM.TOTL.ZS",
+      suffix: "%", digits: 1, unit: "percentage of the labour force",
+      description: "People without work who are available for and seeking work. This ILO modelled series combines nationally reported observations with adjusted, imputed and projected values. The value returned here does not identify which status applies to this country-year; consult ILOSTAT's country-year metadata or the national statistical authority before interpreting it. Imputed values carry high uncertainty and should not be used to rank or compare countries.",
+      href: "https://data.worldbank.org/indicator/SL.UEM.TOTL.ZS",
+      methodology: "https://ilostat.ilo.org/resources/concepts-and-definitions/ilo-modelled-estimates/",
+    },
+    {
+      key: "lifeExpectancy" as const, label: "Life expectancy at birth", code: "SP.DYN.LE00.IN",
+      suffix: " years", digits: 1, unit: "years",
+      description: "The number of years a newborn would live if current age-specific mortality rates applied throughout life. It is a population-level statistical estimate, not an individual prediction.",
+      href: "https://data.worldbank.org/indicator/SP.DYN.LE00.IN",
+    },
   ];
+  const missingCount = stats ? indicators.filter(item => !stats[item.key].data).length : 0;
+
   return (
-    <section className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><Globe2 className="h-4 w-4 text-accent" /> Country profile and development indicators</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Choose a country to retrieve its profile and latest available World Bank indicators. These are country-level indicators, not city prices, visa rules or a guarantee of present-day conditions.</p></div>
-        <Badge variant="outline">Live API lookup</Badge>
-      </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div><label htmlFor="destination-country" className="mb-1.5 block text-xs font-medium text-muted-foreground">Destination country</label>
-          <select id="destination-country" value={countryCode} onChange={e => setCountryCode(e.target.value)} disabled={loadingCountries} className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm">
-            <option value="">{loadingCountries ? "Loading country directory…" : "Select a country"}</option>
-            {countries.map(item => <option key={item.iso2Code} value={item.iso2Code}>{item.name}</option>)}
-          </select>
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="border-b border-border bg-gradient-to-r from-primary/[0.07] via-card to-accent/[0.06] p-5 md:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold"><Globe2 className="h-4 w-4 text-primary" /> Country and economy profile</div>
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Retrieve selected country-directory details and the latest non-empty observation available for each indicator. The indicators can refer to different years and should not be read as one same-year snapshot. Values are reproduced from the named source; they are not independently audited by Amineva Global.</p>
+          </div>
+          <Badge variant="outline">World Bank Indicators API</Badge>
         </div>
-        <div className="rounded-xl bg-muted/50 p-3 text-xs leading-5 text-muted-foreground"><strong className="text-foreground">Important:</strong> Entry requirements depend on the traveller's passport nationality, destination, purpose and travel date. This profile does not determine visa eligibility.</div>
+        <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div>
+            <label htmlFor="destination-country" className="mb-1.5 block text-xs font-medium text-muted-foreground">Select a country or economy</label>
+            <select id="destination-country" value={countryCode} onChange={e => setCountryCode(e.target.value)} disabled={loadingCountries || countries.length === 0} className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <option value="">{loadingCountries ? "Loading country directory…" : countries.length ? "Choose a country or economy" : "Country directory unavailable"}</option>
+              {countries.map(item => <option key={item.iso2Code} value={item.iso2Code}>{item.name}</option>)}
+            </select>
+            {countries.length > 0 && <p className="mt-1.5 text-[10px] text-muted-foreground">{countries.length.toLocaleString()} listed countries and economies · World Bank directory</p>}
+          </div>
+          <div className="rounded-xl border border-accent/20 bg-accent/5 p-3 text-xs leading-5 text-muted-foreground">
+            <strong className="text-foreground">Read this profile carefully.</strong> National averages hide differences between regions, cities and groups. This is a statistical starting point, not a complete assessment of living conditions, job prospects or travel eligibility.
+          </div>
+        </div>
       </div>
-      {country && <div className="mt-5">
+
+      {country && <div className="p-5 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
-          <div><h3 className="text-xl font-semibold">{country.name}</h3><p className="mt-1 text-sm text-muted-foreground">{[country.capitalCity, country.region?.value, country.incomeLevel?.value].filter(Boolean).join(" · ")}</p></div>
+          <div>
+            <h3 className="text-xl font-semibold">{country.name}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {[
+                country.capitalCity?.trim() ? "Capital: " + country.capitalCity.trim() : "",
+                country.region?.value || "",
+                country.incomeLevel?.value ? "World Bank income group: " + country.incomeLevel.value : "",
+              ].filter(Boolean).join(" · ") || "Directory details not supplied"}
+            </p>
+            <p className="mt-1 text-[10px] text-muted-foreground">Income group is the World Bank's annual classification, not a permanent country rating.</p>
+          </div>
           <Badge variant="secondary">ISO {country.iso2Code}</Badge>
         </div>
-        {loadingStats ? <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Retrieving latest available indicators…</div> :
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {indicators.map(item => <div key={item.label} className="rounded-xl border border-border p-4"><p className="text-xs text-muted-foreground">{item.label}</p><p className="mt-1 text-xl font-semibold tabular-nums">{item.data ? formatNumber(item.data.value, item.digits) + item.suffix : "Not available"}</p><p className="mt-1 text-[11px] text-muted-foreground">{item.data?.date ? "Observation year: " + item.data.date : "No recent observation returned"}</p></div>)}
-          </div>}
-        {retrievedAt && <p className="mt-3 text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()} · Source: World Bank Indicators API. Values retain their own observation year.</p>}
+
+        {loadingStats ? (
+          <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Retrieving each indicator independently…</div>
+        ) : stats ? (
+          <>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {indicators.map(item => {
+                const result = stats[item.key];
+                const observation = result.data;
+                return (
+                  <article key={item.key} className="rounded-xl border border-border bg-background/70 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <p className="text-xs font-semibold text-foreground">{item.label}</p>
+                      <Badge variant={observation ? "outline" : "secondary"}>{observation ? "Observation found" : result.error?.startsWith("No non-empty observation") ? "No observation" : "Unavailable"}</Badge>
+                    </div>
+                    <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
+                      {observation ? formatNumber(observation.value, item.digits) + item.suffix : "Unavailable"}
+                    </p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {observation?.date ? "Observation year: " + observation.date : result.error || "No non-empty observation returned."}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.description}</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-3 text-[10px]">
+                      <span className="font-mono text-muted-foreground">{item.code}</span>
+                      <a href={item.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">Indicator data and definition <ExternalLink className="h-3 w-3" /></a>
+                      {item.methodology && <a href={item.methodology} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">ILO method <ExternalLink className="h-3 w-3" /></a>}
+                    </div>
+                    {observation?.footnote && <p className="mt-2 rounded-md bg-muted/60 p-2 text-[10px] leading-4 text-muted-foreground">Source note: {observation.footnote}</p>}
+                  </article>
+                );
+              })}
+            </div>
+            {missingCount > 0 && <p role="status" className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs leading-5 text-muted-foreground">{missingCount} indicator{missingCount === 1 ? "" : "s"} returned no usable value. Missing data is not zero and may reflect reporting coverage, source availability or a retrieval problem. Review the individual status above.</p>}
+            {retrievedAt && <p className="mt-4 text-[11px] text-muted-foreground">Retrieved from the World Bank API: {new Date(retrievedAt).toLocaleString()} · This is the retrieval time, not the publication date. Each card shows its own observation year.</p>}
+          </>
+        ) : null}
       </div>}
-      {error && <p role="status" className="mt-3 text-sm text-muted-foreground">{error}</p>}
-      <div className="mt-5 rounded-xl border border-border p-4">
-        <h3 className="font-semibold text-sm">Check entry and travel rules</h3>
-        <p className="mt-1 text-xs leading-5 text-muted-foreground">Use the traveller's actual passport nationality and purpose. Confirm every requirement on the destination government's immigration or embassy website before paying or travelling.</p>
+
+      {error && <p role="status" className="mx-5 mb-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-muted-foreground md:mx-6">{error}</p>}
+
+      <div className="border-t border-border bg-muted/20 p-5 md:p-6">
+        <h3 className="font-semibold text-sm">Confirm visa and entry rules separately</h3>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">Entry requirements depend on the traveller's passport nationality, destination, travel purpose and date. IATA and foreign-ministry advice are useful references, but the destination government's immigration authority is the controlling source for its entry rules. Confirm directly before booking or travelling.</p>
         <div className="mt-3 flex flex-wrap gap-3">
           <a href="https://www.iata.org/en/travel-centre/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">IATA Travel Centre <ExternalLink className="h-3.5 w-3.5" /></a>
           <a href="https://www.gov.uk/foreign-travel-advice" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">UK government travel advice <ExternalLink className="h-3.5 w-3.5" /></a>
-          <a href="https://travel.state.gov/content/travel/en/international-travel.html" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">U.S. government travel guidance <ExternalLink className="h-3.5 w-3.5" /></a>
+          <a href="https://travel.state.gov/content/travel/en/international-travel.html" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">U.S. government travel advice <ExternalLink className="h-3.5 w-3.5" /></a>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-3 text-[10px]">
+          <a className="text-primary underline underline-offset-2" href="https://datahelpdesk.worldbank.org/knowledgebase/articles/898581-api-basic-call-structures" target="_blank" rel="noreferrer">World Bank API query rules</a>
+          <a className="text-primary underline underline-offset-2" href="https://datahelpdesk.worldbank.org/knowledgebase/articles/1886695-metadata-api-queries" target="_blank" rel="noreferrer">World Bank metadata documentation</a>
+          <a className="text-primary underline underline-offset-2" href="https://datahelpdesk.worldbank.org/knowledgebase/articles/898599-indicator-api-queries" target="_blank" rel="noreferrer">Indicator definitions and metadata</a>
         </div>
       </div>
-      <p className="mt-4 text-[11px] text-muted-foreground">Source: <a className="underline" href="https://datahelpdesk.worldbank.org/knowledgebase/articles/889392" target="_blank" rel="noreferrer">World Bank Indicators API documentation</a>. Estimates and national aggregates should not be substituted for local data.</p>
     </section>
   );
 }
@@ -422,41 +609,77 @@ function ClimateExplorer() {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [rows, setRows] = useState<ClimateMonth[]>([]);
+  const [period, setPeriod] = useState("");
+  const [sources, setSources] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [retrievedAt, setRetrievedAt] = useState("");
+  const activeRequest = useRef<AbortController | null>(null);
+
+  useEffect(() => () => activeRequest.current?.abort(), []);
+
   const run = async (event: React.FormEvent) => {
     event.preventDefault();
     const lat = Number(latitude), lon = Number(longitude);
     if (latitude.trim() === "" || longitude.trim() === "" || !Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-      setError("Enter a valid latitude (−90 to 90) and longitude (−180 to 180)."); return;
+      setError("Enter a valid latitude (−90 to 90) and longitude (−180 to 180).");
+      return;
     }
-    setLoading(true); setError("");
+    activeRequest.current?.abort();
     const controller = new AbortController();
+    activeRequest.current = controller;
+    setLoading(true);
+    setError("");
+    setRows([]);
+    setPeriod("");
+    setSources([]);
+    setRetrievedAt("");
     try {
       const result = await fetchClimateNormals(lat, lon, controller.signal);
-      setRows(result); setRetrievedAt(new Date().toISOString());
-      if (!result.length) setError("The service returned no monthly values for these coordinates.");
-    } catch (err: any) { setError(err?.message || "The climate service could not be reached. Try again."); }
-    finally { setLoading(false); }
+      if (activeRequest.current !== controller) return;
+      setRows(result.rows);
+      setPeriod(result.period || "The API did not provide explicit start and end dates for this climatology response.");
+      setSources(result.sources);
+      setRetrievedAt(new Date().toISOString());
+      if (!result.rows.length) setError("NASA POWER returned no usable monthly values for these coordinates. Missing grid-cell values are not displayed as zero.");
+    } catch (err: any) {
+      if (err?.name !== "AbortError" && activeRequest.current === controller) setError(err?.message || "The climate service could not be reached. Try again.");
+    } finally {
+      if (activeRequest.current === controller) {
+        activeRequest.current = null;
+        setLoading(false);
+      }
+    }
   };
+
   return (
-    <section className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><CloudSun className="h-4 w-4 text-accent" /> Point-based climate normals</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Retrieve NASA POWER long-term monthly climatology for a coordinate. These are climate summaries, not a live weather forecast, farm inspection or crop-suitability verdict.</p></div>
-        <Badge variant="outline">NASA POWER API</Badge>
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="border-b border-border bg-gradient-to-r from-primary/[0.07] via-card to-accent/[0.06] p-5 md:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div><div className="flex items-center gap-2 text-sm font-semibold"><CloudSun className="h-4 w-4 text-primary" /> Point-based monthly climate averages</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Retrieve NASA POWER's predefined monthly climatology for one coordinate. These are long-term gridded averages, not current weather, a location-specific station observation, a forecast or a crop-suitability verdict.</p></div>
+          <Badge variant="outline">NASA POWER · Agroclimatology</Badge>
+        </div>
+        <form onSubmit={run} className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+          <div><label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="climate-lat">Latitude</label><Input id="climate-lat" value={latitude} onChange={e => setLatitude(e.target.value)} placeholder="e.g. 5.6037" inputMode="decimal" /></div>
+          <div><label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="climate-lon">Longitude</label><Input id="climate-lon" value={longitude} onChange={e => setLongitude(e.target.value)} placeholder="e.g. -0.1870" inputMode="decimal" /></div>
+          <Button type="submit" disabled={loading} className="sm:mt-6">{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Retrieve</Button>
+        </form>
       </div>
-      <form onSubmit={run} className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-        <div><label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="climate-lat">Latitude</label><Input id="climate-lat" value={latitude} onChange={e => setLatitude(e.target.value)} placeholder="e.g. 5.6037" inputMode="decimal" /></div>
-        <div><label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="climate-lon">Longitude</label><Input id="climate-lon" value={longitude} onChange={e => setLongitude(e.target.value)} placeholder="e.g. -0.1870" inputMode="decimal" /></div>
-        <Button type="submit" disabled={loading} className="sm:mt-6">{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Retrieve</Button>
-      </form>
-      {error && <p role="status" className="mt-3 text-sm text-muted-foreground">{error}</p>}
+      {error && <p role="status" className="m-5 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">{error}</p>}
+      {loading && <div className="flex items-center gap-2 p-5 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Retrieving monthly averages…</div>}
       {rows.length > 0 && <>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-muted-foreground">Coordinates: {latitude}, {longitude}</p><p className="text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()}</p></div>
-        <div className="mt-3 overflow-x-auto rounded-xl border border-border"><table className="w-full text-sm"><thead className="bg-muted/60 text-left"><tr><th className="px-3 py-2 font-medium">Month</th><th className="px-3 py-2 font-medium">Mean temp. °C</th><th className="px-3 py-2 font-medium">Precipitation mm/day</th><th className="px-3 py-2 font-medium">Relative humidity %</th></tr></thead><tbody>{rows.map(row => <tr key={row.month} className="border-t border-border"><td className="px-3 py-2 font-medium">{row.month}</td><td className="px-3 py-2 tabular-nums">{formatNumber(row.temperature, 1)}</td><td className="px-3 py-2 tabular-nums">{formatNumber(row.precipitation, 1)}</td><td className="px-3 py-2 tabular-nums">{formatNumber(row.humidity, 1)}</td></tr>)}</tbody></table></div>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-5"><p className="text-xs text-muted-foreground">Requested coordinate: {latitude}, {longitude}</p><p className="text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()}</p></div>
+        <div className="m-5 overflow-x-auto rounded-xl border border-border"><table className="w-full text-sm"><thead className="bg-muted/60 text-left"><tr><th className="px-3 py-2 font-medium">Month</th><th className="px-3 py-2 font-medium">Mean temp. °C</th><th className="px-3 py-2 font-medium">Precipitation mm/day</th><th className="px-3 py-2 font-medium">Relative humidity %</th></tr></thead><tbody>{rows.map(row => <tr key={row.month} className="border-t border-border"><td className="px-3 py-2 font-medium">{row.month}</td><td className="px-3 py-2 tabular-nums">{formatNumber(row.temperature, 1)}</td><td className="px-3 py-2 tabular-nums">{formatNumber(row.precipitation, 1)}</td><td className="px-3 py-2 tabular-nums">{formatNumber(row.humidity, 1)}</td></tr>)}</tbody></table></div>
+        <div className="mx-5 mb-5 rounded-xl border border-border bg-muted/30 p-4">
+          <p className="text-xs font-semibold">Data context and limitations</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">NASA POWER climatology period: {period} The API's climatology service supplies a predefined climatology; this interface does not assume a 1991–2020 normal period. Coordinates are mapped to gridded data, so results may differ from a nearby weather station and should not be treated as field measurements.</p>
+          {sources.length > 0 && <p className="mt-2 text-[11px] text-muted-foreground">Underlying data source identifier(s): {sources.join(", ")}</p>}
+          <p className="mt-2 text-[11px] text-muted-foreground">Precipitation is a mean daily rate in mm/day, not the total rainfall for the month. Monthly totals require a separate calculation using the applicable daily-rate convention and should not be inferred from this table alone.</p>
+        </div>
       </>}
-      <p className="mt-4 text-[11px] text-muted-foreground">Source: <a href="https://power.larc.nasa.gov/docs/services/api/temporal/climatology/" target="_blank" rel="noreferrer" className="underline">NASA POWER Climatology API documentation</a>. Parameter availability and the underlying observation/reanalysis period should be checked before operational use.</p>
+      <div className="border-t border-border bg-muted/20 p-5">
+        <p className="text-[11px] leading-5 text-muted-foreground">Source and method: <a href="https://power.larc.nasa.gov/docs/services/api/temporal/climatology/" target="_blank" rel="noreferrer" className="font-semibold text-primary underline underline-offset-2">NASA POWER Climatology API documentation</a> · <a href="https://power.larc.nasa.gov/docs/services/api/temporal/" target="_blank" rel="noreferrer" className="font-semibold text-primary underline underline-offset-2">Temporal API product descriptions</a>. Review parameter metadata, source model and grid limitations before operational decisions.</p>
+      </div>
     </section>
   );
 }
@@ -470,7 +693,10 @@ function SourceDirectory({ sources }: { sources: Source[] }) {
         <div className="mt-3 flex items-center justify-between gap-2"><span className="text-[10px] text-muted-foreground">{source.type}</span><a href={source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">Open source <ExternalLink className="h-3 w-3" /></a></div>
       </article>)}
     </div>
-    <p className="mt-4 text-[11px] leading-5 text-muted-foreground">A source's presence here does not mean every page or dataset it publishes has been reviewed. Check its jurisdiction, publication date, update date, methodology and limitations for each decision.</p>
+    <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
+      <p className="text-xs font-semibold text-foreground">How to use this directory</p>
+      <p className="mt-1 text-[11px] leading-5 text-muted-foreground">These are starting points, not a claim that every linked page or dataset has been checked for the current question. Match the source to the claim: use the responsible government authority for current law and entry rules; the originating statistical agency for official national statistics; and the named research publisher or repository for a publication. Confirm the exact jurisdiction, population, reference period, definition, methodology and revision date before relying on a figure. A source's institutional authority does not make every third-party interpretation of its data authoritative.</p>
+    </div>
   </section>;
 }
 
@@ -511,17 +737,18 @@ export default function InfoDiscoveryPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <section className="discovery-hero relative overflow-hidden border-b border-border">
-        <div className="mx-auto max-w-7xl px-5 py-9 md:px-8 md:py-12">
-          <div className="mb-5 flex items-center gap-2 text-xs font-medium text-muted-foreground">
-            <Link to="/" className="hover:text-foreground">Amineva Global</Link><ChevronRight className="h-3.5 w-3.5" /><Link to="/info-discovery" className="hover:text-foreground">Info Discovery</Link>
-            {selected && <><ChevronRight className="h-3.5 w-3.5" /><button onClick={() => goToCategory(selected.slug)} className="hover:text-foreground">{selected.title}</button></>}
-            {selectedTopic && <><ChevronRight className="h-3.5 w-3.5" /><span className="text-foreground">{selectedTopic.title}</span></>}
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/95 to-primary/85 px-5 py-10 text-primary-foreground md:px-8 md:py-14">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+        <div className="relative z-10 mx-auto max-w-7xl">
+          <div className="mb-5 flex items-center gap-2 text-xs font-medium text-primary-foreground/70">
+            <Link to="/" className="transition hover:text-primary-foreground">Amineva Global</Link><ChevronRight className="h-3.5 w-3.5" /><Link to="/info-discovery" className="transition hover:text-primary-foreground">Info Discovery</Link>
+            {selected && <><ChevronRight className="h-3.5 w-3.5" /><button onClick={() => goToCategory(selected.slug)} className="transition hover:text-primary-foreground">{selected.title}</button></>}
+            {selectedTopic && <><ChevronRight className="h-3.5 w-3.5" /><span className="text-primary-foreground">{selectedTopic.title}</span></>}
           </div>
           <div className="max-w-4xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-accent/40 bg-accent/15 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-accent"><Globe2 className="h-3.5 w-3.5" /> INFORMATION DISCOVERY SYSTEM</div>
-            <h1 className="text-3xl font-semibold tracking-tight md:text-5xl">{selectedTopic ? selectedTopic.title : selected ? selected.title : "Discover information. Understand your options. Make informed decisions."}</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">{selectedTopic ? selectedTopic.description : selected ? selected.summary : "Search across career development, destinations, technology, business, agriculture and operational intelligence. Move from a broad question to a structured subject, then follow the evidence and sources relevant to your decision."}</p>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-primary-foreground"><Globe2 className="h-3.5 w-3.5 text-accent" /> INFORMATION DISCOVERY SYSTEM</div>
+            <h1 className="text-3xl font-bold tracking-tight text-primary-foreground md:text-5xl">{selectedTopic ? selectedTopic.title : selected ? selected.title : "Discover information. Understand your options. Make informed decisions."}</h1>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-primary-foreground/80 md:text-base">{selectedTopic ? selectedTopic.description : selected ? selected.summary : "Search across career development, destinations, technology, business, agriculture and operational intelligence. Move from a broad question to a structured subject, then follow the evidence and sources relevant to your decision."}</p>
           </div>
           <div className="relative mt-7 max-w-4xl">
             <form onSubmit={onSearchSubmit} className="flex flex-col gap-2 rounded-2xl border border-border bg-card shadow-sm p-2 text-foreground shadow-xl sm:flex-row sm:items-center">
@@ -581,7 +808,7 @@ export default function InfoDiscoveryPage() {
             <div className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-7"><div className="flex items-center gap-2 text-sm font-semibold text-accent"><selected.icon className="h-4 w-4" /> Area overview</div><p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p><div className="mt-5 flex flex-wrap gap-2"><Badge variant="outline">{allTopics(selected).length} topics</Badge><Badge variant="outline">{selected.sections.length} subject groups</Badge><Badge variant="outline">{selected.sources.length} reference sources</Badge></div></div>
             <div><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Subject menu</h2><p className="mt-1 text-sm text-muted-foreground">Search within this area or filter by subject group.</p></div><Badge variant="outline">{filteredSections.reduce((count, section) => count + section.items.length, 0)} matching topics</Badge></div>
               <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={e => setTopicFilter(e.target.value)} placeholder="Filter topics and questions" aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={e => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
-              {filteredSections.length ? <div className="space-y-4">{filteredSections.map(section => <section key={section.title} className="rounded-2xl border border-border bg-card shadow-sm p-5"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div><div className="mt-4 grid gap-2 md:grid-cols-2">{section.items.map(item => <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className="group rounded-xl border border-border p-4 text-left transition hover:-translate-y-0.5 hover:border-accent/50 hover:bg-accent/5 hover:shadow-md"><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-accent" /></span><span className="mt-2 block text-xs leading-5 text-muted-foreground">{item.description}</span></button>)}</div></section>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
+              {filteredSections.length ? <div className="space-y-4">{filteredSections.map(section => <section key={section.title} className="rounded-2xl border border-border bg-card p-5"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div><div className="mt-4 grid gap-2 md:grid-cols-2">{section.items.map(item => <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className="group rounded-xl border border-border bg-card p-4 text-left transition hover:border-accent/50 hover:bg-accent/5"><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span><span className="mt-2 block text-xs leading-5 text-muted-foreground">{item.description}</span></button>)}</div></section>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
             </div>
             {selected.slug === "travel-destination" && <CountryExplorer />}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
@@ -594,14 +821,13 @@ export default function InfoDiscoveryPage() {
 
           {!selected && <section className="space-y-7">
             <div><div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Explore the six areas</h2><p className="mt-1 text-sm text-muted-foreground">Each area has its own subject menu, reference sources and discovery workflow.</p></div><Badge variant="outline">6 areas</Badge></div>
-              <div className="grid gap-4 md:grid-cols-2">{categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className="group flex h-full flex-col rounded-2xl border border-border bg-card shadow-sm p-5 text-left transition hover:-translate-y-1 hover:border-accent/50 hover:shadow-[var(--shadow-discovery)]"><div className="mb-4 flex items-start justify-between"><span className="rounded-xl bg-gradient-to-br from-accent/25 to-accent/5 p-3 text-accent ring-1 ring-accent/30"><category.icon className="h-6 w-6" /></span><ArrowRight className="h-5 w-5 text-muted-foreground transition group-hover:translate-x-1 group-hover:text-accent" /></div><h3 className="text-lg font-semibold">{category.title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{category.summary}</p><div className="mt-4 flex flex-wrap gap-1.5">{category.sections.slice(0, 3).map(section => <span key={section.title} className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{section.title}</span>)}</div><div className="mt-4 flex items-center border-t border-border pt-3 text-xs font-semibold text-accent">Open subject menu <ChevronRight className="ml-1 h-4 w-4" /></div></button>)}</div>
+              <div className="grid gap-4 md:grid-cols-2">{categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className="group flex h-full flex-col rounded-2xl border border-t-4 border-t-accent/70 border-border bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-xl"><div className="mb-4 flex items-start justify-between"><span className="rounded-xl border border-primary/10 bg-primary/10 p-3 text-primary"><category.icon className="h-6 w-6" /></span><ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary" /></div><h3 className="text-lg font-semibold">{category.title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{category.summary}</p><div className="mt-4 flex flex-wrap gap-1.5">{category.sections.slice(0, 3).map(section => <span key={section.title} className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{section.title}</span>)}</div><div className="mt-4 flex items-center border-t border-border pt-3 text-xs font-semibold text-primary">Open subject menu <ChevronRight className="ml-1 h-4 w-4" /></div></button>)}</div>
             </div>
             <ResearchPanel />
             <div className="rounded-2xl border border-border bg-card shadow-sm p-5"><div className="flex items-start gap-3"><FileCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" /><div><h2 className="font-semibold">How information is classified</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Official records, statistical estimates, research publications, reported experiences and AI-generated interpretations are not interchangeable. Each displayed result should retain its source, update date, jurisdiction, method and verification status. The live connectors currently available here are identified on their individual panels.</p></div></div></div>
           </section>}
         </div>
       </div>
-      <footer className="border-t border-border"><div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-6 text-xs text-muted-foreground md:flex-row md:items-center md:justify-between md:px-8"><span>© {new Date().getFullYear()} Amineva Global. Information Discovery System.</span><div className="flex gap-4"><Link to="/about-us" className="hover:text-foreground">About Us</Link><Link to="/faqs" className="hover:text-foreground">FAQs</Link><Link to="/support" className="hover:text-foreground">Support</Link></div></div></footer>
     </main>
   );
 }
