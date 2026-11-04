@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness,
@@ -307,21 +307,33 @@ async function fetchCountryStats(code: string, signal: AbortSignal): Promise<Cou
 const monthOrder = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
 const monthLabels = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
 type ClimateMonth = { month: string; temperature?: number; precipitation?: number; humidity?: number };
-async function fetchClimateNormals(latitude: number, longitude: number, signal: AbortSignal): Promise<ClimateMonth[]> {
+type ClimateResult = { rows: ClimateMonth[]; period?: string; sources: string[]; gridResolution?: string };
+async function fetchClimateNormals(latitude: number, longitude: number, signal: AbortSignal): Promise<ClimateResult> {
   const params = new URLSearchParams({
     parameters: "T2M,PRECTOTCORR,RH2M", community: "AG",
     latitude: String(latitude), longitude: String(longitude), format: "JSON",
   });
   const response = await fetch("https://power.larc.nasa.gov/api/temporal/climatology/point?" + params.toString(), { signal });
-  if (!response.ok) throw new Error("NASA POWER could not return data for these coordinates (" + response.status + ").");
+  if (!response.ok) throw new Error("NASA POWER could not return data for these coordinates (HTTP " + response.status + ").");
   const payload = await response.json();
+  if (payload?.messages?.length) throw new Error(payload.messages.map((item: any) => item.message || String(item)).join(" "));
   const data = payload?.properties?.parameter || payload?.parameter || {};
-  return monthOrder.map((code, index) => ({
+  const cleanValue = (value: unknown): number | undefined => {
+    const parsed = Number(value);
+    // NASA POWER uses a fill value for missing grid-cell observations.
+    return value !== null && value !== undefined && Number.isFinite(parsed) && parsed > -900 ? parsed : undefined;
+  };
+  const rows = monthOrder.map((code, index) => ({
     month: monthLabels[index],
-    temperature: data.T2M?.[code],
-    precipitation: data.PRECTOTCORR?.[code],
-    humidity: data.RH2M?.[code],
-  })).filter(item => [item.temperature, item.precipitation, item.humidity].some(value => typeof value === "number"));
+    temperature: cleanValue(data.T2M?.[code]),
+    precipitation: cleanValue(data.PRECTOTCORR?.[code]),
+    humidity: cleanValue(data.RH2M?.[code]),
+  })).filter(item => [item.temperature, item.precipitation, item.humidity].some(value => value !== undefined));
+  const header = payload?.header || {};
+  const period = header.start && header.end ? String(header.start) + "–" + String(header.end) : undefined;
+  const sources = Array.isArray(header.sources) ? header.sources.map(String) : [];
+  const gridResolution = payload?.geometry?.coordinates ? "Nearest NASA POWER grid cell" : undefined;
+  return { rows, period, sources, gridResolution };
 }
 
 function formatNumber(value?: number | null, digits = 0) {
@@ -335,43 +347,65 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [retrievedAt, setRetrievedAt] = useState("");
+  const activeRequest = useRef<AbortController | null>(null);
+
+  useEffect(() => {
+    setQuery(initialQuery);
+  }, [initialQuery]);
+
+  useEffect(() => () => activeRequest.current?.abort(), []);
+
   const runSearch = async (event?: React.FormEvent) => {
     event?.preventDefault();
     const clean = query.trim();
     if (clean.length < 3) { setError("Enter at least three characters to search research records."); return; }
-    setLoading(true); setError("");
+    activeRequest.current?.abort();
     const controller = new AbortController();
+    activeRequest.current = controller;
+    setLoading(true);
+    setError("");
+    setRecords([]);
+    setRetrievedAt("");
     try {
       const results = await searchCrossref(clean, controller.signal);
+      if (activeRequest.current !== controller) return;
       setRecords(results);
       setRetrievedAt(new Date().toISOString());
       if (!results.length) setError("No matching publication metadata was returned. Try different search terms.");
     } catch (err: any) {
-      if (err?.name !== "AbortError") setError(err?.message || "The research index could not be reached. Check the connection and try again.");
-    } finally { setLoading(false); }
+      if (err?.name !== "AbortError" && activeRequest.current === controller) {
+        setError(err?.message || "The research index could not be reached. Check the connection and try again.");
+      }
+    } finally {
+      if (activeRequest.current === controller) {
+        activeRequest.current = null;
+        setLoading(false);
+      }
+    }
   };
+
   return (
     <section className="rounded-2xl border border-border bg-card p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><BookOpen className="h-4 w-4 text-primary" /> Research publication search</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Search Crossref's public scholarly metadata index. Results are publication records—not proof that a paper's claims are correct or that its full text is freely available.</p></div>
-        <Badge variant="outline">Live public index</Badge>
+        <div><div className="flex items-center gap-2 text-sm font-semibold"><BookOpen className="h-4 w-4 text-primary" /> Research publication search</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Search Crossref's publisher-deposited scholarly metadata. A DOI or Crossref record confirms that metadata was registered, not that the research findings are correct, independently replicated, peer-reviewed or freely accessible.</p></div>
+        <Badge variant="outline">Crossref metadata</Badge>
       </div>
       <form onSubmit={runSearch} className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search a subject, question or research topic" aria-label="Search research publications" />
         <Button type="submit" disabled={loading || query.trim().length < 3} className="sm:min-w-32">{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Search</Button>
       </form>
-      {error && <p role="status" className="mt-3 text-sm text-muted-foreground">{error}</p>}
-      {retrievedAt && <p className="mt-3 text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()} · Source: Crossref REST API</p>}
+      {error && <p role="status" className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">{error}</p>}
+      {retrievedAt && <p className="mt-3 text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()} · Metadata source: Crossref REST API · Retrieval time is not publication time.</p>}
       {records.length > 0 && <div className="mt-4 space-y-3">
-        {records.map((record, index) => <article key={record.doi || record.url || index} className="rounded-xl border border-border p-4">
-          <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Year not supplied"}</Badge><span className="text-[11px] text-muted-foreground">{record.type}</span></div>
+        {records.map((record, index) => <article key={record.doi || record.url || index} className="rounded-xl border border-border bg-background/60 p-4">
+          <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Publication year not supplied"}</Badge><span className="text-[11px] text-muted-foreground">{record.type}</span></div>
           <h3 className="mt-2 font-semibold leading-6">{record.url ? <a href={record.url} target="_blank" rel="noreferrer" className="hover:text-primary hover:underline">{record.title} <ExternalLink className="inline h-3.5 w-3.5" /></a> : record.title}</h3>
           {(record.authors || record.journal || record.publisher) && <p className="mt-1 text-xs leading-5 text-muted-foreground">{[record.authors, record.journal, record.publisher].filter(Boolean).join(" · ")}</p>}
           {record.abstract && <p className="mt-3 text-sm leading-6 text-muted-foreground">{record.abstract}{record.abstract.length >= 620 ? "…" : ""}</p>}
-          <p className="mt-3 text-[11px] text-muted-foreground">Provenance: metadata deposited with Crossref · Content not independently verified by this search</p>
+          <p className="mt-3 border-t border-border pt-3 text-[11px] leading-5 text-muted-foreground">Provenance: metadata deposited with Crossref. Check the publisher's article page for corrections, retractions, study methods, full text and publication status before relying on its conclusions.</p>
         </article>)}
       </div>}
-      <p className="mt-4 text-[11px] text-muted-foreground">Crossref documents its public REST API and the publisher-deposited nature of its metadata at <a className="underline underline-offset-2" href="https://www.crossref.org/documentation/retrieve-metadata/rest-api/" target="_blank" rel="noreferrer">Crossref API documentation</a>.</p>
+      <p className="mt-4 text-[11px] text-muted-foreground">Crossref API documentation: <a className="underline underline-offset-2" href="https://www.crossref.org/documentation/retrieve-metadata/rest-api/" target="_blank" rel="noreferrer">publisher-deposited metadata and API use</a>.</p>
     </section>
   );
 }
@@ -569,41 +603,77 @@ function ClimateExplorer() {
   const [latitude, setLatitude] = useState("");
   const [longitude, setLongitude] = useState("");
   const [rows, setRows] = useState<ClimateMonth[]>([]);
+  const [period, setPeriod] = useState("");
+  const [sources, setSources] = useState<string[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [retrievedAt, setRetrievedAt] = useState("");
+  const activeRequest = useRef<AbortController | null>(null);
+
+  useEffect(() => () => activeRequest.current?.abort(), []);
+
   const run = async (event: React.FormEvent) => {
     event.preventDefault();
     const lat = Number(latitude), lon = Number(longitude);
     if (latitude.trim() === "" || longitude.trim() === "" || !Number.isFinite(lat) || !Number.isFinite(lon) || lat < -90 || lat > 90 || lon < -180 || lon > 180) {
-      setError("Enter a valid latitude (−90 to 90) and longitude (−180 to 180)."); return;
+      setError("Enter a valid latitude (−90 to 90) and longitude (−180 to 180).");
+      return;
     }
-    setLoading(true); setError("");
+    activeRequest.current?.abort();
     const controller = new AbortController();
+    activeRequest.current = controller;
+    setLoading(true);
+    setError("");
+    setRows([]);
+    setPeriod("");
+    setSources([]);
+    setRetrievedAt("");
     try {
       const result = await fetchClimateNormals(lat, lon, controller.signal);
-      setRows(result); setRetrievedAt(new Date().toISOString());
-      if (!result.length) setError("The service returned no monthly values for these coordinates.");
-    } catch (err: any) { setError(err?.message || "The climate service could not be reached. Try again."); }
-    finally { setLoading(false); }
+      if (activeRequest.current !== controller) return;
+      setRows(result.rows);
+      setPeriod(result.period || "The API did not provide explicit start and end dates for this climatology response.");
+      setSources(result.sources);
+      setRetrievedAt(new Date().toISOString());
+      if (!result.rows.length) setError("NASA POWER returned no usable monthly values for these coordinates. Missing grid-cell values are not displayed as zero.");
+    } catch (err: any) {
+      if (err?.name !== "AbortError" && activeRequest.current === controller) setError(err?.message || "The climate service could not be reached. Try again.");
+    } finally {
+      if (activeRequest.current === controller) {
+        activeRequest.current = null;
+        setLoading(false);
+      }
+    }
   };
+
   return (
-    <section className="rounded-2xl border border-border bg-card p-5 md:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><CloudSun className="h-4 w-4 text-primary" /> Point-based climate normals</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Retrieve NASA POWER long-term monthly climatology for a coordinate. These are climate summaries, not a live weather forecast, farm inspection or crop-suitability verdict.</p></div>
-        <Badge variant="outline">NASA POWER API</Badge>
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="border-b border-border bg-gradient-to-r from-primary/[0.07] via-card to-accent/[0.06] p-5 md:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div><div className="flex items-center gap-2 text-sm font-semibold"><CloudSun className="h-4 w-4 text-primary" /> Point-based monthly climate averages</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Retrieve NASA POWER's predefined monthly climatology for one coordinate. These are long-term gridded averages, not current weather, a location-specific station observation, a forecast or a crop-suitability verdict.</p></div>
+          <Badge variant="outline">NASA POWER · Agroclimatology</Badge>
+        </div>
+        <form onSubmit={run} className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
+          <div><label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="climate-lat">Latitude</label><Input id="climate-lat" value={latitude} onChange={e => setLatitude(e.target.value)} placeholder="e.g. 5.6037" inputMode="decimal" /></div>
+          <div><label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="climate-lon">Longitude</label><Input id="climate-lon" value={longitude} onChange={e => setLongitude(e.target.value)} placeholder="e.g. -0.1870" inputMode="decimal" /></div>
+          <Button type="submit" disabled={loading} className="sm:mt-6">{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Retrieve</Button>
+        </form>
       </div>
-      <form onSubmit={run} className="mt-4 grid gap-3 sm:grid-cols-[1fr_1fr_auto]">
-        <div><label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="climate-lat">Latitude</label><Input id="climate-lat" value={latitude} onChange={e => setLatitude(e.target.value)} placeholder="e.g. 5.6037" inputMode="decimal" /></div>
-        <div><label className="mb-1.5 block text-xs font-medium text-muted-foreground" htmlFor="climate-lon">Longitude</label><Input id="climate-lon" value={longitude} onChange={e => setLongitude(e.target.value)} placeholder="e.g. -0.1870" inputMode="decimal" /></div>
-        <Button type="submit" disabled={loading} className="sm:mt-6">{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Retrieve</Button>
-      </form>
-      {error && <p role="status" className="mt-3 text-sm text-muted-foreground">{error}</p>}
+      {error && <p role="status" className="m-5 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">{error}</p>}
+      {loading && <div className="flex items-center gap-2 p-5 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Retrieving monthly averages…</div>}
       {rows.length > 0 && <>
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-2"><p className="text-xs text-muted-foreground">Coordinates: {latitude}, {longitude}</p><p className="text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()}</p></div>
-        <div className="mt-3 overflow-x-auto rounded-xl border border-border"><table className="w-full text-sm"><thead className="bg-muted/60 text-left"><tr><th className="px-3 py-2 font-medium">Month</th><th className="px-3 py-2 font-medium">Mean temp. °C</th><th className="px-3 py-2 font-medium">Precipitation mm/day</th><th className="px-3 py-2 font-medium">Relative humidity %</th></tr></thead><tbody>{rows.map(row => <tr key={row.month} className="border-t border-border"><td className="px-3 py-2 font-medium">{row.month}</td><td className="px-3 py-2 tabular-nums">{formatNumber(row.temperature, 1)}</td><td className="px-3 py-2 tabular-nums">{formatNumber(row.precipitation, 1)}</td><td className="px-3 py-2 tabular-nums">{formatNumber(row.humidity, 1)}</td></tr>)}</tbody></table></div>
+        <div className="flex flex-wrap items-center justify-between gap-2 px-5 pt-5"><p className="text-xs text-muted-foreground">Requested coordinate: {latitude}, {longitude}</p><p className="text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()}</p></div>
+        <div className="m-5 overflow-x-auto rounded-xl border border-border"><table className="w-full text-sm"><thead className="bg-muted/60 text-left"><tr><th className="px-3 py-2 font-medium">Month</th><th className="px-3 py-2 font-medium">Mean temp. °C</th><th className="px-3 py-2 font-medium">Precipitation mm/day</th><th className="px-3 py-2 font-medium">Relative humidity %</th></tr></thead><tbody>{rows.map(row => <tr key={row.month} className="border-t border-border"><td className="px-3 py-2 font-medium">{row.month}</td><td className="px-3 py-2 tabular-nums">{formatNumber(row.temperature, 1)}</td><td className="px-3 py-2 tabular-nums">{formatNumber(row.precipitation, 1)}</td><td className="px-3 py-2 tabular-nums">{formatNumber(row.humidity, 1)}</td></tr>)}</tbody></table></div>
+        <div className="mx-5 mb-5 rounded-xl border border-border bg-muted/30 p-4">
+          <p className="text-xs font-semibold">Data context and limitations</p>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">NASA POWER climatology period: {period} The API's climatology service supplies a predefined climatology; this interface does not assume a 1991–2020 normal period. Coordinates are mapped to gridded data, so results may differ from a nearby weather station and should not be treated as field measurements.</p>
+          {sources.length > 0 && <p className="mt-2 text-[11px] text-muted-foreground">Underlying data source identifier(s): {sources.join(", ")}</p>}
+          <p className="mt-2 text-[11px] text-muted-foreground">Precipitation is a mean daily rate in mm/day, not the total rainfall for the month. Monthly totals require a separate calculation using the applicable daily-rate convention and should not be inferred from this table alone.</p>
+        </div>
       </>}
-      <p className="mt-4 text-[11px] text-muted-foreground">Source: <a href="https://power.larc.nasa.gov/docs/services/api/temporal/climatology/" target="_blank" rel="noreferrer" className="underline">NASA POWER Climatology API documentation</a>. Parameter availability and the underlying observation/reanalysis period should be checked before operational use.</p>
+      <div className="border-t border-border bg-muted/20 p-5">
+        <p className="text-[11px] leading-5 text-muted-foreground">Source and method: <a href="https://power.larc.nasa.gov/docs/services/api/temporal/climatology/" target="_blank" rel="noreferrer" className="font-semibold text-primary underline underline-offset-2">NASA POWER Climatology API documentation</a> · <a href="https://power.larc.nasa.gov/docs/services/api/temporal/" target="_blank" rel="noreferrer" className="font-semibold text-primary underline underline-offset-2">Temporal API product descriptions</a>. Review parameter metadata, source model and grid limitations before operational decisions.</p>
+      </div>
     </section>
   );
 }
