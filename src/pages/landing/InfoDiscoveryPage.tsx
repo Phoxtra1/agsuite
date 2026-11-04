@@ -247,25 +247,61 @@ async function searchCrossref(query: string, signal: AbortSignal): Promise<Resea
   });
 }
 
-type WBIndicator = { value: number | null; date?: string };
-type WBCountry = { id: string; iso2Code: string; name: string; capitalCity: string; region: { id: string; value: string }; incomeLevel: { value: string } };
-type CountryStats = { population?: WBIndicator; gdp?: WBIndicator; unemployment?: WBIndicator; lifeExpectancy?: WBIndicator };
+type WBIndicator = { value: number; date: string; footnote?: string };
+type IndicatorResult = { data?: WBIndicator; error?: string };
+type WBCountry = {
+  id: string; iso2Code: string; name: string; capitalCity?: string;
+  region?: { id?: string; value?: string }; incomeLevel?: { id?: string; value?: string };
+};
+type CountryStats = {
+  population: IndicatorResult;
+  gdp: IndicatorResult;
+  unemployment: IndicatorResult;
+  lifeExpectancy: IndicatorResult;
+};
+
 async function fetchWorldBankIndicator(code: string, indicator: string, signal: AbortSignal): Promise<WBIndicator | undefined> {
-  const url = "https://api.worldbank.org/v2/country/" + encodeURIComponent(code) + "/indicator/" + encodeURIComponent(indicator) + "?format=json&mrv=1&per_page=1";
+  // MRNEV means "most recent non-empty value". MRV=1 can return a null
+  // observation and hide an earlier valid year for countries with reporting gaps.
+  const url = "https://api.worldbank.org/v2/country/" + encodeURIComponent(code) + "/indicator/" + encodeURIComponent(indicator) + "?format=json&mrnev=1&per_page=1&footnote=y";
   const response = await fetch(url, { signal, headers: { Accept: "application/json" } });
-  if (!response.ok) return undefined;
-  const data = await response.json();
-  const row = Array.isArray(data?.[1]) ? data[1].find((item: any) => item.value !== null) : undefined;
-  return row ? { value: row.value, date: row.date } : undefined;
+  if (!response.ok) throw new Error("World Bank returned HTTP " + response.status + " for " + indicator + ".");
+  const payload = await response.json();
+  if (!Array.isArray(payload) || !Array.isArray(payload[1])) {
+    const apiMessage = payload?.[0]?.message?.[0]?.value || payload?.message || "Unexpected response from the World Bank Indicators API.";
+    throw new Error(String(apiMessage));
+  }
+  const row = payload[1].find((item: any) => item && item.value !== null && item.value !== undefined);
+  if (!row || !Number.isFinite(Number(row.value))) return undefined;
+  return {
+    value: Number(row.value),
+    date: String(row.date || ""),
+    footnote: row.footnote ? String(row.footnote) : undefined,
+  };
 }
+
 async function fetchCountryStats(code: string, signal: AbortSignal): Promise<CountryStats> {
-  const [population, gdp, unemployment, lifeExpectancy] = await Promise.all([
+  const requests = await Promise.allSettled([
     fetchWorldBankIndicator(code, "SP.POP.TOTL", signal),
     fetchWorldBankIndicator(code, "NY.GDP.PCAP.CD", signal),
     fetchWorldBankIndicator(code, "SL.UEM.TOTL.ZS", signal),
     fetchWorldBankIndicator(code, "SP.DYN.LE00.IN", signal),
   ]);
-  return { population, gdp, unemployment, lifeExpectancy };
+  const toResult = (result: PromiseSettledResult<WBIndicator | undefined>): IndicatorResult => {
+    if (result.status === "rejected") {
+      const reason = result.reason as Error | undefined;
+      return { error: reason?.message || "This indicator could not be retrieved." };
+    }
+    return result.value
+      ? { data: result.value }
+      : { error: "No non-empty observation is currently returned for this economy." };
+  };
+  return {
+    population: toResult(requests[0]),
+    gdp: toResult(requests[1]),
+    unemployment: toResult(requests[2]),
+    lifeExpectancy: toResult(requests[3]),
+  };
 }
 
 const monthOrder = ["JAN","FEB","MAR","APR","MAY","JUN","JUL","AUG","SEP","OCT","NOV","DEC"];
@@ -348,72 +384,183 @@ function CountryExplorer() {
   const [loadingStats, setLoadingStats] = useState(false);
   const [error, setError] = useState("");
   const [retrievedAt, setRetrievedAt] = useState("");
+
   useEffect(() => {
     const controller = new AbortController();
+    let active = true;
     fetch("https://api.worldbank.org/v2/country?format=json&per_page=400", { signal: controller.signal })
-      .then(response => { if (!response.ok) throw new Error("Country directory is unavailable."); return response.json(); })
-      .then(payload => {
-        const list = (payload?.[1] || []).filter((item: WBCountry) => item.iso2Code && item.region?.id !== "NA" && item.capitalCity);
-        setCountries(list.sort((a: WBCountry, b: WBCountry) => a.name.localeCompare(b.name)));
+      .then(response => {
+        if (!response.ok) throw new Error("World Bank country directory returned HTTP " + response.status + ".");
+        return response.json();
       })
-      .catch(err => { if (err?.name !== "AbortError") setError(err?.message || "Could not load the country directory."); })
-      .finally(() => setLoadingCountries(false));
-    return () => controller.abort();
+      .then(payload => {
+        if (!Array.isArray(payload) || !Array.isArray(payload[1])) {
+          throw new Error("The World Bank country directory returned an unexpected response.");
+        }
+        // Keep economies even when a capital-city field is blank. The API also
+        // returns regional and income aggregates, which are excluded here.
+        const list = (payload[1] as WBCountry[])
+          .filter(item => item?.iso2Code && item?.region?.id && item.region.id !== "NA")
+          .sort((a, b) => a.name.localeCompare(b.name));
+        if (active) setCountries(list);
+      })
+      .catch(err => {
+        if (active && err?.name !== "AbortError") setError(err?.message || "Could not load the World Bank country directory.");
+      })
+      .finally(() => { if (active) setLoadingCountries(false); });
+    return () => { active = false; controller.abort(); };
   }, []);
+
   useEffect(() => {
-    if (!countryCode) { setStats(null); return; }
+    if (!countryCode) {
+      setStats(null);
+      setRetrievedAt("");
+      setLoadingStats(false);
+      return;
+    }
     const controller = new AbortController();
-    setLoadingStats(true); setError("");
+    let active = true;
+    setStats(null);
+    setRetrievedAt("");
+    setLoadingStats(true);
+    setError("");
     fetchCountryStats(countryCode, controller.signal)
-      .then(result => { setStats(result); setRetrievedAt(new Date().toISOString()); })
-      .catch(err => { if (err?.name !== "AbortError") setError(err?.message || "Could not retrieve country indicators."); })
-      .finally(() => setLoadingStats(false));
-    return () => controller.abort();
+      .then(result => {
+        if (!active) return;
+        setStats(result);
+        setRetrievedAt(new Date().toISOString());
+      })
+      .catch(err => {
+        if (active && err?.name !== "AbortError") setError(err?.message || "Could not retrieve country indicators.");
+      })
+      .finally(() => { if (active) setLoadingStats(false); });
+    return () => { active = false; controller.abort(); };
   }, [countryCode]);
+
   const country = countries.find(item => item.iso2Code === countryCode);
   const indicators = [
-    { label: "Population", data: stats?.population, suffix: "", digits: 0 },
-    { label: "GDP per person", data: stats?.gdp, suffix: " US$", digits: 0 },
-    { label: "Unemployment", data: stats?.unemployment, suffix: "%", digits: 1 },
-    { label: "Life expectancy", data: stats?.lifeExpectancy, suffix: " years", digits: 1 },
+    {
+      key: "population" as const, label: "Population", code: "SP.POP.TOTL",
+      suffix: "", digits: 0, unit: "people",
+      description: "Estimated total population. The World Bank series draws on UN population estimates and national statistical sources.",
+      href: "https://data.worldbank.org/indicator/SP.POP.TOTL",
+    },
+    {
+      key: "gdp" as const, label: "GDP per capita (current US$)", code: "NY.GDP.PCAP.CD",
+      suffix: " US$", digits: 0, unit: "current US dollars per person",
+      description: "GDP divided by population at current prices and exchange rates. This is not average salary, household income or a purchasing-power-adjusted figure.",
+      href: "https://data.worldbank.org/indicator/NY.GDP.PCAP.CD",
+    },
+    {
+      key: "unemployment" as const, label: "Unemployment rate (ILO modelled estimate)", code: "SL.UEM.TOTL.ZS",
+      suffix: "%", digits: 1, unit: "percentage of the labour force",
+      description: "People without work who are available for and seeking work. This modelled series may include imputed or projected observations; the World Bank warns that imputed observations have high uncertainty and should not be used for country rankings.",
+      href: "https://data.worldbank.org/indicator/SL.UEM.TOTL.ZS",
+      methodology: "https://ilostat.ilo.org/resources/concepts-and-definitions/ilo-modelled-estimates/",
+    },
+    {
+      key: "lifeExpectancy" as const, label: "Life expectancy at birth", code: "SP.DYN.LE00.IN",
+      suffix: " years", digits: 1, unit: "years",
+      description: "The number of years a newborn would live if current age-specific mortality rates applied throughout life. It is a population-level statistical estimate, not an individual prediction.",
+      href: "https://data.worldbank.org/indicator/SP.DYN.LE00.IN",
+    },
   ];
+  const missingCount = stats ? indicators.filter(item => !stats[item.key].data).length : 0;
+
   return (
-    <section className="rounded-2xl border border-border bg-card p-5 md:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><Globe2 className="h-4 w-4 text-primary" /> Country profile and development indicators</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Choose a country to retrieve its profile and latest available World Bank indicators. These are country-level indicators, not city prices, visa rules or a guarantee of present-day conditions.</p></div>
-        <Badge variant="outline">Live API lookup</Badge>
-      </div>
-      <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
-        <div><label htmlFor="destination-country" className="mb-1.5 block text-xs font-medium text-muted-foreground">Destination country</label>
-          <select id="destination-country" value={countryCode} onChange={e => setCountryCode(e.target.value)} disabled={loadingCountries} className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm">
-            <option value="">{loadingCountries ? "Loading country directory…" : "Select a country"}</option>
-            {countries.map(item => <option key={item.iso2Code} value={item.iso2Code}>{item.name}</option>)}
-          </select>
+    <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+      <div className="border-b border-border bg-gradient-to-r from-primary/[0.07] via-card to-accent/[0.06] p-5 md:p-6">
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <div className="flex items-center gap-2 text-sm font-semibold"><Globe2 className="h-4 w-4 text-primary" /> Country and economy profile</div>
+            <p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Retrieve selected country-directory details and the latest non-empty observation available for each indicator. The indicators can refer to different years and should not be read as one same-year snapshot.</p>
+          </div>
+          <Badge variant="outline">World Bank Indicators API</Badge>
         </div>
-        <div className="rounded-xl bg-muted/50 p-3 text-xs leading-5 text-muted-foreground"><strong className="text-foreground">Important:</strong> Entry requirements depend on the traveller's passport nationality, destination, purpose and travel date. This profile does not determine visa eligibility.</div>
+        <div className="mt-4 grid gap-3 md:grid-cols-[minmax(0,1fr)_minmax(0,1fr)]">
+          <div>
+            <label htmlFor="destination-country" className="mb-1.5 block text-xs font-medium text-muted-foreground">Select a country or economy</label>
+            <select id="destination-country" value={countryCode} onChange={e => setCountryCode(e.target.value)} disabled={loadingCountries || countries.length === 0} className="h-11 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <option value="">{loadingCountries ? "Loading country directory…" : countries.length ? "Choose a country or economy" : "Country directory unavailable"}</option>
+              {countries.map(item => <option key={item.iso2Code} value={item.iso2Code}>{item.name}</option>)}
+            </select>
+            {countries.length > 0 && <p className="mt-1.5 text-[10px] text-muted-foreground">{countries.length.toLocaleString()} listed countries and economies · World Bank directory</p>}
+          </div>
+          <div className="rounded-xl border border-accent/20 bg-accent/5 p-3 text-xs leading-5 text-muted-foreground">
+            <strong className="text-foreground">Read this profile carefully.</strong> National averages hide differences between regions, cities and groups. This is a statistical starting point, not a complete assessment of living conditions, job prospects or travel eligibility.
+          </div>
+        </div>
       </div>
-      {country && <div className="mt-5">
+
+      {country && <div className="p-5 md:p-6">
         <div className="flex flex-wrap items-start justify-between gap-3 border-b border-border pb-4">
-          <div><h3 className="text-xl font-semibold">{country.name}</h3><p className="mt-1 text-sm text-muted-foreground">{[country.capitalCity, country.region?.value, country.incomeLevel?.value].filter(Boolean).join(" · ")}</p></div>
+          <div>
+            <h3 className="text-xl font-semibold">{country.name}</h3>
+            <p className="mt-1 text-sm text-muted-foreground">
+              {[
+                country.capitalCity?.trim() ? "Capital: " + country.capitalCity.trim() : "",
+                country.region?.value || "",
+                country.incomeLevel?.value ? "World Bank income group: " + country.incomeLevel.value : "",
+              ].filter(Boolean).join(" · ") || "Directory details not supplied"}
+            </p>
+            <p className="mt-1 text-[10px] text-muted-foreground">Income group is the World Bank's annual classification, not a permanent country rating.</p>
+          </div>
           <Badge variant="secondary">ISO {country.iso2Code}</Badge>
         </div>
-        {loadingStats ? <div className="flex items-center gap-2 py-6 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Retrieving latest available indicators…</div> :
-          <div className="mt-4 grid gap-3 sm:grid-cols-2">
-            {indicators.map(item => <div key={item.label} className="rounded-xl border border-border p-4"><p className="text-xs text-muted-foreground">{item.label}</p><p className="mt-1 text-xl font-semibold tabular-nums">{item.data ? formatNumber(item.data.value, item.digits) + item.suffix : "Not available"}</p><p className="mt-1 text-[11px] text-muted-foreground">{item.data?.date ? "Observation year: " + item.data.date : "No recent observation returned"}</p></div>)}
-          </div>}
-        {retrievedAt && <p className="mt-3 text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()} · Source: World Bank Indicators API. Values retain their own observation year.</p>}
+
+        {loadingStats ? (
+          <div className="flex items-center gap-2 py-8 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Retrieving each indicator independently…</div>
+        ) : stats ? (
+          <>
+            <div className="mt-4 grid gap-3 sm:grid-cols-2">
+              {indicators.map(item => {
+                const result = stats[item.key];
+                const observation = result.data;
+                return (
+                  <article key={item.key} className="rounded-xl border border-border bg-background/70 p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-2">
+                      <p className="text-xs font-semibold text-foreground">{item.label}</p>
+                      <Badge variant={observation ? "outline" : "secondary"}>{observation ? "Data returned" : "No value"}</Badge>
+                    </div>
+                    <p className="mt-2 text-2xl font-semibold tabular-nums text-foreground">
+                      {observation ? formatNumber(observation.value, item.digits) + item.suffix : "Not reported"}
+                    </p>
+                    <p className="mt-1 text-[11px] text-muted-foreground">
+                      {observation?.date ? "Observation year: " + observation.date : result.error || "No non-empty observation returned."}
+                    </p>
+                    <p className="mt-2 text-xs leading-5 text-muted-foreground">{item.description}</p>
+                    <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t border-border pt-3 text-[10px]">
+                      <span className="font-mono text-muted-foreground">{item.code}</span>
+                      <a href={item.href} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">Indicator data and definition <ExternalLink className="h-3 w-3" /></a>
+                      {item.methodology && <a href={item.methodology} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 font-semibold text-primary hover:underline">ILO method <ExternalLink className="h-3 w-3" /></a>}
+                    </div>
+                    {observation?.footnote && <p className="mt-2 rounded-md bg-muted/60 p-2 text-[10px] leading-4 text-muted-foreground">Source note: {observation.footnote}</p>}
+                  </article>
+                );
+              })}
+            </div>
+            {missingCount > 0 && <p role="status" className="mt-4 rounded-lg border border-border bg-muted/40 p-3 text-xs leading-5 text-muted-foreground">{missingCount} indicator{missingCount === 1 ? "" : "s"} returned no usable value. Missing data is not zero and may reflect reporting coverage, source availability or a retrieval problem. Review the individual status above.</p>}
+            {retrievedAt && <p className="mt-4 text-[11px] text-muted-foreground">Retrieved from the World Bank API: {new Date(retrievedAt).toLocaleString()} · This is the retrieval time, not the publication date. Each card shows its own observation year.</p>}
+          </>
+        ) : null}
       </div>}
-      {error && <p role="status" className="mt-3 text-sm text-muted-foreground">{error}</p>}
-      <div className="mt-5 rounded-xl border border-border p-4">
-        <h3 className="font-semibold text-sm">Check entry and travel rules</h3>
-        <p className="mt-1 text-xs leading-5 text-muted-foreground">Use the traveller's actual passport nationality and purpose. Confirm every requirement on the destination government's immigration or embassy website before paying or travelling.</p>
+
+      {error && <p role="status" className="mx-5 mb-4 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-muted-foreground md:mx-6">{error}</p>}
+
+      <div className="border-t border-border bg-muted/20 p-5 md:p-6">
+        <h3 className="font-semibold text-sm">Confirm visa and entry rules separately</h3>
+        <p className="mt-1 text-xs leading-5 text-muted-foreground">Entry requirements depend on the traveller's passport nationality, destination, travel purpose and date. IATA and foreign-ministry advice are useful references, but the destination government's immigration authority is the controlling source for its entry rules. Confirm directly before booking or travelling.</p>
         <div className="mt-3 flex flex-wrap gap-3">
           <a href="https://www.iata.org/en/travel-centre/" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">IATA Travel Centre <ExternalLink className="h-3.5 w-3.5" /></a>
           <a href="https://www.gov.uk/foreign-travel-advice" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">UK government travel advice <ExternalLink className="h-3.5 w-3.5" /></a>
-          <a href="https://travel.state.gov/content/travel/en/international-travel.html" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">U.S. government travel guidance <ExternalLink className="h-3.5 w-3.5" /></a>
+          <a href="https://travel.state.gov/content/travel/en/international-travel.html" target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-sm font-medium text-primary hover:underline">U.S. government travel advice <ExternalLink className="h-3.5 w-3.5" /></a>
+        </div>
+        <div className="mt-4 flex flex-wrap gap-3 border-t border-border pt-3 text-[10px]">
+          <a className="text-primary underline underline-offset-2" href="https://datahelpdesk.worldbank.org/knowledgebase/articles/898581-api-basic-call-structures" target="_blank" rel="noreferrer">World Bank API query rules</a>
+          <a className="text-primary underline underline-offset-2" href="https://datahelpdesk.worldbank.org/knowledgebase/articles/1886695-metadata-api-queries" target="_blank" rel="noreferrer">World Bank metadata documentation</a>
+          <a className="text-primary underline underline-offset-2" href="https://datahelpdesk.worldbank.org/knowledgebase/articles/898599-indicator-api-queries" target="_blank" rel="noreferrer">Indicator definitions and metadata</a>
         </div>
       </div>
-      <p className="mt-4 text-[11px] text-muted-foreground">Source: <a className="underline" href="https://datahelpdesk.worldbank.org/knowledgebase/articles/889392" target="_blank" rel="noreferrer">World Bank Indicators API documentation</a>. Estimates and national aggregates should not be substituted for local data.</p>
     </section>
   );
 }
