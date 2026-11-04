@@ -10,7 +10,6 @@ const navLinks = [
   { label: "About Us", to: "/about-us" },
   { label: "FAQs", to: "/faqs" },
   { label: "Support", to: "/support" },
-  { label: "Workspace", to: "/workspace" },
 ];
 
 export default function Landing() {
@@ -43,7 +42,6 @@ export default function Landing() {
                 </Link>
               ))}
               <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground" aria-label="Toggle appearance settings"><Settings className="h-4 w-4" /> Settings</button>
-              <Link to="/workspace" className={`text-sm font-medium transition ${location.pathname.startsWith("/workspace") ? "text-foreground" : "text-muted-foreground hover:text-foreground"}`}>Workspace</Link>
             </nav>
 
             <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
@@ -67,7 +65,6 @@ export default function Landing() {
                     </Link>
                   ))}
                   <button type="button" onClick={() => { setTheme(theme === "dark" ? "light" : "dark"); setMobileOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-foreground hover:bg-accent/10"><Settings className="h-4 w-4" /> Settings <span className="ml-auto text-xs text-muted-foreground">{theme === "dark" ? "Dark mode" : "Light mode"}</span></button>
-                  <Link to="/workspace" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Workspace</Link>
                 </div>
               </motion.div>
             )}
@@ -95,7 +92,6 @@ export default function Landing() {
                   <Link to="/about-us" className="block text-sm text-muted-foreground hover:text-foreground transition">About Us</Link>
                   <Link to="/faqs" className="block text-sm text-muted-foreground hover:text-foreground transition">FAQs</Link>
                   <Link to="/support" className="block text-sm text-muted-foreground hover:text-foreground transition">Support</Link>
-                  <Link to="/workspace" className="block text-sm text-muted-foreground hover:text-foreground transition">Workspace</Link>
                 </div>
               </div>
               <div>
