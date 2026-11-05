@@ -44,7 +44,7 @@ describe("Amineva Impact Data Layer", () => {
     expect(careerDev?.schoolEngagements).toBeDefined();
     expect(careerDev?.schoolEngagements?.length).toBeGreaterThan(0);
     const engagement = careerDev?.schoolEngagements?.[0];
-    expect(engagement?.beneficiariesCount).toBe(600);
+    expect(engagement?.beneficiariesCount).toBe(1000);
     expect(engagement?.topicsCovered.length).toBeGreaterThan(0);
   });
 
