@@ -2,11 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness,
-  Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink,
-  ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass,
-  ArrowUpRight, AlertTriangle, Info, Lightbulb, Bookmark, BookmarkCheck,
-  Printer, Download, FolderPlus, FileCheck2, Wallet, Database, } from "lucide-react";
+  ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness, Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink, ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass, ArrowUpRight, AlertTriangle, Info, Lightbulb, Bookmark, BookmarkCheck, Printer, Download, FolderPlus, FileCheck2, Wallet, Database, Code, Server, Wrench, Store, Users, BarChart3, CreditCard, Landmark, Package, ShoppingCart, Warehouse } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
