@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Settings } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import amvLogo from "@/assets/amv_global_logo.png";
+import GlobalFooter from "@/components/layout/GlobalFooter";
 
 const navLinks = [
   { label: "Info Discovery", to: "/info-discovery" },
@@ -73,6 +74,7 @@ export default function Landing() {
 
       <Outlet />
 
+      {!isHome && <GlobalFooter />}
     </div>
   );
 }
