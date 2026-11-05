@@ -104,30 +104,145 @@ export const AminevaImpactPage: FC = () => {
   return (
     <div className="w-full bg-background text-foreground min-h-screen">
       {/* HERO / INTRODUCTION */}
-      <section className="relative isolate overflow-hidden border-b border-border bg-gradient-to-br from-primary/[0.12] via-background to-accent/[0.06] py-20 lg:py-28">
-        <div className="pointer-events-none absolute inset-0 -z-0 overflow-hidden"><div className="absolute -left-24 top-8 h-80 w-80 rounded-full bg-accent/10 blur-3xl" /><div className="absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-primary/10 blur-3xl" /><div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" /></div>
-        <div className="max-w-7xl mx-auto px-6 relative z-10">
+      <section className="relative isolate overflow-hidden border-b border-border bg-gradient-to-br from-primary/[0.10] via-background to-accent/[0.08] py-12 md:py-16 lg:py-20">
+        <div className="pointer-events-none absolute inset-0 -z-0 overflow-hidden">
+          <div className="absolute -left-24 top-8 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+          <div className="absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
+          <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" />
+        </div>
+        <div className="max-w-7xl mx-auto px-6 relative z-10 grid lg:grid-cols-12 gap-10 items-center">
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 18 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="max-w-4xl mx-auto text-center"
+            className="lg:col-span-6 space-y-6"
           >
-            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent/30 bg-accent/10 text-accent font-semibold text-xs tracking-wider uppercase mb-6">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Amineva Global Community Platform</span>
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full border border-accent/30 bg-accent/10 text-accent font-semibold text-xs tracking-wider uppercase">
+              <Heart className="w-3.5 h-3.5" />
+              <span>Amineva Global Initiatives</span>
             </div>
-
-            <h1 className="text-4xl md:text-6xl font-bold tracking-tight text-foreground leading-tight mb-6">
-              Amineva <span className="text-accent">Impact</span>
-            </h1>
-
-            <p className="text-lg md:text-xl text-muted-foreground leading-relaxed mb-8">
-              {IMPACT_INTRO.positioning}
+            <div className="space-y-3">
+              <h1 className="text-4xl md:text-5xl xl:text-6xl font-bold tracking-tight text-foreground leading-[1.08]">
+                Amineva <span className="text-accent">Impact</span>
+              </h1>
+              <p className="text-base md:text-lg font-semibold text-foreground/80">
+                Education, opportunity and practical development.
+              </p>
+              <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-2xl">
+                {IMPACT_INTRO.positioning}
+              </p>
+            </div>
+            <div className="flex flex-wrap items-center gap-3 pt-1">
+              <a href="#activities-gallery">
+                <Button size="lg" className="gap-2 font-semibold shadow-sm">
+                  See Our Work <ArrowRight className="w-4 h-4" />
+                </Button>
+              </a>
+              <Link to="/support">
+                <Button size="lg" variant="outline" className="gap-2">
+                  Partner With Us <Heart className="w-4 h-4" />
+                </Button>
+              </Link>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              A transparent view of our programmes, school engagements and collaboration opportunities.
             </p>
-
-
           </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, x: 18 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ duration: 0.6, delay: 0.08 }}
+            className="lg:col-span-6"
+          >
+            <div className="grid grid-cols-12 grid-rows-2 gap-3 h-[300px] sm:h-[380px]">
+              <button
+                type="button"
+                onClick={() => setSelectedImage({
+                  url: "/images/impact/impact-school-engagement-hero.webp",
+                  title: "Classroom Engagement & Learner Participation",
+                  altText: "A facilitator and learners share a moment during a classroom engagement, with classmates gathered in the room.",
+                  caption: "A classroom moment from a school engagement documented by Amineva Global.",
+                })}
+                className="group relative col-span-8 row-span-2 overflow-hidden rounded-3xl border border-border bg-muted text-left shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                aria-label="View classroom engagement photograph"
+              >
+                <img
+                  src="/images/impact/impact-school-engagement-hero.webp"
+                  alt="A facilitator and learners share a moment during a classroom engagement, with classmates gathered in the room."
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="eager"
+                />
+                <span className="absolute inset-x-0 bottom-0 bg-gradient-to-t from-primary/90 via-primary/35 to-transparent px-4 pb-4 pt-14 text-left">
+                  <span className="block text-xs font-semibold uppercase tracking-wider text-white/80">
+                    School engagement
+                  </span>
+                  <span className="mt-1 block text-sm font-semibold text-white">
+                    Learning through real participation
+                  </span>
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setSelectedImage(heroSecondaryImage)}
+                className="group relative col-span-4 overflow-hidden rounded-3xl border border-border bg-muted text-left shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
+                aria-label="View computer learning photograph"
+              >
+                <img
+                  src={heroSecondaryImage.url}
+                  alt={heroSecondaryImage.altText}
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
+                  loading="lazy"
+                />
+              </button>
+              <div className="col-span-4 rounded-3xl border border-accent/20 bg-card p-4 sm:p-5 shadow-sm flex flex-col justify-between">
+                <div className="w-9 h-9 rounded-xl bg-accent/10 text-accent flex items-center justify-center">
+                  <School className="w-5 h-5" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wider text-accent">
+                    On the ground
+                  </p>
+                  <p className="mt-1 text-sm font-bold text-foreground leading-snug">
+                    Working with learners, schools and communities.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
+      {/* IMPACT SNAPSHOT */}
+      <section className="max-w-7xl mx-auto px-6 -mt-1">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 py-6">
+          <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 md:p-5 shadow-sm">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+              <School className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">3</p>
+              <p className="text-xs text-muted-foreground">Schools engaged</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 md:p-5 shadow-sm">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
+              <Users className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-2xl font-bold text-foreground">600+</p>
+              <p className="text-xs text-muted-foreground">Learners reached</p>
+            </div>
+          </div>
+          <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 md:p-5 shadow-sm">
+            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
+              <HeartHandshake className="h-5 w-5" />
+            </div>
+            <div>
+              <p className="text-lg font-bold text-foreground">Career Development</p>
+              <p className="text-xs text-muted-foreground">First active initiative</p>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -348,7 +463,7 @@ export const AminevaImpactPage: FC = () => {
                   </p>
                 </div>
                 <Badge variant="outline" className="text-xs text-accent border-accent/30">
-                  Regularly Updated
+                  {SCHOOL_ACTIVITY_IMAGES.length} Photographs
                 </Badge>
               </div>
 
