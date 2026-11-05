@@ -47,6 +47,14 @@ const fadeUp = {
   }),
 };
 
+const heroSecondaryImage = {
+  type: "image" as const,
+  url: "/images/impact/impact-school-computer-session.webp",
+  title: "Digital Learning & Computer Exposure",
+  caption: "Learners gathered with facilitators and computer equipment during a school-based educational engagement.",
+  altText: "School learners standing with facilitators and computer equipment during an educational engagement.",
+};
+
 export const AminevaImpactPage: FC = () => {
   const { initiativeId } = useParams<{ initiativeId?: string }>();
   const [selectedStatusFilter, setSelectedStatusFilter] = useState<
@@ -450,7 +458,7 @@ export const AminevaImpactPage: FC = () => {
             </TabsList>
           </div>
 
-          <TabsContent value="engagements" className="space-y-10">
+          <TabsContent value="engagements" className="space-y-10" id="activities-gallery">
             {/* Gallery of Activity Images */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
