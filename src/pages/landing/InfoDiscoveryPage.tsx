@@ -172,6 +172,7 @@ const categories: Category[] = [
     ],
     product: { label: "Explore DataLens", href: "https://app.amineva.com", description: "Continue to DataLens for website and application maintenance, software development, cloud infrastructure, database management and professional IT support." },
   },
+  {
     slug: "business-management", title: "Business Management", icon: BriefcaseBusiness,
     summary: "Understand how a business controls inventory, purchasing, sales, cash flow, employee responsibilities, financial records and day-to-day performance.",
     purpose: "Running a business requires more than recording sales. Owners and managers need a dependable picture of what the business holds, what it buys and sells, what money is expected and received, what it owes, who is responsible for each activity and where losses or delays occur. This area introduces the practical systems, records, checks and management measures that help a business operate with greater control. It is an educational starting point; accounting, tax, employment and regulatory decisions should be checked against the rules and qualified advice that apply to the business.",
