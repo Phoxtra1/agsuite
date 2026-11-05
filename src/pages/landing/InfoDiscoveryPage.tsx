@@ -4,6 +4,7 @@ import {
   ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness,
   Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink,
   ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass,
+  Package, ShoppingCart, BarChart3, Users, Warehouse, Store,
   AlertTriangle, Info, ArrowUpRight, Lightbulb, Bookmark, BookmarkCheck,
   Printer, Download, FolderPlus,
 } from "lucide-react";
@@ -1012,6 +1013,10 @@ export default function InfoDiscoveryPage() {
         </section>
       )}
 
+      {selected?.slug === "business-management" && selected.product && (
+        <InventraSpotlight product={selected.product} />
+      )}
+
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="space-y-5">
           <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
@@ -1187,22 +1192,38 @@ export default function InfoDiscoveryPage() {
               </>
             )}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
-            {selected.product && selected.slug !== "career-development-education" && <ProductConnection product={selected.product} />}
+            {selected.product && selected.slug !== "career-development-education" && selected.slug !== "business-management" && <ProductConnection product={selected.product} />}
             <p className="text-[11px] text-muted-foreground">
               This topic guide is an investigation structure. It does not itself certify a current visa rule, price, job vacancy, crop condition or organisational finding.
             </p>
           </section>}
 
           {selected && !selectedTopic && <section className="space-y-6">
-            <div className="group relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary via-primary to-primary/90 p-6 text-primary-foreground shadow-lg shadow-primary/10 md:p-8"><div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full bg-accent/15 blur-3xl" /><div className="relative"><div className="flex items-center gap-2 text-sm font-semibold text-accent"><selected.icon className="h-4 w-4" /> Area overview</div><p className="mt-3 max-w-4xl text-sm leading-7 text-primary-foreground/80 md:text-base">{selected.purpose}</p><div className="mt-5 flex flex-wrap gap-2"><Badge variant="outline" className="border-primary-foreground/25 text-primary-foreground">{allTopics(selected).length} topics</Badge><Badge variant="outline" className="border-primary-foreground/25 text-primary-foreground">{selected.sections.length} subject groups</Badge></div></div></div>
+            {selected.slug === "business-management" ? (
+              <div className="rounded-3xl border border-border border-l-4 border-l-accent bg-card p-6 shadow-sm md:p-8">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                    <span className="rounded-xl border border-accent/30 bg-accent/10 p-2 text-accent"><selected.icon className="h-4 w-4" /></span>
+                    Area overview
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">{allTopics(selected).length} topics</Badge>
+                    <Badge variant="outline">{selected.sections.length} subject groups</Badge>
+                  </div>
+                </div>
+                <p className="mt-4 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p>
+              </div>
+            ) : (
+              <div className="group relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary via-primary to-primary/90 p-6 text-primary-foreground shadow-lg shadow-primary/10 md:p-8"><div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full bg-accent/15 blur-3xl" /><div className="relative"><div className="flex items-center gap-2 text-sm font-semibold text-accent"><selected.icon className="h-4 w-4" /> Area overview</div><p className="mt-3 max-w-4xl text-sm leading-7 text-primary-foreground/80 md:text-base">{selected.purpose}</p><div className="mt-5 flex flex-wrap gap-2"><Badge variant="outline" className="border-primary-foreground/25 text-primary-foreground">{allTopics(selected).length} topics</Badge><Badge variant="outline" className="border-primary-foreground/25 text-primary-foreground">{selected.sections.length} subject groups</Badge></div></div></div>
+            )}
             <div><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Subject menu</h2><p className="mt-1 text-sm text-muted-foreground">Search within this area or filter by subject group.</p></div><Badge variant="outline">{filteredSections.reduce((count, section) => count + section.items.length, 0)} matching topics</Badge></div>
               <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTopicFilter(e.target.value)} placeholder="Filter topics and questions" aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
-              {filteredSections.length ? <div className="space-y-4">{filteredSections.map(section => <section key={section.title} className="rounded-2xl border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div><div className="mt-4 grid gap-2 md:grid-cols-2">{section.items.map(item => <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className="group relative flex min-h-32 flex-col rounded-xl border border-border bg-background/70 p-4 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-accent/50 hover:bg-accent/5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span><span className="mt-2 block flex-1 text-xs leading-5 text-muted-foreground">{item.description}</span><span className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold text-primary opacity-80 group-hover:opacity-100">Explore topic <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span></button>)}</div></section>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
+              {filteredSections.length ? <div className="space-y-4">{filteredSections.map((section, sectionIndex) => <section key={section.title} className={"rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md " + (selected.slug === "business-management" ? "border-l-4 " + (sectionIndex % 3 === 0 ? "border-l-primary" : sectionIndex % 3 === 1 ? "border-l-accent" : "border-l-muted-foreground/60") : "")}><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div><div className="mt-4 grid gap-3 md:grid-cols-2">{section.items.map((item, itemIndex) => <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className={"group relative flex min-h-36 flex-col rounded-xl border border-border bg-background/70 p-4 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:bg-card hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 " + (selected.slug === "business-management" ? "border-l-[3px] " + (itemIndex % 3 === 0 ? "border-l-primary/75" : itemIndex % 3 === 1 ? "border-l-accent" : "border-l-muted-foreground/55") : "hover:border-accent/50 hover:bg-accent/5")}><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span><span className="mt-2 block flex-1 text-xs leading-5 text-muted-foreground">{item.description}</span><span className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold text-primary opacity-80 group-hover:opacity-100">Explore topic <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span></button>)}</div></section>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
             </div>
             {selected.slug === "travel-destination" && <CountryExplorer />}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
             <ResearchPanel initialQuery={selected.title} />
-            {selected.product && selected.slug !== "career-development-education" && <ProductConnection product={selected.product} />}
+            {selected.product && selected.slug !== "career-development-education" && selected.slug !== "business-management" && <ProductConnection product={selected.product} />}
             {selected.slug === "operational-intelligence" && <div className="rounded-2xl border border-border bg-muted/40 p-5"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-4 w-4 text-accent" /> Authorised evidence only</div><p className="mt-2 text-xs leading-5 text-muted-foreground">Verification and anomaly detection require approved connections to source systems, documented permissions and review controls. This public information area explains the method; it does not claim access to private organisational records.</p></div>}
           </section>}
 
@@ -1233,6 +1254,68 @@ export default function InfoDiscoveryPage() {
         />
       )}
     </main>
+  );
+}
+
+
+function InventraSpotlight({ product }: { product: ProductLink }) {
+  const capabilities = [
+    { icon: Package, title: "Inventory visibility", description: "Monitor stock levels, low-stock alerts and reorder points.", accent: "border-l-primary" },
+    { icon: ShoppingCart, title: "Point of sale", description: "Record sales with barcode scanning, receipts and multiple payment options.", accent: "border-l-accent" },
+    { icon: BarChart3, title: "Sales performance", description: "Review daily sales summaries, revenue and product performance trends.", accent: "border-l-muted-foreground/60" },
+    { icon: Users, title: "Staff and accountability", description: "Use PIN-based staff access, role permissions and activity logs.", accent: "border-l-primary" },
+    { icon: Warehouse, title: "Multiple locations", description: "Keep inventory visible across shops, warehouses and distribution points.", accent: "border-l-accent" },
+    { icon: Store, title: "Different business types", description: "Designed for retail shops, wholesalers, warehouses, restaurants and bars.", accent: "border-l-muted-foreground/60" },
+  ];
+
+  return (
+    <section aria-label="Explore Inventra" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
+      <div className="overflow-hidden rounded-3xl border border-accent/35 bg-card shadow-md">
+        <div className="grid gap-6 border-l-4 border-l-accent p-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-8 md:p-7 lg:p-8">
+          <div className="flex flex-col items-start justify-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
+              <Package className="h-3.5 w-3.5" /> Amineva business platform
+            </span>
+            <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">
+              Keep your stock, sales and store operations in view.
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">
+              Inventra brings inventory tracking and point-of-sale sales into one business workflow. Set up products and categories, monitor quantities, record sales and review how products are performing—so everyday decisions are based on business records rather than guesswork.
+            </p>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              Track low-stock items and reorder points, process barcode-assisted sales, issue receipts and review daily sales summaries. Staff can work with PIN-based access and role permissions, while activity logs support clearer accountability. For businesses with more than one shop or warehouse, multi-location inventory tools help keep stock activity connected.
+            </p>
+            <a
+              href={product.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            >
+              {product.label} <ArrowUpRight className="h-4 w-4" />
+            </a>
+            <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+              Open Inventra to explore the platform and its registration options.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {capabilities.map((item) => (
+              <article key={item.title} className={"rounded-2xl border border-border border-l-4 bg-background/70 p-4 transition hover:-translate-y-0.5 hover:shadow-md " + item.accent}>
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-primary">
+                  <item.icon className="h-4 w-4" />
+                </div>
+                <h3 className="mt-3 text-sm font-semibold text-foreground">{item.title}</h3>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/30 px-5 py-3 text-[11px] text-muted-foreground md:px-7">
+          <span>For retailers · wholesalers · warehouses · restaurants · bars</span>
+          <span>Designed for desktop, tablet and mobile use</span>
+        </div>
+      </div>
+    </section>
   );
 }
 
