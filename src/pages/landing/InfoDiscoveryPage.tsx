@@ -220,7 +220,6 @@ const categories: Category[] = [
     product: { label: "Explore Inventra", href: "https://stock.amineva.com", description: "Continue to Inventra for inventory, stock operations and related business management workflows." },
   },
   {
-  {
     slug: "financial-operations", title: "Financial Operations", icon: Wallet,
     summary: "Understand how financial transactions are monitored, payments are reconciled, income and expenses are recorded, cash flow is managed and financial performance is reported.",
     purpose: "Financial operations depend on accurate transactions, reliable account records and clear responsibility for money moving through an organisation. Mobile money vendors, microfinance institutions, microcredit providers, savings and loans operators, rural banks and other financial service organisations need to understand what has been received, paid, disbursed, collected, settled or left outstanding. Businesses also need dependable records of income, expenses, payments, cash flow and financial obligations. This area explains why those practices matter, how records fit together and what managers should review. It is educational guidance, not a substitute for regulated financial, accounting or legal advice.",
@@ -271,6 +270,7 @@ const categories: Category[] = [
     ],
     product: { label: "Open Sikasɛm", href: "https://ops.amineva.com", description: "Open Sikasɛm to explore financial-network transaction monitoring, field collection, float tracking, reconciliation and operational oversight." },
   },
+  {
     slug: "agriculture-climate-intelligence", title: "Agriculture and Climate Intelligence", icon: Sprout,
     summary: "Understand local weather, seasonal climate risks, land and water conditions, crop suitability, satellite observations, farm operations, agricultural logistics and markets.",
     purpose: "Agriculture is shaped by decisions that are connected: where to farm, what to grow, when to plant, how to manage water and inputs, how to recognise field risks, and how to store, move and sell produce. This area explains how weather observations, forecasts, long-term climate patterns, land characteristics, field records, remote-sensing indicators and market information can support those decisions. Every dataset has limits: a forecast is not an observation, a satellite signal is not a field diagnosis, and regional averages do not replace local knowledge or inspection.",
