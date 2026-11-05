@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import {
   Sparkles,
   Heart,
+  HeartHandshake,
   Target,
   Users,
   Building2,
