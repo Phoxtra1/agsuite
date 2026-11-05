@@ -117,7 +117,7 @@ export default function GlobalFooter() {
             </span>
           </Link>
           <p className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-amber-300">
-            Technology. Intelligence. Progress.
+            Connect Verify Grow
           </p>
           <p className="text-sm leading-relaxed text-white/65">
             Building digital products and practical technology solutions for businesses,
