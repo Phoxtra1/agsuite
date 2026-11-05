@@ -50,7 +50,7 @@ const fadeUp = {
 
 const heroSecondaryImage = {
   type: "image" as const,
-  url: "/images/impact/impact-school-computer-session.webp",
+  url: "/edu...png",
   title: "Digital Learning & Computer Exposure",
   caption: "Learners gathered with facilitators and computer equipment during a school-based educational engagement.",
   altText: "School learners standing with facilitators and computer equipment during an educational engagement.",
@@ -168,7 +168,7 @@ export const AminevaImpactPage: FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedImage({
-                  url: "/images/impact/impact-school-engagement-hero.webp",
+                  url: "/edu......png",
                   title: "Classroom Engagement & Learner Participation",
                   altText: "A facilitator and learners share a moment during a classroom engagement, with classmates gathered in the room.",
                   caption: "A classroom moment from a school engagement documented by Amineva Global.",
@@ -177,7 +177,7 @@ export const AminevaImpactPage: FC = () => {
                 aria-label="View classroom engagement photograph"
               >
                 <img
-                  src="/images/impact/impact-school-engagement-hero.webp"
+                  src="/edu......png"
                   alt="A facilitator and learners share a moment during a classroom engagement, with classmates gathered in the room."
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   loading="eager"
