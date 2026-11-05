@@ -142,6 +142,7 @@ const categories: Category[] = [
       { name: "CISA", scope: "Cybersecurity, secure-by-design and infrastructure protection guidance", type: "Official U.S. cyber defence agency", url: "https://www.cisa.gov/" },
       { name: "World Bank Open Data", scope: "Country-level digital development and economic indicators where available", type: "Official international statistics", url: "https://data.worldbank.org/" },
     ],
+    product: { label: "Explore DataLens", href: "https://app.amineva.com", description: "Continue to DataLens for deeper business and data intelligence services." },
   },
   {
     slug: "business-management", title: "Business Management", icon: BriefcaseBusiness,
