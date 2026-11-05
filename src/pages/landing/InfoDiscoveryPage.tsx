@@ -189,6 +189,7 @@ const categories: Category[] = [
       { name: "ACFE / COSO Fraud Risk Management", scope: "Fraud governance, risk assessment, control activities, investigation and monitoring", type: "Professional control guidance", url: "https://www.acfe.com/fraud-resources/fraud-risk-tools---coso/fraud-risk-management-guide" },
       { name: "OECD Data Explorer", scope: "Comparable economic and business-related indicators across participating economies", type: "International statistical source", url: "https://data-explorer.oecd.org/" },
     ],
+    product: { label: "Explore Inventra", href: "https://stock.amineva.com", description: "Continue to Inventra for inventory, stock operations and related business management workflows." },
   },
   {
     slug: "agriculture-climate-intelligence", title: "Agriculture and Climate Intelligence", icon: Sprout,
