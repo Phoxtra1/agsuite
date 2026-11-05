@@ -260,6 +260,32 @@ function normalise(value: string) {
 }
 
 const SEARCH_STOP_WORDS = new Set(["a", "an", "and", "are", "as", "at", "can", "do", "does", "for", "from", "how", "i", "in", "is", "it", "of", "on", "or", "the", "to", "what", "when", "where", "which", "who", "why", "with"]);
+const BUSINESS_SEARCH_TERMS: Record<string, string> = {
+  "inventory-and-stock-records": "stock register stock ledger stock balance stock movement goods received dispatch stock control storekeeping",
+  "product-catalogues-and-stock-classification": "SKU barcode product code item master product catalogue product category variant unit of measure UOM duplicate item",
+  "stocktaking-and-discrepancies": "stock count physical inventory count stocktake stock variance stock adjustment inventory discrepancy reconciliation",
+  "stock-valuation-and-cost-of-goods-sold": "FIFO weighted average cost WAC closing stock inventory value COGS cost of sales valuation gross profit",
+  "reorder-levels-and-stock-replenishment": "reorder point minimum stock maximum stock safety stock low stock alerts purchase planning lead time replenishment",
+  "loss-damage-expiry-and-shrinkage": "stock loss theft wastage expired goods damaged goods inventory shrinkage write off expiry control",
+  "purchasing-and-supplier-records": "purchase order PO supplier invoice goods received note GRN delivery note procurement supplier balance vendor management",
+  "sales-and-transaction-records": "point of sale POS till sales receipt invoice cash card mobile money momo bank transfer discounts voids daily sales",
+  "cash-bank-and-mobile-money-reconciliation": "cashbook bank reconciliation bank statement mobile money momo payment settlement transaction matching payment fees reversals",
+  "returns-refunds-and-transaction-adjustments": "sales return refund reversal void credit note stock return transaction correction exchange adjustment approval",
+  "receipts-invoices-and-document-control": "receipt tax invoice proforma invoice delivery note debit note credit note document management missing invoice duplicate receipt",
+  "cash-flow-management-and-forecasting": "cash flow forecast cash inflow cash outflow liquidity working capital cash shortage cash planning runway",
+  "accounts-receivable-and-customer-credit": "accounts receivable debtors debtor ageing outstanding customer balances credit control unpaid invoice collections",
+  "accounts-payable-and-supplier-obligations": "accounts payable creditors creditor ageing supplier bills vendor payments outstanding payables due invoices",
+  "revenue-expenses-and-operating-margins": "profit and loss P&L income statement gross profit net profit gross margin net margin operating expenses cost of sales revenue",
+  "daily-cash-position-and-financial-records": "cashbook petty cash cash float opening balance closing balance daily cash report bank balance account balance cash position",
+  "employee-accountability-and-responsibilities": "staff responsibility employee roles duties attendance performance assignment access rights accountability",
+  "shift-handovers-and-cash-custody": "shift change handover cash count till float cash custody register key handover pending tasks",
+  "approvals-and-separation-of-duties": "approval matrix authorisation limits maker checker segregation of duties purchase approval payment approval delegation",
+  "internal-controls-and-loss-prevention": "fraud prevention internal audit control checks exception review unauthorised transactions asset protection",
+  "business-records-access-and-audit-trails": "audit log audit trail user activity history record changes permissions data access backup retention",
+  "operational-efficiency-and-process-improvement": "workflow process mapping bottleneck delays productivity operating procedure SOP error reduction process improvement",
+  "business-performance-indicators-and-kpis": "KPI dashboard key performance indicator stock turnover inventory turnover sales growth gross margin order fulfilment",
+  "management-reports-and-business-decisions": "management dashboard business reporting monthly report variance analysis budget versus actual decision support"
+};
 function allTopics(category: Category) {
   return category.sections.flatMap(section => section.items.map(item => ({ ...item, section: section.title, slug: slugify(item.title) })));
 }
@@ -773,7 +799,13 @@ export default function InfoDiscoveryPage() {
   const filteredSections = useMemo(() => selected?.sections.map(section => ({ ...section, items: section.items.filter(item => (sectionFilter === "all" || section.title === sectionFilter) && normalise([item.title, item.description, ...item.questions].join(" ")).includes(normalise(topicFilter.trim()))) })).filter(section => section.items.length > 0) || [], [selected, sectionFilter, topicFilter]);
   const searchIndex = useMemo(() => categories.flatMap(category => [
     { kind: "area" as const, label: category.title, detail: category.summary, category, slug: category.slug },
-    ...allTopics(category).map(item => ({ kind: "topic" as const, label: item.title, detail: item.section + " · " + item.description + " · " + item.questions.join(" "), category, slug: item.slug })),
+    ...allTopics(category).map(item => ({
+      kind: "topic" as const,
+      label: item.title,
+      detail: [item.section, item.description, item.questions.join(" "), category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
+      category,
+      slug: item.slug,
+    })),
   ]), []);
   const searchResults = useMemo(() => {
     const clean = normalise(query.trim());
