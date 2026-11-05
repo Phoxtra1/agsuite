@@ -33,7 +33,7 @@ import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracke
 type Topic = { title: string; description: string; questions: string[] };
 type Section = { title: string; description: string; items: Topic[] };
 type Source = { name: string; scope: string; type: string; url: string };
-type ProductLink = { label: string; href: string };
+type ProductLink = { label: string; href: string; introduction: string };
 type Category = {
   slug: string; title: string; summary: string; purpose: string; icon: React.ElementType;
   sections: Section[]; sources: Source[]; product?: ProductLink;
@@ -81,7 +81,7 @@ const categories: Category[] = [
       { name: "ESCO", scope: "Occupation, skills, competence and qualification descriptions for the European labour market", type: "European Commission classification", url: "https://esco.ec.europa.eu/en/classification" },
       { name: "O*NET Online", scope: "Occupation tasks, skills and work context; United States occupational framework", type: "National occupational reference", url: "https://www.onetonline.org/" },
     ],
-    product: { label: "Explore Adesua", href: "https://as.amineva.com" },
+    product: { label: "Continue to Adesua", href: "https://as.amineva.com", introduction: "When you are ready to continue exploring practical learning and education pathways, visit Adesua." },
   },
   {
     slug: "travel-destination", title: "Travel and Destination", icon: Plane,
@@ -169,7 +169,7 @@ const categories: Category[] = [
       { name: "CISA", scope: "Cybersecurity, secure-by-design and infrastructure protection guidance", type: "Official U.S. cyber defence agency", url: "https://www.cisa.gov/" },
       { name: "Cloud Security Alliance", scope: "Cloud security practices and guidance", type: "Industry security reference", url: "https://cloudsecurityalliance.org/" },
     ],
-    product: { label: "Explore DataLens", href: "https://app.amineva.com" },
+    product: { label: "Visit DataLens", href: "https://app.amineva.com", introduction: "When your organisation is ready to take the next step with its technology needs, you can continue to DataLens." },
   },
   {
     slug: "business-management", title: "Business Management", icon: BriefcaseBusiness,
@@ -216,7 +216,7 @@ const categories: Category[] = [
       { name: "ACFE / COSO Fraud Risk Management", scope: "Fraud governance, risk assessment, control activities, investigation and monitoring", type: "Professional control guidance", url: "https://www.acfe.com/fraud-resources/fraud-risk-tools---coso/fraud-risk-management-guide" },
       { name: "OECD Data Explorer", scope: "Comparable economic and business-related indicators across participating economies", type: "International statistical source", url: "https://data-explorer.oecd.org/" },
     ],
-    product: { label: "Explore Inventra", href: "https://stock.amineva.com" },
+    product: { label: "Visit Inventra", href: "https://stock.amineva.com", introduction: "When you are ready to put stronger business-management practices into action, continue to Inventra." },
   },
   {
     slug: "financial-operations", title: "Financial Operations", icon: Wallet,
@@ -267,7 +267,7 @@ const categories: Category[] = [
       { name: "CGAP", scope: "Research and practical guidance on financial inclusion, microfinance and digital financial services", type: "International development research centre", url: "https://www.cgap.org/" },
       { name: "IFRS for SMEs", scope: "Financial reporting requirements designed for eligible small and medium-sized entities", type: "Official international accounting standard", url: "https://www.ifrs.org/issued-standards/ifrs-for-smes/" },
     ],
-    product: { label: "Open Sikasɛm", href: "https://ops.amineva.com" },
+    product: { label: "Visit Sikasɛm", href: "https://ops.amineva.com", introduction: "When you are ready to put these financial practices into everyday operations, continue to Sikasɛm." },
   },
   {
     slug: "agriculture-climate-intelligence", title: "Agriculture and Climate Intelligence", icon: Sprout,
@@ -316,7 +316,7 @@ const categories: Category[] = [
       { name: "NASA POWER", scope: "Meteorological and solar datasets with point and regional temporal services", type: "Public Earth-science data service", url: "https://power.larc.nasa.gov/" },
       { name: "Copernicus Data Space", scope: "Sentinel and other Earth-observation datasets, browser and APIs", type: "Official Earth-observation data access", url: "https://dataspace.copernicus.eu/explore-data" },
     ],
-    product: { label: "Explore AgroClimate", href: "https://agro.amineva.com" },
+    product: { label: "Visit AgroClimate", href: "https://agro.amineva.com", introduction: "When you are ready to take the next step in applying this knowledge to agricultural activities, continue to AgroClimate." },
   },
   {
     slug: "operational-intelligence", title: "Operational Intelligence", icon: ShieldCheck,
@@ -1223,8 +1223,8 @@ export default function InfoDiscoveryPage() {
               <span className="min-w-0 flex-1">
                 <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">Independent learning platform</span>
                 <span className="block text-xl font-bold tracking-tight text-foreground">Adesua</span>
-                <span className="mt-1.5 block max-w-xl text-sm leading-6 text-muted-foreground">Practical learning, career guidance, self-assessment and an examination portal, with video explainers showing how the platform works.</span>
-                <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary">Explore Adesua <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span>
+                <span className="mt-1.5 block max-w-xl text-sm leading-6 text-muted-foreground">Continue exploring practical learning and education pathways through Amineva’s learning platform.</span>
+                <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary">Continue to Adesua <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span>
               </span>
             </a>
             <Link
@@ -1524,18 +1524,28 @@ function AreaOverview({ category }: { category: Category }) {
           </div>
 
           {category.product ? (
-            <div className="flex flex-col items-start gap-3 rounded-2xl border border-accent/20 bg-muted/30 p-4 md:p-5">
-              <p className="text-xs leading-6 text-muted-foreground">
-                Ready to take the next step? Continue through the relevant Amineva platform.
-              </p>
+            <div className="group relative flex flex-col items-start justify-between gap-5 overflow-hidden rounded-2xl border border-accent/30 bg-gradient-to-br from-accent/10 via-card to-primary/5 p-5 shadow-sm transition duration-300 hover:border-accent/55 hover:shadow-md md:min-h-48 md:p-6">
+              <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-accent/10 blur-2xl transition-transform duration-500 group-hover:scale-125" />
+              <div className="relative">
+                <span className="inline-flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.17em] text-accent">
+                  <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                  Continue with Amineva
+                </span>
+                <p className="mt-3 max-w-sm text-sm leading-6 text-muted-foreground">
+                  {category.product.introduction}
+                </p>
+              </div>
               <a
                 href={category.product.href}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+                aria-label={category.product.label}
+                className="relative inline-flex min-h-11 w-full items-center justify-between gap-3 rounded-xl border border-accent/35 bg-accent px-4 py-3 text-sm font-bold text-accent-foreground shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-accent hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
               >
-                {category.product.label}
-                <ArrowUpRight className="h-4 w-4" />
+                <span>{category.product.label}</span>
+                <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-accent-foreground/15">
+                  <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
+                </span>
               </a>
             </div>
           ) : (
