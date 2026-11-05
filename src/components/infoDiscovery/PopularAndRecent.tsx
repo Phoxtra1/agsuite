@@ -66,7 +66,7 @@ export function PopularAndRecent({ recentTopics, onSelectTopic, onSelectRecent, 
             <button
               key={item.topicSlug}
               type="button"
-              onClick={() => item.kind === "topic" || !item.kind ? onSelectTopic(item.categorySlug, item.topicSlug) : onSelectRecent(item)}
+              onClick={() => onSelectTopic(item.categorySlug, item.topicSlug)}
               className="flex w-full items-start justify-between rounded-xl border border-border/60 bg-muted/30 p-3 text-left transition hover:bg-accent/5 hover:border-accent/40 group"
             >
               <div className="min-w-0 flex-1 pr-2">
@@ -110,7 +110,7 @@ export function PopularAndRecent({ recentTopics, onSelectTopic, onSelectRecent, 
                 <button
                   key={item.categorySlug + item.topicSlug + item.visitedAt}
                   type="button"
-                  onClick={() => onSelectTopic(item.categorySlug, item.topicSlug)}
+                  onClick={() => item.kind === "topic" || !item.kind ? onSelectTopic(item.categorySlug, item.topicSlug) : onSelectRecent(item)}
                   className="flex w-full items-start justify-between rounded-xl border border-border/60 bg-muted/30 p-3 text-left transition hover:bg-accent/5 hover:border-accent/40 group"
                 >
                   <div className="min-w-0 flex-1 pr-2">
