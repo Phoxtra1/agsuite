@@ -82,7 +82,7 @@ const categories: Category[] = [
       { name: "ESCO", scope: "Occupation, skills, competence and qualification descriptions for the European labour market", type: "European Commission classification", url: "https://esco.ec.europa.eu/en/classification" },
       { name: "O*NET Online", scope: "Occupation tasks, skills and work context; United States occupational framework", type: "National occupational reference", url: "https://www.onetonline.org/" },
     ],
-    product: { label: "Explore Adesua", href: "https://as.amineva.com/get-started", description: "Continue into practical learning, guided exercises and skill development." },
+    product: { label: "Explore Adesua", href: "https://as.amineva.com", description: "Continue to practical learning, career guidance, self-assessment and examination resources." },
   },
   {
     slug: "travel-destination", title: "Travel and Destination", icon: Plane,
@@ -891,6 +891,54 @@ export default function InfoDiscoveryPage() {
           </div>
         </div>
       </section>
+
+
+      {selected?.slug === "career-development-education" && (
+        <section aria-label="Career development resources" className="mx-auto max-w-7xl px-5 pt-7 md:px-8">
+          <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
+            <div>
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">Continue your journey</p>
+              <h2 className="mt-1 text-xl font-semibold tracking-tight md:text-2xl">Explore learning and impact opportunities</h2>
+            </div>
+            <span className="text-xs text-muted-foreground">Amineva Global</span>
+          </div>
+          <div className="grid gap-4 lg:grid-cols-2">
+            <a
+              href="https://as.amineva.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="group relative isolate flex min-h-40 items-center gap-4 overflow-hidden rounded-2xl border border-accent/30 bg-card p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-accent/60 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            >
+              <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-accent/15 via-transparent to-primary/5 opacity-80 transition-opacity group-hover:opacity-100" />
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-accent/25 bg-accent/10 text-accent transition-transform duration-300 group-hover:scale-105">
+                <GraduationCap className="h-7 w-7" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">Independent learning platform</span>
+                <span className="block text-xl font-bold tracking-tight text-foreground">Adesua</span>
+                <span className="mt-1.5 block max-w-xl text-sm leading-6 text-muted-foreground">Practical learning, career guidance, self-assessment and an examination portal, with video explainers showing how the platform works.</span>
+                <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary">Explore Adesua <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span>
+              </span>
+            </a>
+            <Link
+              to="/impact"
+              className="group relative isolate flex min-h-40 items-center gap-4 overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-accent/50 hover:shadow-xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            >
+              <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-br from-primary/10 via-transparent to-accent/10 opacity-70 transition-opacity group-hover:opacity-100" />
+              <span className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl border border-primary/15 bg-primary/10 text-primary transition-transform duration-300 group-hover:scale-105">
+                <Compass className="h-7 w-7" />
+              </span>
+              <span className="min-w-0 flex-1">
+                <span className="mb-1 block text-[11px] font-semibold uppercase tracking-[0.16em] text-accent">Education and community initiatives</span>
+                <span className="block text-xl font-bold tracking-tight text-foreground">Amineva Impact</span>
+                <span className="mt-1.5 block max-w-xl text-sm leading-6 text-muted-foreground">Discover Amineva Global's educational and community initiatives, school engagements and programme updates.</span>
+                <span className="mt-3 inline-flex items-center gap-2 text-sm font-semibold text-primary">Explore Amineva Impact <ArrowUpRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" /></span>
+              </span>
+            </Link>
+          </div>
+        </section>
+      )}
+
       {generalQuery && <div className="mx-auto max-w-5xl px-5 pt-8 md:px-8"><GeneralSearchAnswer query={generalQuery} onClose={() => setGeneralQuery("")} /></div>}
 
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -1061,7 +1109,7 @@ export default function InfoDiscoveryPage() {
             </article>
 
             <ResearchPanel initialQuery={selectedTopic.title} />
-            <SourceDirectory sources={selected.sources} />
+            {selected.slug !== "career-development-education" && <SourceDirectory sources={selected.sources} />}
             {selected.slug === "travel-destination" && (
               <>
                 <CountryExplorer onCountriesLoaded={setCountryList} />
@@ -1069,35 +1117,23 @@ export default function InfoDiscoveryPage() {
               </>
             )}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
-            {selected.product && <ProductConnection product={selected.product} />}
-            {selected.slug === "career-development-education" && (
-              <div className="rounded-2xl border border-border bg-card shadow-sm p-5">
-                <h2 className="font-semibold">Amineva Impact</h2>
-                <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                  The existing school and community initiative material remains part of Career Development and Education.
-                </p>
-                <Link to="/impact" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">
-                  View Amineva Impact engagements <ArrowUpRight className="h-4 w-4" />
-                </Link>
-              </div>
-            )}
+            {selected.product && selected.slug !== "career-development-education" && <ProductConnection product={selected.product} />}
             <p className="text-[11px] text-muted-foreground">
               This topic guide is an investigation structure. It does not itself certify a current visa rule, price, job vacancy, crop condition or organisational finding.
             </p>
           </section>}
 
           {selected && !selectedTopic && <section className="space-y-6">
-            <div className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-7"><div className="flex items-center gap-2 text-sm font-semibold text-accent"><selected.icon className="h-4 w-4" /> Area overview</div><p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p><div className="mt-5 flex flex-wrap gap-2"><Badge variant="outline">{allTopics(selected).length} topics</Badge><Badge variant="outline">{selected.sections.length} subject groups</Badge><Badge variant="outline">{selected.sources.length} reference sources</Badge></div></div>
+            <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-accent/[0.07] p-6 shadow-sm md:p-8"><div className="flex items-center gap-2 text-sm font-semibold text-accent"><selected.icon className="h-4 w-4" /> Area overview</div><p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p><div className="mt-5 flex flex-wrap gap-2"><Badge variant="outline">{allTopics(selected).length} topics</Badge><Badge variant="outline">{selected.sections.length} subject groups</Badge></div></div>
             <div><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Subject menu</h2><p className="mt-1 text-sm text-muted-foreground">Search within this area or filter by subject group.</p></div><Badge variant="outline">{filteredSections.reduce((count, section) => count + section.items.length, 0)} matching topics</Badge></div>
               <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTopicFilter(e.target.value)} placeholder="Filter topics and questions" aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
-              {filteredSections.length ? <div className="space-y-4">{filteredSections.map(section => <section key={section.title} className="rounded-2xl border border-border bg-card p-5"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div><div className="mt-4 grid gap-2 md:grid-cols-2">{section.items.map(item => <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className="group rounded-xl border border-border bg-card p-4 text-left transition hover:border-accent/50 hover:bg-accent/5"><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span><span className="mt-2 block text-xs leading-5 text-muted-foreground">{item.description}</span></button>)}</div></section>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
+              {filteredSections.length ? <div className="space-y-4">{filteredSections.map(section => <section key={section.title} className="rounded-2xl border border-border bg-card p-5"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div><div className="mt-4 grid gap-2 md:grid-cols-2">{section.items.map(item => <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className="group rounded-xl border border-border bg-card p-4 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-accent/50 hover:bg-accent/5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span><span className="mt-2 block text-xs leading-5 text-muted-foreground">{item.description}</span></button>)}</div></section>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
             </div>
             {selected.slug === "travel-destination" && <CountryExplorer />}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
             <ResearchPanel initialQuery={selected.title} />
-            <SourceDirectory sources={selected.sources} />
-            {selected.product && <ProductConnection product={selected.product} />}
-            {selected.slug === "career-development-education" && <div className="rounded-2xl border border-border bg-card shadow-sm p-5"><h2 className="font-semibold">Amineva Impact</h2><p className="mt-1 text-sm leading-6 text-muted-foreground">School engagements and learner activities sit within this area rather than appearing as a separate discovery category.</p><Link to="/impact" className="mt-3 inline-flex items-center gap-1 text-sm font-semibold text-primary hover:underline">Explore existing engagements <ArrowUpRight className="h-4 w-4" /></Link></div>}
+            {selected.slug !== "career-development-education" && <SourceDirectory sources={selected.sources} />}
+            {selected.product && selected.slug !== "career-development-education" && <ProductConnection product={selected.product} />}
             {selected.slug === "operational-intelligence" && <div className="rounded-2xl border border-border bg-muted/40 p-5"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-4 w-4 text-accent" /> Authorised evidence only</div><p className="mt-2 text-xs leading-5 text-muted-foreground">Verification and anomaly detection require approved connections to source systems, documented permissions and review controls. This public information area explains the method; it does not claim access to private organisational records.</p></div>}
           </section>}
 
