@@ -1,11 +1,13 @@
 import React from "react";
-import { Clock, TrendingUp, ChevronRight, BookOpen } from "lucide-react";
+import { Clock, TrendingUp, ChevronRight, BookOpen, Trash2, Search, Compass } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { RecentTopicItem } from "@/lib/infoDiscovery/savedTopics";
 
 interface PopularAndRecentProps {
   recentTopics: RecentTopicItem[];
   onSelectTopic: (catSlug: string, topicSlug: string) => void;
+  onSelectRecent: (item: RecentTopicItem) => void;
+  onClearRecent: () => void;
 }
 
 // Popular topics selected dynamically across diverse research domains
@@ -40,7 +42,7 @@ const POPULAR_TOPICS = [
   },
 ];
 
-export function PopularAndRecent({ recentTopics, onSelectTopic }: PopularAndRecentProps) {
+export function PopularAndRecent({ recentTopics, onSelectTopic, onSelectRecent, onClearRecent }: PopularAndRecentProps) {
   return (
     <div className="grid gap-6 md:grid-cols-2 mb-8">
       {/* Popular Topics */}
@@ -48,15 +50,15 @@ export function PopularAndRecent({ recentTopics, onSelectTopic }: PopularAndRece
         <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-accent" />
-            <h2 className="text-sm font-semibold text-foreground">Popular Topics</h2>
+            <h2 className="text-sm font-semibold text-foreground">Suggested Starting Points</h2>
           </div>
           <Badge variant="outline" className="text-[10px]">
-            Frequently Explored
+            Curated suggestions
           </Badge>
         </div>
 
         <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-          High-demand starting points across careers, destinations, cybersecurity, and business management.
+          A selection of useful subjects to help you begin exploring different areas.
         </p>
 
         <div className="mt-4 space-y-2">
@@ -64,7 +66,7 @@ export function PopularAndRecent({ recentTopics, onSelectTopic }: PopularAndRece
             <button
               key={item.topicSlug}
               type="button"
-              onClick={() => onSelectTopic(item.categorySlug, item.topicSlug)}
+              onClick={() => item.kind === "topic" || !item.kind ? onSelectTopic(item.categorySlug, item.topicSlug) : onSelectRecent(item)}
               className="flex w-full items-start justify-between rounded-xl border border-border/60 bg-muted/30 p-3 text-left transition hover:bg-accent/5 hover:border-accent/40 group"
             >
               <div className="min-w-0 flex-1 pr-2">
@@ -87,28 +89,26 @@ export function PopularAndRecent({ recentTopics, onSelectTopic }: PopularAndRece
           <div className="flex items-center justify-between pb-3 border-b border-border">
             <div className="flex items-center gap-2">
               <Clock className="h-4 w-4 text-primary" />
-              <h2 className="text-sm font-semibold text-foreground">Recently Viewed</h2>
+              <h2 className="text-sm font-semibold text-foreground">Recent Activity</h2>
             </div>
-            <Badge variant="secondary" className="text-[10px]">
-              {recentTopics.length} Recents
-            </Badge>
+            <div className="flex items-center gap-2"><Badge variant="secondary" className="text-[10px]">{recentTopics.length} items</Badge>{recentTopics.length > 0 && <button type="button" onClick={onClearRecent} aria-label="Clear recent activity" className="rounded-md p-1.5 text-muted-foreground hover:bg-muted"><Trash2 className="h-3.5 w-3.5" /></button>}</div>
           </div>
 
           <p className="mt-2 text-xs text-muted-foreground leading-relaxed">
-            Jump back into subjects and investigation questions you recently reviewed.
+            Return to a subject, area or search you recently explored.
           </p>
 
           <div className="mt-4 space-y-2">
             {recentTopics.length === 0 ? (
               <div className="rounded-xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
                 <BookOpen className="h-6 w-6 mx-auto mb-2 opacity-40" />
-                <p>No recent topics yet.</p>
-                <p className="mt-1 text-[11px]">As you browse subjects, they will appear here for fast re-entry.</p>
+                <p>No recent activity yet.</p>
+                <p className="mt-1 text-[11px]">Opened areas, topics and submitted searches will appear here.</p>
               </div>
             ) : (
-              recentTopics.slice(0, 4).map((item) => (
+              recentTopics.slice(0, 5).map((item) => (
                 <button
-                  key={item.categorySlug + item.topicSlug}
+                  key={item.categorySlug + item.topicSlug + item.visitedAt}
                   type="button"
                   onClick={() => onSelectTopic(item.categorySlug, item.topicSlug)}
                   className="flex w-full items-start justify-between rounded-xl border border-border/60 bg-muted/30 p-3 text-left transition hover:bg-accent/5 hover:border-accent/40 group"
@@ -118,7 +118,7 @@ export function PopularAndRecent({ recentTopics, onSelectTopic }: PopularAndRece
                       {item.topicTitle}
                     </span>
                     <span className="mt-0.5 block text-[11px] text-muted-foreground">
-                      {item.categoryTitle}
+                      {item.kind === "search" ? "Search" : item.kind === "area" ? "Discovery area" : item.categoryTitle}
                     </span>
                   </div>
                   <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-primary transition mt-1 shrink-0" />
