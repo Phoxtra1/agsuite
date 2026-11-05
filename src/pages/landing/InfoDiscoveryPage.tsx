@@ -1,3 +1,4 @@
+// Production build verification checkpoint.
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
