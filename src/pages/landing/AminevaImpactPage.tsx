@@ -367,7 +367,7 @@ export const AminevaImpactPage: FC = () => {
                       type="button"
                       onClick={() => setSelectedImage(img)}
                       aria-label={`View photo: ${img.title}`}
-                      className="group/image relative block w-full aspect-[4/3] overflow-hidden bg-muted text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+                      className="group/image relative block w-full aspect-[2/1] overflow-hidden bg-muted text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
                     >
                       <img
                         src={img.url}
