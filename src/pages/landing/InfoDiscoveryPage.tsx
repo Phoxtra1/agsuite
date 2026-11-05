@@ -35,7 +35,7 @@ import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracke
 type Topic = { title: string; description: string; questions: string[] };
 type Section = { title: string; description: string; items: Topic[] };
 type Source = { name: string; scope: string; type: string; url: string };
-type ProductLink = { label: string; href: string; description: string };
+type ProductLink = { label: string; href: string };
 type Category = {
   slug: string; title: string; summary: string; purpose: string; icon: React.ElementType;
   sections: Section[]; sources: Source[]; product?: ProductLink;
@@ -83,7 +83,7 @@ const categories: Category[] = [
       { name: "ESCO", scope: "Occupation, skills, competence and qualification descriptions for the European labour market", type: "European Commission classification", url: "https://esco.ec.europa.eu/en/classification" },
       { name: "O*NET Online", scope: "Occupation tasks, skills and work context; United States occupational framework", type: "National occupational reference", url: "https://www.onetonline.org/" },
     ],
-    product: { label: "Explore Adesua", href: "https://as.amineva.com", description: "Continue to practical learning, career guidance, self-assessment and examination resources." },
+    product: { label: "Explore Adesua", href: "https://as.amineva.com" },
   },
   {
     slug: "travel-destination", title: "Travel and Destination", icon: Plane,
@@ -171,7 +171,7 @@ const categories: Category[] = [
       { name: "CISA", scope: "Cybersecurity, secure-by-design and infrastructure protection guidance", type: "Official U.S. cyber defence agency", url: "https://www.cisa.gov/" },
       { name: "Cloud Security Alliance", scope: "Cloud security practices and guidance", type: "Industry security reference", url: "https://cloudsecurityalliance.org/" },
     ],
-    product: { label: "Explore DataLens", href: "https://app.amineva.com", description: "Continue to DataLens for website and application maintenance, software development, cloud infrastructure, database management and professional IT support." },
+    product: { label: "Explore DataLens", href: "https://app.amineva.com" },
   },
   {
     slug: "business-management", title: "Business Management", icon: BriefcaseBusiness,
@@ -218,7 +218,7 @@ const categories: Category[] = [
       { name: "ACFE / COSO Fraud Risk Management", scope: "Fraud governance, risk assessment, control activities, investigation and monitoring", type: "Professional control guidance", url: "https://www.acfe.com/fraud-resources/fraud-risk-tools---coso/fraud-risk-management-guide" },
       { name: "OECD Data Explorer", scope: "Comparable economic and business-related indicators across participating economies", type: "International statistical source", url: "https://data-explorer.oecd.org/" },
     ],
-    product: { label: "Explore Inventra", href: "https://stock.amineva.com", description: "Continue to Inventra for inventory, stock operations and related business management workflows." },
+    product: { label: "Explore Inventra", href: "https://stock.amineva.com" },
   },
   {
     slug: "financial-operations", title: "Financial Operations", icon: Wallet,
@@ -269,7 +269,7 @@ const categories: Category[] = [
       { name: "CGAP", scope: "Research and practical guidance on financial inclusion, microfinance and digital financial services", type: "International development research centre", url: "https://www.cgap.org/" },
       { name: "IFRS for SMEs", scope: "Financial reporting requirements designed for eligible small and medium-sized entities", type: "Official international accounting standard", url: "https://www.ifrs.org/issued-standards/ifrs-for-smes/" },
     ],
-    product: { label: "Open Sikasɛm", href: "https://ops.amineva.com", description: "Open Sikasɛm to explore financial-network transaction monitoring, field collection, float tracking, reconciliation and operational oversight." },
+    product: { label: "Open Sikasɛm", href: "https://ops.amineva.com" },
   },
   {
     slug: "agriculture-climate-intelligence", title: "Agriculture and Climate Intelligence", icon: Sprout,
@@ -318,7 +318,7 @@ const categories: Category[] = [
       { name: "NASA POWER", scope: "Meteorological and solar datasets with point and regional temporal services", type: "Public Earth-science data service", url: "https://power.larc.nasa.gov/" },
       { name: "Copernicus Data Space", scope: "Sentinel and other Earth-observation datasets, browser and APIs", type: "Official Earth-observation data access", url: "https://dataspace.copernicus.eu/explore-data" },
     ],
-    product: { label: "Explore AgroClimate", href: "https://agro.amineva.com", description: "Continue to AgroClimate to explore weather and climate information, production risk awareness, farm learning and input management tools." },
+    product: { label: "Explore AgroClimate", href: "https://agro.amineva.com" },
   },
   {
     slug: "operational-intelligence", title: "Operational Intelligence", icon: ShieldCheck,
@@ -1248,22 +1248,9 @@ export default function InfoDiscoveryPage() {
         </section>
       )}
 
-      {!selectedTopic && selected?.slug === "business-management" && selected.product && (
-        <InventraSpotlight product={selected.product} />
+      {selected && !["career-development-education", "travel-destination"].includes(selected.slug) && (
+        <AreaOverview category={selected} />
       )}
-
-      {!selectedTopic && selected?.slug === "agriculture-climate-intelligence" && selected.product && (
-        <AgroClimateSpotlight product={selected.product} />
-      )}
-      {!selectedTopic && selected?.slug === "it-innovation" && selected.product && (
-        <DataLensSpotlight product={selected.product} />
-      )}
-      {selectedTopic && selected?.slug === "business-management" && selected.product && <InventraSpotlight product={selected.product} />}
-      {selectedTopic && selected?.slug === "agriculture-climate-intelligence" && selected.product && <AgroClimateSpotlight product={selected.product} />}
-      {selectedTopic && selected?.slug === "it-innovation" && selected.product && <DataLensSpotlight product={selected.product} />}
-      {!selectedTopic && selected?.slug === "financial-operations" && selected.product && <SikasemSpotlight product={selected.product} />}
-      {selectedTopic && selected?.slug === "financial-operations" && selected.product && <SikasemSpotlight product={selected.product} />}
-      {selectedTopic && selected?.product && !["business-management","agriculture-climate-intelligence","it-innovation","financial-operations","career-development-education"].includes(selected.slug) && <ProductConnection product={selected.product} />}
 
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="space-y-5">
@@ -1512,182 +1499,59 @@ export default function InfoDiscoveryPage() {
 
 
 
-function DataLensSpotlight({ product }: { product: ProductLink }) {
-  const capabilities = [
-    { icon: Laptop, title: "Website and application services", description: "Plan, build, maintain and improve websites and digital applications.", edge: "border-t-4 border-t-primary" },
-    { icon: Code, title: "Software development", description: "Develop tailored software, mobile applications and system integrations.", edge: "border-r-4 border-r-accent" },
-    { icon: Server, title: "Cloud and infrastructure", description: "Configure hosting, servers, deployment, backups and service continuity.", edge: "border-b-4 border-b-success/75" },
-    { icon: Wrench, title: "IT support and troubleshooting", description: "Resolve technical issues and support devices, accounts, networks and business email.", edge: "border-l-4 border-l-primary/70" },
-    { icon: Database, title: "Database and data management", description: "Design, maintain, migrate, secure and optimise organisational data systems.", edge: "border-t-4 border-t-accent" },
-    { icon: ShieldCheck, title: "Cybersecurity and protection", description: "Improve access controls, technical safeguards, updates and recovery readiness.", edge: "border-r-4 border-r-success/75" },
-  ];
-  return <section aria-label="Explore DataLens IT services" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
-    <div className="overflow-hidden rounded-3xl border border-accent/30 bg-card shadow-md">
-      <div className="grid gap-6 border-t-4 border-t-accent p-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-8 md:p-8">
-        <div className="flex flex-col items-start justify-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent"><Wrench className="h-3.5 w-3.5" /> Professional IT services</span>
-          <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">Practical technology services for dependable operations.</h2>
-          <p className="mt-4 text-sm leading-7 text-muted-foreground">DataLens brings together professional IT services covering website and application maintenance, custom software development, cloud infrastructure and deployment, technical support, database management and system integration.</p>
-          <p className="mt-3 text-sm leading-7 text-muted-foreground">Use these guides to understand your organisation's technology needs, ask better questions and plan the right level of technical support. Continue to DataLens to review the services and request assistance.</p>
-          <a href={product.href} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">{product.label} <ArrowUpRight className="h-4 w-4" /></a>
-          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">Continue to DataLens for professional IT service information and enquiries.</p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">{capabilities.map(item => <article key={item.title} className={"rounded-2xl border border-border bg-background/70 p-4 transition hover:-translate-y-0.5 hover:shadow-md " + item.edge}><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-primary"><item.icon className="h-4 w-4" /></div><h3 className="mt-3 text-sm font-semibold text-foreground">{item.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p></article>)}</div>
-      </div>
-    </div>
-  </section>;
-}
-
-function SikasemSpotlight({ product }: { product: ProductLink }) {
-  const capabilities = [
-    { icon: Store, title: "Mobile money and vendor operations", description: "Record activity across cash, mobile money and bank channels, with transaction references and vendor oversight.", edge: "border-t-4 border-t-primary" },
-    { icon: Wallet, title: "Cash and digital float", description: "Track physical cash and electronic float movements so operators can understand available working balances.", edge: "border-r-4 border-r-accent" },
-    { icon: Users, title: "Savings and field collections", description: "Support collector workflows for member deposits, customer records and daily collection summaries.", edge: "border-b-4 border-b-success/75" },
-    { icon: FileCheck2, title: "Debt collection follow-up", description: "Record field-visit outcomes, amounts collected, repayment promises and follow-up information.", edge: "border-l-4 border-l-primary/70" },
-    { icon: BarChart3, title: "Financial ledger and reconciliation", description: "Bring transaction, deposit, field-collection, float and forex activity into a shared financial view.", edge: "border-t-4 border-t-accent" },
-    { icon: ShieldCheck, title: "Accountability and audit records", description: "Review staff and collector activity, transaction history, supporting evidence and operational exceptions.", edge: "border-r-4 border-r-success/75" },
-    { icon: CreditCard, title: "Lending partner access", description: "Review available lending partners and retain references for applications continued through lender channels.", edge: "border-b-4 border-b-primary/70" },
-    { icon: Landmark, title: "Forex and financial services", description: "Record foreign-exchange operations and support related financial-service workflows, including insurance records.", edge: "border-l-4 border-l-accent" },
-  ];
-  return <section aria-label="Explore Sikasɛm Financial Operations" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
-    <div className="overflow-hidden rounded-3xl border border-accent/30 bg-card shadow-md">
-      <div className="grid gap-6 border-t-4 border-t-accent p-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-8 md:p-8">
-        <div className="flex flex-col items-start justify-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent"><Wallet className="h-3.5 w-3.5" /> Financial operations</span>
-          <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">Keep financial network activity visible, traceable and accountable.</h2>
-          <p className="mt-4 text-sm leading-7 text-muted-foreground">Sikasɛm is designed for financial networks that need to monitor transactions and field operations across mobile money vendors, savings collectors, microfinance and microcredit operations, savings and loans organisations, rural banks and related service providers.</p>
-          <p className="mt-3 text-sm leading-7 text-muted-foreground">The application brings together vendor transactions, cash and digital float, collector deposits, debt-collection visits, financial ledger records, forex activity and operational oversight. The guides on this page also explain wider financial-management practices—such as income, expenses, budgeting and cash flow—so users can understand the full financial picture without assuming every practice is a separate Sikasɛm module.</p>
-          <a href={product.href} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">{product.label} <ArrowUpRight className="h-4 w-4" /></a>
-          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">Open the Sikasɛm application to review its current workflows and platform access.</p>
-        </div>
-        <div className="grid gap-3 sm:grid-cols-2">{capabilities.map(item => <article key={item.title} className={"rounded-2xl border border-border bg-background/70 p-4 transition hover:-translate-y-0.5 hover:shadow-md " + item.edge}><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-primary"><item.icon className="h-4 w-4" /></div><h3 className="mt-3 text-sm font-semibold text-foreground">{item.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p></article>)}</div>
-      </div>
-    </div>
-  </section>;
-}
-
-function AgroClimateSpotlight({ product }: { product: ProductLink }) {
-  const capabilities = [
-    { icon: CloudSun, title: "Weather and climate context", description: "Explore local weather information and seasonal conditions that influence farm planning.", accent: "border-l-primary" },
-    { icon: Sprout, title: "Production risk awareness", description: "Consider crop, livestock and environmental risks alongside field observations.", accent: "border-l-success/75" },
-    { icon: Compass, title: "Location and field context", description: "Relate farm locations and field conditions to the wider environment.", accent: "border-l-accent" },
-    { icon: Package, title: "Farm input management", description: "Bring visibility to seeds, fertiliser, feed and other resources used in production.", accent: "border-l-primary" },
-    { icon: BookOpen, title: "Agricultural learning", description: "Build understanding of farming practices, production decisions and responsible use of information.", accent: "border-l-success/75" },
-    { icon: Warehouse, title: "Post-harvest and operations", description: "Think beyond the field to storage, handling, movement and delivery of produce.", accent: "border-l-accent" },
-  ];
+function AreaOverview({ category }: { category: Category }) {
+  const Icon = category.icon;
 
   return (
-    <section aria-label="Explore AgroClimate" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
-      <div className="overflow-hidden rounded-3xl border border-success/25 bg-card shadow-md">
-        <div className="grid gap-6 border-l-4 border-l-success p-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-8 md:p-7 lg:p-8">
-          <div className="flex flex-col items-start justify-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-success/25 bg-success/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-success">
-              <Sprout className="h-3.5 w-3.5" /> Amineva agriculture platform
+    <section
+      aria-label={`${category.title} overview`}
+      className="mx-auto max-w-7xl px-5 pt-6 md:px-8"
+    >
+      <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+        <div className="grid gap-5 border-t-4 border-t-accent p-5 md:grid-cols-[minmax(0,1fr)_minmax(220px,0.34fr)] md:items-center md:gap-8 md:p-7">
+          <div>
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
+              <Icon className="h-3.5 w-3.5" />
+              Area overview
             </span>
-            <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">
-              Connect climate conditions with the decisions made on your farm.
+            <h2 className="mt-3 text-xl font-bold leading-tight tracking-tight text-foreground md:text-2xl">
+              Why {category.title.toLowerCase()} matters
             </h2>
-            <p className="mt-4 text-sm leading-7 text-muted-foreground">
-              Farming decisions are connected. Weather and seasonal conditions influence planting and field work; land, water and crop requirements influence what can grow; and input availability, labour, storage and transport affect what a farm can produce and deliver.
+            <p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground">
+              {category.purpose}
             </p>
-            <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              AgroClimate brings agricultural and climate tools together to help users explore weather information, production risks, farm learning and input management. Use the information alongside field observations, local conditions and qualified agricultural advice when making important production decisions.
-            </p>
-            <a
-              href={product.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-success px-5 py-3 text-sm font-bold text-success-foreground shadow-sm transition hover:-translate-y-0.5 hover:brightness-95 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2"
-            >
-              {product.label} <ArrowUpRight className="h-4 w-4" />
-            </a>
-            <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
-              Continue to AgroClimate to explore the available tools and platform workflows.
+            <p className="mt-3 max-w-4xl text-xs leading-6 text-muted-foreground">
+              Use the topics and reference material below to build a clearer understanding of the subject, compare relevant considerations and identify the questions that matter in your own situation.
             </p>
           </div>
 
-          <div className="grid gap-3 sm:grid-cols-2">
-            {capabilities.map((item) => (
-              <article key={item.title} className={"rounded-2xl border border-border border-l-4 bg-background/70 p-4 transition hover:-translate-y-0.5 hover:shadow-md " + item.accent}>
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-primary">
-                  <item.icon className="h-4 w-4" />
-                </div>
-                <h3 className="mt-3 text-sm font-semibold text-foreground">{item.title}</h3>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/30 px-5 py-3 text-[11px] text-muted-foreground md:px-7">
-          <span>For crop production · livestock · farm operations</span>
-          <span>Weather · inputs · field context · farm planning</span>
+          {category.product ? (
+            <div className="flex flex-col items-start gap-3 rounded-2xl border border-accent/20 bg-muted/30 p-4 md:p-5">
+              <p className="text-xs leading-6 text-muted-foreground">
+                Ready to take the next step? Continue through the relevant Amineva platform.
+              </p>
+              <a
+                href={category.product.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+              >
+                {category.product.label}
+                <ArrowUpRight className="h-4 w-4" />
+              </a>
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-border bg-muted/30 p-4 md:p-5">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+                Explore the subject
+              </p>
+              <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                Browse the guides below to understand the methods, evidence and decisions involved.
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </section>
   );
-}
-
-function InventraSpotlight({ product }: { product: ProductLink }) {
-  const capabilities = [
-    { icon: Package, title: "Inventory visibility", description: "Monitor stock levels, low-stock alerts and reorder points.", accent: "border-l-primary" },
-    { icon: ShoppingCart, title: "Point of sale", description: "Record sales with barcode scanning, receipts and multiple payment options.", accent: "border-l-accent" },
-    { icon: BarChart3, title: "Sales performance", description: "Review daily sales summaries, revenue and product performance trends.", accent: "border-l-success/75" },
-    { icon: Users, title: "Staff and accountability", description: "Use PIN-based staff access, role permissions and activity logs.", accent: "border-l-primary" },
-    { icon: Warehouse, title: "Multiple locations", description: "Keep inventory visible across shops, warehouses and distribution points.", accent: "border-l-accent" },
-    { icon: Store, title: "Different business types", description: "Designed for retail shops, wholesalers, warehouses, restaurants and bars.", accent: "border-l-success/75" },
-  ];
-
-  return (
-    <section aria-label="Explore Inventra" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
-      <div className="overflow-hidden rounded-3xl border border-accent/35 bg-card shadow-md">
-        <div className="grid gap-6 border-l-4 border-l-accent p-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-8 md:p-7 lg:p-8">
-          <div className="flex flex-col items-start justify-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
-              <Package className="h-3.5 w-3.5" /> Amineva business platform
-            </span>
-            <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">
-              Keep your stock, sales and store operations in view.
-            </h2>
-            <p className="mt-4 text-sm leading-7 text-muted-foreground">
-              Inventra brings inventory tracking and point-of-sale sales into one business workflow. Set up products and categories, monitor quantities, record sales and review how products are performing—so everyday decisions are based on business records rather than guesswork.
-            </p>
-            <p className="mt-3 text-sm leading-7 text-muted-foreground">
-              Track low-stock items and reorder points, process barcode-assisted sales, issue receipts and review daily sales summaries. Staff can work with PIN-based access and role permissions, while activity logs support clearer accountability. For businesses with more than one shop or warehouse, multi-location inventory tools help keep stock activity connected.
-            </p>
-            <a
-              href={product.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-            >
-              {product.label} <ArrowUpRight className="h-4 w-4" />
-            </a>
-            <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
-              Open Inventra to explore the platform and its registration options.
-            </p>
-          </div>
-
-          <div className="grid gap-3 sm:grid-cols-2">
-            {capabilities.map((item) => (
-              <article key={item.title} className={"rounded-2xl border border-border border-l-4 bg-background/70 p-4 transition hover:-translate-y-0.5 hover:shadow-md " + item.accent}>
-                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-primary">
-                  <item.icon className="h-4 w-4" />
-                </div>
-                <h3 className="mt-3 text-sm font-semibold text-foreground">{item.title}</h3>
-                <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p>
-              </article>
-            ))}
-          </div>
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/30 px-5 py-3 text-[11px] text-muted-foreground md:px-7">
-          <span>For retailers · wholesalers · warehouses · restaurants · bars</span>
-          <span>Designed for desktop, tablet and mobile use</span>
-        </div>
-      </div>
-    </section>
-  );
-}
-
-function ProductConnection({ product }: { product: ProductLink }) {
-  return <div className="flex flex-col justify-between gap-4 rounded-2xl border border-accent/30 bg-gradient-to-r from-accent/10 to-transparent p-5 sm:flex-row sm:items-center"><div><div className="mb-1 text-sm font-semibold">Continue with {product.label.replace("Explore ", "")}</div><p className="max-w-2xl text-sm leading-6 text-muted-foreground">{product.description}</p></div><a href={product.href} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center text-sm font-semibold text-primary hover:underline">{product.label} <ExternalLink className="ml-2 h-4 w-4" /></a></div>;
 }
