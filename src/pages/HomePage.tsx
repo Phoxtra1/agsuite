@@ -326,6 +326,7 @@ export default function HomePage() {
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>
+            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => onPickProduct(workspaceProduct)}>Workspace</button>
 
             {/* Settings with theme toggle */}
             <div className="relative" ref={settingsRef}>
@@ -405,27 +406,13 @@ export default function HomePage() {
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
                   <Search className="h-4 w-4" /> Information Discovery
                 </div>
-                <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Discover information. Understand your options. Make informed decisions.</h1>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">Search any subject and get clear, detailed information to help you learn, plan and decide with confidence.</p>
+                <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Welcome to Amineva Global.</h1>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">A place to explore ideas, find answers and get things done — whenever curiosity calls.</p>
                 <button type="button" onClick={() => navigate("/info-discovery")} className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
                   Explore Info Discovery <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
               </section>
 
-              <section className="mt-5 rounded-xl border border-border bg-card p-5">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent">
-                    <WorkspaceIcon className="h-6 w-6" />
-                  </div>
-                  <div className="min-w-0 flex-1">
-                    <h2 className="font-semibold text-foreground">Workspace</h2>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">Open your productivity workspace for documents, spreadsheets, presentations, forms and files.</p>
-                  </div>
-                  <button type="button" onClick={() => onPickProduct(workspaceProduct)} className="inline-flex shrink-0 items-center text-sm font-semibold text-primary hover:underline">
-                    Open <ArrowRight className="ml-1 h-4 w-4" />
-                  </button>
-                </div>
-              </section>
             </>
           )}
         </div>

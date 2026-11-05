@@ -738,7 +738,7 @@ export default function InfoDiscoveryPage() {
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [generalQuery, setGeneralQuery] = useState("");
   const [heroIndex, setHeroIndex] = useState(0);
-  useEffect(() => { const t = window.setInterval(() => setHeroIndex(i => (i + 1) % HERO_SCENES.length), 7000); return () => window.clearInterval(t); }, []);
+  useEffect(() => { const t = window.setInterval(() => setHeroIndex(i => (i + 1) % HERO_SCENES.length), 30 * 60 * 1000); return () => window.clearInterval(t); }, []);
   const [savedDrawerOpen, setSavedDrawerOpen] = useState(false);
   const [savedTopicsList, setSavedTopicsList] = useState<SavedTopicItem[]>(() => getSavedTopics());
   const [recentTopicsList, setRecentTopicsList] = useState<RecentTopicItem[]>(() => getRecentTopics());
