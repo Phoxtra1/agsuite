@@ -28,6 +28,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   IMPACT_INTRO,
   FOCUS_AREAS,
@@ -54,6 +55,7 @@ export const AminevaImpactPage: FC = () => {
   const [expandedInitiativeId, setExpandedInitiativeId] = useState<string | null>(
     initiativeId || "career-development"
   );
+  const [selectedImage, setSelectedImage] = useState<{ url: string; title: string; altText: string; caption: string } | null>(null);
 
   useEffect(() => {
     document.title = "Amineva Impact | Community & Educational Initiatives | Amineva Global";
@@ -102,7 +104,8 @@ export const AminevaImpactPage: FC = () => {
   return (
     <div className="w-full bg-background text-foreground min-h-screen">
       {/* HERO / INTRODUCTION */}
-      <section className="relative py-20 lg:py-28 overflow-hidden bg-gradient-to-b from-primary/10 via-background to-background border-b border-border">
+      <section className="relative isolate overflow-hidden border-b border-border bg-gradient-to-br from-primary/[0.12] via-background to-accent/[0.06] py-20 lg:py-28">
+        <div className="pointer-events-none absolute inset-0 -z-0 overflow-hidden"><div className="absolute -left-24 top-8 h-80 w-80 rounded-full bg-accent/10 blur-3xl" /><div className="absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-primary/10 blur-3xl" /><div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-accent/40 to-transparent" /></div>
         <div className="max-w-7xl mx-auto px-6 relative z-10">
           <motion.div
             initial={{ opacity: 0, y: 16 }}
@@ -153,10 +156,10 @@ export const AminevaImpactPage: FC = () => {
                 viewport={{ once: true }}
                 variants={fadeUp}
                 custom={i}
-                className="p-6 rounded-2xl border border-border bg-card hover:border-accent/40 transition-all duration-300 flex flex-col justify-between"
+                className="group relative overflow-hidden p-6 rounded-2xl border border-border bg-card shadow-sm hover:-translate-y-1 hover:border-accent/50 hover:shadow-lg transition-all duration-300 flex flex-col justify-between focus-within:ring-2 focus-within:ring-accent/40"
               >
                 <div>
-                  <div className="w-12 h-12 rounded-xl bg-accent/10 flex items-center justify-center text-accent mb-5">
+                  <div className="w-12 h-12 rounded-xl border border-accent/20 bg-accent/10 flex items-center justify-center text-accent mb-5 transition-transform duration-300 group-hover:scale-105">
                     <Icon className="w-6 h-6" />
                   </div>
                   <h3 className="text-lg font-semibold text-foreground mb-2">
@@ -360,14 +363,22 @@ export const AminevaImpactPage: FC = () => {
                     custom={idx}
                     className="group rounded-2xl border border-border bg-card overflow-hidden hover:border-accent/50 transition-all duration-300 shadow-sm flex flex-col"
                   >
-                    <div className="relative aspect-[4/3] w-full overflow-hidden bg-muted">
+                    <button
+                      type="button"
+                      onClick={() => setSelectedImage(img)}
+                      aria-label={`View photo: ${img.title}`}
+                      className="group/image relative block w-full aspect-[4/3] overflow-hidden bg-muted text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
+                    >
                       <img
                         src={img.url}
                         alt={img.altText}
-                        className="w-full h-full object-cover object-center group-hover:scale-105 transition-transform duration-500"
+                        className="h-full w-full object-cover object-center transition-transform duration-500 group-hover/image:scale-105"
                         loading="lazy"
                       />
-                    </div>
+                      <span className="absolute inset-x-0 bottom-0 flex items-center justify-between bg-gradient-to-t from-primary/90 to-transparent px-4 pb-3 pt-9 text-xs font-semibold text-primary-foreground opacity-0 transition-opacity duration-200 group-hover/image:opacity-100 group-focus-visible/image:opacity-100">
+                        View photograph <ExternalLink className="h-3.5 w-3.5" />
+                      </span>
+                    </button>
                     <div className="p-4 flex-1 flex flex-col justify-between">
                       <div>
                         <h4 className="text-sm font-semibold text-foreground line-clamp-1 mb-1">
@@ -503,6 +514,24 @@ export const AminevaImpactPage: FC = () => {
             </div>
           </TabsContent>
         </Tabs>
+
+        <Dialog open={selectedImage !== null} onOpenChange={(open) => { if (!open) setSelectedImage(null); }}>
+          <DialogContent className="max-w-5xl border-border bg-card p-3 md:p-5">
+            {selectedImage && (
+              <>
+                <DialogHeader className="pr-8">
+                  <DialogTitle>{selectedImage.title}</DialogTitle>
+                  <DialogDescription>{selectedImage.caption}</DialogDescription>
+                </DialogHeader>
+                <img
+                  src={selectedImage.url}
+                  alt={selectedImage.altText}
+                  className="max-h-[72vh] w-full rounded-xl bg-muted object-contain"
+                />
+              </>
+            )}
+          </DialogContent>
+        </Dialog>
       </section>
 
       {/* SECTION C: REUSABLE & EXPANDABLE INITIATIVE SHOWCASE */}
@@ -544,13 +573,14 @@ export const AminevaImpactPage: FC = () => {
                 <div
                   key={init.id}
                   id={`initiative-${init.id}`}
-                  className="border border-border bg-card rounded-2xl overflow-hidden transition-all duration-300 shadow-sm"
+                  className="group border border-border bg-card rounded-2xl overflow-hidden transition-all duration-300 shadow-sm hover:border-accent/40 hover:shadow-md"
                 >
-                  <div
-                    onClick={() =>
-                      setExpandedInitiativeId(isExpanded ? null : init.id)
-                    }
-                    className="p-6 flex items-center justify-between cursor-pointer hover:bg-muted/30 transition"
+                  <button
+                    type="button"
+                    aria-expanded={isExpanded}
+                    aria-controls={`initiative-content-${init.id}`}
+                    onClick={() => setExpandedInitiativeId(isExpanded ? null : init.id)}
+                    className="group w-full p-6 flex items-center justify-between gap-4 text-left hover:bg-muted/30 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
                   >
                     <div className="space-y-1 pr-4">
                       <div className="flex items-center gap-3 flex-wrap">
@@ -567,22 +597,19 @@ export const AminevaImpactPage: FC = () => {
                       </p>
                     </div>
 
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="text-muted-foreground flex-shrink-0"
-                    >
+                    <span aria-hidden="true" className="flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-full border border-border bg-background text-muted-foreground transition group-hover:border-accent/40">
                       {isExpanded ? (
                         <ChevronUp className="w-5 h-5" />
                       ) : (
                         <ChevronDown className="w-5 h-5" />
                       )}
-                    </Button>
-                  </div>
+                    </span>
+                  </button>
 
                   <AnimatePresence>
                     {isExpanded && (
                       <motion.div
+                        id={`initiative-content-${init.id}`}
                         initial={{ height: 0, opacity: 0 }}
                         animate={{ height: "auto", opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
