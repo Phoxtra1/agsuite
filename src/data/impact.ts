@@ -165,21 +165,21 @@ export const SCHOOL_ACTIVITY_IMAGES: MediaItem[] = [
   },
   {
     type: "image",
-    url: "/images/impact/impact-school-computer-session.webp",
-    title: "Digital Learning & Computer Exposure",
+    url: "/images/impact/impact-school-engagement-hero.webp",
+    title: "School Engagement & Learner Participation",
     caption:
-      "Learners gathered with facilitators and computer equipment during a school-based educational engagement.",
+      "A learner receives educational materials during a school engagement, with classmates gathered for the session.",
     altText:
-      "School learners standing with facilitators and computer equipment during an educational engagement.",
+      "An Amineva Global facilitator and two learners sharing educational materials in a classroom while other students observe.",
   },
   {
     type: "image",
-    url: "/images/impact/impact-school-engagement.webp",
-    title: "Classroom Engagement & Learner Participation",
+    url: "/images/impact/impact-school-computer-session.webp",
+    title: "Digital Learning & Computer Exposure",
     caption:
-      "A facilitator and learners share a moment during a classroom engagement, with classmates gathered in the room.",
+      "Learners gather with facilitators and computer equipment during a school-based digital learning engagement.",
     altText:
-      "A facilitator and two learners in the foreground during a classroom engagement, with other students seated behind them.",
+      "School learners standing with facilitators beside laptops and computer equipment during an educational engagement.",
   },
 ];
 
