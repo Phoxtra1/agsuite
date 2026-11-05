@@ -22,6 +22,7 @@ import {
   type SavedTopicItem,
   type RecentTopicItem,
 } from "@/lib/infoDiscovery/savedTopics";
+import { GeneralSearchAnswer } from "@/components/infoDiscovery/GeneralSearchAnswer";
 import { AskTopicPanel } from "@/components/infoDiscovery/AskTopicPanel";
 import { VisaChecker } from "@/components/infoDiscovery/VisaChecker";
 import { SavedTopicsDrawer } from "@/components/infoDiscovery/SavedTopicsDrawer";
@@ -222,6 +223,13 @@ const categories: Category[] = [
       { name: "ISO 31000 Risk Management", scope: "Principles and guidance for managing organisational risk", type: "International standards guidance", url: "https://www.iso.org/iso-31000-risk-management.html" },
     ],
   },
+];
+
+const HERO_SCENES = [
+  { label: "Knowledge", line: "Find clear, detailed explanations on any subject, question or idea.", bg: "radial-gradient(circle at 20% 30%, hsl(var(--accent) / 0.35), transparent 55%), linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))" },
+  { label: "World & places", line: "Learn about countries, cultures, history and how the world works.", bg: "radial-gradient(circle at 80% 20%, hsl(var(--accent) / 0.3), transparent 50%), linear-gradient(200deg, hsl(var(--primary) / 0.9), hsl(var(--primary)))" },
+  { label: "Science & technology", line: "Explore discoveries, inventions and the ideas shaping tomorrow.", bg: "radial-gradient(circle at 50% 100%, hsl(var(--accent) / 0.3), transparent 55%), linear-gradient(160deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))" },
+  { label: "People & society", line: "Understand economies, communities, health and everyday life.", bg: "radial-gradient(circle at 10% 90%, hsl(var(--accent) / 0.35), transparent 50%), linear-gradient(110deg, hsl(var(--primary) / 0.85), hsl(var(--primary)))" },
 ];
 
 function slugify(value: string) {
@@ -728,6 +736,9 @@ export default function InfoDiscoveryPage() {
   const [topicFilter, setTopicFilter] = useState("");
   const [sectionFilter, setSectionFilter] = useState("all");
   const [showSuggestions, setShowSuggestions] = useState(false);
+  const [generalQuery, setGeneralQuery] = useState("");
+  const [heroIndex, setHeroIndex] = useState(0);
+  useEffect(() => { const t = window.setInterval(() => setHeroIndex(i => (i + 1) % HERO_SCENES.length), 7000); return () => window.clearInterval(t); }, []);
   const [savedDrawerOpen, setSavedDrawerOpen] = useState(false);
   const [savedTopicsList, setSavedTopicsList] = useState<SavedTopicItem[]>(() => getSavedTopics());
   const [recentTopicsList, setRecentTopicsList] = useState<RecentTopicItem[]>(() => getRecentTopics());
@@ -767,13 +778,8 @@ export default function InfoDiscoveryPage() {
 
   const goToCategory = (slug: string) => { setQuery(""); setShowSuggestions(false); navigate("/info-discovery/" + slug); };
   const goToTopic = (catSlug: string, topSlug: string) => { setQuery(""); setShowSuggestions(false); navigate("/info-discovery/" + catSlug + "/" + topSlug); };
-  const onSearchSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    if (!searchResults.length) return;
-    const first = searchResults[0];
-    if (first.kind === "area") goToCategory(first.category.slug);
-    else goToTopic(first.category.slug, first.slug);
-  };
+  const runGeneralSearch = (text: string) => { const clean = text.trim(); if (!clean) return; setGeneralQuery(clean); setShowSuggestions(false); };
+  const onSearchSubmit = (event: React.FormEvent) => { event.preventDefault(); runGeneralSearch(query); };
 
   const isCurrentSaved = selected && selectedTopic ? isTopicSaved(selected.slug, selectedTopic.slug) : false;
 
@@ -830,9 +836,9 @@ export default function InfoDiscoveryPage() {
       const opt = {
         margin: 12,
         filename: `${selectedTopic.slug}-report.pdf`,
-        image: { type: "jpeg", quality: 0.98 },
+        image: { type: "jpeg" as const, quality: 0.98 },
         html2canvas: { scale: 2, useCORS: true, backgroundColor: "#ffffff" },
-        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" },
+        jsPDF: { unit: "mm", format: "a4", orientation: "portrait" as const },
       };
       await html2pdf().set(opt).from(topicArticleRef.current).save();
       toast.success("PDF exported successfully!");
@@ -849,33 +855,41 @@ export default function InfoDiscoveryPage() {
 
   return (
     <main className="min-h-screen bg-background text-foreground">
-      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary/95 to-primary/85 px-5 py-10 text-primary-foreground md:px-8 md:py-14">
-        <div className="pointer-events-none absolute -right-24 -top-24 h-80 w-80 rounded-full bg-accent/10 blur-3xl" />
+      <section className="relative bg-primary px-5 pb-12 pt-8 text-primary-foreground md:px-8 md:pb-16 md:pt-10">
+        <div className="pointer-events-none absolute inset-0 overflow-hidden">
+          {HERO_SCENES.map((scene, i) => <div key={scene.label} className={"absolute inset-0 transition-opacity duration-[1500ms] " + (i === heroIndex ? "opacity-100" : "opacity-0")} style={{ background: scene.bg }} />)}
+          <div className="absolute -left-20 top-10 h-72 w-72 animate-pulse rounded-full bg-accent/15 blur-3xl" />
+          <div className="absolute -right-24 -bottom-24 h-80 w-80 animate-pulse rounded-full bg-primary-foreground/10 blur-3xl [animation-delay:1.5s]" />
+        </div>
         <div className="relative z-10 mx-auto max-w-7xl">
-          <div className="mb-5 flex items-center gap-2 text-xs font-medium text-primary-foreground/70">
+          <div className="mb-6 flex items-center gap-2 text-xs font-medium text-primary-foreground/70">
             <Link to="/" className="transition hover:text-primary-foreground">Amineva Global</Link><ChevronRight className="h-3.5 w-3.5" /><Link to="/info-discovery" className="transition hover:text-primary-foreground">Info Discovery</Link>
             {selected && <><ChevronRight className="h-3.5 w-3.5" /><button onClick={() => goToCategory(selected.slug)} className="transition hover:text-primary-foreground">{selected.title}</button></>}
             {selectedTopic && <><ChevronRight className="h-3.5 w-3.5" /><span className="text-primary-foreground">{selectedTopic.title}</span></>}
           </div>
-          <div className="max-w-4xl">
-            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1.5 text-[11px] font-semibold tracking-wide text-primary-foreground"><Globe2 className="h-3.5 w-3.5 text-accent" /> INFORMATION DISCOVERY SYSTEM</div>
-            <h1 className="text-3xl font-bold tracking-tight text-primary-foreground md:text-5xl">{selectedTopic ? selectedTopic.title : selected ? selected.title : "Discover information. Understand your options. Make informed decisions."}</h1>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-primary-foreground/80 md:text-base">{selectedTopic ? selectedTopic.description : selected ? selected.summary : "Search across career development, destinations, technology, business, agriculture and operational intelligence. Move from a broad question to a structured subject, then follow the evidence and sources relevant to your decision."}</p>
+          <div className="mx-auto max-w-3xl text-center">
+            <div key={heroIndex} className="mb-3 inline-flex animate-fade-in items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide"><Globe2 className="h-3.5 w-3.5 text-accent" /> {HERO_SCENES[heroIndex].label}</div>
+            <h1 className="text-3xl font-bold tracking-tight md:text-5xl">{selectedTopic ? selectedTopic.title : selected ? selected.title : "Search anything. Understand everything."}</h1>
+            <p key={"p" + heroIndex} className="mx-auto mt-3 max-w-2xl animate-fade-in text-sm leading-7 text-primary-foreground/80 md:text-base">{selectedTopic ? selectedTopic.description : selected ? selected.summary : HERO_SCENES[heroIndex].line}</p>
           </div>
-          <div className="relative mt-7 max-w-4xl">
-            <form onSubmit={onSearchSubmit} className="flex flex-col gap-2 rounded-2xl border border-border bg-card shadow-sm p-2 text-foreground shadow-xl sm:flex-row sm:items-center">
-              <div className="flex min-w-0 flex-1 items-center gap-3 px-3"><Search className="h-5 w-5 shrink-0 text-muted-foreground" /><Input value={query} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setQuery(e.target.value); setShowSuggestions(true); }} onFocus={() => setShowSuggestions(true)} onBlur={() => window.setTimeout(() => setShowSuggestions(false), 160)} placeholder="Search areas, topics, questions and subjects" className="h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" aria-label="Search information discovery" /></div>
-              <Button type="submit" className="h-11 bg-accent px-6 text-accent-foreground hover:bg-accent/90" disabled={!searchResults.length}>Open result <ArrowRight className="ml-2 h-4 w-4" /></Button>
+          <div className="relative z-40 mx-auto mt-7 max-w-3xl">
+            <form onSubmit={onSearchSubmit} className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-2 text-foreground shadow-xl sm:flex-row sm:items-center">
+              <div className="flex min-w-0 flex-1 items-center gap-3 px-3"><Search className="h-5 w-5 shrink-0 text-muted-foreground" /><Input value={query} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setQuery(e.target.value); setShowSuggestions(true); }} onFocus={() => setShowSuggestions(true)} onBlur={() => window.setTimeout(() => setShowSuggestions(false), 160)} placeholder="What would you like to know?" className="h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" aria-label="Search information discovery" /></div>
+              <Button type="submit" className="h-11 bg-accent px-6 text-accent-foreground hover:bg-accent/90" disabled={!query.trim()}>Search <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </form>
-            {showSuggestions && query.trim() && <div className="absolute left-0 right-0 top-full z-30 mt-2 max-h-96 overflow-y-auto rounded-xl border border-border bg-card p-2 text-foreground shadow-xl">
-              {searchResults.length ? searchResults.map((result, index) => <button key={result.category.slug + result.slug + index} type="button" onMouseDown={e => e.preventDefault()} onClick={() => result.kind === "area" ? goToCategory(result.category.slug) : goToTopic(result.category.slug, result.slug)} className="flex w-full items-start gap-3 rounded-lg p-3 text-left hover:bg-muted">
+            {showSuggestions && query.trim() && <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-96 overflow-y-auto rounded-xl border border-border bg-card p-2 text-left text-foreground shadow-2xl">
+              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => runGeneralSearch(query)} className="flex w-full items-center gap-3 rounded-lg p-3 text-left hover:bg-muted">
+                <span className="rounded-lg bg-accent/15 p-2 text-accent"><Search className="h-4 w-4" /></span><span className="text-sm font-medium">Search for “{query.trim()}”</span>
+              </button>
+              {searchResults.map((result, index) => <button key={result.category.slug + result.slug + index} type="button" onMouseDown={e => e.preventDefault()} onClick={() => result.kind === "area" ? goToCategory(result.category.slug) : goToTopic(result.category.slug, result.slug)} className="flex w-full items-start gap-3 rounded-lg p-3 text-left hover:bg-muted">
                 <span className="mt-0.5 rounded-lg bg-accent/15 p-2 text-accent">{result.kind === "area" ? <result.category.icon className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium">{result.label}</span><span className="mt-0.5 block text-xs text-muted-foreground">{result.category.title}{result.kind === "topic" ? " · " + result.detail.split(" · ")[0] : ""}</span></span><ChevronRight className="mt-1 h-4 w-4 text-muted-foreground" />
-              </button>) : <p className="px-3 py-5 text-center text-sm text-muted-foreground">No matching area or topic. Try another phrase.</p>}
+              </button>)}
             </div>}
-            <p className="mt-2 text-[11px] text-muted-foreground">Search opens a matching area or topic. Use the research index below to search indexed publications.</p>
+            <div className="mt-4 flex justify-center gap-1.5">{HERO_SCENES.map((_, i) => <button key={i} type="button" aria-label={"Show scene " + (i + 1)} onClick={() => setHeroIndex(i)} className={"h-1.5 rounded-full transition-all " + (i === heroIndex ? "w-6 bg-accent" : "w-1.5 bg-primary-foreground/40")} />)}</div>
           </div>
         </div>
       </section>
+      {generalQuery && <div className="mx-auto max-w-5xl px-5 pt-8 md:px-8"><GeneralSearchAnswer query={generalQuery} onClose={() => setGeneralQuery("")} /></div>}
 
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="space-y-5">
