@@ -6,8 +6,8 @@ import type { RecentTopicItem } from "@/lib/infoDiscovery/savedTopics";
 interface PopularAndRecentProps {
   recentTopics: RecentTopicItem[];
   onSelectTopic: (catSlug: string, topicSlug: string) => void;
-  onSelectRecent: (item: RecentTopicItem) => void;
-  onClearRecent: () => void;
+  onSelectRecent?: (item: RecentTopicItem) => void;
+  onClearRecent?: () => void;
 }
 
 // Popular topics selected dynamically across diverse research domains
@@ -44,9 +44,9 @@ const POPULAR_TOPICS = [
 
 export function PopularAndRecent({ recentTopics, onSelectTopic, onSelectRecent, onClearRecent }: PopularAndRecentProps) {
   return (
-    <div className="grid gap-6 md:grid-cols-2 mb-8">
+    <div className="mb-10 grid gap-5 md:grid-cols-2">
       {/* Popular Topics */}
-      <div className="rounded-2xl border border-border bg-card shadow-sm p-5">
+      <div className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card to-accent/[0.05] p-5 shadow-sm md:p-6">
         <div className="flex items-center justify-between pb-3 border-b border-border">
           <div className="flex items-center gap-2">
             <TrendingUp className="h-4 w-4 text-accent" />
@@ -84,7 +84,7 @@ export function PopularAndRecent({ recentTopics, onSelectTopic, onSelectRecent, 
       </div>
 
       {/* Recently Viewed */}
-      <div className="rounded-2xl border border-border bg-card shadow-sm p-5 flex flex-col justify-between">
+      <div className="flex flex-col justify-between rounded-3xl border border-border bg-card p-5 shadow-sm md:p-6">
         <div>
           <div className="flex items-center justify-between pb-3 border-b border-border">
             <div className="flex items-center gap-2">
@@ -100,7 +100,7 @@ export function PopularAndRecent({ recentTopics, onSelectTopic, onSelectRecent, 
 
           <div className="mt-4 space-y-2">
             {recentTopics.length === 0 ? (
-              <div className="rounded-xl border border-dashed border-border p-6 text-center text-xs text-muted-foreground">
+              <div className="rounded-2xl border border-dashed border-border bg-muted/20 p-7 text-center text-xs text-muted-foreground">
                 <BookOpen className="h-6 w-6 mx-auto mb-2 opacity-40" />
                 <p>No recent activity yet.</p>
                 <p className="mt-1 text-[11px]">Opened areas, topics and submitted searches will appear here.</p>
@@ -110,7 +110,7 @@ export function PopularAndRecent({ recentTopics, onSelectTopic, onSelectRecent, 
                 <button
                   key={item.categorySlug + item.topicSlug + item.visitedAt}
                   type="button"
-                  onClick={() => item.kind === "topic" || !item.kind ? onSelectTopic(item.categorySlug, item.topicSlug) : onSelectRecent(item)}
+                  onClick={() => item.kind === "topic" || !item.kind ? onSelectTopic(item.categorySlug, item.topicSlug) : onSelectRecent?.(item)}
                   className="flex w-full items-start justify-between rounded-xl border border-border/60 bg-muted/30 p-3 text-left transition hover:bg-accent/5 hover:border-accent/40 group"
                 >
                   <div className="min-w-0 flex-1 pr-2">
