@@ -29,6 +29,7 @@ const LEGACY_KEYS = [
   "amineva_drive_files",
   "amineva_drive_shares",
   "amineva_drive_activity",
+  "amineva_recent_topics",
 ];
 
 let activeUid: string | null = null;
