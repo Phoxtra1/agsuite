@@ -140,6 +140,8 @@ export interface RecentTopicItem {
   topicSlug: string;
   topicTitle: string;
   visitedAt: string;
+  kind?: "topic" | "area" | "search";
+  searchQuery?: string;
 }
 
 export function recordRecentTopic(item: Omit<RecentTopicItem, "visitedAt">) {
@@ -148,7 +150,7 @@ export function recordRecentTopic(item: Omit<RecentTopicItem, "visitedAt">) {
     const raw = localStorage.getItem(wsKey(RECENT_KEY));
     const list: RecentTopicItem[] = raw ? JSON.parse(raw) : [];
     const filtered = list.filter(
-      (r) => !(r.categorySlug === item.categorySlug && r.topicSlug === item.topicSlug)
+      (r) => !(r.categorySlug === item.categorySlug && r.topicSlug === item.topicSlug && r.kind === (item.kind || "topic") && r.searchQuery === item.searchQuery)
     );
     const updated = [{ ...item, visitedAt: new Date().toISOString() }, ...filtered].slice(0, 8);
     localStorage.setItem(wsKey(RECENT_KEY), JSON.stringify(updated));
@@ -165,4 +167,22 @@ export function getRecentTopics(): RecentTopicItem[] {
   } catch {
     return [];
   }
+}
+
+export function clearRecentTopics(): void {
+  if (typeof localStorage === "undefined") return;
+  try { localStorage.removeItem(wsKey(RECENT_KEY)); } catch { /* ignore */ }
+}
+
+export function recordRecentSearch(searchQuery: string): void {
+  const clean = searchQuery.trim();
+  if (!clean) return;
+  recordRecentTopic({
+    categorySlug: "general-search",
+    categoryTitle: "Information Discovery",
+    topicSlug: "search-" + clean.toLocaleLowerCase(),
+    topicTitle: clean,
+    kind: "search",
+    searchQuery: clean,
+  });
 }
