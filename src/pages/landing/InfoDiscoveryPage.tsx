@@ -1111,6 +1111,13 @@ export default function InfoDiscoveryPage() {
       {selected?.slug === "agriculture-climate-intelligence" && selected.product && (
         <AgroClimateSpotlight product={selected.product} />
       )}
+      {selected?.slug === "it-innovation" && selected.product && (
+        <DataLensSpotlight product={selected.product} />
+      )}
+      {selectedTopic && selected?.slug === "business-management" && selected.product && <InventraSpotlight product={selected.product} />}
+      {selectedTopic && selected?.slug === "agriculture-climate-intelligence" && selected.product && <AgroClimateSpotlight product={selected.product} />}
+      {selectedTopic && selected?.slug === "it-innovation" && selected.product && <DataLensSpotlight product={selected.product} />}
+      {selectedTopic && selected?.product && !["business-management","agriculture-climate-intelligence","it-innovation","career-development-education"].includes(selected.slug) && <ProductConnection product={selected.product} />}
 
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="space-y-5">
@@ -1287,7 +1294,7 @@ export default function InfoDiscoveryPage() {
               </>
             )}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
-            {selected.product && selected.slug !== "career-development-education" && selected.slug !== "business-management" && selected.slug !== "agriculture-climate-intelligence" && <ProductConnection product={selected.product} />}
+
             <p className="text-[11px] text-muted-foreground">
               This topic guide is an investigation structure. It does not itself certify a current visa rule, price, job vacancy, crop condition or organisational finding.
             </p>
@@ -1323,7 +1330,7 @@ export default function InfoDiscoveryPage() {
             {selected.slug === "travel-destination" && <CountryExplorer />}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
             <ResearchPanel initialQuery={selected.title} />
-            {selected.product && selected.slug !== "career-development-education" && selected.slug !== "business-management" && selected.slug !== "agriculture-climate-intelligence" && <ProductConnection product={selected.product} />}
+
             {selected.slug === "operational-intelligence" && <div className="rounded-2xl border border-border bg-muted/40 p-5"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-4 w-4 text-accent" /> Authorised evidence only</div><p className="mt-2 text-xs leading-5 text-muted-foreground">Verification and anomaly detection require approved connections to source systems, documented permissions and review controls. This public information area explains the method; it does not claim access to private organisational records.</p></div>}
           </section>}
 
@@ -1358,6 +1365,30 @@ export default function InfoDiscoveryPage() {
 }
 
 
+
+function DataLensSpotlight({ product }: { product: ProductLink }) {
+  const capabilities = [
+    { icon: BarChart3, title: "Business performance", description: "Understand performance through structured indicators and reports.", edge: "border-t-4 border-t-primary" },
+    { icon: Compass, title: "Explore patterns", description: "Examine trends, relationships and changes across business information.", edge: "border-r-4 border-r-accent" },
+    { icon: BookOpen, title: "Evidence-led decisions", description: "Bring context to figures and understand what the available data supports.", edge: "border-b-4 border-b-success/75" },
+    { icon: Package, title: "Operational visibility", description: "Connect business activity with the measures that matter to management.", edge: "border-l-4 border-l-primary/70" },
+  ];
+  return <section aria-label="Explore DataLens" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
+    <div className="overflow-hidden rounded-3xl border border-accent/30 bg-card shadow-md">
+      <div className="grid gap-6 border-t-4 border-t-accent p-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-8 md:p-8">
+        <div className="flex flex-col items-start justify-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent"><BarChart3 className="h-3.5 w-3.5" /> Amineva intelligence platform</span>
+          <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">Turn business information into clearer decisions.</h2>
+          <p className="mt-4 text-sm leading-7 text-muted-foreground">DataLens is the next step for organisations that need to look beyond individual records and understand what their business information is showing. Explore performance, identify patterns, review indicators and bring greater structure to management decisions.</p>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">The Info Discovery guides introduce the concepts. DataLens is where visitors can continue to the platform and explore the available business intelligence capabilities in greater depth.</p>
+          <a href={product.href} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">{product.label} <ArrowUpRight className="h-4 w-4" /></a>
+          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">Continue to DataLens to explore the platform and registration options.</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">{capabilities.map(item => <article key={item.title} className={"rounded-2xl border border-border bg-background/70 p-4 transition hover:-translate-y-0.5 hover:shadow-md " + item.edge}><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-primary"><item.icon className="h-4 w-4" /></div><h3 className="mt-3 text-sm font-semibold text-foreground">{item.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p></article>)}</div>
+      </div>
+    </div>
+  </section>;
+}
 
 function AgroClimateSpotlight({ product }: { product: ProductLink }) {
   const capabilities = [
