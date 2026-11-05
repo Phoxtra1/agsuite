@@ -3,6 +3,7 @@ name: Verify application build
 on:
   push:
     branches:
+      - main
       - information-discovery-foundation
   pull_request:
     branches:
