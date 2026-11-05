@@ -178,16 +178,27 @@ describe("Workspace isolation — local caches are account-scoped", () => {
     expect(keyB.endsWith(USER_B.id)).toBe(true);
   });
 
-  it("switching accounts purges the previous account's cached content", async () => {
+  it("switching accounts preserves offline work without exposing it to the next account", async () => {
     signIn(USER_A);
     await listDocuments(); // warms A's cache
     const keyA = wsKey("amineva_workspace_docs");
     expect(localStorage.getItem(keyA)).toContain("A private item");
 
     signIn(USER_B);
-    expect(localStorage.getItem(keyA)).toBeNull();
-    const docs = await listDocuments();
-    expect(JSON.stringify(docs)).not.toContain("A private item");
+    // Account-scoped caches are deliberately retained for offline recovery.
+    // The active account must never read another account's cache.
+    expect(localStorage.getItem(keyA)).toContain("A private item");
+    expect(wsKey("amineva_workspace_docs")).not.toBe(keyA);
+
+    const docsForB = await listDocuments();
+    expect(JSON.stringify(docsForB)).not.toContain("A private item");
+    expect(titlesOf(docsForB)).toEqual(["B private item"]);
+
+    // The original owner can still recover their own cached work offline.
+    Object.defineProperty(navigator, "onLine", { value: false, configurable: true });
+    signIn(USER_A);
+    const docsForA = await listDocuments();
+    expect(JSON.stringify(docsForA)).toContain("A private item");
   });
 
   it("legacy unscoped caches are never served to a signed-in account", async () => {
