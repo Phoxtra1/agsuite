@@ -18,6 +18,8 @@ import {
   isTopicSaved,
   sendTopicToWorkspace,
   recordRecentTopic,
+  recordRecentSearch,
+  clearRecentTopics,
   getRecentTopics,
   type SavedTopicItem,
   type RecentTopicItem,
@@ -737,8 +739,7 @@ export default function InfoDiscoveryPage() {
   const [sectionFilter, setSectionFilter] = useState("all");
   const [showSuggestions, setShowSuggestions] = useState(false);
   const [generalQuery, setGeneralQuery] = useState("");
-  const [heroIndex, setHeroIndex] = useState(0);
-  useEffect(() => { const t = window.setInterval(() => setHeroIndex(i => (i + 1) % HERO_SCENES.length), 30 * 60 * 1000); return () => window.clearInterval(t); }, []);
+  const heroIndex = 0;
   const [savedDrawerOpen, setSavedDrawerOpen] = useState(false);
   const [savedTopicsList, setSavedTopicsList] = useState<SavedTopicItem[]>(() => getSavedTopics());
   const [recentTopicsList, setRecentTopicsList] = useState<RecentTopicItem[]>(() => getRecentTopics());
@@ -760,6 +761,7 @@ export default function InfoDiscoveryPage() {
         categoryTitle: selected.title,
         topicSlug: selectedTopic.slug,
         topicTitle: selectedTopic.title,
+        kind: "topic",
       });
       setRecentTopicsList(getRecentTopics());
     }
@@ -776,9 +778,9 @@ export default function InfoDiscoveryPage() {
     return searchIndex.filter(item => normalise([item.label, item.detail, item.category.title].join(" ")).includes(clean)).slice(0, 12);
   }, [query, searchIndex]);
 
-  const goToCategory = (slug: string) => { setQuery(""); setShowSuggestions(false); navigate("/info-discovery/" + slug); };
+  const goToCategory = (slug: string) => { const category = categories.find(item => item.slug === slug); if (category) { recordRecentTopic({ categorySlug: category.slug, categoryTitle: category.title, topicSlug: "__area__", topicTitle: category.title, kind: "area" }); setRecentTopicsList(getRecentTopics()); } setQuery(""); setShowSuggestions(false); navigate("/info-discovery/" + slug); };
   const goToTopic = (catSlug: string, topSlug: string) => { setQuery(""); setShowSuggestions(false); navigate("/info-discovery/" + catSlug + "/" + topSlug); };
-  const runGeneralSearch = (text: string) => { const clean = text.trim(); if (!clean) return; setGeneralQuery(clean); setShowSuggestions(false); };
+  const runGeneralSearch = (text: string) => { const clean = text.trim(); if (!clean) return; recordRecentSearch(clean); setRecentTopicsList(getRecentTopics()); setGeneralQuery(clean); setShowSuggestions(false); };
   const onSearchSubmit = (event: React.FormEvent) => { event.preventDefault(); runGeneralSearch(query); };
 
   const isCurrentSaved = selected && selectedTopic ? isTopicSaved(selected.slug, selectedTopic.slug) : false;
@@ -857,9 +859,9 @@ export default function InfoDiscoveryPage() {
     <main className="min-h-screen bg-background text-foreground">
       <section className="relative bg-primary px-5 pb-12 pt-8 text-primary-foreground md:px-8 md:pb-16 md:pt-10">
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
-          {HERO_SCENES.map((scene, i) => <div key={scene.label} className={"absolute inset-0 transition-opacity duration-[1500ms] " + (i === heroIndex ? "opacity-100" : "opacity-0")} style={{ background: scene.bg }} />)}
-          <div className="absolute -left-20 top-10 h-72 w-72 animate-pulse rounded-full bg-accent/15 blur-3xl" />
-          <div className="absolute -right-24 -bottom-24 h-80 w-80 animate-pulse rounded-full bg-primary-foreground/10 blur-3xl [animation-delay:1.5s]" />
+          <div className="absolute inset-0" style={{ background: HERO_SCENES[0].bg }} />
+          <div className="absolute -left-20 top-10 h-72 w-72 rounded-full bg-accent/10 blur-3xl" />
+          <div className="absolute -right-24 -bottom-24 h-80 w-80 rounded-full bg-primary-foreground/10 blur-3xl" />
         </div>
         <div className="relative z-10 mx-auto max-w-7xl">
           <div className="mb-6 flex items-center gap-2 text-xs font-medium text-primary-foreground/70">
@@ -868,9 +870,9 @@ export default function InfoDiscoveryPage() {
             {selectedTopic && <><ChevronRight className="h-3.5 w-3.5" /><span className="text-primary-foreground">{selectedTopic.title}</span></>}
           </div>
           <div className="mx-auto max-w-3xl text-center">
-            <div key={heroIndex} className="mb-3 inline-flex animate-fade-in items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide"><Globe2 className="h-3.5 w-3.5 text-accent" /> {HERO_SCENES[heroIndex].label}</div>
+            <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide"><Globe2 className="h-3.5 w-3.5 text-accent" /> {HERO_SCENES[heroIndex].label}</div>
             <h1 className="text-3xl font-bold tracking-tight md:text-5xl">{selectedTopic ? selectedTopic.title : selected ? selected.title : "Search anything. Understand everything."}</h1>
-            <p key={"p" + heroIndex} className="mx-auto mt-3 max-w-2xl animate-fade-in text-sm leading-7 text-primary-foreground/80 md:text-base">{selectedTopic ? selectedTopic.description : selected ? selected.summary : HERO_SCENES[heroIndex].line}</p>
+            <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-primary-foreground/80 md:text-base">{selectedTopic ? selectedTopic.description : selected ? selected.summary : HERO_SCENES[heroIndex].line}</p>
           </div>
           <div className="relative z-40 mx-auto mt-7 max-w-3xl">
             <form onSubmit={onSearchSubmit} className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-2 text-foreground shadow-xl sm:flex-row sm:items-center">
@@ -885,7 +887,7 @@ export default function InfoDiscoveryPage() {
                 <span className="mt-0.5 rounded-lg bg-accent/15 p-2 text-accent">{result.kind === "area" ? <result.category.icon className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium">{result.label}</span><span className="mt-0.5 block text-xs text-muted-foreground">{result.category.title}{result.kind === "topic" ? " · " + result.detail.split(" · ")[0] : ""}</span></span><ChevronRight className="mt-1 h-4 w-4 text-muted-foreground" />
               </button>)}
             </div>}
-            <div className="mt-4 flex justify-center gap-1.5">{HERO_SCENES.map((_, i) => <button key={i} type="button" aria-label={"Show scene " + (i + 1)} onClick={() => setHeroIndex(i)} className={"h-1.5 rounded-full transition-all " + (i === heroIndex ? "w-6 bg-accent" : "w-1.5 bg-primary-foreground/40")} />)}</div>
+            
           </div>
         </div>
       </section>
@@ -920,7 +922,13 @@ export default function InfoDiscoveryPage() {
           </div>
           <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Compass className="h-4 w-4 text-accent" /> How to use this system</div>
-            <p className="text-xs leading-5 text-muted-foreground">Start with an area, narrow to a topic, compare evidence and follow the source links. Research metadata and public indicators are attributed to their providers and keep their own update dates.</p>
+            <p className="text-xs leading-5 text-muted-foreground">Start with an area, narrow to a topic, then compare the evidence. Use the search field for a question or subject. Check who published each claim, what location and period it covers, and whether it is a confirmed fact, estimate or interpretation. Use official authorities for current rules and decisions.</p>
+          </div>
+          <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
+            <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Lightbulb className="h-4 w-4 text-accent" /> Discovery corner</div>
+            <p className="text-xs leading-5 text-muted-foreground"><span className="font-semibold text-foreground">Research tip:</span> Turn a broad question into smaller questions. Identify the exact place, people, period and decision involved before comparing information.</p>
+            <div className="my-3 border-t border-border" />
+            <p className="text-xs leading-5 text-muted-foreground"><span className="font-semibold text-foreground">Evidence check:</span> A recent result is not automatically reliable. Look for the original publisher, method, date and limitations before relying on it.</p>
           </div>
         </aside>
 
