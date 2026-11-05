@@ -1294,49 +1294,24 @@ export default function InfoDiscoveryPage() {
           </section>}
 
           {selected && !selectedTopic && <section className="space-y-6">
-            {selected.slug === "business-management" ? (
-              <div className="rounded-3xl border border-border border-l-4 border-l-accent bg-card p-6 shadow-sm md:p-8">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                    <span className="rounded-xl border border-accent/30 bg-accent/10 p-2 text-accent"><selected.icon className="h-4 w-4" /></span>
-                    Area overview
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">{allTopics(selected).length} topics</Badge>
-                    <Badge variant="outline">{selected.sections.length} subject groups</Badge>
-                  </div>
-                </div>
-                <p className="mt-4 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p>
+            <div className={"rounded-3xl border border-border bg-card p-6 shadow-sm md:p-8 " + (selected.slug === "business-management" ? "border-t-4 border-t-accent" : selected.slug === "agriculture-climate-intelligence" ? "border-r-4 border-r-success" : selected.slug === "operational-intelligence" ? "border-b-4 border-b-primary" : "border-l-4 border-l-accent")}>
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div className="flex items-center gap-2 text-sm font-semibold text-primary"><span className="rounded-xl border border-accent/25 bg-accent/10 p-2 text-accent"><selected.icon className="h-4 w-4" /></span>Area overview</div>
+                <div className="flex flex-wrap gap-2"><Badge variant="outline">{allTopics(selected).length} topics</Badge><Badge variant="outline">{selected.sections.length} subject groups</Badge></div>
               </div>
-            ) : (
-              {selected.slug === "agriculture-climate-intelligence" ? (
-              <div className="rounded-3xl border border-border border-l-4 border-l-success bg-card p-6 shadow-sm md:p-8">
-                <div className="flex flex-wrap items-center justify-between gap-3">
-                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
-                    <span className="rounded-xl border border-success/25 bg-success/10 p-2 text-success"><selected.icon className="h-4 w-4" /></span>
-                    Area overview
-                  </div>
-                  <div className="flex flex-wrap gap-2">
-                    <Badge variant="outline">{allTopics(selected).length} topics</Badge>
-                    <Badge variant="outline">{selected.sections.length} subject groups</Badge>
-                  </div>
-                </div>
-                <p className="mt-4 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p>
-              </div>
-            ) : (
-              <div className="group relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary via-primary to-primary/90 p-6 text-primary-foreground shadow-lg shadow-primary/10 md:p-8"><div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full bg-accent/15 blur-3xl" /><div className="relative"><div className="flex items-center gap-2 text-sm font-semibold text-accent"><selected.icon className="h-4 w-4" /> Area overview</div><p className="mt-3 max-w-4xl text-sm leading-7 text-primary-foreground/80 md:text-base">{selected.purpose}</p><div className="mt-5 flex flex-wrap gap-2"><Badge variant="outline" className="border-primary-foreground/25 text-primary-foreground">{allTopics(selected).length} topics</Badge><Badge variant="outline" className="border-primary-foreground/25 text-primary-foreground">{selected.sections.length} subject groups</Badge></div></div></div>
-            )}
-            )}
+              <p className="mt-4 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p>
+            </div>
             <div><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Subject menu</h2><p className="mt-1 text-sm text-muted-foreground">Search within this area or filter by subject group.</p></div><Badge variant="outline">{filteredSections.reduce((count, section) => count + section.items.length, 0)} matching topics</Badge></div>
               <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTopicFilter(e.target.value)} placeholder="Filter topics and questions" aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
               {filteredSections.length ? <div className="space-y-4">{filteredSections.map((section, sectionIndex) => {
-                const useAccentCards = selected.slug === "business-management" || selected.slug === "agriculture-climate-intelligence";
-                const groupAccent = sectionIndex % 3 === 0 ? "border-l-primary" : sectionIndex % 3 === 1 ? "border-l-accent" : "border-l-success/75";
-                return <section key={section.title} className={"rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md " + (useAccentCards ? "border-l-4 " + groupAccent : "")}>
+                const edgeClasses = ["border-t-4 border-t-primary", "border-r-4 border-r-accent", "border-b-4 border-b-success/75", "border-l-4 border-l-primary/75"];
+                const groupAccent = edgeClasses[sectionIndex % edgeClasses.length];
+                return <section key={section.title} className={"rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md " + groupAccent}>
                   <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div>
                   <div className="mt-4 grid gap-3 md:grid-cols-2">{section.items.map((item, itemIndex) => {
-                    const cardAccent = itemIndex % 3 === 0 ? "border-l-primary/75" : itemIndex % 3 === 1 ? "border-l-accent" : "border-l-success/65";
-                    return <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className={"group relative flex min-h-36 flex-col rounded-xl border border-border bg-background/70 p-4 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:bg-card hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 " + (useAccentCards ? "border-l-[3px] " + cardAccent : "hover:border-accent/50 hover:bg-accent/5")}>
+                    const cardEdges = ["border-t-[3px] border-t-primary/80", "border-r-[3px] border-r-accent", "border-b-[3px] border-b-success/70", "border-l-[3px] border-l-primary/65"];
+                    const cardAccent = cardEdges[(itemIndex + sectionIndex) % cardEdges.length];
+                    return <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className={"group relative flex min-h-36 flex-col rounded-xl border border-border bg-background/70 p-4 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:bg-card hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 " + cardAccent}>
                       <span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span>
                       <span className="mt-2 block flex-1 text-xs leading-5 text-muted-foreground">{item.description}</span>
                       <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold text-primary opacity-80 group-hover:opacity-100">Explore topic <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span>
