@@ -6,7 +6,7 @@ import {
   ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass,
   Package, Warehouse, ArrowUpRight, ShoppingCart, BarChart3, Users, Store,
   AlertTriangle, Info, Lightbulb, Bookmark, BookmarkCheck,
-  Printer, Download, FolderPlus, FileCheck2,
+  Printer, Download, FolderPlus, FileCheck2, Wallet, Code, Server, Wrench, Database,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -135,36 +135,43 @@ const categories: Category[] = [
     ],
   },
   {
-    slug: "it-innovation", title: "IT and Innovation", icon: Laptop,
-    summary: "Understand digital systems, infrastructure, cybersecurity, databases, cloud services, automation and professional IT support.",
-    purpose: "Technology should solve an operational need and remain dependable after launch. This area helps individuals and organisations understand what systems they need, the risks of neglect, the trade-offs between cloud and self-hosted infrastructure, and the maintenance required to keep technology useful and secure.",
+    slug: "it-innovation", title: "IT Services and Support", icon: Laptop,
+    summary: "Understand the IT services organisations rely on: websites and software, technical support, networks, cloud infrastructure, cybersecurity, databases and system maintenance.",
+    purpose: "Technology is part of everyday operations. Websites, applications, computers, networks, business email, databases and cloud services all need to be planned, configured, maintained and protected. This area helps individuals and organisations understand common IT service needs, what can go wrong when systems are neglected, how to assess providers and how to plan dependable technical support. The aim is practical technology awareness—not assumptions that every organisation needs the same system or service.",
     sections: [
-      { title: "Digital products and system development", description: "Plan, build, improve and maintain working digital services.", items: [
-        topic("Website and web application development", "Understand the work involved in planning, building, testing, deploying and supporting websites and web applications.", ["What user problem must the system solve?", "Which workflows and integrations are required?", "Who will maintain it after launch?"]),
-        topic("Software maintenance and reliability", "Review updates, bug fixes, compatibility, performance, backups and operational support.", ["Who monitors failures and responds?", "How are changes tested before release?", "Can the service be restored after a failure?"]),
-        topic("System integration and APIs", "Connect independent systems through controlled interfaces and well-defined data contracts.", ["Which system owns each record?", "How are authentication, permissions and errors handled?", "How are duplicate events and failed syncs reconciled?"]),
+      { title: "IT planning and technical support", description: "Identify technology needs, manage devices and accounts, and obtain the right technical assistance.", items: [
+        topic("IT assessment and technology planning", "Review an organisation's current devices, systems, connectivity, workflows, risks and priorities before choosing new technology or services.", ["Which business activity needs technical support or improvement?", "What systems, devices and subscriptions are already in use?", "Which risks or service interruptions need attention first?", "How will the proposed work be scoped, costed and reviewed?"]),
+        topic("IT support and technical troubleshooting", "Understand helpdesk support, fault diagnosis, escalation, remote assistance and the documentation needed to resolve recurring technology problems.", ["What happened, when did it start and who is affected?", "Is the issue related to a device, application, account, network or service provider?", "What response time and escalation route are appropriate?", "Has the fix been tested and documented?"]),
+        topic("Computer, device and endpoint management", "Manage computers, phones, printers and other connected devices through setup, configuration, updates, inventory, security and retirement.", ["Who owns each device and who is authorised to use it?", "Are operating systems and applications supported and updated?", "Are lost or retired devices securely removed from organisational access?", "Are device records, warranties and licences maintained?"]),
+        topic("Business email, domains and online presence", "Understand domain registration, DNS, business email, website hosting, SSL certificates and the settings needed to keep online services reachable and trustworthy.", ["Who controls the domain and its renewal?", "Are DNS, email authentication and website certificates correctly configured?", "Can staff recover access if an administrator leaves?", "Are website and email services monitored for interruption?"]),
       ]},
-      { title: "Data and infrastructure", description: "Choose infrastructure based on workload, risk, capacity and operating capability.", items: [
-        topic("Cloud versus self-hosted infrastructure", "Compare managed cloud services with infrastructure operated directly by an organisation.", ["Who patches and monitors the servers?", "What are the full costs of compute, storage, bandwidth and backups?", "What happens if the provider or local operator is unavailable?"]),
-        topic("Database design and management", "Understand data modelling, access patterns, query performance, backup and retention.", ["Which data must be stored and for how long?", "Are indexes aligned with actual queries?", "Can redundant records or oversized payloads be eliminated safely?"]),
-        topic("Cloud services and deployment", "Investigate hosting, storage, networking, identity, observability and deployment pipelines.", ["What is included in the service plan?", "Where are data and backups stored?", "Are usage limits, egress and maintenance costs understood?"]),
+      { title: "Websites, software and digital systems", description: "Understand how digital services are designed, developed, integrated, tested and maintained.", items: [
+        topic("Website and web application development", "Explore how requirements, user experience, frontend and backend development, testing, deployment and ongoing maintenance come together in a working website or application.", ["What should users be able to do with the system?", "Which information and workflows must it handle?", "How will accessibility, security and performance be tested?", "Who will maintain the system after launch?"]),
+        topic("Custom software and mobile application development", "Understand when an organisation may need tailored software or a mobile application, and how to evaluate scope, usability, ownership and long-term support.", ["Is an existing product sufficient or is custom development justified?", "Which users, devices and operating systems must be supported?", "Who owns the source code, data and deployment accounts?", "What training, documentation and maintenance are included?"]),
+        topic("Software maintenance and application reliability", "Review upgrades, compatibility, defect correction, performance, monitoring and release management so that software remains usable after deployment.", ["How are issues reported, prioritised and resolved?", "Are changes tested before they reach users?", "Are dependencies and unsupported components reviewed?", "Can the previous stable version be restored if an update fails?"]),
+        topic("System integration and APIs", "Connect separate applications and services through documented interfaces, controlled permissions and reliable data exchange.", ["Which system is the authoritative source for each record?", "How are credentials, permissions and data transfers protected?", "What happens when a connection fails or sends the same event twice?", "Can integration activity be monitored and reconciled?"]),
       ]},
-      { title: "Security and organisational IT", description: "Reduce exposure and support reliable day-to-day technology operations.", items: [
-        topic("Cybersecurity and access control", "Assess identity, authentication, permissions, patching, backups, incident response and user awareness.", ["Who has access and why?", "Are privileged actions logged and reviewed?", "Can compromised access be revoked quickly?"]),
-        topic("Business automation", "Identify repetitive, error-prone processes suitable for controlled automation.", ["What triggers the workflow?", "What approval or exception path is needed?", "How will the system prove that the action completed?"]),
-        topic("IT infrastructure management", "Review devices, networks, domains, email, servers, licences and technical support.", ["Which assets exist and who owns them?", "What dependencies can interrupt operations?", "Which maintenance tasks are overdue?"]),
-        topic("Professional IT services and talent", "Identify the expertise required for implementation, support, security and ongoing operations.", ["Is the task project-based or continuous?", "What measurable service level is needed?", "How will technical quality and handover be assessed?"]),
+      { title: "Networks, cloud and infrastructure", description: "Keep the underlying technology environment connected, available, recoverable and appropriately maintained.", items: [
+        topic("Computer networks, Wi-Fi and connectivity", "Understand wired and wireless networks, routers, switches, internet connectivity, network coverage and secure access for staff and guests.", ["Where are network weak spots or recurring connection failures?", "Are business and guest devices separated appropriately?", "Who manages network equipment, passwords and firmware updates?", "Is the internet connection suitable for the organisation's critical workflows?"]),
+        topic("Servers, hosting and infrastructure management", "Explore server provisioning, operating systems, storage, monitoring, updates, capacity and the responsibilities involved in maintaining hosted systems.", ["Where does each application or service run?", "Who is responsible for patching, monitoring and incident response?", "Are storage, compute and bandwidth sized for actual demand?", "What is the recovery plan if a server or hosting provider becomes unavailable?"]),
+        topic("Cloud services and deployment", "Compare managed cloud services with self-hosted environments, including identity, storage, networking, deployment, usage limits and ongoing costs.", ["What does the selected service include and exclude?", "Where are operational data and backups stored?", "Are access controls, usage limits and recurring costs understood?", "How can services be moved or restored if the provider relationship changes?"]),
+        topic("Backups, recovery and service continuity", "Plan how important files, databases and applications are backed up, tested and restored after accidental deletion, system failure, cyber incident or outage.", ["Which systems and records are essential to restore first?", "How often are backups created and how long are they retained?", "Are backups protected from unauthorised changes or deletion?", "When was a full restoration test last completed?"]),
+      ]},
+      { title: "Cybersecurity and data management", description: "Protect accounts, devices, systems and information while maintaining dependable records.", items: [
+        topic("Cybersecurity and access management", "Understand identity controls, strong authentication, role-based permissions, secure configuration, patching and incident response across organisational technology.", ["Who has access to each system and why?", "Are administrator accounts limited and protected with stronger authentication?", "How quickly can access be suspended when a device or account is compromised?", "Are security events reviewed and acted upon?"]),
+        topic("Data protection and database management", "Explore how organisations structure, validate, store, back up and control access to operational records in databases and other information systems.", ["What information is collected and why is it needed?", "Who may view, change, export or delete the records?", "Are data quality, retention and backup requirements documented?", "Can important records be retrieved and verified when needed?"]),
+        topic("Database design, migration and performance", "Understand data models, migrations, query performance, indexing and the checks needed when moving information between systems.", ["Has the current data structure been documented?", "Are duplicates, missing values and inconsistent formats identified before migration?", "How will the migrated data be reconciled against the source?", "Can the database handle expected use without exposing unnecessary information?"]),
+        topic("IT service providers, contracts and service levels", "Evaluate technical providers through scope, responsibilities, response times, service levels, access arrangements, deliverables and exit plans.", ["What is included in the service and what is billed separately?", "Who owns accounts, credentials, code, domains and data?", "How are incidents, changes and unresolved issues escalated?", "What documentation and handover are required when an engagement ends?"]),
       ]},
     ],
     sources: [
       { name: "NIST Cybersecurity Framework 2.0", scope: "Cybersecurity risk governance and management outcomes", type: "Official standards guidance", url: "https://www.nist.gov/cyberframework" },
       { name: "OWASP Top 10", scope: "Common critical web application security risk categories", type: "Open security reference", url: "https://owasp.org/projects/top-ten" },
       { name: "CISA", scope: "Cybersecurity, secure-by-design and infrastructure protection guidance", type: "Official U.S. cyber defence agency", url: "https://www.cisa.gov/" },
-      { name: "World Bank Open Data", scope: "Country-level digital development and economic indicators where available", type: "Official international statistics", url: "https://data.worldbank.org/" },
+      { name: "Cloud Security Alliance", scope: "Cloud security practices and guidance", type: "Industry security reference", url: "https://cloudsecurityalliance.org/" },
     ],
-    product: { label: "Explore DataLens", href: "https://app.amineva.com", description: "Continue to DataLens for deeper business and data intelligence services." },
+    product: { label: "Explore DataLens", href: "https://app.amineva.com", description: "Continue to DataLens for website and application maintenance, software development, cloud infrastructure, database management and professional IT support." },
   },
-  {
     slug: "business-management", title: "Business Management", icon: BriefcaseBusiness,
     summary: "Understand how a business controls inventory, purchasing, sales, cash flow, employee responsibilities, financial records and day-to-day performance.",
     purpose: "Running a business requires more than recording sales. Owners and managers need a dependable picture of what the business holds, what it buys and sells, what money is expected and received, what it owes, who is responsible for each activity and where losses or delays occur. This area introduces the practical systems, records, checks and management measures that help a business operate with greater control. It is an educational starting point; accounting, tax, employment and regulatory decisions should be checked against the rules and qualified advice that apply to the business.",
@@ -212,6 +219,52 @@ const categories: Category[] = [
     product: { label: "Explore Inventra", href: "https://stock.amineva.com", description: "Continue to Inventra for inventory, stock operations and related business management workflows." },
   },
   {
+  {
+    slug: "financial-operations", title: "Financial Operations", icon: Wallet,
+    summary: "Understand how financial transactions are monitored, payments are reconciled, income and expenses are recorded, cash flow is managed and financial performance is reported.",
+    purpose: "Financial operations depend on accurate transactions, reliable account records and clear responsibility for money moving through an organisation. Mobile money vendors, microfinance institutions, microcredit providers, savings and loans operators, rural banks and other financial service organisations need to understand what has been received, paid, disbursed, collected, settled or left outstanding. Businesses also need dependable records of income, expenses, payments, cash flow and financial obligations. This area explains why those practices matter, how records fit together and what managers should review. It is educational guidance, not a substitute for regulated financial, accounting or legal advice.",
+    sections: [
+      { title: "Transaction monitoring and financial networks", description: "Understand the movement, status and oversight of transactions across agents, branches and financial service operations.", items: [
+        topic("Financial transactions and monitoring", "Understand how to record and monitor deposits, withdrawals, transfers, collections, payments, disbursements, reversals and adjustments with clear references and status history.", ["Can each transaction be traced to a date, amount, channel, account and responsible operator?", "Is the transaction pending, completed, reversed, failed or under review?", "Are duplicate, incomplete or unusual entries identified rather than silently ignored?", "Can the transaction history be reviewed by an authorised person?"]),
+        topic("Mobile money agent transactions and float management", "Explore how mobile money vendors monitor cash and electronic float, customer transactions, commissions, settlement activity and daily operating balances.", ["How much physical cash and electronic float is available at the start and end of the day?", "Are cash-in, cash-out, transfers and reversals recorded against the correct service channel?", "Do provider statements and agent records agree after fees and commissions?", "What is the plan when cash or electronic float becomes insufficient?"]),
+        topic("Microcredit disbursements and repayment tracking", "Understand how loan disbursements, repayment schedules, collections, arrears, rescheduling and outstanding balances should be recorded and reviewed.", ["Does each disbursement link to an approved facility and borrower record?", "Are expected repayments compared with actual collections?", "How old are overdue amounts and what explains the delay?", "Are rescheduled, written-off or amended balances clearly distinguished from normal repayments?"]),
+        topic("Savings, contributions and member accounts", "Explore how savings deposits, member contributions, withdrawals, payouts and account balances are recorded so that individuals and institutions can verify activity over time.", ["Can each contribution or withdrawal be traced to the correct member and account?", "Are member statements consistent with the institution's transaction records?", "Are payout rules, dates and approvals documented?", "How are corrections handled without losing the original transaction history?"]),
+        topic("Branch, agent and service-point monitoring", "Understand how managers compare activity across branches, tellers, mobile money agents, field collectors and other service points while maintaining fair, evidence-based oversight.", ["Which transactions and balances should each service point report at close of business?", "Are cash, float, collections and unresolved exceptions reviewed consistently?", "Can activity be traced to the correct staff member and location?", "How are differences escalated and followed up?"]),
+      ]},
+      { title: "Payments, accounts and reconciliation", description: "Follow money across payment channels and account records, then investigate differences between expected and actual balances.", items: [
+        topic("Payment channels and transaction processing", "Understand how cash, mobile money, bank transfers, cards, cheques and other payment channels create different records, settlement times, charges and risks.", ["Which payment channel was used and what confirmation is available?", "When should the receiving account be credited?", "Which fees, limits or processing delays apply?", "How are failed, pending and reversed payments communicated and recorded?"]),
+        topic("Transaction reconciliation and settlement", "Compare internal transaction records with bank statements, mobile money reports, provider settlements and cash counts. Reconciliation should explain differences instead of forcing totals to match.", ["What total was expected for the period and channel?", "What amount actually settled and on what date?", "Are fees, reversals, timing differences and pending transactions separated?", "Who reviews and signs off unresolved differences?"]),
+        topic("Account balances and ledger management", "Understand opening balances, debits, credits, running balances, account statements and the relationship between individual transaction records and account totals.", ["Does every balance have a defined account, owner and reporting date?", "Can the closing balance be reproduced from the opening balance and recorded movements?", "Are corrections supported by an authorised adjustment entry?", "Do sub-ledgers and summary balances agree?"]),
+        topic("Cash handling and daily balancing", "Establish clear procedures for receiving, holding, transferring and handing over physical cash, including opening floats, receipts, cash counts and end-of-day balancing.", ["Who was responsible for the cash at each stage?", "Does the physical count agree with the recorded cash position?", "Are shortages and overages documented and investigated?", "Are handovers, safe custody and bank deposits evidenced?"]),
+      ]},
+      { title: "Income, expenses and cash-flow management", description: "Understand money earned, money spent, upcoming obligations and the timing of cash available to operate.", items: [
+        topic("Business income and revenue records", "Record income from sales, fees, service charges, commissions, interest or other legitimate activities in a way that identifies its source, date and supporting transaction.", ["What activity generated the income?", "Has the amount been received, invoiced or only expected?", "Are refunds, reversals, discounts and applicable charges accounted for?", "Can reported revenue be traced to supporting transactions?"]),
+        topic("Business expenses and cost control", "Classify operating expenses and other payments so that managers can see where funds are being used and identify unusual or rising costs.", ["What was purchased or paid for, and for which business purpose?", "Is there an invoice, receipt or other supporting evidence?", "Was the expenditure within an approved budget or authority limit?", "Are recurring costs, cash expenses and one-off purchases reviewed separately?"]),
+        topic("Cash-flow management and liquidity", "Understand the timing of cash inflows and outflows, forecast upcoming needs and identify possible shortages before they disrupt operations.", ["What funds are available now across cash and operating accounts?", "Which receipts and payments are expected and when?", "Can the organisation meet payroll, supplier, customer and repayment obligations on time?", "How would a delayed settlement or unexpected expense affect the cash position?"]),
+        topic("Budgeting and financial planning", "Use realistic budgets and spending plans to set expectations, allocate resources and compare actual performance against approved plans.", ["Are assumptions and planning periods clearly documented?", "Which costs are fixed, variable or sensitive to transaction volume?", "Where do actual results differ materially from the budget?", "What corrective action is appropriate and who is responsible?"]),
+      ]},
+      { title: "Financial records and reporting", description: "Maintain records that can be checked, explained and used to support responsible financial decisions.", items: [
+        topic("Financial recordkeeping and documentation", "Organise transaction references, receipts, invoices, statements, approvals and supporting documents so that each reported amount can be checked.", ["Is each record complete, dated and linked to a source transaction?", "Are corrections and adjustments traceable to the original entry?", "Who can access, amend and retain the records?", "How long should different records be retained under applicable rules?"]),
+        topic("Daily financial reports and statements", "Understand daily transaction summaries, cash positions, settlement reports, account statements and exception reports used to review operations.", ["Does the report state its period, scope and source?", "Are totals separated by branch, agent, channel or account where necessary?", "Are pending items and unresolved differences visible?", "Can the report be reconciled to underlying transaction records?"]),
+        topic("Financial statements and management reporting", "Learn how income and expense summaries, balance information and cash-flow reports provide different views of financial performance and position.", ["What period does the report cover and what accounting basis is used?", "Does a surplus or profit correspond to cash actually available?", "Are assets, liabilities, income and expenses classified consistently?", "Which limitations or missing records should accompany the report?"]),
+        topic("Financial performance indicators", "Understand measures such as income and expense trends, liquidity, operating costs, repayment performance, arrears and transaction volumes without treating one metric as a complete picture.", ["Is the measure clearly defined and consistently calculated?", "Does it compare similar periods, products and service points?", "What underlying factors explain a change in the metric?", "Could the indicator create a misleading impression when viewed alone?"]),
+      ]},
+      { title: "Controls, risk and institutional oversight", description: "Protect funds and records through clear authority, review, accountability and appropriate regulatory awareness.", items: [
+        topic("Approvals and separation of financial duties", "Understand why transaction initiation, verification, approval, payment and reconciliation should be assigned carefully, especially for sensitive or high-value actions.", ["Who may initiate, verify and approve a transaction?", "Are approval limits appropriate to value and risk?", "Can a person approve their own transaction without independent review?", "Are overrides and emergency approvals documented?"]),
+        topic("Fraud indicators and irregular transaction review", "Recognise why duplicate payments, unusual transaction patterns, unexplained reversals, altered records and unexplained cash differences require careful review and documented escalation.", ["What makes the activity unusual compared with the expected process?", "Can the original evidence and transaction history be preserved?", "Who is authorised to investigate and escalate the concern?", "Has the issue been resolved, referred or left open with a clear owner?"]),
+        topic("Loan portfolio and arrears monitoring", "Understand how institutions review outstanding loan balances, scheduled repayments, arrears, rescheduling, concentration and portfolio quality over time.", ["What proportion of the portfolio is current or overdue?", "Are arrears grouped consistently by age and product?", "Are rescheduled loans reported separately?", "What evidence supports the explanation for changes in portfolio quality?"]),
+        topic("Regulatory records and financial reporting obligations", "Understand why regulated financial organisations maintain accurate records, follow reporting calendars and confirm obligations with the relevant supervisory authority.", ["Which regulator and rules apply to the institution and its activities?", "What reports, formats and deadlines are prescribed?", "Are reported figures supported by reconciled records?", "Who reviews updates to applicable regulatory requirements?"]),
+        topic("Customer information, permissions and audit trails", "Protect customer and member information through controlled access, secure record handling, traceable changes and clear responsibilities for data use.", ["Which staff roles need access to each type of information?", "Are access changes made promptly when responsibilities change?", "Can the organisation identify who viewed or changed a sensitive record?", "Are privacy, retention and security obligations documented?"]),
+      ]},
+    ],
+    sources: [
+      { name: "Bank of Ghana", scope: "Financial-sector supervision, payment systems and notices for regulated institutions and payment service providers", type: "Official national regulator", url: "https://www.bog.gov.gh/" },
+      { name: "Ghana Financial Intelligence Centre", scope: "Anti-money-laundering and counter-terrorist-financing guidance and reporting information", type: "Official national authority", url: "https://fic.gov.gh/" },
+      { name: "CGAP", scope: "Research and practical guidance on financial inclusion, microfinance and digital financial services", type: "International development research centre", url: "https://www.cgap.org/" },
+      { name: "IFRS for SMEs", scope: "Financial reporting requirements designed for eligible small and medium-sized entities", type: "Official international accounting standard", url: "https://www.ifrs.org/issued-standards/ifrs-for-smes/" },
+    ],
+    product: { label: "Explore Sikasɛm", href: "/explainer/sikasem", description: "Continue to Sikasɛm to learn about transaction monitoring and financial operations for financial service providers." },
+  },
     slug: "agriculture-climate-intelligence", title: "Agriculture and Climate Intelligence", icon: Sprout,
     summary: "Understand local weather, seasonal climate risks, land and water conditions, crop suitability, satellite observations, farm operations, agricultural logistics and markets.",
     purpose: "Agriculture is shaped by decisions that are connected: where to farm, what to grow, when to plant, how to manage water and inputs, how to recognise field risks, and how to store, move and sell produce. This area explains how weather observations, forecasts, long-term climate patterns, land characteristics, field records, remote-sensing indicators and market information can support those decisions. Every dataset has limits: a forecast is not an observation, a satellite signal is not a field diagnosis, and regional averages do not replace local knowledge or inspection.",
@@ -323,6 +376,30 @@ function normalise(value: string) {
 }
 
 const SEARCH_STOP_WORDS = new Set(["a", "an", "and", "are", "as", "at", "can", "do", "does", "for", "from", "how", "i", "in", "is", "it", "of", "on", "or", "the", "to", "what", "when", "where", "which", "who", "why", "with"]);
+const FINANCIAL_SEARCH_TERMS: Record<string, string> = {
+  "financial-transactions-and-monitoring": "transaction monitoring transaction history deposits withdrawals transfers collections disbursements pending completed failed reversed duplicate transaction reference",
+  "mobile-money-agent-transactions-and-float-management": "momo mobile money agent cash float electronic float cash in cash out commissions settlement vendor balances",
+  "microcredit-disbursements-and-repayment-tracking": "microcredit micro loan disbursement repayment instalment schedule arrears overdue loan balance collections",
+  "savings-contributions-and-member-accounts": "savings deposits contributions susu member account withdrawals payouts account statement",
+  "branch-agent-and-service-point-monitoring": "branch monitoring agent oversight teller service point field collector transaction volume daily close",
+  "payment-channels-and-transaction-processing": "payments cash mobile money bank transfer card cheque payment provider processing transaction channel",
+  "transaction-reconciliation-and-settlement": "reconciliation settlement bank statement momo report provider settlement fees reversal pending variance",
+  "account-balances-and-ledger-management": "account balance ledger debit credit opening balance closing balance running balance statement subledger",
+  "cash-handling-and-daily-balancing": "cash handling float cash count daily balancing cashbook teller vault cash custody handover shortage overage",
+  "business-income-and-revenue-records": "income revenue sales fees commissions service charge interest receipts money received turnover earnings",
+  "business-expenses-and-cost-control": "expenses expenditure costs operating costs purchases bills invoices receipts spending cost control",
+  "cash-flow-management-and-liquidity": "cash flow liquidity inflow outflow cash forecast working capital funds available cash shortage obligations",
+  "budgeting-and-financial-planning": "budget budgeting financial plan forecast budget variance actual versus budget financial planning",
+  "financial-recordkeeping-and-documentation": "financial records recordkeeping receipts invoices statements audit trail supporting documents transaction documentation",
+  "daily-financial-reports-and-statements": "daily report financial summary transaction summary cash position settlement report account statement exception report",
+  "financial-statements-and-management-reporting": "financial statement income statement balance sheet cash flow report management reporting accounts",
+  "financial-performance-indicators": "financial KPI indicators liquidity operating cost income expense trends repayment performance arrears portfolio performance",
+  "approvals-and-separation-of-financial-duties": "transaction approval authorisation maker checker dual control separation of duties payment approval limits",
+  "fraud-indicators-and-irregular-transaction-review": "fraud irregular transaction suspicious activity duplicate payment reversal altered records cash discrepancy investigation",
+  "loan-portfolio-and-arrears-monitoring": "loan portfolio arrears portfolio quality non performing loans repayment performance overdue aging rescheduled loan",
+  "regulatory-records-and-financial-reporting-obligations": "regulatory reporting compliance central bank supervisor regulator financial returns reporting deadline institution",
+  "customer-information-permissions-and-audit-trails": "customer data privacy permissions access control user roles audit logs transaction history data protection",
+};
 const BUSINESS_SEARCH_TERMS: Record<string, string> = {
   "inventory-and-stock-records": "stock register stock ledger stock balance stock movement goods received dispatch stock control storekeeping",
   "product-catalogues-and-stock-classification": "SKU barcode product code item master product catalogue product category variant unit of measure UOM duplicate item",
@@ -949,7 +1026,7 @@ export default function InfoDiscoveryPage() {
     ...allTopics(category).map(item => ({
       kind: "topic" as const,
       label: item.title,
-      detail: [item.section, item.description, item.questions.join(" "), category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : "", category.slug === "agriculture-climate-intelligence" ? AGRICULTURE_SEARCH_TERMS[item.slug] || "" : "", category.slug === "travel-destination" ? TRAVEL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "operational-intelligence" ? OPERATIONAL_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
+      detail: [item.section, item.description, item.questions.join(" "), category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : "", category.slug === "agriculture-climate-intelligence" ? AGRICULTURE_SEARCH_TERMS[item.slug] || "" : "", category.slug === "travel-destination" ? TRAVEL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "operational-intelligence" ? OPERATIONAL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "financial-operations" ? FINANCIAL_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
       category,
       slug: item.slug,
     })),
@@ -1159,20 +1236,22 @@ export default function InfoDiscoveryPage() {
         </section>
       )}
 
-      {selected?.slug === "business-management" && selected.product && (
+      {!selectedTopic && selected?.slug === "business-management" && selected.product && (
         <InventraSpotlight product={selected.product} />
       )}
 
-      {selected?.slug === "agriculture-climate-intelligence" && selected.product && (
+      {!selectedTopic && selected?.slug === "agriculture-climate-intelligence" && selected.product && (
         <AgroClimateSpotlight product={selected.product} />
       )}
-      {selected?.slug === "it-innovation" && selected.product && (
+      {!selectedTopic && selected?.slug === "it-innovation" && selected.product && (
         <DataLensSpotlight product={selected.product} />
       )}
       {selectedTopic && selected?.slug === "business-management" && selected.product && <InventraSpotlight product={selected.product} />}
       {selectedTopic && selected?.slug === "agriculture-climate-intelligence" && selected.product && <AgroClimateSpotlight product={selected.product} />}
       {selectedTopic && selected?.slug === "it-innovation" && selected.product && <DataLensSpotlight product={selected.product} />}
-      {selectedTopic && selected?.product && !["business-management","agriculture-climate-intelligence","it-innovation","career-development-education"].includes(selected.slug) && <ProductConnection product={selected.product} />}
+      {!selectedTopic && selected?.slug === "financial-operations" && selected.product && <SikasemSpotlight product={selected.product} />}
+      {selectedTopic && selected?.slug === "financial-operations" && selected.product && <SikasemSpotlight product={selected.product} />}
+      {selectedTopic && selected?.product && !["business-management","agriculture-climate-intelligence","it-innovation","financial-operations","career-development-education"].includes(selected.slug) && <ProductConnection product={selected.product} />}
 
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="space-y-5">
@@ -1191,7 +1270,7 @@ export default function InfoDiscoveryPage() {
               </Button>
             </div>
             <nav className="space-y-1">
-              <button onClick={() => navigate("/info-discovery")} className={"flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm " + (!selected ? "bg-accent/15 font-semibold text-foreground shadow-[inset_3px_0_0_hsl(var(--accent))]" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>All areas <span className="text-xs">06</span></button>
+              <button onClick={() => navigate("/info-discovery")} className={"flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm " + (!selected ? "bg-accent/15 font-semibold text-foreground shadow-[inset_3px_0_0_hsl(var(--accent))]" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>All areas <span className="text-xs">{String(categories.length).padStart(2, "0")}</span></button>
               {categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className={"flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm " + (selected?.slug === category.slug ? "bg-accent/15 font-semibold text-foreground shadow-[inset_3px_0_0_hsl(var(--accent))]" : "text-muted-foreground hover:bg-muted hover:text-foreground")}><category.icon className="h-4 w-4 shrink-0" /><span>{category.title}</span></button>)}
             </nav>
           </div>
@@ -1398,7 +1477,7 @@ export default function InfoDiscoveryPage() {
               onClearRecent={onClearRecent}
             />
 
-            <div><div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Explore the six areas</h2><p className="mt-1 text-sm text-muted-foreground">Start with a clear overview, explore the questions that matter and find the right service for the next step.</p></div><Badge variant="outline">6 areas</Badge></div>
+            <div><div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Explore the seven areas</h2><p className="mt-1 text-sm text-muted-foreground">Start with a clear overview, explore the questions that matter and find the right service for the next step.</p></div><Badge variant="outline">7 areas</Badge></div>
               <div className="grid gap-4 md:grid-cols-2">{categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className="group flex h-full flex-col rounded-2xl border border-t-4 border-t-accent/70 border-border bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-xl"><div className="mb-4 flex items-start justify-between"><span className="rounded-xl border border-primary/10 bg-primary/10 p-3 text-primary"><category.icon className="h-6 w-6" /></span><ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary" /></div><h3 className="text-lg font-semibold">{category.title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{category.summary}</p><div className="mt-4 flex flex-wrap gap-1.5">{category.sections.slice(0, 3).map(section => <span key={section.title} className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{section.title}</span>)}</div><div className="mt-4 flex items-center border-t border-border pt-3 text-xs font-semibold text-primary">Open subject menu <ChevronRight className="ml-1 h-4 w-4" /></div></button>)}</div>
             </div>
             <ResearchPanel />
@@ -1423,21 +1502,47 @@ export default function InfoDiscoveryPage() {
 
 function DataLensSpotlight({ product }: { product: ProductLink }) {
   const capabilities = [
-    { icon: BarChart3, title: "Business performance", description: "Understand performance through structured indicators and reports.", edge: "border-t-4 border-t-primary" },
-    { icon: Compass, title: "Explore patterns", description: "Examine trends, relationships and changes across business information.", edge: "border-r-4 border-r-accent" },
-    { icon: BookOpen, title: "Evidence-led decisions", description: "Bring context to figures and understand what the available data supports.", edge: "border-b-4 border-b-success/75" },
-    { icon: Package, title: "Operational visibility", description: "Connect business activity with the measures that matter to management.", edge: "border-l-4 border-l-primary/70" },
+    { icon: Laptop, title: "Website and application services", description: "Plan, build, maintain and improve websites and digital applications.", edge: "border-t-4 border-t-primary" },
+    { icon: Code, title: "Software development", description: "Develop tailored software, mobile applications and system integrations.", edge: "border-r-4 border-r-accent" },
+    { icon: Server, title: "Cloud and infrastructure", description: "Configure hosting, servers, deployment, backups and service continuity.", edge: "border-b-4 border-b-success/75" },
+    { icon: Wrench, title: "IT support and troubleshooting", description: "Resolve technical issues and support devices, accounts, networks and business email.", edge: "border-l-4 border-l-primary/70" },
+    { icon: Database, title: "Database and data management", description: "Design, maintain, migrate, secure and optimise organisational data systems.", edge: "border-t-4 border-t-accent" },
+    { icon: ShieldCheck, title: "Cybersecurity and protection", description: "Improve access controls, technical safeguards, updates and recovery readiness.", edge: "border-r-4 border-r-success/75" },
   ];
-  return <section aria-label="Explore DataLens" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
+  return <section aria-label="Explore DataLens IT services" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
     <div className="overflow-hidden rounded-3xl border border-accent/30 bg-card shadow-md">
       <div className="grid gap-6 border-t-4 border-t-accent p-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-8 md:p-8">
         <div className="flex flex-col items-start justify-center">
-          <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent"><BarChart3 className="h-3.5 w-3.5" /> Amineva intelligence platform</span>
-          <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">Turn business information into clearer decisions.</h2>
-          <p className="mt-4 text-sm leading-7 text-muted-foreground">DataLens is the next step for organisations that need to look beyond individual records and understand what their business information is showing. Explore performance, identify patterns, review indicators and bring greater structure to management decisions.</p>
-          <p className="mt-3 text-sm leading-7 text-muted-foreground">The Info Discovery guides introduce the concepts. DataLens is where visitors can continue to the platform and explore the available business intelligence capabilities in greater depth.</p>
+          <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent"><Wrench className="h-3.5 w-3.5" /> Professional IT services</span>
+          <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">Practical technology services for dependable operations.</h2>
+          <p className="mt-4 text-sm leading-7 text-muted-foreground">DataLens brings together professional IT services covering website and application maintenance, custom software development, cloud infrastructure and deployment, technical support, database management and system integration.</p>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">Use these guides to understand your organisation's technology needs, ask better questions and plan the right level of technical support. Continue to DataLens to review the services and request assistance.</p>
           <a href={product.href} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">{product.label} <ArrowUpRight className="h-4 w-4" /></a>
-          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">Continue to DataLens to explore the platform and registration options.</p>
+          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">Continue to DataLens for professional IT service information and enquiries.</p>
+        </div>
+        <div className="grid gap-3 sm:grid-cols-2">{capabilities.map(item => <article key={item.title} className={"rounded-2xl border border-border bg-background/70 p-4 transition hover:-translate-y-0.5 hover:shadow-md " + item.edge}><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-primary"><item.icon className="h-4 w-4" /></div><h3 className="mt-3 text-sm font-semibold text-foreground">{item.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p></article>)}</div>
+      </div>
+    </div>
+  </section>;
+}
+
+function SikasemSpotlight({ product }: { product: ProductLink }) {
+  const capabilities = [
+    { icon: Wallet, title: "Transaction monitoring", description: "Understand transaction activity across financial service operations and service points.", edge: "border-t-4 border-t-primary" },
+    { icon: CreditCard, title: "Payments and settlement", description: "Review payment channels, settlement records, reversals and reconciliation.", edge: "border-r-4 border-r-accent" },
+    { icon: Landmark, title: "Accounts and financial records", description: "Keep account activity, balances and supporting transaction records clear.", edge: "border-b-4 border-b-success/75" },
+    { icon: BarChart3, title: "Financial reporting", description: "Use clear summaries to review activity, outstanding items and operational performance.", edge: "border-l-4 border-l-primary/70" },
+  ];
+  return <section aria-label="Explore Sikasɛm Financial Operations" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
+    <div className="overflow-hidden rounded-3xl border border-accent/30 bg-card shadow-md">
+      <div className="grid gap-6 border-t-4 border-t-accent p-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-8 md:p-8">
+        <div className="flex flex-col items-start justify-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent"><Wallet className="h-3.5 w-3.5" /> Financial operations</span>
+          <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">Make financial activity easier to monitor and understand.</h2>
+          <p className="mt-4 text-sm leading-7 text-muted-foreground">Financial service operations depend on accurate transaction records and clear oversight. Sikasɛm is relevant to mobile money vendors, microfinance and microcredit providers, savings and loans operators, rural banks and similar financial networks that need visibility into the transactions moving through their operations.</p>
+          <p className="mt-3 text-sm leading-7 text-muted-foreground">These guides also explain the wider principles of income and expense records, payments, cash flow, account balances and financial reporting. Explore Sikasɛm to learn more about the platform's financial transaction monitoring focus.</p>
+          <Link to={product.href} className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">{product.label} <ArrowUpRight className="h-4 w-4" /></Link>
+          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">Continue to the Sikasɛm overview and platform information.</p>
         </div>
         <div className="grid gap-3 sm:grid-cols-2">{capabilities.map(item => <article key={item.title} className={"rounded-2xl border border-border bg-background/70 p-4 transition hover:-translate-y-0.5 hover:shadow-md " + item.edge}><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-primary"><item.icon className="h-4 w-4" /></div><h3 className="mt-3 text-sm font-semibold text-foreground">{item.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p></article>)}</div>
       </div>
