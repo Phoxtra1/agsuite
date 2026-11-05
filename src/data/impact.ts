@@ -163,6 +163,24 @@ export const SCHOOL_ACTIVITY_IMAGES: MediaItem[] = [
     altText:
       "Students and facilitators during an Amineva Impact career mentorship session.",
   },
+  {
+    type: "image",
+    url: "/images/impact/impact-school-computer-session.webp",
+    title: "Digital Learning & Computer Exposure",
+    caption:
+      "Learners gathered with facilitators and computer equipment during a school-based educational engagement.",
+    altText:
+      "School learners standing with facilitators and computer equipment during an educational engagement.",
+  },
+  {
+    type: "image",
+    url: "/images/impact/impact-school-engagement.webp",
+    title: "Classroom Engagement & Learner Participation",
+    caption:
+      "A facilitator and learners share a moment during a classroom engagement, with classmates gathered in the room.",
+    altText:
+      "A facilitator and two learners in the foreground during a classroom engagement, with other students seated behind them.",
+  },
 ];
 
 export const INITIATIVES: Initiative[] = [
