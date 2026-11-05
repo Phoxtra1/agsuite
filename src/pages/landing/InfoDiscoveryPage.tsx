@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
   ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness,
-  Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink, FileCheck2,
+  Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink,
   ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass,
   AlertTriangle, Info, ArrowUpRight, Lightbulb, Bookmark, BookmarkCheck,
   Printer, Download, FolderPlus,
@@ -24,7 +24,6 @@ import {
   type SavedTopicItem,
   type RecentTopicItem,
 } from "@/lib/infoDiscovery/savedTopics";
-import { GeneralSearchAnswer } from "@/components/infoDiscovery/GeneralSearchAnswer";
 import { AskTopicPanel } from "@/components/infoDiscovery/AskTopicPanel";
 import { VisaChecker } from "@/components/infoDiscovery/VisaChecker";
 import { SavedTopicsDrawer } from "@/components/infoDiscovery/SavedTopicsDrawer";
@@ -204,7 +203,7 @@ const categories: Category[] = [
   {
     slug: "operational-intelligence", title: "Operational Intelligence", icon: ShieldCheck,
     summary: "Establish what is happening across an organisation by connecting processes, records, evidence, exceptions and outcomes.",
-    purpose: "Organisations often hold fragmented records across people, documents and separate systems. Operational Truth Infrastructure is a way to establish what is known, what conflicts, what remains unverified, what needs attention and whether agreed actions produced the intended result. It depends on authorised access to relevant evidence; it does not infer truth from an AI answer alone.",
+    purpose: "Organisations often hold fragmented records across people, documents and separate systems. Operational Truth Infrastructure is a way to establish what is known, what conflicts, what remains unverified, what needs attention and whether agreed actions produced the intended result. It depends on authorised access to relevant evidence; no automated summary can replace original records, accountable review and independent verification.",
     sections: [
       { title: "Operational Truth Infrastructure", description: "Five connected capabilities for examining the reality of organisational activity.", items: [
         topic("Reality Mapping", "Create a structured picture of processes, systems, records, activities, responsibilities, dependencies and relationships.", ["Which process is being examined?", "Which people, systems and records participate?", "Where are the hand-offs, dependencies and control points?"]),
@@ -228,7 +227,7 @@ const categories: Category[] = [
 ];
 
 const HERO_SCENES = [
-  { label: "Knowledge", line: "Find clear, detailed explanations on any subject, question or idea.", bg: "radial-gradient(circle at 20% 30%, hsl(var(--accent) / 0.35), transparent 55%), linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))" },
+  { label: "Knowledge", line: "Explore the subjects, evidence and decisions that shape education, work, organisations and everyday life.", bg: "radial-gradient(circle at 20% 30%, hsl(var(--accent) / 0.35), transparent 55%), linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))" },
   { label: "World & places", line: "Learn about countries, cultures, history and how the world works.", bg: "radial-gradient(circle at 80% 20%, hsl(var(--accent) / 0.3), transparent 50%), linear-gradient(200deg, hsl(var(--primary) / 0.9), hsl(var(--primary)))" },
   { label: "Science & technology", line: "Explore discoveries, inventions and the ideas shaping tomorrow.", bg: "radial-gradient(circle at 50% 100%, hsl(var(--accent) / 0.3), transparent 55%), linear-gradient(160deg, hsl(var(--primary)), hsl(var(--primary) / 0.8))" },
   { label: "People & society", line: "Understand economies, communities, health and everyday life.", bg: "radial-gradient(circle at 10% 90%, hsl(var(--accent) / 0.35), transparent 50%), linear-gradient(110deg, hsl(var(--primary) / 0.85), hsl(var(--primary)))" },
@@ -238,8 +237,10 @@ function slugify(value: string) {
   return value.toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 }
 function normalise(value: string) {
-  return value.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+  return value.toLocaleLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "").replace(/[^a-z0-9]+/g, " ").trim();
 }
+
+const SEARCH_STOP_WORDS = new Set(["a", "an", "and", "are", "as", "at", "can", "do", "does", "for", "from", "how", "i", "in", "is", "it", "of", "on", "or", "the", "to", "what", "when", "where", "which", "who", "why", "with"]);
 function allTopics(category: Category) {
   return category.sections.flatMap(section => section.items.map(item => ({ ...item, section: section.title, slug: slugify(item.title) })));
 }
@@ -715,22 +716,6 @@ function ClimateExplorer() {
   );
 }
 
-function SourceDirectory({ sources }: { sources: Source[] }) {
-  return <section className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-6">
-    <div className="flex items-center justify-between gap-3"><div><div className="flex items-center gap-2 text-sm font-semibold"><FileCheck2 className="h-4 w-4 text-accent" /> Source directory</div><p className="mt-1 text-xs text-muted-foreground">Start with the source that has authority over the question.</p></div><Badge variant="outline">{sources.length} sources</Badge></div>
-    <div className="mt-4 grid gap-3 md:grid-cols-2">
-      {sources.map(source => <article key={source.name} className="rounded-xl border border-border p-4">
-        <h3 className="text-sm font-semibold">{source.name}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{source.scope}</p>
-        <div className="mt-3 flex items-center justify-between gap-2"><span className="text-[10px] text-muted-foreground">{source.type}</span><a href={source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">Open source <ExternalLink className="h-3 w-3" /></a></div>
-      </article>)}
-    </div>
-    <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
-      <p className="text-xs font-semibold text-foreground">How to use this directory</p>
-      <p className="mt-1 text-[11px] leading-5 text-muted-foreground">These are starting points, not a claim that every linked page or dataset has been checked for the current question. Match the source to the claim: use the responsible government authority for current law and entry rules; the originating statistical agency for official national statistics; and the named research publisher or repository for a publication. Confirm the exact jurisdiction, population, reference period, definition, methodology and revision date before relying on a figure. A source's institutional authority does not make every third-party interpretation of its data authoritative.</p>
-    </div>
-  </section>;
-}
-
 export default function InfoDiscoveryPage() {
   const { categorySlug, topicSlug } = useParams<{ categorySlug?: string; topicSlug?: string }>();
   const navigate = useNavigate();
@@ -738,7 +723,6 @@ export default function InfoDiscoveryPage() {
   const [topicFilter, setTopicFilter] = useState("");
   const [sectionFilter, setSectionFilter] = useState("all");
   const [showSuggestions, setShowSuggestions] = useState(false);
-  const [generalQuery, setGeneralQuery] = useState("");
   const heroIndex = 0;
   const [savedDrawerOpen, setSavedDrawerOpen] = useState(false);
   const [savedTopicsList, setSavedTopicsList] = useState<SavedTopicItem[]>(() => getSavedTopics());
@@ -770,18 +754,57 @@ export default function InfoDiscoveryPage() {
   const filteredSections = useMemo(() => selected?.sections.map(section => ({ ...section, items: section.items.filter(item => (sectionFilter === "all" || section.title === sectionFilter) && normalise([item.title, item.description, ...item.questions].join(" ")).includes(normalise(topicFilter.trim()))) })).filter(section => section.items.length > 0) || [], [selected, sectionFilter, topicFilter]);
   const searchIndex = useMemo(() => categories.flatMap(category => [
     { kind: "area" as const, label: category.title, detail: category.summary, category, slug: category.slug },
-    ...allTopics(category).map(item => ({ kind: "topic" as const, label: item.title, detail: item.section + " · " + item.description, category, slug: item.slug })),
+    ...allTopics(category).map(item => ({ kind: "topic" as const, label: item.title, detail: item.section + " · " + item.description + " · " + item.questions.join(" "), category, slug: item.slug })),
   ]), []);
   const searchResults = useMemo(() => {
     const clean = normalise(query.trim());
     if (!clean) return [];
-    return searchIndex.filter(item => normalise([item.label, item.detail, item.category.title].join(" ")).includes(clean)).slice(0, 12);
+    const terms = clean.split(/\s+/).filter(term => term.length > 1 && !SEARCH_STOP_WORDS.has(term));
+    const lookupTerms = terms.length ? terms : [clean];
+    return searchIndex
+      .map(item => {
+        const title = normalise(item.label);
+        const searchable = normalise([item.label, item.detail, item.category.title].join(" "));
+        const matchedTerms = lookupTerms.filter(term => searchable.includes(term)).length;
+        const titleScore = title === clean ? 100 : title.startsWith(clean) ? 60 : title.includes(clean) ? 40 : 0;
+        return { item, score: titleScore + matchedTerms * 10, matchedTerms };
+      })
+      .filter(result => result.matchedTerms === lookupTerms.length)
+      .sort((a, b) => b.score - a.score)
+      .slice(0, 10)
+      .map(result => result.item);
   }, [query, searchIndex]);
 
   const goToCategory = (slug: string) => { const category = categories.find(item => item.slug === slug); if (category) { recordRecentTopic({ categorySlug: category.slug, categoryTitle: category.title, topicSlug: "__area__", topicTitle: category.title, kind: "area" }); setRecentTopicsList(getRecentTopics()); } setQuery(""); setShowSuggestions(false); navigate("/info-discovery/" + slug); };
   const goToTopic = (catSlug: string, topSlug: string) => { setQuery(""); setShowSuggestions(false); navigate("/info-discovery/" + catSlug + "/" + topSlug); };
-  const runGeneralSearch = (text: string) => { const clean = text.trim(); if (!clean) return; recordRecentSearch(clean); setRecentTopicsList(getRecentTopics()); setGeneralQuery(clean); setShowSuggestions(false); };
-  const onSearchSubmit = (event: React.FormEvent) => { event.preventDefault(); runGeneralSearch(query); };
+  const onSearchSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+    const clean = query.trim();
+    if (!clean) return;
+    recordRecentSearch(clean);
+    setRecentTopicsList(getRecentTopics());
+    setShowSuggestions(true);
+    if (searchResults.length === 1) {
+      const result = searchResults[0];
+      if (result.kind === "area") goToCategory(result.category.slug);
+      else goToTopic(result.category.slug, result.slug);
+    }
+  };
+  const onSelectRecent = (item: RecentTopicItem) => {
+    if (item.kind === "search") {
+      setQuery(item.topicTitle);
+      setShowSuggestions(true);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else if (item.kind === "area" || item.topicSlug === "__area__") {
+      goToCategory(item.categorySlug);
+    } else {
+      goToTopic(item.categorySlug, item.topicSlug);
+    }
+  };
+  const onClearRecent = () => {
+    clearRecentTopics();
+    setRecentTopicsList([]);
+  };
 
   const isCurrentSaved = selected && selectedTopic ? isTopicSaved(selected.slug, selectedTopic.slug) : false;
 
@@ -871,21 +894,20 @@ export default function InfoDiscoveryPage() {
           </div>
           <div className="mx-auto max-w-3xl text-center">
             <div className="mb-3 inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-wide"><Globe2 className="h-3.5 w-3.5 text-accent" /> {HERO_SCENES[heroIndex].label}</div>
-            <h1 className="text-3xl font-bold tracking-tight md:text-5xl">{selectedTopic ? selectedTopic.title : selected ? selected.title : "Search anything. Understand everything."}</h1>
+            <h1 className="text-3xl font-bold tracking-tight md:text-5xl">{selectedTopic ? selectedTopic.title : selected ? selected.title : "Understand what matters. Know where to go next."}</h1>
             <p className="mx-auto mt-3 max-w-2xl text-sm leading-7 text-primary-foreground/80 md:text-base">{selectedTopic ? selectedTopic.description : selected ? selected.summary : HERO_SCENES[heroIndex].line}</p>
           </div>
           <div className="relative z-40 mx-auto mt-7 max-w-3xl">
             <form onSubmit={onSearchSubmit} className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-2 text-foreground shadow-xl sm:flex-row sm:items-center">
-              <div className="flex min-w-0 flex-1 items-center gap-3 px-3"><Search className="h-5 w-5 shrink-0 text-muted-foreground" /><Input value={query} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setQuery(e.target.value); setShowSuggestions(true); }} onFocus={() => setShowSuggestions(true)} onBlur={() => window.setTimeout(() => setShowSuggestions(false), 160)} placeholder="What would you like to know?" className="h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" aria-label="Search information discovery" /></div>
+              <div className="flex min-w-0 flex-1 items-center gap-3 px-3"><Search className="h-5 w-5 shrink-0 text-muted-foreground" /><Input value={query} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setQuery(e.target.value); setShowSuggestions(true); }} onFocus={() => setShowSuggestions(true)} onBlur={() => window.setTimeout(() => setShowSuggestions(false), 160)} placeholder="Search topics and subject areas" className="h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" aria-label="Search information discovery" /></div>
               <Button type="submit" className="h-11 bg-accent px-6 text-accent-foreground hover:bg-accent/90" disabled={!query.trim()}>Search <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </form>
-            {showSuggestions && query.trim() && <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-96 overflow-y-auto rounded-xl border border-border bg-card p-2 text-left text-foreground shadow-2xl">
-              <button type="button" onMouseDown={e => e.preventDefault()} onClick={() => runGeneralSearch(query)} className="flex w-full items-center gap-3 rounded-lg p-3 text-left hover:bg-muted">
-                <span className="rounded-lg bg-accent/15 p-2 text-accent"><Search className="h-4 w-4" /></span><span className="text-sm font-medium">Search for “{query.trim()}”</span>
-              </button>
-              {searchResults.map((result, index) => <button key={result.category.slug + result.slug + index} type="button" onMouseDown={e => e.preventDefault()} onClick={() => result.kind === "area" ? goToCategory(result.category.slug) : goToTopic(result.category.slug, result.slug)} className="flex w-full items-start gap-3 rounded-lg p-3 text-left hover:bg-muted">
-                <span className="mt-0.5 rounded-lg bg-accent/15 p-2 text-accent">{result.kind === "area" ? <result.category.icon className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />}</span><span className="min-w-0 flex-1"><span className="block text-sm font-medium">{result.label}</span><span className="mt-0.5 block text-xs text-muted-foreground">{result.category.title}{result.kind === "topic" ? " · " + result.detail.split(" · ")[0] : ""}</span></span><ChevronRight className="mt-1 h-4 w-4 text-muted-foreground" />
-              </button>)}
+            <p className="mt-2 text-center text-[11px] text-primary-foreground/70">Search results come from the subjects and guides published in Info Discovery.</p>
+            {showSuggestions && query.trim() && <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-96 overflow-y-auto rounded-2xl border border-border bg-card p-2 text-left text-foreground shadow-2xl">
+              <p className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Matching areas and topics</p>
+              {searchResults.length > 0 ? searchResults.map((result, index) => <button key={result.category.slug + result.slug + index} type="button" onMouseDown={e => e.preventDefault()} onClick={() => result.kind === "area" ? goToCategory(result.category.slug) : goToTopic(result.category.slug, result.slug)} className="group flex w-full items-start gap-3 rounded-xl p-3 text-left transition hover:bg-accent/5">
+                <span className="mt-0.5 rounded-xl border border-accent/20 bg-accent/10 p-2 text-accent">{result.kind === "area" ? <result.category.icon className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />}</span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold group-hover:text-primary">{result.label}</span><span className="mt-0.5 block text-xs text-muted-foreground">{result.category.title}{result.kind === "topic" ? " · " + result.detail.split(" · ")[0] : ""}</span></span><ChevronRight className="mt-1 h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5" />
+              </button>) : <div className="px-3 py-5"><p className="text-sm font-semibold text-foreground">No matching topic found.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Try a different keyword or browse one of the discovery areas below.</p></div>}
             </div>}
             
           </div>
@@ -938,8 +960,6 @@ export default function InfoDiscoveryPage() {
           </div>
         </section>
       )}
-
-      {generalQuery && <div className="mx-auto max-w-5xl px-5 pt-8 md:px-8"><GeneralSearchAnswer query={generalQuery} onClose={() => setGeneralQuery("")} /></div>}
 
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="space-y-5">
@@ -1045,7 +1065,7 @@ export default function InfoDiscoveryPage() {
               </div>
             </div>
 
-            <article ref={topicArticleRef} className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-7">
+            <article ref={topicArticleRef} className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card to-accent/[0.05] p-6 shadow-md md:p-8">
               <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-accent">
                   <Lightbulb className="h-4 w-4" /> What this topic helps you investigate
@@ -1109,7 +1129,6 @@ export default function InfoDiscoveryPage() {
             </article>
 
             <ResearchPanel initialQuery={selectedTopic.title} />
-            {selected.slug !== "career-development-education" && <SourceDirectory sources={selected.sources} />}
             {selected.slug === "travel-destination" && (
               <>
                 <CountryExplorer onCountriesLoaded={setCountryList} />
@@ -1124,15 +1143,14 @@ export default function InfoDiscoveryPage() {
           </section>}
 
           {selected && !selectedTopic && <section className="space-y-6">
-            <div className="rounded-2xl border border-border bg-gradient-to-br from-card via-card to-accent/[0.07] p-6 shadow-sm md:p-8"><div className="flex items-center gap-2 text-sm font-semibold text-accent"><selected.icon className="h-4 w-4" /> Area overview</div><p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p><div className="mt-5 flex flex-wrap gap-2"><Badge variant="outline">{allTopics(selected).length} topics</Badge><Badge variant="outline">{selected.sections.length} subject groups</Badge></div></div>
+            <div className="group relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary via-primary to-primary/90 p-6 text-primary-foreground shadow-lg shadow-primary/10 md:p-8"><div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full bg-accent/15 blur-3xl" /><div className="relative"><div className="flex items-center gap-2 text-sm font-semibold text-accent"><selected.icon className="h-4 w-4" /> Area overview</div><p className="mt-3 max-w-4xl text-sm leading-7 text-primary-foreground/80 md:text-base">{selected.purpose}</p><div className="mt-5 flex flex-wrap gap-2"><Badge variant="outline" className="border-primary-foreground/25 text-primary-foreground">{allTopics(selected).length} topics</Badge><Badge variant="outline" className="border-primary-foreground/25 text-primary-foreground">{selected.sections.length} subject groups</Badge></div></div></div>
             <div><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Subject menu</h2><p className="mt-1 text-sm text-muted-foreground">Search within this area or filter by subject group.</p></div><Badge variant="outline">{filteredSections.reduce((count, section) => count + section.items.length, 0)} matching topics</Badge></div>
               <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTopicFilter(e.target.value)} placeholder="Filter topics and questions" aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
-              {filteredSections.length ? <div className="space-y-4">{filteredSections.map(section => <section key={section.title} className="rounded-2xl border border-border bg-card p-5"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div><div className="mt-4 grid gap-2 md:grid-cols-2">{section.items.map(item => <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className="group rounded-xl border border-border bg-card p-4 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:border-accent/50 hover:bg-accent/5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span><span className="mt-2 block text-xs leading-5 text-muted-foreground">{item.description}</span></button>)}</div></section>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
+              {filteredSections.length ? <div className="space-y-4">{filteredSections.map(section => <section key={section.title} className="rounded-2xl border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md"><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div><div className="mt-4 grid gap-2 md:grid-cols-2">{section.items.map(item => <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className="group relative flex min-h-32 flex-col rounded-xl border border-border bg-background/70 p-4 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:border-accent/50 hover:bg-accent/5 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60"><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span><span className="mt-2 block flex-1 text-xs leading-5 text-muted-foreground">{item.description}</span><span className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold text-primary opacity-80 group-hover:opacity-100">Explore topic <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span></button>)}</div></section>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
             </div>
             {selected.slug === "travel-destination" && <CountryExplorer />}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
             <ResearchPanel initialQuery={selected.title} />
-            {selected.slug !== "career-development-education" && <SourceDirectory sources={selected.sources} />}
             {selected.product && selected.slug !== "career-development-education" && <ProductConnection product={selected.product} />}
             {selected.slug === "operational-intelligence" && <div className="rounded-2xl border border-border bg-muted/40 p-5"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-4 w-4 text-accent" /> Authorised evidence only</div><p className="mt-2 text-xs leading-5 text-muted-foreground">Verification and anomaly detection require approved connections to source systems, documented permissions and review controls. This public information area explains the method; it does not claim access to private organisational records.</p></div>}
           </section>}
@@ -1142,13 +1160,15 @@ export default function InfoDiscoveryPage() {
             <PopularAndRecent
               recentTopics={recentTopicsList}
               onSelectTopic={(catSlug: string, topSlug: string) => goToTopic(catSlug, topSlug)}
+              onSelectRecent={onSelectRecent}
+              onClearRecent={onClearRecent}
             />
 
-            <div><div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Explore the six areas</h2><p className="mt-1 text-sm text-muted-foreground">Each area has its own subject menu, reference sources and discovery workflow.</p></div><Badge variant="outline">6 areas</Badge></div>
+            <div><div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Explore the six areas</h2><p className="mt-1 text-sm text-muted-foreground">Start with a clear overview, explore the questions that matter and find the right service for the next step.</p></div><Badge variant="outline">6 areas</Badge></div>
               <div className="grid gap-4 md:grid-cols-2">{categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className="group flex h-full flex-col rounded-2xl border border-t-4 border-t-accent/70 border-border bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-xl"><div className="mb-4 flex items-start justify-between"><span className="rounded-xl border border-primary/10 bg-primary/10 p-3 text-primary"><category.icon className="h-6 w-6" /></span><ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary" /></div><h3 className="text-lg font-semibold">{category.title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{category.summary}</p><div className="mt-4 flex flex-wrap gap-1.5">{category.sections.slice(0, 3).map(section => <span key={section.title} className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{section.title}</span>)}</div><div className="mt-4 flex items-center border-t border-border pt-3 text-xs font-semibold text-primary">Open subject menu <ChevronRight className="ml-1 h-4 w-4" /></div></button>)}</div>
             </div>
             <ResearchPanel />
-            <div className="rounded-2xl border border-border bg-card shadow-sm p-5"><div className="flex items-start gap-3"><FileCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" /><div><h2 className="font-semibold">How information is classified</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Official records, statistical estimates, research publications, reported experiences and AI-generated interpretations are not interchangeable. Each displayed result should retain its source, update date, jurisdiction, method and verification status. The live connectors currently available here are identified on their individual panels.</p></div></div></div>
+            <div className="rounded-2xl border border-border bg-card shadow-sm p-5"><div className="flex items-start gap-3"><FileCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" /><div><h2 className="font-semibold">How information is classified</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Official records, statistical estimates, research publications, reported experiences and analytical interpretations are not interchangeable. Every important claim should be checked against its original publisher, date, jurisdiction, method and verification status.</p></div></div></div>
           </section>}
         </div>
       </div>
