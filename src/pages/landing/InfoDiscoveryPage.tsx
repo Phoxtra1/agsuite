@@ -1246,9 +1246,6 @@ export default function InfoDiscoveryPage() {
         </section>
       )}
 
-      {selected && !["career-development-education", "travel-destination"].includes(selected.slug) && (
-      )}
-
       {!selectedTopic && selected?.slug === "business-management" && selected.product && <InventraSpotlight product={selected.product} />}
       {!selectedTopic && selected?.slug === "agriculture-climate-intelligence" && selected.product && <AgroClimateSpotlight product={selected.product} />}
       {!selectedTopic && selected?.slug === "it-innovation" && selected.product && <DataLensSpotlight product={selected.product} />}
