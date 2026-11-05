@@ -8,6 +8,10 @@ import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import amvLogo from "@/assets/amv_global_logo.png";
+import discoverySearch from "@/assets/info-discovery/discovery-search.svg";
+import connectedKnowledge from "@/assets/info-discovery/connected-knowledge.svg";
+import researchInsight from "@/assets/info-discovery/research-insight.svg";
+import worldOfIdeas from "@/assets/info-discovery/world-of-ideas.svg";
 import AuthCard from "@/components/home/AuthCard";
 
 import { getProductIcon } from "@/lib/products";
@@ -406,8 +410,14 @@ export default function HomePage() {
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
                   <Search className="h-4 w-4" /> Information Discovery
                 </div>
-                <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Welcome to Amineva Global.</h1>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">A place to explore ideas, find answers and get things done — whenever curiosity calls.</p>
+                <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Find the information. Understand the bigger picture.</h1>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">Explore questions, connect ideas and examine information from different perspectives. Move beyond quick answers to clearer understanding, useful insight and better-informed decisions.</p>
+                <div className="mt-6 grid grid-cols-2 gap-3" aria-label="Information discovery artwork">
+                  <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={discoverySearch} alt="A magnifying glass exploring information" className="block h-auto w-full" loading="eager" /></div>
+                  <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={connectedKnowledge} alt="Connected ideas and knowledge" className="block h-auto w-full" loading="lazy" /></div>
+                  <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={researchInsight} alt="Research and evidence" className="block h-auto w-full" loading="lazy" /></div>
+                  <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={worldOfIdeas} alt="A connected world of ideas" className="block h-auto w-full" loading="lazy" /></div>
+                </div>
                 <button type="button" onClick={() => navigate("/info-discovery")} className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
                   Explore Info Discovery <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
