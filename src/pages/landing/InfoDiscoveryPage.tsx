@@ -4,9 +4,8 @@ import {
   ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness,
   Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink,
   ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass,
-  Package, Warehouse, ArrowUpRight,
-  Package, ShoppingCart, BarChart3, Users, Warehouse, Store,
-  AlertTriangle, Info, ArrowUpRight, Lightbulb, Bookmark, BookmarkCheck,
+  Package, Warehouse, ArrowUpRight, ShoppingCart, BarChart3, Users, Store,
+  AlertTriangle, Info, Lightbulb, Bookmark, BookmarkCheck,
   Printer, Download, FolderPlus,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -307,7 +306,9 @@ const BUSINESS_SEARCH_TERMS: Record<string, string> = {
   "business-records-access-and-audit-trails": "audit log audit trail user activity history record changes permissions data access backup retention",
   "operational-efficiency-and-process-improvement": "workflow process mapping bottleneck delays productivity operating procedure SOP error reduction process improvement",
   "business-performance-indicators-and-kpis": "KPI dashboard key performance indicator stock turnover inventory turnover sales growth gross margin order fulfilment",
-  "management-reports-and-business-decisions": "management dashboard business reporting monthly report variance analysis budget versus actual decision support"
+  "management-reports-and-business-decisions": "management dashboard business reporting monthly report variance analysis budget versus actual decision support",
+};
+const AGRICULTURE_SEARCH_TERMS: Record<string, string> = {
   "local-weather-observations-and-forecasts": "weather forecast rain forecast temperature humidity wind hourly weather local forecast farm weather meteo",
   "rainfall-patterns-and-water-availability": "rainfall rain distribution dry spell water access runoff waterlogging irrigation rainfall total",
   "temperature-humidity-and-growing-conditions": "heat stress humidity temperature range microclimate crop conditions animal comfort",
@@ -335,6 +336,7 @@ const BUSINESS_SEARCH_TERMS: Record<string, string> = {
   "farm-revenue-margins-and-profitability": "farm revenue farm income gross margin net profit yield revenue production economics",
   "agricultural-records-and-decision-reporting": "farm dashboard farm reports yield records production reporting harvest report farm performance",
 };
+
 function allTopics(category: Category) {
   return category.sections.flatMap(section => section.items.map(item => ({ ...item, section: section.title, slug: slugify(item.title) })));
 }
@@ -851,7 +853,7 @@ export default function InfoDiscoveryPage() {
     ...allTopics(category).map(item => ({
       kind: "topic" as const,
       label: item.title,
-      detail: [item.section, item.description, item.questions.join(" "), category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : "", category.slug === "agriculture-climate-intelligence" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
+      detail: [item.section, item.description, item.questions.join(" "), category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : "", category.slug === "agriculture-climate-intelligence" ? AGRICULTURE_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
       category,
       slug: item.slug,
     })),
