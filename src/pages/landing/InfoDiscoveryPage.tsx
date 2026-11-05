@@ -4,6 +4,7 @@ import {
   ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness,
   Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink,
   ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass,
+  Package, Warehouse, ArrowUpRight,
   Package, ShoppingCart, BarChart3, Users, Warehouse, Store,
   AlertTriangle, Info, ArrowUpRight, Lightbulb, Bookmark, BookmarkCheck,
   Printer, Download, FolderPlus,
@@ -194,23 +195,44 @@ const categories: Category[] = [
   },
   {
     slug: "agriculture-climate-intelligence", title: "Agriculture and Climate Intelligence", icon: Sprout,
-    summary: "Connect weather, climate risks, land and crop suitability, satellite observations, farm operations, logistics and market conditions.",
-    purpose: "Agricultural decisions depend on local conditions and changing evidence. Useful intelligence connects climate and weather observations with crop requirements, land characteristics, satellite signals, farm activity, logistics and market information. A climate indicator is not, by itself, a field inspection or a crop-yield prediction.",
+    summary: "Understand local weather, seasonal climate risks, land and water conditions, crop suitability, satellite observations, farm operations, agricultural logistics and markets.",
+    purpose: "Agriculture is shaped by decisions that are connected: where to farm, what to grow, when to plant, how to manage water and inputs, how to recognise field risks, and how to store, move and sell produce. This area explains how weather observations, forecasts, long-term climate patterns, land characteristics, field records, remote-sensing indicators and market information can support those decisions. Every dataset has limits: a forecast is not an observation, a satellite signal is not a field diagnosis, and regional averages do not replace local knowledge or inspection.",
     sections: [
-      { title: "Climate and environmental conditions", description: "Investigate weather and longer-term environmental patterns relevant to agricultural decisions.", items: [
-        topic("Weather observations and forecasts", "Separate observed weather from forecast values and climate averages.", ["What is the observation period?", "Which weather station, grid or model produced the value?", "How far ahead is the forecast and how uncertain is it?"]),
-        topic("Seasonal climate risks", "Review rainfall, temperature, drought, heat and other seasonal risks relevant to a crop and location.", ["Which season and growing stage are affected?", "Is the source a forecast, historical analysis or observation?", "What local evidence is available?"]),
-        topic("Rainfall and temperature patterns", "Explore the timing, distribution and variability of rainfall and temperature.", ["What is the monthly pattern?", "How does the selected period compare with the long-term baseline?", "Are extreme events hidden by averages?"]),
+      { title: "Weather, climate and seasonal risk", description: "Understand the difference between current conditions, forecasts and longer-term climate patterns—and how each affects farm decisions.", items: [
+        topic("Local weather observations and forecasts", "Understand how temperature, rainfall, humidity, wind and short-range forecasts relate to a specific farm location. Check the time, location, source and forecast horizon before using a weather value to plan field work.", ["Is this a measured observation, a forecast or a model estimate?", "How close is the source location or grid cell to the farm?", "When was the information updated and how far ahead does it apply?", "What weather conditions could interrupt planting, spraying, harvesting or transport?"]),
+        topic("Rainfall patterns and water availability", "Examine the timing, intensity and distribution of rainfall rather than relying only on seasonal totals. Connect rainfall information with soil conditions, water storage, irrigation access and crop water requirements.", ["Did rain arrive at the right growth stage or outside the useful planting window?", "Are rainfall totals hiding long dry spells or intense runoff events?", "What water sources are available during dry periods?", "Could drainage, erosion or waterlogging affect the field?"]),
+        topic("Temperature, humidity and growing conditions", "Explore how heat, cold, humidity and day-to-day variation can affect crop development, livestock comfort, disease pressure and post-harvest handling.", ["Which temperature range matters for the selected crop or livestock?", "Are high daytime temperatures or warm nights creating additional stress?", "How might humidity affect disease pressure or stored produce?", "Are the observations representative of the farm's microclimate?"]),
+        topic("Seasonal climate patterns and planting windows", "Use seasonal outlooks and historical climate patterns to understand likely periods of rainfall, dry conditions and temperature changes. Treat outlooks as probabilities rather than guarantees.", ["What is the expected start and end of the local rainy season?", "How much uncertainty is present in the seasonal outlook?", "Which crop duration fits the likely growing period?", "What alternative plan is available if the rains start late or end early?"]),
+        topic("Drought, heat, flood and extreme-weather risks", "Identify weather-related hazards that can affect crops, livestock, farm infrastructure and supply routes. Assess exposure and practical preparedness instead of interpreting a risk indicator as proof that a loss will occur.", ["Which fields, water sources, animals or facilities are most exposed?", "What warning signs or official advisories should be monitored?", "Are drainage, water storage, shade or contingency plans adequate?", "How will damage and recovery needs be recorded after an event?"]),
       ]},
-      { title: "Land, crop and satellite intelligence", description: "Assess land characteristics and investigate observed changes.", items: [
-        topic("Land suitability", "Examine soil, slope, drainage, water access, climate and land-use constraints before selecting a site.", ["What soil and terrain evidence exists?", "Is water available through the growing season?", "What restrictions or competing land uses apply?"]),
-        topic("Crop-specific suitability", "Compare crop requirements with the climate, soil, water and management conditions of a proposed site.", ["What temperature and rainfall range does the crop require?", "What soil and growing-period constraints matter?", "What local trial or extension evidence is available?"]),
-        topic("Satellite mapping and crop stress", "Use satellite observations as indicators for investigation, not as automatic proof of crop condition.", ["Which sensor and acquisition date were used?", "What cloud, resolution or seasonal limitations apply?", "Can the anomaly be checked in the field?"]),
+      { title: "Land, soil, water and satellite observations", description: "Evaluate the physical characteristics of a farm site and use mapping or remote-sensing information as evidence to investigate—not as a substitute for field checks.", items: [
+        topic("Land suitability and site selection", "Assess whether a proposed location is suitable for a crop or farming activity by considering terrain, soil, drainage, water access, climate, land use and practical access.", ["Is the land legally and practically available for the intended use?", "What slope, drainage and erosion constraints exist?", "Can water, labour, inputs and transport reach the site?", "Which risks require a field survey or local authority check?"]),
+        topic("Soil properties and field conditions", "Understand soil texture, structure, depth, organic matter, pH, fertility and drainage, and how sampling and field observations help establish the conditions within a farm.", ["Has soil been sampled at representative points and depths?", "Are pH, nutrient status and texture known or assumed?", "Do compaction, erosion, salinity or waterlogging need attention?", "Which conclusions require laboratory testing or extension advice?"]),
+        topic("Water resources and irrigation planning", "Examine water sources, seasonal availability, irrigation access, storage, distribution and the water needs of different crops and growth stages.", ["Is the water source reliable through the dry season?", "Does the water quality suit the crop and irrigation method?", "How much water is needed at each growth stage?", "Are pumping, storage and distribution costs sustainable?"]),
+        topic("Farm mapping and field boundaries", "Use coordinates, maps and consistent field identifiers to describe farm boundaries, access routes, water points and production areas. Verify mapped boundaries and ownership or access rights on the ground.", ["Are coordinates recorded in the correct reference system?", "Do mapped boundaries match the land actually managed?", "Are neighbouring plots, access roads and water points identified?", "Can each field be linked to its crop, records and activities?"]),
+        topic("Satellite imagery and land-cover change", "Learn how satellite imagery can help monitor vegetation, land cover, surface conditions and changes over time. Consider acquisition date, resolution, cloud cover, season and sensor limitations.", ["Which satellite or sensor produced the image?", "When was the image acquired and what is its spatial resolution?", "Could cloud, shadows, seasonality or recent land disturbance affect interpretation?", "What field observations are needed to confirm an apparent change?"]),
+        topic("Vegetation indicators and crop-stress investigation", "Understand vegetation indices and other remote-sensing indicators as signals that may help identify areas for closer inspection. Different crops, growth stages, soil backgrounds and weather conditions can change how these signals appear.", ["Which index or indicator is being interpreted and what does it measure?", "Is the comparison made against a suitable crop stage and baseline?", "Could bare soil, mixed vegetation, cloud or water affect the reading?", "Has the flagged area been checked through field scouting or other evidence?"]),
       ]},
-      { title: "Farm operations, logistics and markets", description: "Connect production decisions with the wider agricultural system.", items: [
-        topic("Farm management and field records", "Organise farm activities, input use, planting, field observations and operational history.", ["Are farm boundaries and field IDs consistent?", "Are inputs, labour and activities dated?", "Can observations be linked to a field and crop cycle?"]),
-        topic("Agricultural logistics and post-harvest", "Examine storage, handling, transport, loss and delivery requirements.", ["What are the expected harvest volumes and timing?", "What storage and temperature conditions are required?", "Where can handling or transport create losses?"]),
-        topic("Market and food-price intelligence", "Compare market information by commodity, location, market level and observation date.", ["Is the value a farm-gate, wholesale or retail price?", "What market and unit does it describe?", "How old is the observation?"]),
+      { title: "Crop, livestock and farm operations", description: "Connect production plans, crop calendars, field activities, farm inputs and observations across the production cycle.", items: [
+        topic("Crop selection and site-specific suitability", "Compare crop requirements with local climate, soil, water, terrain, growing duration, labour and market access before committing resources.", ["Does the crop fit the local rainfall and temperature pattern?", "Are soil, water and growing-period requirements understood?", "Can the farm obtain suitable seed, inputs and technical support?", "Is there a reliable market or use for the expected harvest?"]),
+        topic("Planting calendars and crop growth stages", "Plan land preparation, planting, field operations and harvesting around crop duration, local seasonal conditions and the development stage of the crop.", ["What planting window is appropriate for this location and variety?", "How long does the crop typically take to mature under local conditions?", "Which activities must happen at each growth stage?", "What changes if planting is delayed or weather conditions shift?"]),
+        topic("Farm records and production planning", "Keep dated records of fields, crops, varieties, planting, labour, inputs, treatments, field observations and harvests so that results can be reviewed across seasons.", ["Does every activity identify the field, date and responsible person?", "Are input quantities and application dates recorded?", "Can harvest results be compared with the activities and conditions that preceded them?", "Which records are missing or difficult to verify?"]),
+        topic("Pest, disease and field scouting", "Understand monitoring, early warning signs, field scouting and integrated pest-management principles. Symptoms and risk alerts should lead to inspection and, where necessary, qualified diagnosis before treatment decisions.", ["What symptoms or pest evidence were observed, and on which crop stage?", "How widespread is the issue and how quickly is it changing?", "Could weather, nutrient stress or another cause produce similar symptoms?", "What local extension or plant-health authority can confirm the diagnosis and appropriate response?"]),
+        topic("Livestock and aquaculture conditions", "Consider how weather, water, feed, housing, hygiene, stocking density and routine observation affect animal welfare and production in livestock and aquaculture systems.", ["Are temperature, ventilation and water conditions suitable for the species?", "Are feed, water quality and stocking levels monitored?", "Are unusual symptoms or mortality recorded and referred for qualified assessment?", "What contingency is available during heat, flooding or water-quality problems?"]),
+      ]},
+      { title: "Farm inputs, post-harvest and agricultural logistics", description: "Manage the resources and practical movement of agricultural inputs and produce from supply through harvest, storage and delivery.", items: [
+        topic("Seeds, fertiliser and farm-input management", "Plan the procurement, storage, use and tracking of seeds, fertiliser, crop-protection products, animal feed and other farm inputs.", ["Are inputs suitable for the crop, soil and intended use?", "Are batch numbers, quantities, purchase dates and expiry dates recorded?", "Are storage conditions and safe handling requirements followed?", "Can planned input use be reconciled with actual field application?"]),
+        topic("Farm inventory and resource control", "Maintain visibility over input quantities, equipment, tools and consumables so that shortages, damage, expiry and unusual usage can be identified early.", ["What is in stock, where is it stored and who is responsible?", "Which inputs are nearing their reorder point or expiry date?", "Are issues to field teams recorded against a farm or activity?", "Can losses and adjustments be explained and approved?"]),
+        topic("Harvest planning and labour coordination", "Estimate harvest timing and resource needs using crop maturity, field observations, labour, equipment, packaging, storage and buyer arrangements.", ["Which fields are approaching harvest and what evidence supports the estimate?", "Are labour, equipment, crates and transport available on time?", "Can harvesting be staged to avoid congestion or quality loss?", "Are quantities and quality recorded at collection?"]),
+        topic("Post-harvest handling, storage and food quality", "Understand how sorting, cleaning, drying, cooling, packaging, storage and handling affect quality, safety and losses after harvest.", ["What temperature, humidity and ventilation conditions are suitable for the produce?", "Are damaged or contaminated products separated?", "Can batches be traced from field to storage or buyer?", "Where do handling delays or poor storage cause avoidable losses?"]),
+        topic("Agricultural transport and supply-chain logistics", "Plan how inputs and harvested produce move between suppliers, farms, aggregation points, storage facilities, processors and buyers. Consider timing, route access, load capacity and handling requirements.", ["When must inputs arrive to avoid interrupting farm activities?", "Can roads and routes support the vehicle and load during the season?", "Are delivery quantities, destinations and handovers documented?", "How are delays, losses and changes in delivery recorded?"]),
+      ]},
+      { title: "Markets, costs and farm business decisions", description: "Relate production plans to prices, costs, buyers, records and the commercial decisions that affect farm sustainability.", items: [
+        topic("Agricultural market prices and price comparisons", "Compare commodity prices by product, grade, unit, market, location and observation date. Distinguish farm-gate, wholesale and retail prices before drawing conclusions.", ["Which commodity, variety, grade and unit does the price describe?", "Is the price from the farm gate, an aggregation point or a retail market?", "When and where was the price observed?", "Are transport, quality and seasonal differences affecting the comparison?"]),
+        topic("Buyers, suppliers and market access", "Understand how farmers identify buyers and suppliers, assess requirements, negotiate terms and organise collection or delivery.", ["What quality, quantity, packaging and timing does the buyer require?", "Are payment terms and delivery responsibilities clear?", "Can the supplier or buyer be verified and contacted?", "What alternatives exist if the expected buyer cannot collect?"]),
+        topic("Cost of production and farm budgeting", "Build a practical picture of seed, fertiliser, labour, machinery, irrigation, storage, transport and other production costs for a crop or production cycle.", ["Have both cash expenses and relevant non-cash resources been considered?", "Are costs recorded per field, crop, hectare or production cycle?", "Which costs are fixed, variable or dependent on yield?", "What happens to the budget if input prices or harvest volumes change?"]),
+        topic("Farm revenue, margins and profitability", "Distinguish harvest volume, sales revenue, cash collected, operating costs and profit. Use consistent units and periods when estimating whether an activity is financially sustainable.", ["Does the revenue calculation use sold quantity and actual realised prices?", "Are rejected produce, post-harvest losses and unsold stock included?", "Which costs are missing from the calculation?", "How does the result compare across fields, crops or seasons?"]),
+        topic("Agricultural records and decision reporting", "Bring production, input, labour, harvest, storage, transport and sales records together to understand what happened and what should change in the next production cycle.", ["Can each reported quantity be traced to a dated farm record?", "Which indicators help explain yield, quality, cost and delivery performance?", "Are estimates separated from measured results?", "What practical decision should the report support?"]),
       ]},
     ],
     sources: [
@@ -218,7 +240,7 @@ const categories: Category[] = [
       { name: "NASA POWER", scope: "Meteorological and solar datasets with point and regional temporal services", type: "Public Earth-science data service", url: "https://power.larc.nasa.gov/" },
       { name: "Copernicus Data Space", scope: "Sentinel and other Earth-observation datasets, browser and APIs", type: "Official Earth-observation data access", url: "https://dataspace.copernicus.eu/explore-data" },
     ],
-    product: { label: "Explore AgroClimate", href: "https://agro.amineva.com/create-account", description: "Continue into agricultural and climate intelligence tools." },
+    product: { label: "Explore AgroClimate", href: "https://agro.amineva.com", description: "Continue to AgroClimate to explore weather and climate information, production risk awareness, farm learning and input management tools." },
   },
   {
     slug: "operational-intelligence", title: "Operational Intelligence", icon: ShieldCheck,
@@ -286,6 +308,32 @@ const BUSINESS_SEARCH_TERMS: Record<string, string> = {
   "operational-efficiency-and-process-improvement": "workflow process mapping bottleneck delays productivity operating procedure SOP error reduction process improvement",
   "business-performance-indicators-and-kpis": "KPI dashboard key performance indicator stock turnover inventory turnover sales growth gross margin order fulfilment",
   "management-reports-and-business-decisions": "management dashboard business reporting monthly report variance analysis budget versus actual decision support"
+  "local-weather-observations-and-forecasts": "weather forecast rain forecast temperature humidity wind hourly weather local forecast farm weather meteo",
+  "rainfall-patterns-and-water-availability": "rainfall rain distribution dry spell water access runoff waterlogging irrigation rainfall total",
+  "temperature-humidity-and-growing-conditions": "heat stress humidity temperature range microclimate crop conditions animal comfort",
+  "seasonal-climate-patterns-and-planting-windows": "rainy season planting season growing season seasonal outlook onset of rains planting window crop duration",
+  "drought-heat-flood-and-extreme-weather-risks": "drought flood heatwave extreme weather storm heavy rain climate hazard farm risk early warning",
+  "land-suitability-and-site-selection": "farm site selection land assessment terrain slope drainage land use soil suitability water access",
+  "soil-properties-and-field-conditions": "soil test soil sampling pH fertility texture organic matter compaction salinity erosion",
+  "water-resources-and-irrigation-planning": "irrigation water source water storage water quality dry season water requirement",
+  "farm-mapping-and-field-boundaries": "farm map GPS coordinates field boundary geospatial mapping plot boundary farm location",
+  "satellite-imagery-and-land-cover-change": "satellite image remote sensing land cover change earth observation vegetation imagery cloud cover",
+  "vegetation-indicators-and-crop-stress-investigation": "NDVI vegetation index crop stress anomaly detection remote sensing crop monitoring",
+  "crop-selection-and-site-specific-suitability": "crop selection crop suitability crop requirements variety selection agroecological zone",
+  "planting-calendars-and-crop-growth-stages": "planting calendar crop calendar sowing date growth stage maturity harvest window",
+  "farm-records-and-production-planning": "farm diary field records farm activity log crop cycle production plan farm management records",
+  "pest-disease-and-field-scouting": "pest scouting crop disease symptoms plant health integrated pest management IPM crop protection",
+  "livestock-and-aquaculture-conditions": "livestock weather stress animal welfare aquaculture water quality fish farming feed housing",
+  "seeds-fertiliser-and-farm-input-management": "seed fertilizer fertiliser agrochemicals feed farm supplies inputs batch expiry stock",
+  "farm-inventory-and-resource-control": "farm inventory input stock equipment tools consumables stock register inventory control",
+  "harvest-planning-and-labour-coordination": "harvest forecast harvest schedule labour planning equipment harvest volume field maturity",
+  "post-harvest-handling-storage-and-food-quality": "post harvest storage drying cooling packaging cold chain food quality loss reduction",
+  "agricultural-transport-and-supply-chain-logistics": "farm transport logistics produce delivery aggregation supply chain route planning truck",
+  "agricultural-market-prices-and-price-comparisons": "farm gate price wholesale retail commodity market price market information food prices",
+  "buyers-suppliers-and-market-access": "buyers suppliers off taker market access contract farming procurement produce sales",
+  "cost-of-production-and-farm-budgeting": "farm budget production cost input cost cost per acre cost per hectare labour machinery",
+  "farm-revenue-margins-and-profitability": "farm revenue farm income gross margin net profit yield revenue production economics",
+  "agricultural-records-and-decision-reporting": "farm dashboard farm reports yield records production reporting harvest report farm performance",
 };
 function allTopics(category: Category) {
   return category.sections.flatMap(section => section.items.map(item => ({ ...item, section: section.title, slug: slugify(item.title) })));
@@ -803,7 +851,7 @@ export default function InfoDiscoveryPage() {
     ...allTopics(category).map(item => ({
       kind: "topic" as const,
       label: item.title,
-      detail: [item.section, item.description, item.questions.join(" "), category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
+      detail: [item.section, item.description, item.questions.join(" "), category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : "", category.slug === "agriculture-climate-intelligence" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
       category,
       slug: item.slug,
     })),
@@ -1017,6 +1065,10 @@ export default function InfoDiscoveryPage() {
         <InventraSpotlight product={selected.product} />
       )}
 
+      {selected?.slug === "agriculture-climate-intelligence" && selected.product && (
+        <AgroClimateSpotlight product={selected.product} />
+      )}
+
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="space-y-5">
           <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
@@ -1192,7 +1244,7 @@ export default function InfoDiscoveryPage() {
               </>
             )}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
-            {selected.product && selected.slug !== "career-development-education" && selected.slug !== "business-management" && <ProductConnection product={selected.product} />}
+            {selected.product && selected.slug !== "career-development-education" && selected.slug !== "business-management" && selected.slug !== "agriculture-climate-intelligence" && <ProductConnection product={selected.product} />}
             <p className="text-[11px] text-muted-foreground">
               This topic guide is an investigation structure. It does not itself certify a current visa rule, price, job vacancy, crop condition or organisational finding.
             </p>
@@ -1214,16 +1266,46 @@ export default function InfoDiscoveryPage() {
                 <p className="mt-4 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p>
               </div>
             ) : (
+              {selected.slug === "agriculture-climate-intelligence" ? (
+              <div className="rounded-3xl border border-border border-l-4 border-l-success bg-card p-6 shadow-sm md:p-8">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div className="flex items-center gap-2 text-sm font-semibold text-primary">
+                    <span className="rounded-xl border border-success/25 bg-success/10 p-2 text-success"><selected.icon className="h-4 w-4" /></span>
+                    Area overview
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    <Badge variant="outline">{allTopics(selected).length} topics</Badge>
+                    <Badge variant="outline">{selected.sections.length} subject groups</Badge>
+                  </div>
+                </div>
+                <p className="mt-4 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p>
+              </div>
+            ) : (
               <div className="group relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-primary via-primary to-primary/90 p-6 text-primary-foreground shadow-lg shadow-primary/10 md:p-8"><div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full bg-accent/15 blur-3xl" /><div className="relative"><div className="flex items-center gap-2 text-sm font-semibold text-accent"><selected.icon className="h-4 w-4" /> Area overview</div><p className="mt-3 max-w-4xl text-sm leading-7 text-primary-foreground/80 md:text-base">{selected.purpose}</p><div className="mt-5 flex flex-wrap gap-2"><Badge variant="outline" className="border-primary-foreground/25 text-primary-foreground">{allTopics(selected).length} topics</Badge><Badge variant="outline" className="border-primary-foreground/25 text-primary-foreground">{selected.sections.length} subject groups</Badge></div></div></div>
+            )}
             )}
             <div><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Subject menu</h2><p className="mt-1 text-sm text-muted-foreground">Search within this area or filter by subject group.</p></div><Badge variant="outline">{filteredSections.reduce((count, section) => count + section.items.length, 0)} matching topics</Badge></div>
               <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTopicFilter(e.target.value)} placeholder="Filter topics and questions" aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
-              {filteredSections.length ? <div className="space-y-4">{filteredSections.map((section, sectionIndex) => <section key={section.title} className={"rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md " + (selected.slug === "business-management" ? "border-l-4 " + (sectionIndex % 3 === 0 ? "border-l-primary" : sectionIndex % 3 === 1 ? "border-l-accent" : "border-l-success/75") : "")}><div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div><div className="mt-4 grid gap-3 md:grid-cols-2">{section.items.map((item, itemIndex) => <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className={"group relative flex min-h-36 flex-col rounded-xl border border-border bg-background/70 p-4 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:bg-card hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 " + (selected.slug === "business-management" ? "border-l-[3px] " + (itemIndex % 3 === 0 ? "border-l-primary/75" : itemIndex % 3 === 1 ? "border-l-accent" : "border-l-success/65") : "hover:border-accent/50 hover:bg-accent/5")}><span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span><span className="mt-2 block flex-1 text-xs leading-5 text-muted-foreground">{item.description}</span><span className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold text-primary opacity-80 group-hover:opacity-100">Explore topic <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span></button>)}</div></section>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
+              {filteredSections.length ? <div className="space-y-4">{filteredSections.map((section, sectionIndex) => {
+                const useAccentCards = selected.slug === "business-management" || selected.slug === "agriculture-climate-intelligence";
+                const groupAccent = sectionIndex % 3 === 0 ? "border-l-primary" : sectionIndex % 3 === 1 ? "border-l-accent" : "border-l-success/75";
+                return <section key={section.title} className={"rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md " + (useAccentCards ? "border-l-4 " + groupAccent : "")}>
+                  <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div>
+                  <div className="mt-4 grid gap-3 md:grid-cols-2">{section.items.map((item, itemIndex) => {
+                    const cardAccent = itemIndex % 3 === 0 ? "border-l-primary/75" : itemIndex % 3 === 1 ? "border-l-accent" : "border-l-success/65";
+                    return <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className={"group relative flex min-h-36 flex-col rounded-xl border border-border bg-background/70 p-4 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:bg-card hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 " + (useAccentCards ? "border-l-[3px] " + cardAccent : "hover:border-accent/50 hover:bg-accent/5")}>
+                      <span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span>
+                      <span className="mt-2 block flex-1 text-xs leading-5 text-muted-foreground">{item.description}</span>
+                      <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold text-primary opacity-80 group-hover:opacity-100">Explore topic <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span>
+                    </button>;
+                  })}</div>
+                </section>;
+              })}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No topics match these filters. Clear the search or select all subject groups.</div>}
             </div>
             {selected.slug === "travel-destination" && <CountryExplorer />}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
             <ResearchPanel initialQuery={selected.title} />
-            {selected.product && selected.slug !== "career-development-education" && selected.slug !== "business-management" && <ProductConnection product={selected.product} />}
+            {selected.product && selected.slug !== "career-development-education" && selected.slug !== "business-management" && selected.slug !== "agriculture-climate-intelligence" && <ProductConnection product={selected.product} />}
             {selected.slug === "operational-intelligence" && <div className="rounded-2xl border border-border bg-muted/40 p-5"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-4 w-4 text-accent" /> Authorised evidence only</div><p className="mt-2 text-xs leading-5 text-muted-foreground">Verification and anomaly detection require approved connections to source systems, documented permissions and review controls. This public information area explains the method; it does not claim access to private organisational records.</p></div>}
           </section>}
 
@@ -1257,6 +1339,68 @@ export default function InfoDiscoveryPage() {
   );
 }
 
+
+
+function AgroClimateSpotlight({ product }: { product: ProductLink }) {
+  const capabilities = [
+    { icon: CloudSun, title: "Weather and climate context", description: "Explore local weather information and seasonal conditions that influence farm planning.", accent: "border-l-primary" },
+    { icon: Sprout, title: "Production risk awareness", description: "Consider crop, livestock and environmental risks alongside field observations.", accent: "border-l-success/75" },
+    { icon: Compass, title: "Location and field context", description: "Relate farm locations and field conditions to the wider environment.", accent: "border-l-accent" },
+    { icon: Package, title: "Farm input management", description: "Bring visibility to seeds, fertiliser, feed and other resources used in production.", accent: "border-l-primary" },
+    { icon: BookOpen, title: "Agricultural learning", description: "Build understanding of farming practices, production decisions and responsible use of information.", accent: "border-l-success/75" },
+    { icon: Warehouse, title: "Post-harvest and operations", description: "Think beyond the field to storage, handling, movement and delivery of produce.", accent: "border-l-accent" },
+  ];
+
+  return (
+    <section aria-label="Explore AgroClimate" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
+      <div className="overflow-hidden rounded-3xl border border-success/25 bg-card shadow-md">
+        <div className="grid gap-6 border-l-4 border-l-success p-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-8 md:p-7 lg:p-8">
+          <div className="flex flex-col items-start justify-center">
+            <span className="inline-flex items-center gap-2 rounded-full border border-success/25 bg-success/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-success">
+              <Sprout className="h-3.5 w-3.5" /> Amineva agriculture platform
+            </span>
+            <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">
+              Connect climate conditions with the decisions made on your farm.
+            </h2>
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">
+              Farming decisions are connected. Weather and seasonal conditions influence planting and field work; land, water and crop requirements influence what can grow; and input availability, labour, storage and transport affect what a farm can produce and deliver.
+            </p>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground">
+              AgroClimate brings agricultural and climate tools together to help users explore weather information, production risks, farm learning and input management. Use the information alongside field observations, local conditions and qualified agricultural advice when making important production decisions.
+            </p>
+            <a
+              href={product.href}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="mt-6 inline-flex items-center gap-2 rounded-xl bg-success px-5 py-3 text-sm font-bold text-success-foreground shadow-sm transition hover:-translate-y-0.5 hover:brightness-95 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-success focus-visible:ring-offset-2"
+            >
+              {product.label} <ArrowUpRight className="h-4 w-4" />
+            </a>
+            <p className="mt-2 text-[11px] leading-5 text-muted-foreground">
+              Continue to AgroClimate to explore the available tools and platform workflows.
+            </p>
+          </div>
+
+          <div className="grid gap-3 sm:grid-cols-2">
+            {capabilities.map((item) => (
+              <article key={item.title} className={"rounded-2xl border border-border border-l-4 bg-background/70 p-4 transition hover:-translate-y-0.5 hover:shadow-md " + item.accent}>
+                <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-primary">
+                  <item.icon className="h-4 w-4" />
+                </div>
+                <h3 className="mt-3 text-sm font-semibold text-foreground">{item.title}</h3>
+                <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p>
+              </article>
+            ))}
+          </div>
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-muted/30 px-5 py-3 text-[11px] text-muted-foreground md:px-7">
+          <span>For crop production · livestock · farm operations</span>
+          <span>Weather · inputs · field context · farm planning</span>
+        </div>
+      </div>
+    </section>
+  );
+}
 
 function InventraSpotlight({ product }: { product: ProductLink }) {
   const capabilities = [
