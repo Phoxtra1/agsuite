@@ -1,7 +1,6 @@
 import React, { useState } from "react";
-import { Sparkles, Loader2, CheckCircle2 } from "lucide-react";
+import { ArrowRight, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { askAboutTopic, type TopicSummaryResult } from "@/lib/infoDiscovery/askTopic";
 
 interface AskTopicPanelProps {
@@ -22,10 +21,15 @@ export function AskTopicPanel({
   const [loading, setLoading] = useState(false);
   const [result, setResult] = useState<TopicSummaryResult | null>(null);
   const [expanded, setExpanded] = useState(false);
+  const [error, setError] = useState("");
 
   const handleAsk = async () => {
-    setLoading(true);
+    if (loading) return;
+
     setExpanded(true);
+    setLoading(true);
+    setError("");
+
     try {
       const res = await askAboutTopic({
         topicTitle,
@@ -35,26 +39,24 @@ export function AskTopicPanel({
         referenceSources,
       });
       setResult(res);
+    } catch {
+      setError("We couldn't retrieve the information for this topic. Please try again.");
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="rounded-xl border border-primary/20 bg-primary/[0.03] p-4 flex flex-col justify-between">
-      <div>
-        <div className="flex items-center justify-between gap-2">
-          <div className="flex items-center gap-2 text-xs font-semibold text-primary">
-            <Sparkles className="h-4 w-4 text-accent" />
-            <span>Ask about this topic</span>
-          </div>
-          <Badge variant="outline" className="text-[10px]">
-            Dipa Supported
-          </Badge>
+    <section className="rounded-xl border border-primary/20 bg-primary/[0.03] p-4">
+      <div className="flex flex-col gap-3">
+        <div>
+          <h3 className="text-sm font-semibold tracking-tight text-foreground">
+            Ask about this topic
+          </h3>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            Explore a concise overview, key points and relevant reference sources for this subject.
+          </p>
         </div>
-        <p className="mt-2 text-xs leading-5 text-muted-foreground">
-          Synthesize a concise, source-backed summary for this subject with Dipa AI analysis behind the scenes.
-        </p>
 
         {!expanded && (
           <Button
@@ -63,71 +65,91 @@ export function AskTopicPanel({
             variant="outline"
             onClick={handleAsk}
             disabled={loading}
-            className="mt-3 w-full border-primary/30 text-xs font-semibold hover:bg-primary/10"
+            className="w-full justify-between border-primary/30 text-xs font-semibold hover:bg-primary/10"
           >
-            {loading ? (
-              <>
-                <Loader2 className="mr-2 h-3.5 w-3.5 animate-spin" />
-                Synthesizing...
-              </>
-            ) : (
-              <>
-                <Sparkles className="mr-2 h-3.5 w-3.5 text-accent" />
-                Generate Dipa Summary
-              </>
-            )}
+            Ask about this topic
+            <ArrowRight className="ml-2 h-3.5 w-3.5" />
           </Button>
         )}
 
-        {expanded && result && (
-          <div className="mt-3 space-y-3 pt-3 border-t border-primary/15">
-            <p className="text-xs leading-5 text-foreground">{result.summary}</p>
-
-            {result.keyTakeaways.length > 0 && (
-              <div>
-                <p className="text-[11px] font-semibold text-foreground mb-1.5">Key Investigation Takeaways:</p>
-                <ul className="space-y-1">
-                  {result.keyTakeaways.map((item, idx) => (
-                    <li key={idx} className="flex items-start gap-1.5 text-[11px] text-muted-foreground">
-                      <CheckCircle2 className="h-3 w-3 mt-0.5 text-accent shrink-0" />
-                      <span>{item}</span>
-                    </li>
-                  ))}
-                </ul>
+        {expanded && (
+          <div className="space-y-3 border-t border-primary/15 pt-3" aria-live="polite">
+            {loading && (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                Gathering information…
               </div>
             )}
 
-            {result.sources.length > 0 && (
-              <div className="pt-2 border-t border-border/50">
-                <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1">
-                  Referenced Authorities:
-                </p>
-                <div className="flex flex-wrap gap-1.5">
-                  {result.sources.map((s) => (
-                    <span
-                      key={s.name}
-                      title={s.scope || s.name}
-                      className="inline-flex items-center rounded-md border border-border bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground"
-                    >
-                      {s.name}
-                    </span>
-                  ))}
-                </div>
+            {error && !loading && (
+              <div role="alert" className="rounded-lg border border-border bg-muted/50 p-3 text-xs leading-5 text-muted-foreground">
+                {error}
+                <button
+                  type="button"
+                  onClick={handleAsk}
+                  className="ml-1 font-semibold text-primary underline underline-offset-2"
+                >
+                  Try again
+                </button>
               </div>
+            )}
+
+            {result && !loading && (
+              <>
+                <p className="text-xs leading-6 text-foreground">{result.summary}</p>
+
+                {result.keyTakeaways.length > 0 && (
+                  <div>
+                    <p className="mb-1.5 text-[11px] font-semibold text-foreground">
+                      Key points
+                    </p>
+                    <ul className="space-y-1.5">
+                      {result.keyTakeaways.map((item, idx) => (
+                        <li key={idx} className="flex items-start gap-1.5 text-[11px] leading-5 text-muted-foreground">
+                          <CheckCircle2 className="mt-0.5 h-3 w-3 shrink-0 text-accent" />
+                          <span>{item}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+
+                {result.sources.length > 0 && (
+                  <div className="border-t border-border/50 pt-2">
+                    <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      Sources
+                    </p>
+                    <div className="flex flex-wrap gap-1.5">
+                      {result.sources.map((source) => (
+                        <span
+                          key={source.name}
+                          title={source.scope || source.name}
+                          className="inline-flex items-center rounded-md border border-border bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground"
+                        >
+                          {source.name}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
       </div>
 
-      {expanded && (
+      {expanded && !loading && (
         <button
           type="button"
-          onClick={() => setExpanded(false)}
-          className="mt-3 text-[11px] text-muted-foreground hover:text-foreground text-left underline"
+          onClick={() => {
+            setExpanded(false);
+            setError("");
+          }}
+          className="mt-3 text-left text-[11px] text-muted-foreground underline underline-offset-2 hover:text-foreground"
         >
-          Hide summary
+          Hide information
         </button>
       )}
-    </div>
+    </section>
   );
 }
