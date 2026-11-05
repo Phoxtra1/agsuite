@@ -406,7 +406,7 @@ export default function HomePage() {
                   <Search className="h-4 w-4" /> Information Discovery
                 </div>
                 <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Discover information. Understand your options. Make informed decisions.</h1>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">Explore structured information across career development and education, travel and destinations, IT and innovation, business management, agriculture and climate intelligence, and operational intelligence.</p>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">Search any subject and get clear, detailed information to help you learn, plan and decide with confidence.</p>
                 <button type="button" onClick={() => navigate("/info-discovery")} className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
                   Explore Info Discovery <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
