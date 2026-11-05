@@ -230,7 +230,7 @@ export const AminevaImpactPage: FC = () => {
               <School className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">3</p>
+              <p className="text-2xl font-bold text-foreground">5</p>
               <p className="text-xs text-muted-foreground">Schools engaged</p>
             </div>
           </div>
@@ -239,7 +239,7 @@ export const AminevaImpactPage: FC = () => {
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">600+</p>
+              <p className="text-2xl font-bold text-foreground">1,000</p>
               <p className="text-xs text-muted-foreground">Learners reached</p>
             </div>
           </div>
@@ -599,11 +599,11 @@ export const AminevaImpactPage: FC = () => {
               {/* Highlight Banner */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 rounded-2xl bg-accent/10 border border-accent/20 text-center">
                 <div className="p-2">
-                  <div className="text-2xl font-bold text-foreground">3</div>
+                  <div className="text-2xl font-bold text-foreground">5</div>
                   <div className="text-xs text-muted-foreground mt-0.5">Schools Engaged</div>
                 </div>
                 <div className="p-2">
-                  <div className="text-2xl font-bold text-foreground">Over 600</div>
+                  <div className="text-2xl font-bold text-foreground">1,000</div>
                   <div className="text-xs text-muted-foreground mt-0.5">Students Participated</div>
                 </div>
                 <div className="p-2">

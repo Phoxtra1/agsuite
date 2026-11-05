@@ -243,7 +243,7 @@ export const INITIATIVES: Initiative[] = [
           "Combining practical skills with classroom learning",
           "How to talk to parents about career goals",
         ],
-        beneficiariesCount: 600,
+        beneficiariesCount: 1000,
       },
     ],
     media: SCHOOL_ACTIVITY_IMAGES,
@@ -258,7 +258,7 @@ export const INITIATIVES: Initiative[] = [
         date: "High Participation",
         title: "Learners Interest & Practical Discovery",
         summary:
-          "Over 600 learners actively participating in discovery exercises, asking proactive questions about modern careers, and showing keen curiosity toward hands-on skills.",
+          "1,000 learners actively participating in discovery exercises, asking proactive questions about modern careers, and showing keen curiosity toward hands-on skills.",
       },
       {
         date: "Next Quarter",
@@ -274,8 +274,8 @@ export const INITIATIVES: Initiative[] = [
       },
     ],
     achievements: [
-      "Number of schools engaged: 3 basic schools successfully reached through direct on-ground sessions.",
-      "Students participated: Over 600 learners actively involved in career discovery workshops.",
+      "Number of schools engaged: 5 basic schools successfully reached through direct on-ground sessions.",
+      "Students participated: 1,000 learners actively involved in career discovery workshops.",
       "Realization of career foundation and importance: Students developed early understanding of how academic focus connects directly to life goals.",
       "Discovery of practical abilities: Learners identified personal strengths, hands-on talents, and vocational curiosity beyond conventional textbooks.",
       "Career alignment & capacity building: Established foundational frameworks guiding students toward purposeful career selection and skills building.",
@@ -284,12 +284,12 @@ export const INITIATIVES: Initiative[] = [
     verifiedMetrics: [
       {
         label: "Schools Engaged",
-        figure: "3",
+        figure: "5",
         description: "Basic schools directly engaged with structured outreach",
       },
       {
         label: "Students Participated",
-        figure: "Over 600",
+        figure: "1,000",
         description: "Learners empowered through career workshops",
       },
       {
