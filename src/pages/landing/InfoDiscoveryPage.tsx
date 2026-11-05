@@ -6,7 +6,7 @@ import {
   ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass,
   Package, Warehouse, ArrowUpRight, ShoppingCart, BarChart3, Users, Store,
   AlertTriangle, Info, Lightbulb, Bookmark, BookmarkCheck,
-  Printer, Download, FolderPlus,
+  Printer, Download, FolderPlus, FileCheck2,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
