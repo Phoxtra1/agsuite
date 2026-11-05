@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Sparkles, BookOpen, ExternalLink, Loader2, CheckCircle2 } from "lucide-react";
+import { Sparkles, Loader2, CheckCircle2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { askAboutTopic, type TopicSummaryResult } from "@/lib/infoDiscovery/askTopic";
@@ -104,17 +104,13 @@ export function AskTopicPanel({
                 </p>
                 <div className="flex flex-wrap gap-1.5">
                   {result.sources.map((s) => (
-                    <a
+                    <span
                       key={s.name}
-                      href={s.url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="inline-flex items-center gap-1 rounded bg-muted px-2 py-0.5 text-[10px] text-primary hover:underline"
+                      title={s.scope || s.name}
+                      className="inline-flex items-center rounded-md border border-border bg-muted px-2.5 py-1 text-[10px] font-medium text-muted-foreground"
                     >
-                      <BookOpen className="h-2.5 w-2.5" />
                       {s.name}
-                      <ExternalLink className="h-2 w-2" />
-                    </a>
+                    </span>
                   ))}
                 </div>
               </div>
