@@ -1,5 +1,23 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 
+// Keep Seal authentication verification deterministic and independent of live Appwrite.
+vi.mock("@/lib/appwrite", () => ({
+  functions: { createExecution: vi.fn() },
+  account: {
+    deleteSession: vi.fn().mockResolvedValue(null),
+    create: vi.fn().mockResolvedValue({ $id: "mock-user" }),
+    createEmailPasswordSession: vi.fn(async (email: string) => {
+      if (email.includes("non-existent") || email.includes("unknown")) {
+        throw { code: 401, message: "user_not_found" };
+      }
+      return { $id: "mock-session" };
+    }),
+    updatePrefs: vi.fn().mockResolvedValue({}),
+    get: vi.fn().mockResolvedValue({ $id: "mock-user", prefs: { seal: true } }),
+  },
+  ID: { unique: () => "mock-user-id" },
+}));
+
 // Backend DB Mock for verification test
 type Row = Record<string, any>;
 const db: Record<string, Row[]> = {};
