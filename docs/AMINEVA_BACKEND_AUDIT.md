@@ -86,6 +86,7 @@ These are migration-level findings; they require review against the actual deplo
 2. The admin_credentials migration seeds a built-in administrator identifier and a PIN hash derived from a known static PIN and salt. Treat this as a credential exposure risk. Remove/rotate the legacy credential through a controlled security migration before production use; do not expose or reuse the seed credential.
 3. ACS migrations include a sync_acs_data_lake function that deletes rows from several ACS tables before rebuilding them. Its invocation frequency, permissions, data-retention requirements and database load must be reviewed before any central backend consolidation.
 4. Some older migrations grant broad authenticated read/update/delete access to shared operational tables (for example inbound messages and ACS records). Review the final effective policies, not only individual migration statements.
+5. The checked-in .env.example sets VITE_DISABLE_PRODUCT_AUTH=true. The Appwrite adapter can create a synthetic, temporary offline identity when sign-in fails at the network layer under this flag. This is not a verified account session and must not be enabled as a production authentication substitute. The production value and Lovable secrets must be checked before release.
 
 No security migration was applied as part of this audit.
 
