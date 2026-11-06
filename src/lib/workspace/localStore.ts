@@ -311,3 +311,22 @@ export async function deleteWorkspaceBlob(id: string): Promise<void> {
   tx.objectStore(BLOBS_STORE).delete(recordKey(scope, id));
   await transactionDone(tx);
 }
+
+
+export async function moveWorkspaceBlob(fromId: string, toId: string): Promise<void> {
+  if (fromId === toId || typeof indexedDB === "undefined") return;
+  const existing = await getWorkspaceBlob(fromId);
+  if (!existing) return;
+  const db = await openDatabase();
+  const scope = currentScope("amineva_drive_blobs");
+  const tx = db.transaction(BLOBS_STORE, "readwrite");
+  const store = tx.objectStore(BLOBS_STORE);
+  store.put({
+    ...existing,
+    key: recordKey(scope, toId),
+    id: toId,
+    updatedAt: new Date().toISOString(),
+  } satisfies StoredBlob);
+  store.delete(recordKey(scope, fromId));
+  await transactionDone(tx);
+}
