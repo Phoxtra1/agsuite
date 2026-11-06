@@ -32,11 +32,11 @@ export interface DocumentShare {
 }
 
 const EMPTY_DOC = { type: "doc", content: [{ type: "paragraph" }] };
-async function await getLocalDocs(): Promise<WorkspaceDocument[]> {
+async function getLocalDocs(): Promise<WorkspaceDocument[]> {
   return readWorkspaceCollection("amineva_workspace_docs");
 }
 
-async function await saveLocalDocs(records: WorkspaceDocument[]): Promise<void> {
+async function saveLocalDocs(records: WorkspaceDocument[]): Promise<void> {
   await writeWorkspaceCollection("amineva_workspace_docs", records);
 }
 
