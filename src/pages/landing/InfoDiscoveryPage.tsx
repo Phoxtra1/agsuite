@@ -1042,15 +1042,17 @@ export default function InfoDiscoveryPage() {
     if (!clean) return [];
     const terms = clean.split(/\s+/).filter(term => term.length > 1 && !SEARCH_STOP_WORDS.has(term));
     const lookupTerms = terms.length ? terms : [clean];
+    const minimumMatches = lookupTerms.length <= 2 ? 1 : Math.max(1, Math.ceil(lookupTerms.length * 0.5));
     return searchIndex
       .map(item => {
         const title = normalise(item.label);
         const searchable = normalise([item.label, item.detail, item.category.title].join(" "));
         const matchedTerms = lookupTerms.filter(term => searchable.includes(term)).length;
         const titleScore = title === clean ? 100 : title.startsWith(clean) ? 60 : title.includes(clean) ? 40 : 0;
-        return { item, score: titleScore + matchedTerms * 10, matchedTerms };
+        const coverageScore = matchedTerms / lookupTerms.length;
+        return { item, score: titleScore + matchedTerms * 12 + coverageScore * 8, matchedTerms };
       })
-      .filter(result => result.matchedTerms === lookupTerms.length)
+      .filter(result => result.matchedTerms >= minimumMatches)
       .sort((a, b) => b.score - a.score)
       .slice(0, 10)
       .map(result => result.item);
