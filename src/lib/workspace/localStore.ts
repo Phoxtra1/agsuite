@@ -12,9 +12,10 @@
 import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
 
 const DB_NAME = "amineva-workspace-local";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 const RECORDS_STORE = "records";
 const META_STORE = "meta";
+const BLOBS_STORE = "blobs";
 
 interface StoredRecord<T = unknown> {
   key: string;
@@ -47,6 +48,10 @@ function openDatabase(): Promise<IDBDatabase> {
         }
         if (!db.objectStoreNames.contains(META_STORE)) {
           db.createObjectStore(META_STORE, { keyPath: "key" });
+        }
+        if (!db.objectStoreNames.contains(BLOBS_STORE)) {
+          const blobs = db.createObjectStore(BLOBS_STORE, { keyPath: "key" });
+          blobs.createIndex("scope", "scope", { unique: false });
         }
       };
       request.onsuccess = () => {
@@ -253,5 +258,56 @@ export async function clearWorkspaceCollection(collection: string): Promise<void
   const tx = db.transaction(RECORDS_STORE, "readwrite");
   const store = tx.objectStore(RECORDS_STORE);
   existing.forEach((row) => store.delete(row.key));
+  await transactionDone(tx);
+}
+
+
+interface StoredBlob {
+  key: string;
+  scope: string;
+  id: string;
+  blob: Blob;
+  name: string;
+  type: string;
+  size: number;
+  updatedAt: string;
+}
+
+export async function putWorkspaceBlob(id: string, blob: Blob, name = "file"): Promise<void> {
+  if (typeof indexedDB === "undefined") {
+    throw new Error("This browser does not support local file storage.");
+  }
+  const db = await openDatabase();
+  const scope = currentScope("amineva_drive_blobs");
+  const tx = db.transaction(BLOBS_STORE, "readwrite");
+  tx.objectStore(BLOBS_STORE).put({
+    key: recordKey(scope, id),
+    scope,
+    id,
+    blob,
+    name,
+    type: blob.type || "application/octet-stream",
+    size: blob.size,
+    updatedAt: new Date().toISOString(),
+  } satisfies StoredBlob);
+  await transactionDone(tx);
+}
+
+export async function getWorkspaceBlob(id: string): Promise<StoredBlob | null> {
+  if (typeof indexedDB === "undefined") return null;
+  const db = await openDatabase();
+  const scope = currentScope("amineva_drive_blobs");
+  const tx = db.transaction(BLOBS_STORE, "readonly");
+  const result = await requestResult(tx.objectStore(BLOBS_STORE).get(recordKey(scope, id))) as StoredBlob | undefined;
+  await transactionDone(tx);
+  return result ?? null;
+}
+
+export async function deleteWorkspaceBlob(id: string): Promise<void> {
+  if (typeof indexedDB === "undefined") return;
+  const db = await openDatabase();
+  const scope = currentScope("amineva_drive_blobs");
+  const tx = db.transaction(BLOBS_STORE, "readwrite");
+  tx.objectStore(BLOBS_STORE).delete(recordKey(scope, id));
   await transactionDone(tx);
 }
