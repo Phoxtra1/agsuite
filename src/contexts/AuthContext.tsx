@@ -90,12 +90,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     );
 
     // Then get initial session
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(({ data, error }: any) => {
       if (authActionInProgress.current) return;
-      const mapped = mapUser(session?.user ?? null);
+      // A backend outage is not a confirmed sign-out. Preserve the stored
+      // Workspace scope so locally saved records remain addressable.
+      if (error) {
+        setIsLoading(false);
+        return;
+      }
+      const mapped = mapUser(data?.session?.user ?? null);
       handleUserChange(mapped?.id ?? null);
       setUser(mapped);
       setIsAuthenticated(!!mapped);
+      setIsLoading(false);
+    }).catch(() => {
+      // Fail closed for authentication, but do not erase the local account scope.
       setIsLoading(false);
     });
 
