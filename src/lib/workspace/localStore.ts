@@ -6,6 +6,7 @@
  * document does not rewrite every document in the account.
  *
  * Existing account-scoped localStorage collections are migrated on first read.
+ * Anonymous/placeholder scopes are never adopted into a signed-in account.
  * The old key is removed only after the IndexedDB transaction commits.
  */
 
@@ -143,10 +144,6 @@ async function migrateLegacyCollection<T extends { id?: string }>(db: IDBDatabas
     console.warn(`[workspace-storage] Could not read legacy cache ${legacyKey}.`, error);
   }
 
-  // Adopt records left in a temporary local scope before sign-in completed.
-  const placeholderScopes = uid !== "anon" && uid !== "local-user"
-    ? [`anon::${collection}`, `local-user::${collection}`]
-    : [];
   const existing = await getAllInScope<T>(db, scope);
   const candidates = new Map<string, T>();
   for (const row of existing) candidates.set(row.id, row.value);
@@ -156,15 +153,6 @@ async function migrateLegacyCollection<T extends { id?: string }>(db: IDBDatabas
       if (!current || timestampOf(item) >= timestampOf(current)) candidates.set(item.id, item);
     }
   }
-  for (const placeholderScope of placeholderScopes) {
-    const rows = await getAllInScope<T>(db, placeholderScope);
-    for (const row of rows) {
-      if (!row.id) continue;
-      const current = candidates.get(row.id);
-      if (!current || timestampOf(row.value) >= timestampOf(current)) candidates.set(row.id, row.value);
-    }
-  }
-
   const tx = db.transaction([RECORDS_STORE, META_STORE], "readwrite");
   const store = tx.objectStore(RECORDS_STORE);
   for (const [id, value] of candidates) {
@@ -177,9 +165,6 @@ async function migrateLegacyCollection<T extends { id?: string }>(db: IDBDatabas
     } satisfies StoredRecord<T>);
   }
   tx.objectStore(META_STORE).put({ key: marker, value: true } satisfies StoredMeta);
-  if (uid !== "anon" && uid !== "local-user") {
-    tx.objectStore(META_STORE).put({ key: `adopted::${scope}`, value: true } satisfies StoredMeta);
-  }
   await transactionDone(tx);
 
   // Keep the old copy unless the IndexedDB transaction has safely committed.
@@ -203,16 +188,7 @@ export async function readWorkspaceCollection<T extends { id?: string }>(collect
   const scope = currentScope(collection);
   await migrateLegacyCollection<T>(db, collection, scope);
 
-  const primary = await getAllInScope<T>(db, scope);
-  const uid = getWorkspaceUser();
-  let records = primary;
-  if (uid !== "anon" && uid !== "local-user") {
-    const adopted = await hasMeta(db, `adopted::${scope}`);
-    if (!adopted) {
-      await migrateLegacyCollection<T>(db, collection, scope);
-      records = await getAllInScope<T>(db, scope);
-    }
-  }
+  const records = await getAllInScope<T>(db, scope);
   return records
     .map((row) => row.value)
     .sort((a: any, b: any) => timestampOf(b) - timestampOf(a));
