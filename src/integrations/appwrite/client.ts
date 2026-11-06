@@ -1,5 +1,6 @@
 import client, { account, databases, storage as appwriteStorage, functions as appwriteFunctions, APPWRITE_DB_ID, ID } from "@/lib/appwrite";
 import { Query, Permission, Role } from "appwrite";
+import { createClient } from "@supabase/supabase-js";
 
 // Helper: Convert Appwrite document -> standard shape with id, created_at, updated_at
 function mapAppwriteDoc(doc: any): any {
@@ -475,34 +476,16 @@ const authAdapter = {
     } catch (err: any) {
       invalidateAuthCache();
       const msg = err?.message || "";
-      if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("networkerror")) {
-        const disableAuth = (import.meta as any).env?.VITE_DISABLE_PRODUCT_AUTH === "true";
-        if (disableAuth) {
-          const cleanEmail = email.trim();
-          const fallbackId = `offline_${Date.now()}`;
-          const formattedUser = {
-            id: fallbackId,
-            email: cleanEmail,
-            user_metadata: { name: cleanEmail.split("@")[0] },
-            app_metadata: { provider: "email" },
-          };
-          const formattedSession = {
-            access_token: `sess_${fallbackId}`,
-            expires_at: Math.floor(Date.now() / 1000) + 86400,
-            user: formattedUser,
-          };
-          cachedAuthSession = {
-            data: { data: { session: formattedSession }, error: null },
-            timestamp: Date.now(),
-          };
-          return { data: { session: formattedSession, user: formattedUser }, error: null };
-        }
-        return {
-          data: { session: null, user: null },
-          error: { message: "Network error: Unable to connect to authentication server. Please check your connection or try again." },
-        };
-      }
-      return { data: { session: null, user: null }, error: { message: err?.message || "Sign in failed" } };
+      const networkFailure = /failed to fetch|networkerror|network request failed/i.test(msg);
+      return {
+        data: { session: null, user: null },
+        error: {
+          message: networkFailure
+            ? "Network error: Unable to connect to authentication. Existing local Workspace data is preserved; reconnect and sign in to sync."
+            : err?.message || "Sign in failed",
+          code: networkFailure ? "AUTH_SERVICE_UNAVAILABLE" : undefined,
+        },
+      };
     }
   },
 
@@ -517,11 +500,7 @@ const authAdapter = {
       await account.deleteSession("current").catch(() => null);
 
       try {
-        const createPromise = account.create(userId, cleanEmail, password, name);
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Failed to fetch")), 600)
-        );
-        await Promise.race([createPromise, timeoutPromise]);
+        await account.create(userId, cleanEmail, password, name);
       } catch (createErr: any) {
         const createMsg = createErr?.message || "";
         const createCode = createErr?.code;
@@ -543,10 +522,9 @@ const authAdapter = {
         await account.deleteSession("current").catch(() => null);
         session = await account.createEmailPasswordSession(cleanEmail, password);
         user = await account.get();
-      } catch {
-        // If session creation fails post-account creation, construct registered user profile
-        user = { $id: userId, email: cleanEmail, name, prefs: options?.data || {} };
-        session = { $id: `sess_${userId}`, expire: new Date(Date.now() + 86400000).toISOString() };
+      } catch (sessionError) {
+        // Account creation is not authentication. Never manufacture a session.
+        throw new Error("Account created, but sign-in could not be completed. Please sign in normally. " + ((sessionError as any)?.message || ""));
       }
 
       if (options?.data && user?.$id) {
@@ -561,7 +539,7 @@ const authAdapter = {
       };
 
       const formattedSession = {
-        access_token: session.$id || `sess_${userId}`,
+        access_token: session.$id,
         expires_at: session.expire ? Math.floor(new Date(session.expire).getTime() / 1000) : Math.floor(Date.now() / 1000) + 86400,
         user: formattedUser,
       };
@@ -590,38 +568,16 @@ const authAdapter = {
       invalidateAuthCache();
       const msg = err?.message || "";
 
-      if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("networkerror")) {
-        const disableAuth = (import.meta as any).env?.VITE_DISABLE_PRODUCT_AUTH === "true";
-        if (disableAuth) {
-          const cleanEmail = email.trim();
-          const fallbackId = `offline_${Date.now()}`;
-          const formattedUser = {
-            id: fallbackId,
-            email: cleanEmail,
-            user_metadata: { name: options?.data?.name || cleanEmail.split("@")[0], ...options?.data },
-            app_metadata: { provider: "email" },
-          };
-          const formattedSession = {
-            access_token: `sess_${fallbackId}`,
-            expires_at: Math.floor(Date.now() / 1000) + 86400,
-            user: formattedUser,
-          };
-          cachedAuthSession = {
-            data: { data: { session: formattedSession }, error: null },
-            timestamp: Date.now(),
-          };
-          return {
-            data: { user: formattedUser, session: formattedSession },
-            error: null,
-          };
-        }
-        return {
-          data: { user: null, session: null },
-          error: { message: "Network error: Unable to connect to authentication server. Please check your connection or try again." },
-        };
-      }
-
-      return { data: { user: null, session: null }, error: { message: msg || "Registration failed" } };
+      const networkFailure = /failed to fetch|networkerror|network request failed/i.test(msg);
+      return {
+        data: { user: null, session: null },
+        error: {
+          message: networkFailure
+            ? "Network error: Unable to connect to authentication. No offline account was created."
+            : msg || "Registration failed",
+          code: networkFailure ? "AUTH_SERVICE_UNAVAILABLE" : undefined,
+        },
+      };
     }
   },
 
@@ -818,7 +774,7 @@ function channelAdapter(channelName: string) {
 }
 
 // Appwrite Unified Client exporting Supabase-like surface
-export const supabase = {
+const appwriteSupabase = {
   from(collection: string) {
     return new AppwriteQueryBuilder(collection);
   },
@@ -878,4 +834,26 @@ export const supabase = {
   },
 };
 
+
+/**
+ * Explicit backend selection. Workspace local persistence is independent of
+ * the remote provider; no silent provider fallback is allowed.
+ */
+const env = (import.meta as any).env || {};
+const backendProvider = String(env.VITE_BACKEND_PROVIDER || "appwrite").toLowerCase();
+if (backendProvider !== "appwrite" && backendProvider !== "supabase") {
+  throw new Error("Unsupported VITE_BACKEND_PROVIDER. Choose appwrite or supabase.");
+}
+const supabaseUrl = String(env.VITE_SUPABASE_URL || "").trim();
+const supabaseAnonKey = String(env.VITE_SUPABASE_ANON_KEY || "").trim();
+if (backendProvider === "supabase" && (!supabaseUrl || !supabaseAnonKey)) {
+  throw new Error("Supabase provider selected but VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing. Never use a service-role key in the browser.");
+}
+export const supabase: any = backendProvider === "supabase"
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      global: { headers: { "X-Amineva-Client": "Amineva-Global" } },
+    })
+  : appwriteSupabase;
+export const activeBackendProvider = backendProvider as "appwrite" | "supabase";
 export default supabase;
