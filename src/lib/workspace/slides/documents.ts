@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/appwrite/client";
-import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
+import { getWorkspaceUser } from "@/lib/workspace/scope";
+import { readWorkspaceCollection, writeWorkspaceCollection } from "@/lib/workspace/localStore";
 import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
 
 export type SlideElementKind = "text" | "shape" | "image" | "table" | "chart" | "video" | "audio";
@@ -317,26 +318,12 @@ function pushDeck(d: WorkspaceSlideDoc) {
   if (!isRealUser(owner) || !isRemoteId(d.id)) return;
   scheduleRemote(`${TBL}:${d.id}`, () => upsertRemote(TBL, d.id, toRow(d, owner)));
 }
-const CACHE_BASE = "amineva_workspace_slides";
-const CACHE_KEY = () => wsKey(CACHE_BASE);
-
-function getLocalDecks(): WorkspaceSlideDoc[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(CACHE_KEY());
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+async function await getLocalDecks(): Promise<WorkspaceSlideDoc[]> {
+  return readWorkspaceCollection("amineva_workspace_slides");
 }
 
-function saveLocalDecks(decks: WorkspaceSlideDoc[]) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(CACHE_KEY(), JSON.stringify(decks));
-  } catch (e) {
-    console.error("[slides] Failed to save local slides", e);
-  }
+async function await saveLocalDecks(records: WorkspaceSlideDoc[]): Promise<void> {
+  await writeWorkspaceCollection("amineva_workspace_slides", records);
 }
 
 async function getAuthenticatedUserId(): Promise<string> {
@@ -357,7 +344,7 @@ export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
   const userId = await getAuthenticatedUserId();
   if (!userId) return [];
 
-  const local = getLocalDecks();
+  const local = await getLocalDecks();
   if (typeof navigator !== "undefined" && !navigator.onLine) return local;
   try {
     const queryPromise = supabase.from(TBL).select("*").eq("owner_id", userId).order("updated_at", { ascending: false });
@@ -366,8 +353,8 @@ export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
     );
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
-      const merged = reconcile({ table: TBL, local: getLocalDecks(), remote: data as any as WorkspaceSlideDoc[], userId, updatedAt: (d) => d.updated_at, toRow });
-      saveLocalDecks(merged);
+      const merged = reconcile({ table: TBL, local: await getLocalDecks(), remote: data as any as WorkspaceSlideDoc[], userId, updatedAt: (d) => d.updated_at, toRow });
+      await saveLocalDecks(merged);
       return merged;
     }
   } catch (e) {
@@ -377,7 +364,7 @@ export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
 }
 
 export async function getDeck(id: string): Promise<WorkspaceSlideDoc | null> {
-  const local = getLocalDecks();
+  const local = await getLocalDecks();
   const cached = local.find((d) => d.id === id);
   if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
   try {
@@ -388,7 +375,7 @@ export async function getDeck(id: string): Promise<WorkspaceSlideDoc | null> {
       const idx = local.findIndex((d) => d.id === id);
       if (idx >= 0) local[idx] = data as any;
       else local.unshift(data as any);
-      saveLocalDecks(local);
+      await saveLocalDecks(local);
       return data as any;
     }
   } catch (e) {
@@ -415,9 +402,9 @@ export async function createDeck(title = "Untitled presentation"): Promise<Works
     updated_at: now,
   };
 
-  const local = getLocalDecks();
+  const local = await getLocalDecks();
   local.unshift(newDeck);
-  saveLocalDecks(local);
+  await saveLocalDecks(local);
 
   pushDeck(newDeck);
   return newDeck;
@@ -425,20 +412,20 @@ export async function createDeck(title = "Untitled presentation"): Promise<Works
 
 export async function updateDeck(id: string, patch: Partial<WorkspaceSlideDoc>): Promise<boolean> {
   const now = new Date().toISOString();
-  const local = getLocalDecks();
+  const local = await getLocalDecks();
   const idx = local.findIndex((d) => d.id === id);
   if (idx >= 0) {
     local[idx] = { ...local[idx], ...patch, updated_at: now };
-    saveLocalDecks(local);
+    await saveLocalDecks(local);
     pushDeck(local[idx]);
   }
   return true;
 }
 
 export async function deleteDeck(id: string): Promise<boolean> {
-  const local = getLocalDecks();
+  const local = await getLocalDecks();
   const filtered = local.filter((d) => d.id !== id);
-  saveLocalDecks(filtered);
+  await saveLocalDecks(filtered);
   deleteRemote(TBL, id);
   return true;
 }
@@ -458,9 +445,9 @@ export async function duplicateDeck(d: WorkspaceSlideDoc): Promise<WorkspaceSlid
     updated_at: now,
   };
 
-  const local = getLocalDecks();
+  const local = await getLocalDecks();
   local.unshift(duplicated);
-  saveLocalDecks(local);
+  await saveLocalDecks(local);
   pushDeck(duplicated);
   return duplicated;
 }
