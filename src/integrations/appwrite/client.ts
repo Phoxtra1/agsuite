@@ -476,30 +476,15 @@ const authAdapter = {
       invalidateAuthCache();
       const msg = err?.message || "";
       if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("networkerror")) {
-        const disableAuth = (import.meta as any).env?.VITE_DISABLE_PRODUCT_AUTH === "true";
-        if (disableAuth) {
-          const cleanEmail = email.trim();
-          const fallbackId = `offline_${Date.now()}`;
-          const formattedUser = {
-            id: fallbackId,
-            email: cleanEmail,
-            user_metadata: { name: cleanEmail.split("@")[0] },
-            app_metadata: { provider: "email" },
-          };
-          const formattedSession = {
-            access_token: `sess_${fallbackId}`,
-            expires_at: Math.floor(Date.now() / 1000) + 86400,
-            user: formattedUser,
-          };
-          cachedAuthSession = {
-            data: { data: { session: formattedSession }, error: null },
-            timestamp: Date.now(),
-          };
-          return { data: { session: formattedSession, user: formattedUser }, error: null };
-        }
+        // A network failure must never manufacture an authenticated identity.
+        // Workspace can continue using local data for a session already held
+        // in memory, but a fresh sign-in always requires the real auth service.
         return {
           data: { session: null, user: null },
-          error: { message: "Network error: Unable to connect to authentication server. Please check your connection or try again." },
+          error: {
+            message: "Network error: Unable to connect to authentication server. Please check your connection or try again.",
+            code: "AUTH_SERVICE_UNAVAILABLE",
+          },
         };
       }
       return { data: { session: null, user: null }, error: { message: err?.message || "Sign in failed" } };
