@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/appwrite/client";
-import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
+import { getWorkspaceUser } from "@/lib/workspace/scope";
+import { readWorkspaceCollection, writeWorkspaceCollection } from "@/lib/workspace/localStore";
 import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
 
 const TBL = "workspace_documents";
@@ -31,26 +32,12 @@ export interface DocumentShare {
 }
 
 const EMPTY_DOC = { type: "doc", content: [{ type: "paragraph" }] };
-const CACHE_BASE = "amineva_workspace_docs";
-const CACHE_KEY = () => wsKey(CACHE_BASE);
-
-function getLocalDocs(): WorkspaceDocument[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(CACHE_KEY());
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+async function await getLocalDocs(): Promise<WorkspaceDocument[]> {
+  return readWorkspaceCollection("amineva_workspace_docs");
 }
 
-function saveLocalDocs(docs: WorkspaceDocument[]) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(CACHE_KEY(), JSON.stringify(docs));
-  } catch (e) {
-    console.error("[ag-docs] Failed to save local docs", e);
-  }
+async function await saveLocalDocs(records: WorkspaceDocument[]): Promise<void> {
+  await writeWorkspaceCollection("amineva_workspace_docs", records);
 }
 
 async function getAuthenticatedUserId(): Promise<string> {
@@ -71,7 +58,7 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
   const userId = await getAuthenticatedUserId();
   if (!userId) return [];
 
-  const local = getLocalDocs();
+  const local = await getLocalDocs();
   if (typeof navigator !== "undefined" && !navigator.onLine) return local;
   try {
     const queryPromise = supabase
@@ -87,8 +74,8 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
     if (!error && data && Array.isArray(data)) {
-      const merged = reconcile({ table: TBL, local: getLocalDocs(), remote: data as any as WorkspaceDocument[], userId, updatedAt: (d) => d.updated_at, toRow });
-      saveLocalDocs(merged);
+      const merged = reconcile({ table: TBL, local: await getLocalDocs(), remote: data as any as WorkspaceDocument[], userId, updatedAt: (d) => d.updated_at, toRow });
+      await saveLocalDocs(merged);
       return merged;
     }
   } catch (e) {
@@ -98,7 +85,7 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
 }
 
 export async function getDocument(id: string): Promise<WorkspaceDocument | null> {
-  const local = getLocalDocs();
+  const local = await getLocalDocs();
   const cached = local.find((d) => d.id === id);
   if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
   try {
@@ -114,7 +101,7 @@ export async function getDocument(id: string): Promise<WorkspaceDocument | null>
       const idx = local.findIndex((d) => d.id === id);
       if (idx >= 0) local[idx] = data as any;
       else local.unshift(data as any);
-      saveLocalDocs(local);
+      await saveLocalDocs(local);
       return data as any;
     }
   } catch (e) {
@@ -142,9 +129,9 @@ export async function createDocument(title = "Untitled document"): Promise<Works
     updated_at: now,
   };
 
-  const local = getLocalDocs();
+  const local = await getLocalDocs();
   local.unshift(newDoc);
-  saveLocalDocs(local);
+  await saveLocalDocs(local);
 
   pushDoc(newDoc);
   return newDoc;
@@ -155,20 +142,20 @@ export async function updateDocument(
   patch: { title?: string; content_json?: any; content_text?: string; outline?: any; classification?: string }
 ): Promise<boolean> {
   const now = new Date().toISOString();
-  const local = getLocalDocs();
+  const local = await getLocalDocs();
   const idx = local.findIndex((d) => d.id === id);
   if (idx >= 0) {
     local[idx] = { ...local[idx], ...patch, updated_at: now };
-    saveLocalDocs(local);
+    await saveLocalDocs(local);
     pushDoc(local[idx]);
   }
   return true;
 }
 
 export async function deleteDocument(id: string): Promise<boolean> {
-  const local = getLocalDocs();
+  const local = await getLocalDocs();
   const filtered = local.filter((d) => d.id !== id);
-  saveLocalDocs(filtered);
+  await saveLocalDocs(filtered);
   deleteRemote(TBL, id);
   return true;
 }
@@ -188,9 +175,9 @@ export async function duplicateDocument(doc: WorkspaceDocument): Promise<Workspa
     updated_at: now,
   };
 
-  const local = getLocalDocs();
+  const local = await getLocalDocs();
   local.unshift(duplicated);
-  saveLocalDocs(local);
+  await saveLocalDocs(local);
   pushDoc(duplicated);
   return duplicated;
 }
