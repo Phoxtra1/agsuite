@@ -88,11 +88,11 @@ export const EMPTY_WORKBOOK: Workbook = {
   activeSheet: 0,
 };
 
-async function await getLocalSheets(): Promise<WorkspaceSheet[]> {
+async function getLocalSheets(): Promise<WorkspaceSheet[]> {
   return readWorkspaceCollection("amineva_workspace_sheets");
 }
 
-async function await saveLocalSheets(records: WorkspaceSheet[]): Promise<void> {
+async function saveLocalSheets(records: WorkspaceSheet[]): Promise<void> {
   await writeWorkspaceCollection("amineva_workspace_sheets", records);
 }
 
