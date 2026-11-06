@@ -1,6 +1,6 @@
 import { supabase } from "@/integrations/appwrite/client";
 import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
-import { deleteWorkspaceBlob, getWorkspaceBlob, putWorkspaceBlob } from "@/lib/workspace/localStore";
+import { deleteWorkspaceBlob, getWorkspaceBlob, moveWorkspaceBlob, putWorkspaceBlob } from "@/lib/workspace/localStore";
 
 export type DriveKind = "upload" | "doc" | "sheet" | "slide" | "form";
 
@@ -142,9 +142,31 @@ export async function listFolder(folderId: string | null): Promise<{ folders: Dr
       .is("trashed_at", null);
 
     if (!foldersErr && !filesErr && foldersData && filesData) {
-      saveLocal(STORAGE_KEY_FOLDERS, foldersData);
-      saveLocal(STORAGE_KEY_FILES, filesData);
-      return { folders: foldersData as any, files: filesData as any };
+      const mergeById = <T extends { id: string; updated_at?: string }>(localItems: T[], remoteItems: T[]) => {
+        const merged = new Map<string, T>();
+        for (const item of localItems) merged.set(item.id, item);
+        for (const item of remoteItems) {
+          const current = merged.get(item.id);
+          if (!current || new Date(item.updated_at || 0).getTime() >= new Date(current.updated_at || 0).getTime()) {
+            merged.set(item.id, item);
+          }
+        }
+        return Array.from(merged.values());
+      };
+      const mergedFolders = mergeById(
+        getLocal<DriveFolder>(STORAGE_KEY_FOLDERS).filter((item) => item.owner_id === uid),
+        foldersData as DriveFolder[]
+      );
+      const mergedFiles = mergeById(
+        getLocal<DriveFile>(STORAGE_KEY_FILES).filter((item) => item.owner_id === uid),
+        filesData as DriveFile[]
+      );
+      saveLocal(STORAGE_KEY_FOLDERS, mergedFolders);
+      saveLocal(STORAGE_KEY_FILES, mergedFiles);
+      return {
+        folders: mergedFolders.filter((item) => item.parent_id === folderId && !(item as any).trashed_at),
+        files: mergedFiles.filter((item) => item.folder_id === folderId && !item.trashed_at),
+      };
     }
   } catch (e) {
     console.warn("[drive] Fallback to local indexing", e);
@@ -301,12 +323,23 @@ export async function uploadFile(
       .single();
 
     if (!error && data) {
+      const remoteFile = data as DriveFile;
+      if (remoteFile.id && remoteFile.id !== fileId) {
+        await moveWorkspaceBlob(fileId, remoteFile.id).catch((e) => {
+          console.warn("[drive] Could not remap local file copy to remote ID", e);
+        });
+        const localUrl = localBlobUrls.get(fileId);
+        if (localUrl) {
+          localBlobUrls.set(remoteFile.id, localUrl);
+          localBlobUrls.delete(fileId);
+        }
+      }
       const current = getLocal<DriveFile>(STORAGE_KEY_FILES);
       const idx = current.findIndex(f => f.id === fileId);
-      if (idx >= 0) current[idx] = data as any;
+      if (idx >= 0) current[idx] = remoteFile;
       saveLocal(STORAGE_KEY_FILES, current);
       await logActivity("Uploaded file", file.name, "file");
-      return data as any;
+      return remoteFile;
     }
   } catch (e) {
     console.warn("[drive] Offline file registration", e);
