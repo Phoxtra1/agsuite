@@ -1183,7 +1183,7 @@ export default function InfoDiscoveryPage() {
           <div className="relative z-40 mx-auto mt-7 max-w-3xl">
             <form onSubmit={onSearchSubmit} className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-2 text-foreground shadow-xl sm:flex-row sm:items-center">
               <div className="flex min-w-0 flex-1 items-center gap-3 px-3"><Search className="h-5 w-5 shrink-0 text-muted-foreground" /><Input value={query} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setQuery(e.target.value); setShowSuggestions(true); }} onFocus={() => setShowSuggestions(true)} onBlur={() => window.setTimeout(() => setShowSuggestions(false), 160)} placeholder="What are you trying to understand?" className="h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" aria-label="Search information discovery" /></div>
-              <Button type="submit" className="h-11 bg-accent px-6 text-accent-foreground hover:bg-accent/90" disabled={!query.trim()}>Search <ArrowRight className="ml-2 h-4 w-4" /></Button>
+              <Button type="submit" className="h-11 bg-accent px-6 text-accent-foreground hover:bg-accent/90" disabled={!query.trim()}>Explore <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </form>
             <p className="mt-2 text-center text-[11px] text-primary-foreground/70">Amineva maps your question to structured subject areas and investigation guides. It is not an open-web search engine or an automatically generated answer page.</p>
             {showSuggestions && query.trim() && <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-96 overflow-y-auto rounded-2xl border border-border bg-card p-2 text-left text-foreground shadow-2xl">
