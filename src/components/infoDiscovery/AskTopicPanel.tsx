@@ -17,7 +17,6 @@ interface InvestigationGuideProps {
 export function AskTopicPanel({
   topicTitle,
   categoryTitle,
-  description,
   questions = [],
   referenceSources = [],
 }: InvestigationGuideProps) {
@@ -91,7 +90,7 @@ export function AskTopicPanel({
         </div>
       )}
       <p className="mt-3 text-[10px] leading-4 text-muted-foreground">
-        Investigation area: {categoryTitle}. Guide context: {description}
+        Investigation area: {categoryTitle} · Topic: {topicTitle}
       </p>
     </section>
   );
