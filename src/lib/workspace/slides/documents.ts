@@ -318,11 +318,11 @@ function pushDeck(d: WorkspaceSlideDoc) {
   if (!isRealUser(owner) || !isRemoteId(d.id)) return;
   scheduleRemote(`${TBL}:${d.id}`, () => upsertRemote(TBL, d.id, toRow(d, owner)));
 }
-async function await getLocalDecks(): Promise<WorkspaceSlideDoc[]> {
+async function getLocalDecks(): Promise<WorkspaceSlideDoc[]> {
   return readWorkspaceCollection("amineva_workspace_slides");
 }
 
-async function await saveLocalDecks(records: WorkspaceSlideDoc[]): Promise<void> {
+async function saveLocalDecks(records: WorkspaceSlideDoc[]): Promise<void> {
   await writeWorkspaceCollection("amineva_workspace_slides", records);
 }
 
