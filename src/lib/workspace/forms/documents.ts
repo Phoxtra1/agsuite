@@ -347,8 +347,8 @@ async function getAuthenticatedUserId(): Promise<string> {
     if (data?.user?.id) return data.user.id;
   } catch {}
   const scopeUser = getWorkspaceUser();
-  if (scopeUser && scopeUser !== "anon") return scopeUser;
-  return "local-user";
+  if (scopeUser && scopeUser !== "anon" && scopeUser !== "local-user") return scopeUser;
+  throw new Error("Workspace requires an authenticated account. Sign in before creating or opening Workspace records.");
 }
 
 function mapRemoteRowToForm(row: any): FormDocument {
