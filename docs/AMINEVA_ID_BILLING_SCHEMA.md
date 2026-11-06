@@ -1,11 +1,11 @@
 # Amineva ID and Central Billing — schema design
 
-**Status:** Design specification only. This file does not create tables or apply migrations.  
-**Target:** The Amineva Global Supabase project, after its identity, current schema and migration history are confirmed.
+**Status:** Provider-neutral design specification only. This file does not create tables or apply migrations.  
+**Target:** The Amineva Global central identity and billing service. Supabase/Postgres is one possible implementation, not a required single backend. The logical model may be implemented by an Amineva-operated service or another suitable backend.
 
 ## 1. Design rules
 
-- Use Supabase Auth as the central authentication authority once the project connection is confirmed.
+- Use one explicitly selected identity authority behind an IdentityProvider contract. Supabase Auth is an option, not a hard dependency; Appwrite or an Amineva-operated identity service may implement the same contract.
 - Support verified email or phone registration.
 - A user has an individual account and may also create or join one or more organisation accounts.
 - An organisation is an account/customer in its own right, not merely a renamed user profile.
@@ -121,9 +121,9 @@ A browser redirect, screenshot, client-side success message or unverified refere
 - Establish retention rules for old provider events, audit records and completed invoices.
 - Monitor database size, storage, bandwidth, function invocations and authentication use after launch.
 
-## 8. Migration order
+## 8. Provider implementation requirements\n\nThe schema and workflows must be expressed as application-level contracts and implemented through a trusted backend adapter. Do not make browser pages depend directly on Supabase-specific RPCs or tables. Each supported provider must enforce the same account boundaries, membership roles, server-side payment verification, idempotency, auditability and entitlement rules. Keep operational data for AgroClimate, SikaSem, Adesua and DataLens in their existing backends during the initial rollout.\n\n## 9. Migration order
 
-1. Confirm the actual Supabase project connected through Lovable, project URL, public browser key and applied migration history.
+1. Select the intended provider for the first deployment (existing Appwrite, Supabase/Postgres, or an Amineva-operated service) and confirm its live project, credentials and applied schema.
 2. Review the existing profiles, applications, user_app_access, team_members and payment-related structures in the live database.
 3. Agree the final identity and organisation role model.
 4. Create and test account_profiles, organizations and organization_members with RLS.
