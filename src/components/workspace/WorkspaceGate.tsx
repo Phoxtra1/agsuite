@@ -70,7 +70,7 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
       if (cancelled) return;
       setSession({
         userId: effectiveUserId,
-        email: user?.email ?? "workspace@amineva.com",
+        email: user?.email ?? "",
         appId,
         profile,
       });
