@@ -31,6 +31,13 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { toast } from "@/hooks/use-toast";
 import { Search, Sparkles, FolderPlus, HelpCircle, HardDrive, Trash2, Clock, Star, Layout, Users, FileQuestion, ArrowRight } from "lucide-react";
 
+function formatBytes(bytes: number): string {
+  if (!Number.isFinite(bytes) || bytes <= 0) return "0 B";
+  const units = ["B", "KB", "MB", "GB", "TB"];
+  const index = Math.min(Math.floor(Math.log(bytes) / Math.log(1024)), units.length - 1);
+  return `${(bytes / Math.pow(1024, index)).toFixed(index === 0 ? 0 : 1)} ${units[index]}`;
+}
+
 export default function DriveBrowser() {
   const [currentTab, setCurrentTab] = useState("my-drive");
   const [currentFolderId, setCurrentFolderId] = useState<string | null>(null);
@@ -40,7 +47,7 @@ export default function DriveBrowser() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortField, setSortField] = useState("name");
-  const [storage, setStorage] = useState({ used: 0, quota: 10 * 1024 * 1024 * 1024 });
+  const [storage, setStorage] = useState({ used: 0, quota: 0 });
   const [activities, setActivities] = useState<DriveActivity[]>([]);
 
   // Modals & Dialog states
@@ -406,39 +413,23 @@ export default function DriveBrowser() {
         {currentTab === "storage" && (
           <div className="space-y-6 animate-fade-in">
             <h2 className="text-xl font-bold flex items-center gap-2 text-foreground">
-              <Sparkles className="h-5 w-5 text-sky-500" /> Storage Consumption Insight
+              <Sparkles className="h-5 w-5 text-sky-500" /> Storage on this device
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <div className="p-6 bg-card border border-border rounded-3xl">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Free Storage Pool</p>
-                <p className="text-2xl font-black text-foreground mt-2">10.0 GB Limit</p>
-                <p className="text-xs text-muted-foreground mt-1">Upgrade to Premium for up to 2 TB storage capacity.</p>
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+              <div className="rounded-3xl border border-border bg-card p-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Files currently listed in Drive</p>
+                <p className="mt-2 text-2xl font-black text-foreground">{formatBytes(storage.used)}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Calculated from the sizes of non-trashed Drive files. Documents and editor data are stored separately.</p>
               </div>
-
-              <div className="p-6 bg-card border border-border rounded-3xl col-span-2">
-                <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Storage Distribution</p>
-                <div className="space-y-3 mt-4">
-                  <div>
-                    <div className="flex justify-between text-xs font-medium mb-1">
-                      <span>Documents & Exports</span>
-                      <span>15%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full bg-blue-500" style={{ width: "15%" }}></div>
-                    </div>
-                  </div>
-                  <div>
-                    <div className="flex justify-between text-xs font-medium mb-1">
-                      <span>Media and Images</span>
-                      <span>5%</span>
-                    </div>
-                    <div className="h-2 rounded-full bg-muted overflow-hidden">
-                      <div className="h-full bg-emerald-500" style={{ width: "5%" }}></div>
-                    </div>
-                  </div>
-                </div>
+              <div className="rounded-3xl border border-border bg-card p-6">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Browser storage estimate</p>
+                <p className="mt-2 text-2xl font-black text-foreground">{storage.quota > 0 ? formatBytes(storage.quota) : "Not reported"}</p>
+                <p className="mt-1 text-xs text-muted-foreground">Capacity reported by the browser for this website's origin. It is not an Amineva subscription allowance and may include other site data.</p>
               </div>
             </div>
+            <p className="rounded-xl border border-border bg-muted/30 p-4 text-xs leading-5 text-muted-foreground">
+              Drive keeps file details and local file copies on this device where browser storage is available. Cloud synchronisation and backup depend on the connected account service. Export important files and keep a separate backup before clearing browser data or changing devices.
+            </p>
 
             {/* Activity History Logs */}
             <div className="border border-border rounded-3xl p-6 bg-card/40 space-y-4">
@@ -471,10 +462,9 @@ export default function DriveBrowser() {
             <h2 className="text-xl font-bold text-foreground">Drive System Settings</h2>
             <div className="p-6 bg-card border border-border rounded-3xl space-y-4">
               <div>
-                <h3 className="font-semibold text-sm text-foreground">Future Architecture Migration</h3>
+                <h3 className="font-semibold text-sm text-foreground">Local-first file handling</h3>
                 <p className="text-xs text-muted-foreground mt-1">
-                  Amineva Drive is structured natively with a highly robust StorageService abstract interface.
-                  You can seamlessly migrate your files from Supabase block database to Appwrite self-hosted setups instantly with zero code restructuring.
+                  Drive keeps file metadata and available file bytes on this device first. When an account backend is connected, files can also be uploaded to the configured cloud storage. A failed upload must not remove the local copy.
                 </p>
               </div>
               <div className="pt-3 border-t border-border">
