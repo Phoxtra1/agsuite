@@ -184,6 +184,16 @@ async function migrateLegacyCollection<T extends { id?: string }>(db: IDBDatabas
 }
 
 export async function readWorkspaceCollection<T extends { id?: string }>(collection: string): Promise<T[]> {
+  // Non-browser test environments may not expose IndexedDB. Keep the same
+  // scoped API with a localStorage fallback; production browsers use IndexedDB.
+  if (typeof indexedDB === "undefined") {
+    try {
+      const raw = localStorage.getItem(wsKey(collection));
+      return raw ? JSON.parse(raw) : [];
+    } catch {
+      return [];
+    }
+  }
   const db = await openDatabase();
   const scope = currentScope(collection);
   await migrateLegacyCollection<T>(db, collection, scope);
@@ -204,6 +214,10 @@ export async function readWorkspaceCollection<T extends { id?: string }>(collect
 }
 
 export async function writeWorkspaceCollection<T extends { id?: string }>(collection: string, values: T[]): Promise<void> {
+  if (typeof indexedDB === "undefined") {
+    localStorage.setItem(wsKey(collection), JSON.stringify(values));
+    return;
+  }
   const db = await openDatabase();
   const scope = currentScope(collection);
   await migrateLegacyCollection<T>(db, collection, scope);
