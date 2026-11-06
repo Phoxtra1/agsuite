@@ -788,23 +788,22 @@ const appwriteSupabase = {
     try {
       if (fnName === "ensure_self_app_access") {
         const appSlug = args?._app_slug || "workspace";
-        try {
-          const user = await account.get();
-          if (user?.$id) {
-            const existing = await databases.listDocuments(APPWRITE_DB_ID, "module_access", [
-              Query.equal("userId", user.$id),
-              Query.equal("moduleId", appSlug),
-              Query.limit(1),
-            ]);
-            if (existing.documents.length === 0) {
-              await databases.createDocument(APPWRITE_DB_ID, "module_access", ID.unique(), {
-                userId: user.$id,
-                moduleId: appSlug,
-                granted: true,
-              }).catch(() => null);
-            }
-          }
-        } catch {}
+        const user = await account.get();
+        if (!user?.$id) {
+          return { data: null, error: { message: "A verified account session is required to provision Workspace access." } };
+        }
+        const existing = await databases.listDocuments(APPWRITE_DB_ID, "module_access", [
+          Query.equal("userId", user.$id),
+          Query.equal("moduleId", appSlug),
+          Query.limit(1),
+        ]);
+        if (existing.documents.length === 0) {
+          await databases.createDocument(APPWRITE_DB_ID, "module_access", ID.unique(), {
+            userId: user.$id,
+            moduleId: appSlug,
+            granted: true,
+          });
+        }
         return { data: appSlug, error: null };
       }
 
@@ -821,10 +820,14 @@ const appwriteSupabase = {
       }
 
       if (fnName === "get_shared_document" || fnName === "get_shared_sheet" || fnName === "get_shared_slides") {
-        const token = args?._token;
-        const targetTable = fnName === "get_shared_document" ? "workspace_documents" : fnName === "get_shared_sheet" ? "workspace_sheets" : "workspace_slides";
-        const { data } = await supabase.from(targetTable).select("*").limit(1);
-        return { data: data || [], error: null };
+        // Appwrite does not have a verified token-to-share resolver in this
+        // adapter. Returning an arbitrary first record is a data disclosure.
+        // Fail closed until the dedicated share-token collection/function is
+        // configured and can validate expiry, recipient and permissions.
+        return {
+          data: null,
+          error: { message: "Shared-link lookup is unavailable until secure share-token validation is configured." },
+        };
       }
 
       return { data: null, error: null };
