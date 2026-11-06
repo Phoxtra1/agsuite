@@ -329,11 +329,11 @@ function pushForm(f: FormDocument) {
   if (!isRealUser(owner) || !isRemoteId(f.id)) return;
   scheduleRemote(`${TBL}:${f.id}`, () => upsertRemote(TBL, f.id, toRow(f, owner)));
 }
-async function await getLocalForms(): Promise<FormDocument[]> {
+async function getLocalForms(): Promise<FormDocument[]> {
   return readWorkspaceCollection("amineva_forms");
 }
 
-async function await saveLocalForms(records: FormDocument[]): Promise<void> {
+async function saveLocalForms(records: FormDocument[]): Promise<void> {
   await writeWorkspaceCollection("amineva_forms", records);
 }
 
