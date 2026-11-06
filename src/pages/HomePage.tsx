@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useCategoryProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
-import { Clock, XCircle, ArrowRight, Search, Settings, Sun, Moon } from "lucide-react";
+import { Clock, XCircle, ArrowRight, Compass, Settings, Sun, Moon } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -408,10 +408,10 @@ export default function HomePage() {
             <>
               <section className="mt-10 rounded-2xl border border-border bg-card p-6 md:p-7">
                 <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                  <Search className="h-4 w-4" /> Information Discovery
+                  <Compass className="h-4 w-4" /> Information Discovery System
                 </div>
-                <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Find the information. Understand the bigger picture.</h1>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">Explore questions, connect ideas and examine information from different perspectives. Move beyond quick answers to clearer understanding, useful insight and better-informed decisions.</p>
+                <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Understand the subject. Follow the evidence. Know what comes next.</h1>
+                <p className="mt-3 text-sm leading-6 text-muted-foreground">Amineva Global organises information into connected subject areas, investigation questions, evidence standards and original sources. Rather than returning unrelated pages or a generated answer, it helps you understand the context, examine the evidence and identify a useful next step.</p>
                 <div className="mt-6 grid grid-cols-2 gap-3" aria-label="Information discovery artwork">
                   <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={discoverySearch} alt="A magnifying glass exploring information" className="block h-auto w-full" loading="eager" /></div>
                   <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={connectedKnowledge} alt="Connected ideas and knowledge" className="block h-auto w-full" loading="lazy" /></div>
@@ -419,7 +419,7 @@ export default function HomePage() {
                   <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={worldOfIdeas} alt="A connected world of ideas" className="block h-auto w-full" loading="lazy" /></div>
                 </div>
                 <button type="button" onClick={() => navigate("/info-discovery")} className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
-                  Explore Info Discovery <ArrowRight className="ml-2 h-4 w-4" />
+                  Explore Information Discovery <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
               </section>
 

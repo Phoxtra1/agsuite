@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/appwrite/client";
-import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
+import { getWorkspaceUser } from "@/lib/workspace/scope";
+import { readWorkspaceCollection, writeWorkspaceCollection } from "@/lib/workspace/localStore";
 import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
 
 const TBL = "workspace_sheets";
@@ -87,26 +88,12 @@ export const EMPTY_WORKBOOK: Workbook = {
   activeSheet: 0,
 };
 
-const CACHE_BASE = "amineva_workspace_sheets";
-const CACHE_KEY = () => wsKey(CACHE_BASE);
-
-function getLocalSheets(): WorkspaceSheet[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(CACHE_KEY());
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+async function getLocalSheets(): Promise<WorkspaceSheet[]> {
+  return readWorkspaceCollection("amineva_workspace_sheets");
 }
 
-function saveLocalSheets(sheets: WorkspaceSheet[]) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(CACHE_KEY(), JSON.stringify(sheets));
-  } catch (e) {
-    console.error("[sheets] Failed to save local sheets", e);
-  }
+async function saveLocalSheets(records: WorkspaceSheet[]): Promise<void> {
+  await writeWorkspaceCollection("amineva_workspace_sheets", records);
 }
 
 async function getAuthenticatedUserId(): Promise<string> {
@@ -127,7 +114,7 @@ export async function listSheets(): Promise<WorkspaceSheet[]> {
   const userId = await getAuthenticatedUserId();
   if (!userId) return [];
 
-  const local = getLocalSheets();
+  const local = await getLocalSheets();
   if (typeof navigator !== "undefined" && !navigator.onLine) {
     return local;
   }
@@ -138,8 +125,8 @@ export async function listSheets(): Promise<WorkspaceSheet[]> {
     );
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
-      const merged = reconcile({ table: TBL, local: getLocalSheets(), remote: data as any as WorkspaceSheet[], userId, updatedAt: (d) => d.updated_at, toRow });
-      saveLocalSheets(merged);
+      const merged = reconcile({ table: TBL, local: await getLocalSheets(), remote: data as any as WorkspaceSheet[], userId, updatedAt: (d) => d.updated_at, toRow });
+      await saveLocalSheets(merged);
       return merged;
     }
   } catch (e) {
@@ -149,7 +136,7 @@ export async function listSheets(): Promise<WorkspaceSheet[]> {
 }
 
 export async function getSheet(id: string): Promise<WorkspaceSheet | null> {
-  const local = getLocalSheets();
+  const local = await getLocalSheets();
   const cached = local.find((s) => s.id === id);
   if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
   try {
@@ -161,7 +148,7 @@ export async function getSheet(id: string): Promise<WorkspaceSheet | null> {
       if (idx >= 0) {
         if (new Date((data as any).updated_at).getTime() > new Date(local[idx].updated_at).getTime()) local[idx] = data as any;
       } else local.unshift(data as any);
-      saveLocalSheets(local);
+      await saveLocalSheets(local);
       return idx >= 0 ? local[idx] : data as any;
     }
   } catch (e) {
@@ -188,9 +175,9 @@ export async function createSheet(title = "Untitled sheet"): Promise<WorkspaceSh
     updated_at: now,
   };
 
-  const local = getLocalSheets();
+  const local = await getLocalSheets();
   local.unshift(newSheet);
-  saveLocalSheets(local);
+  await saveLocalSheets(local);
 
   pushSheet(newSheet);
   return newSheet;
@@ -198,20 +185,20 @@ export async function createSheet(title = "Untitled sheet"): Promise<WorkspaceSh
 
 export async function updateSheet(id: string, patch: Partial<WorkspaceSheet>): Promise<boolean> {
   const now = new Date().toISOString();
-  const local = getLocalSheets();
+  const local = await getLocalSheets();
   const idx = local.findIndex((s) => s.id === id);
   if (idx >= 0) {
     local[idx] = { ...local[idx], ...patch, updated_at: now };
-    saveLocalSheets(local);
+    await saveLocalSheets(local);
     pushSheet(local[idx]);
   }
   return true;
 }
 
 export async function deleteSheet(id: string): Promise<boolean> {
-  const local = getLocalSheets();
+  const local = await getLocalSheets();
   const filtered = local.filter((s) => s.id !== id);
-  saveLocalSheets(filtered);
+  await saveLocalSheets(filtered);
   deleteRemote(TBL, id);
   return true;
 }
@@ -230,9 +217,9 @@ export async function duplicateSheet(s: WorkspaceSheet): Promise<WorkspaceSheet>
     created_at: now,
     updated_at: now,
   };
-  const local = getLocalSheets();
+  const local = await getLocalSheets();
   local.unshift(duplicated);
-  saveLocalSheets(local);
+  await saveLocalSheets(local);
   pushSheet(duplicated);
   return duplicated;
 }

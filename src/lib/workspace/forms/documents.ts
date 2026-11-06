@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/appwrite/client";
-import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
+import { getWorkspaceUser } from "@/lib/workspace/scope";
+import { readWorkspaceCollection, writeWorkspaceCollection } from "@/lib/workspace/localStore";
 import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
 
 export interface FormTheme {
@@ -328,26 +329,12 @@ function pushForm(f: FormDocument) {
   if (!isRealUser(owner) || !isRemoteId(f.id)) return;
   scheduleRemote(`${TBL}:${f.id}`, () => upsertRemote(TBL, f.id, toRow(f, owner)));
 }
-const CACHE_BASE = "amineva_forms";
-const CACHE_KEY = () => wsKey(CACHE_BASE);
-
-function getLocalForms(): FormDocument[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem(CACHE_KEY());
-    return raw ? JSON.parse(raw) : [];
-  } catch {
-    return [];
-  }
+async function getLocalForms(): Promise<FormDocument[]> {
+  return readWorkspaceCollection("amineva_forms");
 }
 
-function saveLocalForms(forms: FormDocument[]) {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(CACHE_KEY(), JSON.stringify(forms));
-  } catch (e) {
-    console.error("[forms] Failed to save local forms", e);
-  }
+async function saveLocalForms(records: FormDocument[]): Promise<void> {
+  await writeWorkspaceCollection("amineva_forms", records);
 }
 
 async function getAuthenticatedUserId(): Promise<string> {
@@ -389,7 +376,7 @@ export async function listForms(): Promise<FormDocument[]> {
   const userId = await getAuthenticatedUserId();
   if (!userId) return [];
 
-  const local = getLocalForms();
+  const local = await getLocalForms();
   if (typeof navigator !== "undefined" && !navigator.onLine) return local;
 
   try {
@@ -399,8 +386,8 @@ export async function listForms(): Promise<FormDocument[]> {
     );
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
-      const merged = reconcile({ table: TBL, local: getLocalForms(), remote: data.map(mapRemoteRowToForm), userId, updatedAt: (f) => f.updatedAt, toRow });
-      saveLocalForms(merged);
+      const merged = reconcile({ table: TBL, local: await getLocalForms(), remote: data.map(mapRemoteRowToForm), userId, updatedAt: (f) => f.updatedAt, toRow });
+      await saveLocalForms(merged);
       return merged;
     }
   } catch (e) {
@@ -410,7 +397,7 @@ export async function listForms(): Promise<FormDocument[]> {
 }
 
 export async function getFormById(id: string): Promise<FormDocument | null> {
-  const local = getLocalForms();
+  const local = await getLocalForms();
   const cached = local.find((f) => f.id === id || f.formCode === id);
   if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
 
@@ -422,7 +409,7 @@ export async function getFormById(id: string): Promise<FormDocument | null> {
       const idx = local.findIndex((f) => f.id === id);
       if (idx >= 0) local[idx] = form;
       else local.unshift(form);
-      saveLocalForms(local);
+      await saveLocalForms(local);
       return form;
     }
   } catch (e) {
@@ -485,15 +472,15 @@ export async function createForm(title: string, templateId?: string): Promise<Fo
     ],
   };
 
-  const local = getLocalForms();
+  const local = await getLocalForms();
   local.unshift(newDoc);
-  saveLocalForms(local);
+  await saveLocalForms(local);
   pushForm(newDoc);
   return newDoc;
 }
 
 export async function updateForm(id: string, updates: Partial<FormDocument>): Promise<boolean> {
-  const local = getLocalForms();
+  const local = await getLocalForms();
   const index = local.findIndex((f) => f.id === id);
   if (index === -1) return false;
 
@@ -518,15 +505,15 @@ export async function updateForm(id: string, updates: Partial<FormDocument>): Pr
   };
 
   local[index] = updatedDoc;
-  saveLocalForms(local);
+  await saveLocalForms(local);
   pushForm(updatedDoc);
   return true;
 }
 
 export async function deleteForm(id: string): Promise<boolean> {
-  const local = getLocalForms();
+  const local = await getLocalForms();
   const filtered = local.filter((f) => f.id !== id);
-  saveLocalForms(filtered);
+  await saveLocalForms(filtered);
   deleteRemote(TBL, id);
   return true;
 }
@@ -555,9 +542,9 @@ export async function duplicateForm(form: FormDocument): Promise<FormDocument | 
     ],
   };
 
-  const local = getLocalForms();
+  const local = await getLocalForms();
   local.unshift(duplicated);
-  saveLocalForms(local);
+  await saveLocalForms(local);
   pushForm(duplicated);
   return duplicated;
 }
@@ -568,7 +555,7 @@ export async function submitFormResponse(
   answers: Record<string, any>,
   metadata?: any
 ): Promise<FormResponse | null> {
-  const local = getLocalForms();
+  const local = await getLocalForms();
   const index = local.findIndex((f) => f.id === formId);
   if (index === -1) return null;
 
@@ -636,7 +623,7 @@ export async function submitFormResponse(
   };
 
   local[index] = updatedForm;
-  saveLocalForms(local);
+  await saveLocalForms(local);
 
   try {
     await supabase

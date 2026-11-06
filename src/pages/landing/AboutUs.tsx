@@ -36,7 +36,7 @@ const AboutUs: FC = () => (
       <div className="space-y-5 text-sm leading-7 text-muted-foreground md:text-base lg:col-span-7">
         <p>Information is often scattered across government publications, research, datasets, professional references, institutions and individual systems. It can be difficult to know which source is authoritative, whether information is current, or whether two records are describing the same thing.</p>
         <p>Our work is to organise discovery around the question being asked. Instead of treating every subject as a list of unrelated articles, the system connects topics to useful context, evidence, reference sources and practical next steps.</p>
-        <p>Amineva Global also develops and maintains digital capabilities that support practical learning, business operations, technology services, agricultural understanding and organisational verification. These capabilities are connected to discovery where they provide a relevant next step; they are not presented as a catalogue of unrelated applications.</p>
+        <p>Some subjects lead to practical tools or services. Where an Amineva product genuinely supports the next step, it is introduced in context. Where no suitable product exists, the discovery path remains useful on its own and can direct people to appropriate original publishers, public authorities or external platforms.</p>
       </div>
     </section>
 
@@ -68,7 +68,7 @@ const AboutUs: FC = () => (
       <article className="rounded-2xl border border-border bg-card p-7">
         <FileCheck2 className="h-7 w-7 text-accent" />
         <h2 className="mt-4 text-xl font-bold text-foreground">Evidence before certainty</h2>
-        <p className="mt-3 text-sm leading-7 text-muted-foreground">AI-assisted search and analysis can help organise material, surface relationships and explain complex subjects. It does not replace the original source, independent review or the authority responsible for a rule, decision or record. Where evidence is missing or stale, that limitation should remain visible.</p>
+        <p className="mt-3 text-sm leading-7 text-muted-foreground">Automated tools can help organise material, surface relationships and explain complex subjects. They do not replace the original source, independent review or the authority responsible for a rule, decision or record. Where evidence is missing or stale, that limitation should remain visible.</p>
       </article>
     </section>
 

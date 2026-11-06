@@ -1042,15 +1042,17 @@ export default function InfoDiscoveryPage() {
     if (!clean) return [];
     const terms = clean.split(/\s+/).filter(term => term.length > 1 && !SEARCH_STOP_WORDS.has(term));
     const lookupTerms = terms.length ? terms : [clean];
+    const minimumMatches = lookupTerms.length <= 2 ? 1 : Math.max(1, Math.ceil(lookupTerms.length * 0.5));
     return searchIndex
       .map(item => {
         const title = normalise(item.label);
         const searchable = normalise([item.label, item.detail, item.category.title].join(" "));
         const matchedTerms = lookupTerms.filter(term => searchable.includes(term)).length;
         const titleScore = title === clean ? 100 : title.startsWith(clean) ? 60 : title.includes(clean) ? 40 : 0;
-        return { item, score: titleScore + matchedTerms * 10, matchedTerms };
+        const coverageScore = matchedTerms / lookupTerms.length;
+        return { item, score: titleScore + matchedTerms * 12 + coverageScore * 8, matchedTerms };
       })
-      .filter(result => result.matchedTerms === lookupTerms.length)
+      .filter(result => result.matchedTerms >= minimumMatches)
       .sort((a, b) => b.score - a.score)
       .slice(0, 10)
       .map(result => result.item);
@@ -1180,15 +1182,15 @@ export default function InfoDiscoveryPage() {
           </div>
           <div className="relative z-40 mx-auto mt-7 max-w-3xl">
             <form onSubmit={onSearchSubmit} className="flex flex-col gap-2 rounded-2xl border border-border bg-card p-2 text-foreground shadow-xl sm:flex-row sm:items-center">
-              <div className="flex min-w-0 flex-1 items-center gap-3 px-3"><Search className="h-5 w-5 shrink-0 text-muted-foreground" /><Input value={query} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setQuery(e.target.value); setShowSuggestions(true); }} onFocus={() => setShowSuggestions(true)} onBlur={() => window.setTimeout(() => setShowSuggestions(false), 160)} placeholder="Search topics and subject areas" className="h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" aria-label="Search information discovery" /></div>
-              <Button type="submit" className="h-11 bg-accent px-6 text-accent-foreground hover:bg-accent/90" disabled={!query.trim()}>Search <ArrowRight className="ml-2 h-4 w-4" /></Button>
+              <div className="flex min-w-0 flex-1 items-center gap-3 px-3"><Search className="h-5 w-5 shrink-0 text-muted-foreground" /><Input value={query} onChange={(e: React.ChangeEvent<HTMLInputElement>) => { setQuery(e.target.value); setShowSuggestions(true); }} onFocus={() => setShowSuggestions(true)} onBlur={() => window.setTimeout(() => setShowSuggestions(false), 160)} placeholder="What are you trying to understand?" className="h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" aria-label="Search information discovery" /></div>
+              <Button type="submit" className="h-11 bg-accent px-6 text-accent-foreground hover:bg-accent/90" disabled={!query.trim()}>Explore <ArrowRight className="ml-2 h-4 w-4" /></Button>
             </form>
-            <p className="mt-2 text-center text-[11px] text-primary-foreground/70">Search results come from the subjects and guides published in Info Discovery.</p>
+            <p className="mt-2 text-center text-[11px] text-primary-foreground/70">Amineva maps your question to structured subject areas and investigation guides. It is not an open-web search engine or an automatically generated answer page.</p>
             {showSuggestions && query.trim() && <div className="absolute left-0 right-0 top-full z-50 mt-2 max-h-96 overflow-y-auto rounded-2xl border border-border bg-card p-2 text-left text-foreground shadow-2xl">
-              <p className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Matching areas and topics</p>
+              <p className="px-3 pb-2 pt-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Suggested investigation paths</p>
               {searchResults.length > 0 ? searchResults.map((result, index) => <button key={result.category.slug + result.slug + index} type="button" onMouseDown={e => e.preventDefault()} onClick={() => result.kind === "area" ? goToCategory(result.category.slug) : goToTopic(result.category.slug, result.slug)} className="group flex w-full items-start gap-3 rounded-xl p-3 text-left transition hover:bg-accent/5">
                 <span className="mt-0.5 rounded-xl border border-accent/20 bg-accent/10 p-2 text-accent">{result.kind === "area" ? <result.category.icon className="h-4 w-4" /> : <BookOpen className="h-4 w-4" />}</span><span className="min-w-0 flex-1"><span className="block text-sm font-semibold group-hover:text-primary">{result.label}</span><span className="mt-0.5 block text-xs text-muted-foreground">{result.category.title}{result.kind === "topic" ? " · " + result.detail.split(" · ")[0] : ""}</span></span><ChevronRight className="mt-1 h-4 w-4 text-muted-foreground transition group-hover:translate-x-0.5" />
-              </button>) : <div className="px-3 py-5"><p className="text-sm font-semibold text-foreground">No matching topic found.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Try a different keyword or browse one of the discovery areas below.</p></div>}
+              </button>) : <div className="px-3 py-5"><p className="text-sm font-semibold text-foreground">No guide matches that wording.</p><p className="mt-1 text-xs leading-5 text-muted-foreground">Try another phrase or browse the closest area. Each guide provides a structured way to investigate the subject and follow original sources.</p></div>}
             </div>}
             
           </div>
@@ -1276,7 +1278,7 @@ export default function InfoDiscoveryPage() {
           </div>
           <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Compass className="h-4 w-4 text-accent" /> How to use this system</div>
-            <p className="text-xs leading-5 text-muted-foreground">Start with an area, narrow to a topic, then compare the evidence. Use the search field for a question or subject. Check who published each claim, what location and period it covers, and whether it is a confirmed fact, estimate or interpretation. Use official authorities for current rules and decisions.</p>
+            <p className="text-xs leading-5 text-muted-foreground">Start with an area, narrow to an investigation topic, then follow the questions and source routes. Amineva organises the subject and helps you identify what must be checked; it does not claim that a generated answer is the evidence. Confirm current rules and decisions with the responsible authority.</p>
           </div>
           <div className="rounded-2xl border border-border bg-card p-4 shadow-sm">
             <div className="mb-2 flex items-center gap-2 text-sm font-semibold"><Lightbulb className="h-4 w-4 text-accent" /> Discovery corner</div>
@@ -1415,6 +1417,7 @@ export default function InfoDiscoveryPage() {
             </article>
 
             <ResearchPanel initialQuery={selectedTopic.title} />
+            <CategorySourcesPanel sources={selected.sources} product={selected.product} showProduct />
             {selected.slug === "travel-destination" && (
               <>
                 <CountryExplorer onCountriesLoaded={setCountryList} />
@@ -1458,6 +1461,7 @@ export default function InfoDiscoveryPage() {
             {selected.slug === "travel-destination" && <CountryExplorer />}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
             <ResearchPanel initialQuery={selected.title} />
+            <CategorySourcesPanel sources={selected.sources} />
 
             {selected.slug === "operational-intelligence" && <div className="rounded-2xl border border-border bg-muted/40 p-5"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-4 w-4 text-accent" /> Authorised evidence only</div><p className="mt-2 text-xs leading-5 text-muted-foreground">Verification and anomaly detection require approved connections to source systems, documented permissions and review controls. This public information area explains the method; it does not claim access to private organisational records.</p></div>}
           </section>}
@@ -1471,7 +1475,7 @@ export default function InfoDiscoveryPage() {
               onClearRecent={onClearRecent}
             />
 
-            <div><div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Explore the seven areas</h2><p className="mt-1 text-sm text-muted-foreground">Start with a clear overview, explore the questions that matter and find the right service for the next step.</p></div><Badge variant="outline">7 areas</Badge></div>
+            <div><div className="mb-4 flex items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Explore the seven areas</h2><p className="mt-1 text-sm text-muted-foreground">Choose an area, work through its subject guides, examine the evidence questions and follow an appropriate next step.</p></div><Badge variant="outline">7 areas</Badge></div>
               <div className="grid gap-4 md:grid-cols-2">{categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className="group flex h-full flex-col rounded-2xl border border-t-4 border-t-accent/70 border-border bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-xl"><div className="mb-4 flex items-start justify-between"><span className="rounded-xl border border-primary/10 bg-primary/10 p-3 text-primary"><category.icon className="h-6 w-6" /></span><ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary" /></div><h3 className="text-lg font-semibold">{category.title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{category.summary}</p><div className="mt-4 flex flex-wrap gap-1.5">{category.sections.slice(0, 3).map(section => <span key={section.title} className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{section.title}</span>)}</div><div className="mt-4 flex items-center border-t border-border pt-3 text-xs font-semibold text-primary">Open subject menu <ChevronRight className="ml-1 h-4 w-4" /></div></button>)}</div>
             </div>
             <ResearchPanel />
@@ -1489,6 +1493,54 @@ export default function InfoDiscoveryPage() {
         />
       )}
     </main>
+  );
+}
+
+function CategorySourcesPanel({
+  sources,
+  product,
+  showProduct = false,
+}: {
+  sources: Source[];
+  product?: ProductLink;
+  showProduct?: boolean;
+}) {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 shadow-sm md:p-6">
+      <div className="flex items-start gap-3">
+        <Globe2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">Original sources and useful destinations</h2>
+          <p className="mt-1 text-xs leading-5 text-muted-foreground">
+            Continue with the organisations that publish the underlying information. Check each source's authority, geographic scope, date and methodology before using it.
+          </p>
+        </div>
+      </div>
+      {sources.length > 0 ? (
+        <div className="mt-4 grid gap-2 sm:grid-cols-2">
+          {sources.map((source) => (
+            <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer" className="group flex items-start justify-between gap-3 rounded-xl border border-border/70 bg-background/60 p-3 transition hover:border-primary/30 hover:bg-muted/30">
+              <span className="min-w-0">
+                <span className="block text-xs font-semibold text-foreground group-hover:text-primary">{source.name}</span>
+                <span className="mt-1 block text-[11px] leading-5 text-muted-foreground">{source.scope}</span>
+                <span className="mt-1 block text-[10px] text-muted-foreground">{source.type}</span>
+              </span>
+              <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
+            </a>
+          ))}
+        </div>
+      ) : (
+        <p className="mt-3 text-xs text-muted-foreground">No reference directory has been configured for this area yet. Use the investigation questions to identify the responsible original publisher before relying on a claim.</p>
+      )}
+      {showProduct && product && (
+        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+          <p className="max-w-2xl text-xs leading-5 text-muted-foreground">{product.introduction}</p>
+          <a href={product.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
+            {product.label} <ArrowUpRight className="h-3.5 w-3.5" />
+          </a>
+        </div>
+      )}
+    </section>
   );
 }
 

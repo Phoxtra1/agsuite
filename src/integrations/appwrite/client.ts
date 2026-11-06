@@ -413,8 +413,13 @@ const authAdapter = {
       };
       cachedAuthSession = { data: result, timestamp: now };
       return result;
-    } catch {
-      const emptyResult = { data: { session: null }, error: null };
+    } catch (err: any) {
+      // A network/backend failure is not proof that the user signed out.
+      // Keep this distinct so AuthContext does not clear the local Workspace scope.
+      const emptyResult = {
+        data: { session: null },
+        error: { message: err?.message || "Authentication service is temporarily unavailable.", code: "AUTH_SERVICE_UNAVAILABLE" },
+      };
       cachedAuthSession = { data: emptyResult, timestamp: now };
       return emptyResult;
     }
@@ -423,7 +428,7 @@ const authAdapter = {
   async getUser() {
     const sessionRes = await this.getSession();
     const user = sessionRes?.data?.session?.user ?? null;
-    return { data: { user }, error: null };
+    return { data: { user }, error: sessionRes?.error ?? null };
   },
 
   async signInWithPassword({ email, password }: { email: string; password: string }) {
@@ -700,8 +705,10 @@ const authAdapter = {
   },
 
   onAuthStateChange(callback: (event: string, session: any) => void) {
-    // Check session on init and return subscription interface
-    this.getSession().then(({ data }) => {
+    // A failed session check must not be emitted as SIGNED_OUT. Doing so
+    // previously cleared the active local Workspace account scope on outage.
+    this.getSession().then(({ data, error }: any) => {
+      if (error) return;
       callback(data.session ? "SIGNED_IN" : "SIGNED_OUT", data.session);
     });
 
