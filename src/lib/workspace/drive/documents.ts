@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/appwrite/client";
-import { wsKey } from "@/lib/workspace/scope";
+import { getWorkspaceUser, wsKey } from "@/lib/workspace/scope";
+import { deleteWorkspaceBlob, getWorkspaceBlob, putWorkspaceBlob } from "@/lib/workspace/localStore";
 
 export type DriveKind = "upload" | "doc" | "sheet" | "slide" | "form";
 
@@ -62,19 +63,22 @@ const STORAGE_KEY_ACTIVITY = "amineva_drive_activity";
 async function getUserId(): Promise<string> {
   try {
     const { data: u } = await supabase.auth.getUser();
-    return u?.user?.id || "usr-demo";
+    if (u?.user?.id) return u.user.id;
   } catch {
-    return "usr-demo";
+    // Continue with the last locally remembered account scope.
   }
+  const localUser = getWorkspaceUser();
+  return localUser !== "anon" ? localUser : "local-user";
 }
 
 async function getUserEmail(): Promise<string> {
   try {
     const { data: u } = await supabase.auth.getUser();
-    return u?.user?.email || "demo@amineva.com";
+    if (u?.user?.email) return u.user.email;
   } catch {
-    return "demo@amineva.com";
+    // Offline activity entries do not invent a demo email address.
   }
+  return "";
 }
 
 // ---- Sync and Local Storage Backups ----
@@ -245,16 +249,33 @@ export async function uploadFile(
   local.unshift(newFile);
   saveLocal(STORAGE_KEY_FILES, local);
 
+  // Preserve the actual file bytes on this device before attempting cloud upload.
+  if (kind === "upload" && typeof File !== "undefined" && file instanceof File) {
+    try {
+      await putWorkspaceBlob(fileId, file, file.name);
+    } catch (e) {
+      console.warn("[drive] Local file backup unavailable", e);
+    }
+  }
+
   // Attempt upload bucket save if active File
-  if (kind === "upload" && file instanceof File) {
+  if (kind === "upload" && typeof File !== "undefined" && file instanceof File) {
     try {
       const bucketName = "workspace-drive";
-      const { error: uploadErr } = await supabase.storage
+      const { data: uploadData, error: uploadErr } = await supabase.storage
         .from(bucketName)
         .upload(newFile.storage_path!, file);
 
       if (uploadErr) {
-        console.warn("[drive] Bucket upload skipped, storing offline simulation", uploadErr);
+        console.warn("[drive] Bucket upload skipped; the local copy is retained", uploadErr);
+      } else if (uploadData?.path) {
+        // Appwrite's compatibility adapter returns its file ID here; Supabase
+        // returns the bucket path. Retain the actual storage reference either way.
+        newFile.storage_path = uploadData.path;
+        const current = getLocal<DriveFile>(STORAGE_KEY_FILES);
+        const idx = current.findIndex((item) => item.id === fileId);
+        if (idx >= 0) current[idx] = newFile;
+        saveLocal(STORAGE_KEY_FILES, current);
       }
     } catch (e) {
       console.warn("[drive] Bucket offline", e);
@@ -468,15 +489,31 @@ export async function purgeItem(id: string, type: "file" | "folder" = "file"): P
   return true;
 }
 
+const localBlobUrls = new Map<string, string>();
+
 export async function getSignedUrl(file: DriveFile, ttl: number = 300): Promise<string | null> {
-  if (!file.storage_path) return null;
+  if (file.storage_path) {
+    try {
+      const { data, error } = await supabase.storage
+        .from("workspace-drive")
+        .createSignedUrl(file.storage_path, ttl);
+      if (!error && data?.signedUrl) return data.signedUrl;
+    } catch {}
+  }
+
+  // Offline previews use the original locally stored bytes, never a misleading
+  // stock image that could be mistaken for the uploaded file.
   try {
-    const { data, error } = await supabase.storage
-      .from("workspace-drive")
-      .createSignedUrl(file.storage_path, ttl);
-    if (!error && data) return data.signedUrl;
-  } catch {}
-  return "https://images.unsplash.com/photo-1586281380349-632531db7ed4?q=80&w=600&auto=format&fit=crop"; // fallback image
+    const existingUrl = localBlobUrls.get(file.id);
+    if (existingUrl) return existingUrl;
+    const local = await getWorkspaceBlob(file.id);
+    if (!local?.blob) return null;
+    const url = URL.createObjectURL(local.blob);
+    localBlobUrls.set(file.id, url);
+    return url;
+  } catch {
+    return null;
+  }
 }
 
 export async function createShare(fileId: string, access: "view" | "edit" = "view"): Promise<string | null> {
