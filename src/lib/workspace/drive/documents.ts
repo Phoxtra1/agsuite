@@ -475,6 +475,12 @@ export async function purgeItem(id: string, type: "file" | "folder" = "file"): P
     if (idx >= 0) {
       const file = local[idx];
       saveLocal(STORAGE_KEY_FILES, local.filter(f => f.id !== id));
+      await deleteWorkspaceBlob(id).catch(() => undefined);
+      const localUrl = localBlobUrls.get(id);
+      if (localUrl) {
+        URL.revokeObjectURL(localUrl);
+        localBlobUrls.delete(id);
+      }
       if (file.storage_path) {
         try {
           await supabase.storage.from("workspace-drive").remove([file.storage_path]);
@@ -562,8 +568,13 @@ export async function searchDrive(query: string): Promise<DriveFile[]> {
 export async function storageUsage(): Promise<{ used: number; quota: number }> {
   const files = getLocal<DriveFile>(STORAGE_KEY_FILES);
   const totalBytes = files.filter(f => !f.trashed_at).reduce((acc, curr) => acc + (curr.size_bytes || 0), 0);
-  // Free plan is 10 GB
-  const quota = 10 * 1024 * 1024 * 1024;
+  let quota = 0;
+  try {
+    const estimate = await navigator.storage?.estimate?.();
+    quota = Number(estimate?.quota || 0);
+  } catch {
+    // Browser storage estimates are optional and may be unavailable.
+  }
   return { used: totalBytes, quota };
 }
 
