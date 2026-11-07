@@ -6,7 +6,7 @@
  */
 import { databases, APPWRITE_DB_ID } from "@/lib/appwrite";
 import { Query } from "appwrite";
-import { supabase } from "@/integrations/appwrite/client";
+import { supabase, activeBackendProvider } from "@/integrations/appwrite/client";
 
 const DB_ID = APPWRITE_DB_ID;
 const MODULE_ACCESS_COLLECTION_ID = "module_access";
