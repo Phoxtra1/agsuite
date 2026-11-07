@@ -1,7 +1,8 @@
 import { supabase } from "@/integrations/appwrite/client";
 import { getWorkspaceUser } from "@/lib/workspace/scope";
 import { readWorkspaceCollection, writeWorkspaceCollection } from "@/lib/workspace/localStore";
-import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
+import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId, suppressTombstonedRemoteRows, isWorkspaceRecordDeleted } from "@/lib/workspace/remoteSync";
+import { isWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
 
 const TBL = "workspace_sheets";
 const toRow = (d: WorkspaceSheet, userId: string) => ({ ...d, owner_id: isRealUser(d.owner_id) ? d.owner_id : userId });
@@ -97,6 +98,7 @@ async function saveLocalSheets(records: WorkspaceSheet[]): Promise<void> {
 }
 
 async function getAuthenticatedUserId(): Promise<string> {
+  if (isWorkspaceOfflineMode()) return getWorkspaceUser();
   try {
     const getUserPromise = supabase.auth.getUser();
     const timeoutPromise = new Promise<{ data: { user: null }; error: any }>((resolve) =>
@@ -115,7 +117,7 @@ export async function listSheets(): Promise<WorkspaceSheet[]> {
   if (!userId) return [];
 
   const local = await getLocalSheets();
-  if (typeof navigator !== "undefined" && !navigator.onLine) {
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) {
     return local;
   }
   try {
@@ -125,7 +127,8 @@ export async function listSheets(): Promise<WorkspaceSheet[]> {
     );
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
-      const merged = reconcile({ table: TBL, local: await getLocalSheets(), remote: data as any as WorkspaceSheet[], userId, updatedAt: (d) => d.updated_at, toRow });
+      const remoteRows = await suppressTombstonedRemoteRows(TBL, data as any as WorkspaceSheet[]);
+      const merged = reconcile({ table: TBL, local: await getLocalSheets(), remote: remoteRows, userId, updatedAt: (d) => d.updated_at, toRow });
       await saveLocalSheets(merged);
       return merged;
     }
@@ -138,7 +141,8 @@ export async function listSheets(): Promise<WorkspaceSheet[]> {
 export async function getSheet(id: string): Promise<WorkspaceSheet | null> {
   const local = await getLocalSheets();
   const cached = local.find((s) => s.id === id);
-  if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
+  if (cached || isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
+  if (await isWorkspaceRecordDeleted(TBL, id)) return null;
   try {
     const userId = await getAuthenticatedUserId();
     if (!userId) return null;
@@ -199,7 +203,7 @@ export async function deleteSheet(id: string): Promise<boolean> {
   const local = await getLocalSheets();
   const filtered = local.filter((s) => s.id !== id);
   await saveLocalSheets(filtered);
-  deleteRemote(TBL, id);
+  await deleteRemote(TBL, id);
   return true;
 }
 

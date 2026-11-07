@@ -1,50 +1,80 @@
 /**
- * Remote sync for Workspace tools (Docs, Sheets, Slides, Forms).
- *
- * Rules that keep typed work safe:
- *  - The browser copy is always written first and is the source of truth for
- *    the editor. Server responses NEVER overwrite a record that is open.
- *  - Server writes are coalesced per record and run one at a time, so a slow
- *    older write can never land after a newer one.
- *  - Every server write carries the record's own `updated_at`, so the
- *    "which copy is newer" comparison is exact.
- *  - When a list loads, any record that is newer in this browser (or missing
- *    on the server) is pushed up automatically — work done offline or before
- *    sign-in finished is never stranded on one device.
+ * Remote sync boundary for Workspace tools.
+ * Local saves always happen first. The currently configured cloud adapter is
+ * self-hosted Appwrite (through the compatibility client); local-only offline
+ * sessions never attempt a cloud read, write, or delete.
  */
 import { supabase } from "@/integrations/appwrite/client";
+import { isWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
+import { readWorkspaceCollection, writeWorkspaceCollection } from "@/lib/workspace/localStore";
 
 type Task = () => Promise<unknown>;
-
+interface DeleteTombstone {
+  id: string;
+  table: string;
+  recordId: string;
+  deletedAt: string;
+}
+const TOMBSTONES = "__amineva_workspace_sync_tombstones";
 const timers = new Map<string, ReturnType<typeof setTimeout>>();
 const pending = new Map<string, Task>();
 const running = new Map<string, Promise<unknown>>();
 
+function canReachCloud() {
+  return !isWorkspaceOfflineMode() && (typeof navigator === "undefined" || navigator.onLine);
+}
+
+async function updateTombstone(table: string, recordId: string, remove: boolean) {
+  const records = await readWorkspaceCollection<DeleteTombstone>(TOMBSTONES);
+  const id = `${table}:${recordId}`;
+  const next = remove
+    ? records.filter((item) => item.id !== id)
+    : [...records.filter((item) => item.id !== id), { id, table, recordId, deletedAt: new Date().toISOString() }];
+  await writeWorkspaceCollection(TOMBSTONES, next);
+}
+
+async function flushDeleteTombstones() {
+  if (!canReachCloud()) return;
+  const records = await readWorkspaceCollection<DeleteTombstone>(TOMBSTONES);
+  for (const tombstone of records) {
+    try {
+      const { error } = await supabase.from(tombstone.table as any).delete().eq("id", tombstone.recordId);
+      if (!error) await updateTombstone(tombstone.table, tombstone.recordId, true);
+    } catch (error) {
+      console.warn("[workspace-sync] Deferred delete remains queued", error);
+    }
+  }
+}
+
 async function run(key: string) {
-  const t = timers.get(key);
-  if (t) clearTimeout(t);
+  const timer = timers.get(key);
+  if (timer) clearTimeout(timer);
   timers.delete(key);
-  const prev = running.get(key);
-  if (prev) await prev.catch(() => null);
+  if (!canReachCloud()) return;
+  const previous = running.get(key);
+  if (previous) await previous.catch(() => null);
+  if (!canReachCloud()) return;
   const task = pending.get(key);
   if (!task) return;
   pending.delete(key);
-  const p = task().catch((e) => console.warn(`[workspace-sync] ${key} failed`, e));
-  running.set(key, p);
-  await p;
-  if (running.get(key) === p) running.delete(key);
+  const current = task().catch((error) => console.warn(`[workspace-sync] ${key} failed`, error));
+  running.set(key, current);
+  await current;
+  if (running.get(key) === current) running.delete(key);
 }
 
-/** Queue the latest server write for a record; older queued writes are dropped. */
 export function scheduleRemote(key: string, task: Task, delay = 700) {
+  if (!canReachCloud()) return;
   pending.set(key, task);
-  const t = timers.get(key);
-  if (t) clearTimeout(t);
+  const timer = timers.get(key);
+  if (timer) clearTimeout(timer);
   timers.set(key, setTimeout(() => void run(key), delay));
 }
 
 export function flushRemote() {
+  if (!canReachCloud()) return;
   for (const key of Array.from(pending.keys())) void run(key);
+  void flushDeleteTombstones();
 }
 
 if (typeof window !== "undefined") {
@@ -55,7 +85,6 @@ if (typeof window !== "undefined") {
   window.addEventListener("online", flushRemote);
 }
 
-/** Appwrite document ids: ≤36 chars, a-z A-Z 0-9 . - _ , not starting with a symbol. */
 export function isRemoteId(id: unknown): id is string {
   return typeof id === "string" && /^[a-zA-Z0-9][a-zA-Z0-9._-]{0,35}$/.test(id);
 }
@@ -64,56 +93,67 @@ export function isRealUser(userId: unknown): userId is string {
   return typeof userId === "string" && !!userId && userId !== "local-user" && userId !== "anon";
 }
 
-/** Update the server copy, or create it if it doesn't exist yet. */
 export async function upsertRemote(table: string, id: string, row: Record<string, any>): Promise<boolean> {
-  if (typeof navigator !== "undefined" && !navigator.onLine) return false;
+  if (!canReachCloud()) return false;
   const { id: _drop, ...rest } = row;
-  const upd = await supabase.from(table as any).update(rest).eq("id", id);
-  if (!upd.error && Array.isArray(upd.data) && upd.data.length > 0) return true;
-  const ins = await supabase.from(table as any).insert({ ...rest, id });
-  if (ins.error) throw new Error(ins.error.message);
+  const update = await supabase.from(table as any).update(rest).eq("id", id);
+  if (!update.error && Array.isArray(update.data) && update.data.length > 0) return true;
+  const insert = await supabase.from(table as any).insert({ ...rest, id });
+  if (insert.error) throw new Error(insert.error.message);
   return true;
 }
 
-export function deleteRemote(table: string, id: string) {
+export async function deleteRemote(table: string, id: string): Promise<void> {
   pending.delete(`${table}:${id}`);
-  void supabase.from(table as any).delete().eq("id", id).then(() => null, () => null);
+  if (!isRemoteId(id)) return;
+  await updateTombstone(table, id, false);
+  await flushDeleteTombstones();
 }
 
-const ts = (v: unknown) => {
-  const n = new Date(String(v ?? 0)).getTime();
-  return Number.isFinite(n) ? n : 0;
+export async function isWorkspaceRecordDeleted(table: string, recordId: string): Promise<boolean> {
+  const tombstones = await readWorkspaceCollection<DeleteTombstone>(TOMBSTONES);
+  return tombstones.some((item) => item.table === table && item.recordId === recordId);
+}
+
+export async function suppressTombstonedRemoteRows<T extends { id: string }>(table: string, rows: T[]): Promise<T[]> {
+  const tombstones = await readWorkspaceCollection<DeleteTombstone>(TOMBSTONES);
+  const deleted = new Set(tombstones.filter((item) => item.table === table).map((item) => item.recordId));
+  if (deleted.size && canReachCloud()) await flushDeleteTombstones();
+  // Filter against the original tombstones even when the remote delete succeeds
+  // during this fetch; the in-flight list may still contain the pre-delete row.
+  return rows.filter((row) => !deleted.has(row.id));
+}
+
+const timestamp = (value: unknown) => {
+  const parsed = new Date(String(value ?? 0)).getTime();
+  return Number.isFinite(parsed) ? parsed : 0;
 };
 
-/**
- * Merge server and browser lists. Newer copy wins per record; browser records
- * that are newer or missing on the server get pushed up.
- */
-export function reconcile<T extends { id: string }>(opts: {
+export function reconcile<T extends { id: string }>(options: {
   table: string;
   local: T[];
   remote: T[];
   userId: string;
-  updatedAt: (r: T) => unknown;
-  toRow: (r: T, userId: string) => Record<string, any>;
+  updatedAt: (record: T) => unknown;
+  toRow: (record: T, userId: string) => Record<string, any>;
 }): T[] {
-  const { table, local, remote, userId, updatedAt, toRow } = opts;
+  const { table, local, remote, userId, updatedAt, toRow } = options;
   const merged = [...local];
-  const remoteById = new Map(remote.map((r) => [r.id, r]));
-  for (const r of remote) {
-    const idx = merged.findIndex((m) => m.id === r.id);
-    if (idx < 0) merged.push(r);
-    else if (ts(updatedAt(r)) > ts(updatedAt(merged[idx]))) merged[idx] = r;
+  const remoteById = new Map(remote.map((record) => [record.id, record]));
+  for (const record of remote) {
+    const index = merged.findIndex((item) => item.id === record.id);
+    if (index < 0) merged.push(record);
+    else if (timestamp(updatedAt(record)) > timestamp(updatedAt(merged[index]))) merged[index] = record;
   }
-  if (isRealUser(userId)) {
-    for (const l of local) {
-      if (!isRemoteId(l.id)) continue;
-      const r = remoteById.get(l.id);
-      if (!r || ts(updatedAt(l)) > ts(updatedAt(r))) {
-        scheduleRemote(`${table}:${l.id}`, () => upsertRemote(table, l.id, toRow(l, userId)), 50);
+  if (canReachCloud() && isRealUser(userId)) {
+    for (const record of local) {
+      if (!isRemoteId(record.id)) continue;
+      const remoteRecord = remoteById.get(record.id);
+      if (!remoteRecord || timestamp(updatedAt(record)) > timestamp(updatedAt(remoteRecord))) {
+        scheduleRemote(`${table}:${record.id}`, () => upsertRemote(table, record.id, toRow(record, userId)), 50);
       }
     }
   }
-  merged.sort((a, b) => ts(updatedAt(b)) - ts(updatedAt(a)));
+  merged.sort((a, b) => timestamp(updatedAt(b)) - timestamp(updatedAt(a)));
   return merged;
 }

@@ -1,7 +1,8 @@
 import { supabase } from "@/integrations/appwrite/client";
 import { getWorkspaceUser } from "@/lib/workspace/scope";
 import { readWorkspaceCollection, writeWorkspaceCollection } from "@/lib/workspace/localStore";
-import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
+import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId, suppressTombstonedRemoteRows, isWorkspaceRecordDeleted } from "@/lib/workspace/remoteSync";
+import { isWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
 
 export interface FormTheme {
   primary: string;
@@ -338,6 +339,7 @@ async function saveLocalForms(records: FormDocument[]): Promise<void> {
 }
 
 async function getAuthenticatedUserId(): Promise<string> {
+  if (isWorkspaceOfflineMode()) return getWorkspaceUser();
   try {
     const getUserPromise = supabase.auth.getUser();
     const timeoutPromise = new Promise<{ data: { user: null }; error: any }>((resolve) =>
@@ -377,7 +379,7 @@ export async function listForms(): Promise<FormDocument[]> {
   if (!userId) return [];
 
   const local = await getLocalForms();
-  if (typeof navigator !== "undefined" && !navigator.onLine) return local;
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return local;
 
   try {
     const queryPromise = supabase.from(TBL).select("*").eq("owner_id", userId).order("updated_at", { ascending: false });
@@ -386,7 +388,8 @@ export async function listForms(): Promise<FormDocument[]> {
     );
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
-      const merged = reconcile({ table: TBL, local: await getLocalForms(), remote: data.map(mapRemoteRowToForm), userId, updatedAt: (f) => f.updatedAt, toRow });
+      const remoteForms = await suppressTombstonedRemoteRows(TBL, data.map(mapRemoteRowToForm));
+      const merged = reconcile({ table: TBL, local: await getLocalForms(), remote: remoteForms, userId, updatedAt: (f) => f.updatedAt, toRow });
       await saveLocalForms(merged);
       return merged;
     }
@@ -399,7 +402,8 @@ export async function listForms(): Promise<FormDocument[]> {
 export async function getFormById(id: string): Promise<FormDocument | null> {
   const local = await getLocalForms();
   const cached = local.find((f) => f.id === id || f.formCode === id);
-  if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
+  if (cached || isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
+  if (await isWorkspaceRecordDeleted(TBL, id)) return null;
 
   try {
     const userId = await getAuthenticatedUserId();
@@ -514,7 +518,7 @@ export async function deleteForm(id: string): Promise<boolean> {
   const local = await getLocalForms();
   const filtered = local.filter((f) => f.id !== id);
   await saveLocalForms(filtered);
-  deleteRemote(TBL, id);
+  await deleteRemote(TBL, id);
   return true;
 }
 
