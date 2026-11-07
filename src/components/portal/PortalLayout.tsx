@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { ReactNode } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { Compass, BriefcaseBusiness, Wallet, LogOut, Menu, X, Sun, Moon, Settings } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -26,7 +27,6 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
     <NavLink
       key={item.to}
       to={item.to}
-      end={item.to === "/info-discovery"}
       onClick={() => mobile && setMobileOpen(false)}
       className={({ isActive }) =>
         `inline-flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition ${
@@ -99,7 +99,7 @@ export default function PortalLayout({ children }: { children: React.ReactNode }
                   className="rounded-lg border border-border p-2"
                   aria-label="Toggle appearance"
                 >
-                  <Settings className="h-4 w-4" />
+                  {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </button>
                 <button type="button" onClick={() => void signOut()} className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs">
                   <LogOut className="h-3.5 w-3.5" /> Sign out
