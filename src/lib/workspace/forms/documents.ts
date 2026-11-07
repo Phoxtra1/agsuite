@@ -517,7 +517,7 @@ export async function deleteForm(id: string): Promise<boolean> {
   const local = await getLocalForms();
   const filtered = local.filter((f) => f.id !== id);
   await saveLocalForms(filtered);
-  deleteRemote(TBL, id);
+  await deleteRemote(TBL, id);
   return true;
 }
 
