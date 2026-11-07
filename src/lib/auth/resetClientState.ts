@@ -32,6 +32,7 @@ function purgeStorage(storage: Storage) {
           k.startsWith("amineva_drive_"));
       if (
         k === "amineva_theme" ||
+        k === "amineva_offline_profile_id" ||
         isScopedWorkspaceCache ||
         k.startsWith("amineva_workspace_") ||
         k === "amineva_forms"
