@@ -14,12 +14,6 @@ const portalAccount: ProductData = {
   order: 0,
 };
 
-function safeReturnPath(value: string | null): string {
-  if (!value || !value.startsWith("/") || value.startsWith("//")) return "/info-discovery";
-  if (value.startsWith("/get-started") || value.startsWith("/auth/")) return "/info-discovery";
-  return value;
-}
-
 export default function GetStartedPage() {
   const navigate = useNavigate();
   const [params] = useSearchParams();
@@ -29,11 +23,9 @@ export default function GetStartedPage() {
   );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const returnTo = safeReturnPath(params.get("returnTo"));
-
   useEffect(() => {
-    if (!isLoading && isAuthenticated) navigate(returnTo, { replace: true });
-  }, [isAuthenticated, isLoading, navigate, returnTo]);
+    if (!isLoading && isAuthenticated) navigate("/info-discovery", { replace: true });
+  }, [isAuthenticated, isLoading, navigate]);
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-background px-5 py-10 text-foreground md:px-8 md:py-16">
