@@ -1,27 +1,18 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Compass, BriefcaseBusiness, Wallet, LogOut, Menu, X, Sun, Moon } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
+import { Link, NavLink } from "react-router-dom";
+import { Compass, BriefcaseBusiness, Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import amvLogo from "@/assets/amv_global_logo.png";
 
 const links = [
   { to: "/info-discovery", label: "Info Discovery", icon: Compass },
   { to: "/workspace", label: "Workspace", icon: BriefcaseBusiness },
-  { to: "/payments", label: "Payments & Billing", icon: Wallet },
 ];
 
 export default function PortalLayout({ children }: { children: ReactNode }) {
-  const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
-  const navigate = useNavigate();
   const [mobileOpen, setMobileOpen] = useState(false);
-
-  const signOut = async () => {
-    await logout();
-    navigate("/", { replace: true });
-  };
 
   const navLinks = (mobile = false) => links.map((item) => (
     <NavLink
@@ -63,16 +54,7 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
               {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
               <span className="hidden xl:inline">Appearance</span>
             </button>
-            <div className="max-w-48 truncate border-l border-border pl-3 text-xs text-muted-foreground" title={user?.email || ""}>
-              {user?.email || "Signed in"}
-            </div>
-            <button
-              type="button"
-              onClick={() => void signOut()}
-              className="inline-flex h-9 items-center gap-2 rounded-lg border border-border px-3 text-sm transition hover:bg-muted"
-            >
-              <LogOut className="h-4 w-4" /> Sign out
-            </button>
+
           </div>
 
           <button
@@ -90,22 +72,7 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
             <nav aria-label="Mobile portal navigation" className="flex flex-col gap-1">
               {navLinks(true)}
             </nav>
-            <div className="mt-3 flex items-center justify-between border-t border-border pt-3">
-              <span className="max-w-[65%] truncate text-xs text-muted-foreground">{user?.email || "Signed in"}</span>
-              <div className="flex items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                  className="rounded-lg border border-border p-2"
-                  aria-label="Toggle appearance"
-                >
-                  {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                </button>
-                <button type="button" onClick={() => void signOut()} className="inline-flex items-center gap-2 rounded-lg border border-border px-3 py-2 text-xs">
-                  <LogOut className="h-3.5 w-3.5" /> Sign out
-                </button>
-              </div>
-            </div>
+
           </div>
         )}
       </header>
