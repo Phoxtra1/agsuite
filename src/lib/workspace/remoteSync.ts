@@ -103,18 +103,19 @@ export async function upsertRemote(table: string, id: string, row: Record<string
   return true;
 }
 
-export function deleteRemote(table: string, id: string) {
+export async function deleteRemote(table: string, id: string): Promise<void> {
   pending.delete(`${table}:${id}`);
-  void updateTombstone(table, id, false).then(() => flushDeleteTombstones());
+  if (!isRemoteId(id)) return;
+  await updateTombstone(table, id, false);
+  await flushDeleteTombstones();
 }
 
 export async function suppressTombstonedRemoteRows<T extends { id: string }>(table: string, rows: T[]): Promise<T[]> {
   const tombstones = await readWorkspaceCollection<DeleteTombstone>(TOMBSTONES);
-  if (tombstones.some((item) => item.table === table) && canReachCloud()) {
-    await flushDeleteTombstones();
-  }
-  const remaining = await readWorkspaceCollection<DeleteTombstone>(TOMBSTONES);
-  const deleted = new Set(remaining.filter((item) => item.table === table).map((item) => item.recordId));
+  const deleted = new Set(tombstones.filter((item) => item.table === table).map((item) => item.recordId));
+  if (deleted.size && canReachCloud()) await flushDeleteTombstones();
+  // Filter against the original tombstones even when the remote delete succeeds
+  // during this fetch; the in-flight list may still contain the pre-delete row.
   return rows.filter((row) => !deleted.has(row.id));
 }
 
