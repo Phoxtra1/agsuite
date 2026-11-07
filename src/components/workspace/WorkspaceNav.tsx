@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutGrid, FolderOpen, FileText, Sheet as SheetIcon, Presentation, ClipboardList, ArrowLeft, LogOut, Menu, X, Download, Upload, Lock, Compass, Wallet } from "lucide-react";
+import { LayoutGrid, FolderOpen, FileText, Sheet as SheetIcon, Presentation, ClipboardList, LogOut, Menu, X, Download, Upload, Lock, Compass, Wallet } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspaceSession } from "@/components/workspace/WorkspaceGate";
 import { createWorkspaceLocalBackup, restoreWorkspaceLocalBackup } from "@/lib/workspace/localStore";
@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import amvLogo from "@/assets/amv_global_logo.png";
 
 const items = [
-  { to: "/info-discovery", icon: Compass, label: "Information Discovery" },
+  { to: "/info-discovery", icon: Compass, label: "Information Discovery System" },
   { to: "/payments", icon: Wallet, label: "Payments & Billing" },
   { to: "/workspace", icon: LayoutGrid, label: "Workspace Dashboard", end: true },
   { to: "/workspace/docs", icon: FileText, label: "Amineva Docs" },
