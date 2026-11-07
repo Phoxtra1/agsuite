@@ -1,5 +1,6 @@
 import client, { account, databases, storage as appwriteStorage, functions as appwriteFunctions, APPWRITE_DB_ID, ID } from "@/lib/appwrite";
 import { Query, Permission, Role } from "appwrite";
+import { createClient } from "@supabase/supabase-js";
 
 // Helper: Convert Appwrite document -> standard shape with id, created_at, updated_at
 function mapAppwriteDoc(doc: any): any {
@@ -475,13 +476,16 @@ const authAdapter = {
     } catch (err: any) {
       invalidateAuthCache();
       const msg = err?.message || "";
-      if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("networkerror")) {
-        return {
-          data: { session: null, user: null },
-          error: { message: "Network error: Unable to connect to authentication server. Please check your connection or try again." },
-        };
-      }
-      return { data: { session: null, user: null }, error: { message: err?.message || "Sign in failed" } };
+      const networkFailure = /failed to fetch|networkerror|network request failed/i.test(msg);
+      return {
+        data: { session: null, user: null },
+        error: {
+          message: networkFailure
+            ? "Network error: Unable to connect to authentication. Existing local Workspace data is preserved; reconnect and sign in to sync."
+            : err?.message || "Sign in failed",
+          code: networkFailure ? "AUTH_SERVICE_UNAVAILABLE" : undefined,
+        },
+      };
     }
   },
 
@@ -496,15 +500,32 @@ const authAdapter = {
       await account.deleteSession("current").catch(() => null);
       const createdUser = await account.create(userId, cleanEmail, password, name);
 
-      // A real session is required before the UI treats the user as authenticated.
+      try {
+        await account.create(userId, cleanEmail, password, name);
+      } catch (createErr: any) {
+        const createMsg = createErr?.message || "";
+        const createCode = createErr?.code;
+        const createType = createErr?.type;
+
+        if (createCode === 409 || createType === "user_already_exists" || createMsg.includes("already exists")) {
+          return {
+            data: { user: null, session: null },
+            error: { message: "This email address is already registered. Every app in Amineva Suite requires an isolated email address and user account." },
+          };
+        }
+        throw createErr;
+      }
+
+      // Auto sign-in post registration
       let session: any = null;
       let user: any = createdUser;
       try {
         await account.deleteSession("current").catch(() => null);
         session = await account.createEmailPasswordSession(cleanEmail, password);
         user = await account.get();
-      } catch {
-        // Account creation may have succeeded, but do not fabricate a session.
+      } catch (sessionError) {
+        // Account creation is not authentication. Never manufacture a session.
+        throw new Error("Account created, but sign-in could not be completed. Please sign in normally. " + ((sessionError as any)?.message || ""));
       }
 
       if (options?.data && user?.$id && session) {
@@ -518,9 +539,9 @@ const authAdapter = {
         app_metadata: { provider: "email" },
       };
 
-      const formattedSession = session ? {
+      const formattedSession = {
         access_token: session.$id,
-        expires_at: Math.floor(new Date(session.expire).getTime() / 1000),
+        expires_at: session.expire ? Math.floor(new Date(session.expire).getTime() / 1000) : Math.floor(Date.now() / 1000) + 86400,
         user: formattedUser,
       } : null;
 
@@ -543,14 +564,18 @@ const authAdapter = {
       };
     } catch (err: any) {
       invalidateAuthCache();
-      const message = err?.message || "Registration failed";
-      if (message.toLowerCase().includes("failed to fetch") || message.toLowerCase().includes("networkerror")) {
-        return {
-          data: { user: null, session: null },
-          error: { message: "Network error: Unable to connect to authentication server. Please check your connection or try again." },
-        };
-      }
-      return { data: { user: null, session: null }, error: { message } };
+      const msg = err?.message || "";
+
+      const networkFailure = /failed to fetch|networkerror|network request failed/i.test(msg);
+      return {
+        data: { user: null, session: null },
+        error: {
+          message: networkFailure
+            ? "Network error: Unable to connect to authentication. No offline account was created."
+            : msg || "Registration failed",
+          code: networkFailure ? "AUTH_SERVICE_UNAVAILABLE" : undefined,
+        },
+      };
     }
   },
 
@@ -747,7 +772,7 @@ function channelAdapter(channelName: string) {
 }
 
 // Appwrite Unified Client exporting Supabase-like surface
-export const supabase = {
+const appwriteSupabase = {
   from(collection: string) {
     return new AppwriteQueryBuilder(collection);
   },
@@ -761,23 +786,22 @@ export const supabase = {
     try {
       if (fnName === "ensure_self_app_access") {
         const appSlug = args?._app_slug || "workspace";
-        try {
-          const user = await account.get();
-          if (user?.$id) {
-            const existing = await databases.listDocuments(APPWRITE_DB_ID, "module_access", [
-              Query.equal("userId", user.$id),
-              Query.equal("moduleId", appSlug),
-              Query.limit(1),
-            ]);
-            if (existing.documents.length === 0) {
-              await databases.createDocument(APPWRITE_DB_ID, "module_access", ID.unique(), {
-                userId: user.$id,
-                moduleId: appSlug,
-                granted: true,
-              }).catch(() => null);
-            }
-          }
-        } catch {}
+        const user = await account.get();
+        if (!user?.$id) {
+          return { data: null, error: { message: "A verified account session is required to provision Workspace access." } };
+        }
+        const existing = await databases.listDocuments(APPWRITE_DB_ID, "module_access", [
+          Query.equal("userId", user.$id),
+          Query.equal("moduleId", appSlug),
+          Query.limit(1),
+        ]);
+        if (existing.documents.length === 0) {
+          await databases.createDocument(APPWRITE_DB_ID, "module_access", ID.unique(), {
+            userId: user.$id,
+            moduleId: appSlug,
+            granted: true,
+          });
+        }
         return { data: appSlug, error: null };
       }
 
@@ -794,10 +818,14 @@ export const supabase = {
       }
 
       if (fnName === "get_shared_document" || fnName === "get_shared_sheet" || fnName === "get_shared_slides") {
-        const token = args?._token;
-        const targetTable = fnName === "get_shared_document" ? "workspace_documents" : fnName === "get_shared_sheet" ? "workspace_sheets" : "workspace_slides";
-        const { data } = await supabase.from(targetTable).select("*").limit(1);
-        return { data: data || [], error: null };
+        // Appwrite does not have a verified token-to-share resolver in this
+        // adapter. Returning an arbitrary first record is a data disclosure.
+        // Fail closed until the dedicated share-token collection/function is
+        // configured and can validate expiry, recipient and permissions.
+        return {
+          data: null,
+          error: { message: "Shared-link lookup is unavailable until secure share-token validation is configured." },
+        };
       }
 
       return { data: null, error: null };
@@ -807,4 +835,26 @@ export const supabase = {
   },
 };
 
+
+/**
+ * Explicit backend selection. Workspace local persistence is independent of
+ * the remote provider; no silent provider fallback is allowed.
+ */
+const env = (import.meta as any).env || {};
+const backendProvider = String(env.VITE_BACKEND_PROVIDER || "appwrite").toLowerCase();
+if (backendProvider !== "appwrite" && backendProvider !== "supabase") {
+  throw new Error("Unsupported VITE_BACKEND_PROVIDER. Choose appwrite or supabase.");
+}
+const supabaseUrl = String(env.VITE_SUPABASE_URL || "").trim();
+const supabaseAnonKey = String(env.VITE_SUPABASE_ANON_KEY || "").trim();
+if (backendProvider === "supabase" && (!supabaseUrl || !supabaseAnonKey)) {
+  throw new Error("Supabase provider selected but VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing. Never use a service-role key in the browser.");
+}
+export const supabase: any = backendProvider === "supabase"
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
+      global: { headers: { "X-Amineva-Client": "Amineva-Global" } },
+    })
+  : appwriteSupabase;
+export const activeBackendProvider = backendProvider as "appwrite" | "supabase";
 export default supabase;
