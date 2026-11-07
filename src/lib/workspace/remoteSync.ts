@@ -110,6 +110,11 @@ export async function deleteRemote(table: string, id: string): Promise<void> {
   await flushDeleteTombstones();
 }
 
+export async function isWorkspaceRecordDeleted(table: string, recordId: string): Promise<boolean> {
+  const tombstones = await readWorkspaceCollection<DeleteTombstone>(TOMBSTONES);
+  return tombstones.some((item) => item.table === table && item.recordId === recordId);
+}
+
 export async function suppressTombstonedRemoteRows<T extends { id: string }>(table: string, rows: T[]): Promise<T[]> {
   const tombstones = await readWorkspaceCollection<DeleteTombstone>(TOMBSTONES);
   const deleted = new Set(tombstones.filter((item) => item.table === table).map((item) => item.recordId));
