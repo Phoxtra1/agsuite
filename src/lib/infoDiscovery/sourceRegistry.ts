@@ -36,7 +36,7 @@ export const DISCOVERY_SOURCES: DiscoverySource[] = [
     id: "unesco-uis",
     name: "UNESCO Institute for Statistics",
     publisher: "UNESCO",
-    canonicalUrl: "https://uis.unesco.org/",
+    canonicalUrl: "https://www.uis.unesco.org/en/data",
     access: "open-web",
     sourceKind: "institutional",
     subjects: ["education", "skills", "literacy", "research-statistics"],
