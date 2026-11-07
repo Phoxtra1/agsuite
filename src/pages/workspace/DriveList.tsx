@@ -822,13 +822,33 @@ export default function DriveList() {
         }
       } else if (item.kind === "upload") {
         const fileRef = item.originalRef as DriveUploadedFile;
+        const newIdValue = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const newStoragePath = driveUserId ? `${driveUserId}/root/${newIdValue}-${newTitle}` : undefined;
         const newUpload: DriveUploadedFile = {
           ...fileRef,
-          id: `upload-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          id: newIdValue,
           name: newTitle,
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          storagePath: newStoragePath,
+          syncStatus: "pending",
         };
+        const localBlob = await getWorkspaceBlob(fileRef.id).catch(() => null);
+        if (localBlob) {
+          await putWorkspaceBlob(newUpload.id, localBlob.blob, newTitle);
+          if (newStoragePath) {
+            if (navigator.onLine && !workspaceSession.offline && !isWorkspaceOfflineMode()) {
+              const { error } = await supabase.storage.from("workspace-drive").upload(newStoragePath, localBlob.blob, {
+                contentType: fileRef.type || localBlob.type,
+                upsert: true,
+              });
+              if (!error) newUpload.syncStatus = "synced";
+              else await queueDriveUpload(newStoragePath, localBlob.blob as File);
+            } else {
+              await queueDriveUpload(newStoragePath, localBlob.blob as File);
+            }
+          }
+        }
         const nextUploads = [newUpload, ...uploadedFiles];
         setUploadedFiles(nextUploads);
         newId = newUpload.id;
