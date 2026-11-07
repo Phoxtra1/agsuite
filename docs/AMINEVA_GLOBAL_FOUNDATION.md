@@ -10,6 +10,16 @@ Its public purpose is to help people explore knowledge, understand opportunities
 
 Software and internal platforms support the information-discovery purpose; they are not the central public identity.
 
+### Public entry and one-account portal
+
+- The public homepage and footer must consistently define Amineva Global as an **Information Discovery System**. Do not use a generic software-company, technology-solutions or digital-products description as the organisation's public identity.
+- Public visitors use one **Get Started** entry to sign in or create an account.
+- After successful authentication or email verification, the default destination is the Information Discovery portal.
+- The authenticated portal exposes Information Discovery, Workspace and Payments & Billing.
+- Workspace must reuse the signed-in account session. Do not create a separate Workspace registration/login flow.
+- The portal is a unified user experience and account entry, not a mandate to merge each product's operational database.
+- Actual payment processing must use a configured provider and server-side verification. A portal billing page is not proof that card/mobile-money charging, invoices, subscriptions or payment webhooks are live.
+
 ## 2. Information Discovery is not a conventional search engine or AI answer page
 
 The Information Discovery experience must not imitate a generic web-search results page or a chatbot that produces a single answer and asks the visitor to trust it.
