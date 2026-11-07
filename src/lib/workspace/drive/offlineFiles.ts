@@ -6,6 +6,7 @@ interface QueuedUpload {
   file: Blob;
   name: string;
   type: string;
+  action?: "upload" | "delete";
 }
 
 function openDatabase(): Promise<IDBDatabase> {
@@ -24,7 +25,7 @@ export async function queueDriveUpload(path: string, file: File): Promise<void> 
   const db = await openDatabase();
   await new Promise<void>((resolve, reject) => {
     const tx = db.transaction(STORE_NAME, "readwrite");
-    tx.objectStore(STORE_NAME).put({ path, file, name: file.name, type: file.type } satisfies QueuedUpload);
+    tx.objectStore(STORE_NAME).put({ path, file, name: file.name, type: file.type, action: "upload" } satisfies QueuedUpload);
     tx.oncomplete = () => resolve();
     tx.onerror = () => reject(tx.error);
   });
@@ -35,7 +36,7 @@ export async function listQueuedDriveUploads(): Promise<QueuedUpload[]> {
   const db = await openDatabase();
   const uploads = await new Promise<QueuedUpload[]>((resolve, reject) => {
     const request = db.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME).getAll();
-    request.onsuccess = () => resolve(request.result as QueuedUpload[]);
+    request.onsuccess = () => resolve((request.result as QueuedUpload[]).filter((item) => !item.action || item.action === "upload"));
     request.onerror = () => reject(request.error);
   });
   db.close();
@@ -51,4 +52,31 @@ export async function removeQueuedDriveUpload(path: string): Promise<void> {
     tx.onerror = () => reject(tx.error);
   });
   db.close();
+}
+export async function queueDriveDelete(path: string): Promise<void> {
+  const db = await openDatabase();
+  await new Promise<void>((resolve, reject) => {
+    const tx = db.transaction(STORE_NAME, "readwrite");
+    tx.objectStore(STORE_NAME).put({ path, action: "delete" } satisfies Partial<QueuedUpload> as QueuedUpload);
+    tx.oncomplete = () => resolve();
+    tx.onerror = () => reject(tx.error);
+  });
+  db.close();
+}
+
+export async function listQueuedDriveDeletes(): Promise<Array<{ path: string }>> {
+  const db = await openDatabase();
+  const deletes = await new Promise<Array<{ path: string }>>((resolve, reject) => {
+    const request = db.transaction(STORE_NAME, "readonly").objectStore(STORE_NAME).getAll();
+    request.onsuccess = () => resolve(
+      (request.result as QueuedUpload[]).filter((item) => item.action === "delete").map((item) => ({ path: item.path }))
+    );
+    request.onerror = () => reject(request.error);
+  });
+  db.close();
+  return deletes;
+}
+
+export async function removeQueuedDriveDelete(path: string): Promise<void> {
+  await removeQueuedDriveUpload(path);
 }
