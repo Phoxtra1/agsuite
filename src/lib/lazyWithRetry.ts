@@ -6,8 +6,11 @@ function readReloadFlag(): boolean {
   try { return sessionStorage.getItem(RELOAD_KEY) === "1"; } catch { return false; }
 }
 
-function writeReloadFlag(): void {
-  try { sessionStorage.setItem(RELOAD_KEY, "1"); } catch { /* storage may be unavailable */ }
+function writeReloadFlag(): boolean {
+  try {
+    sessionStorage.setItem(RELOAD_KEY, "1");
+    return sessionStorage.getItem(RELOAD_KEY) === "1";
+  } catch { return false; }
 }
 
 function clearReloadFlag(): void {
@@ -27,8 +30,7 @@ export function lazyWithRetry<T extends ComponentType<any>>(
       clearReloadFlag();
       return mod;
     } catch (err) {
-      if (!readReloadFlag()) {
-        writeReloadFlag();
+      if (!readReloadFlag() && writeReloadFlag()) {
         try {
           if ("serviceWorker" in navigator) {
             const regs = await navigator.serviceWorker.getRegistrations();
