@@ -146,6 +146,44 @@ function HashNormalizer() {
   return null;
 }
 
+class RouteErrorBoundary extends React.Component<
+  { children: React.ReactNode },
+  { hasError: boolean }
+> {
+  state = { hasError: false };
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.error("[Amineva route error]", error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <main className="flex min-h-[60vh] items-center justify-center bg-background px-5 py-12 text-foreground">
+          <section className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
+            <h1 className="text-xl font-semibold">This page could not be loaded</h1>
+            <p className="mt-2 text-sm leading-6 text-muted-foreground">
+              The page encountered a loading problem. You can retry it without losing access to the rest of Amineva Global.
+            </p>
+            <button
+              type="button"
+              onClick={() => window.location.reload()}
+              className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground hover:opacity-90"
+            >
+              Reload page
+            </button>
+          </section>
+        </main>
+      );
+    }
+    return this.props.children;
+  }
+}
+
 function AppTelemetry() {
   const location = useLocation();
 
@@ -304,7 +342,7 @@ export default function App() {
             <HashNormalizer />
             <AppTelemetry />
             <AppIdleGuard />
-            <AppRoutes />
+            <RouteErrorBoundary><AppRoutes /></RouteErrorBoundary>
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>
