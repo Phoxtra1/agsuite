@@ -21,3 +21,5 @@ export function PortalAuthGate({ children }: { children: ReactNode }) {
 
   return <>{children}</>;
 }
+
+export default PortalAuthGate;
