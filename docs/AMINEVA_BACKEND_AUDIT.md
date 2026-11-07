@@ -1,7 +1,7 @@
 # Amineva Global — backend audit findings
 
 **Repository inspected:** Phoxtra1/agsuite  
-**Inspection date:** 6 November 2026  
+**Inspection date:** 7 November 2026  
 **Scope:** Active frontend integrations, Workspace persistence, and checked-in Supabase migration files.  
 **Important:** This is a source-code audit. It does not prove the status of a hosted Supabase project, Appwrite database, Fly.io machine, DNS or SSL certificate.
 
@@ -42,7 +42,7 @@ Drive stores folders, file metadata, shares and activity in localStorage. Before
 - Offline file upload and preview tests.
 - Conflict handling and failed remote-sync tests.
 - Explicit backup/export and restore workflow review.
-- Offline access still remains subject to WorkspaceGate authentication. Preserving the local scope is not the same as granting an unverified offline login; an approved local-unlock design is still required if Workspace must be accessible while the identity backend is down.
+- The original audit left trusted-device offline access outstanding. The follow-up branch now adds an explicit device-passphrase unlock, separate from cloud authentication. Real-browser tests are still required before treating it as production-validated.
 
 ## 3. Existing Supabase schema coverage
 
@@ -102,3 +102,17 @@ Before switching the live client to Supabase:
 7. Test rollback, backup and account mapping before production cutover.
 
 Do not place a Supabase service-role key in frontend code. Do not run old migrations blindly against an existing project. Do not delete the Appwrite adapter or data until a verified migration and rollback plan exists.
+
+## 7. Follow-up implementation after the 6 November audit
+
+The current branch `workspace-offline-access-and-sync-safety` adds the previously outstanding trusted-device entry flow and sync safeguards:
+
+- An authenticated user can enrol an optional 12+ character local device passphrase. The passphrase itself is not stored; a salted PBKDF2 verifier is kept in a separate IndexedDB database.
+- A previously enrolled account can unlock its own Workspace data during an identity-service outage without creating an authenticated cloud session or synthetic user.
+- Offline mode explicitly pauses Workspace cloud reads/writes and disables cloud-only sharing/version operations.
+- Local deletions are recorded as tombstones before remote deletion is attempted. Tombstones remain until the cloud delete succeeds, and stale remote rows are filtered during a list reconciliation.
+- The Appwrite adapter no longer manufactures synthetic temporary user IDs or auth tokens when sign-in/registration fails because of a network outage.
+
+**Security limitation:** the device passphrase is an access gate, not encryption of the Workspace IndexedDB contents. This does not replace operating-system login, disk encryption, or independent backup.
+
+These changes still require automated CI and real-browser validation across sign-in, auth outage, refresh/restart, device unlock, account switching, sync retries, and deletion recovery. They do not confirm production deployment, hosted Appwrite health, live Supabase connection, or the contents of a hosted database.
