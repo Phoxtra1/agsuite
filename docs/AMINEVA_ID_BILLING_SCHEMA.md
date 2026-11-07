@@ -121,7 +121,11 @@ A browser redirect, screenshot, client-side success message or unverified refere
 - Establish retention rules for old provider events, audit records and completed invoices.
 - Monitor database size, storage, bandwidth, function invocations and authentication use after launch.
 
-## 8. Provider implementation requirements\n\nThe schema and workflows must be expressed as application-level contracts and implemented through a trusted backend adapter. Do not make browser pages depend directly on Supabase-specific RPCs or tables. Each supported provider must enforce the same account boundaries, membership roles, server-side payment verification, idempotency, auditability and entitlement rules. Keep operational data for AgroClimate, SikaSem, Adesua and DataLens in their existing backends during the initial rollout.\n\n## 9. Migration order
+## 8. Provider implementation requirements
+
+The schema and workflows must be expressed as application-level contracts and implemented through a trusted backend adapter. Do not make browser pages depend directly on Supabase-specific RPCs or tables. Each supported provider must enforce the same account boundaries, membership roles, server-side payment verification, idempotency, auditability and entitlement rules. Keep operational data for AgroClimate, SikaSem, Adesua and DataLens in their existing backends during the initial rollout.
+
+## 9. Migration order
 
 1. Select the intended provider for the first deployment (existing Appwrite, Supabase/Postgres, or an Amineva-operated service) and confirm its live project, credentials and applied schema.
 2. Review the existing profiles, applications, user_app_access, team_members and payment-related structures in the live database.
