@@ -15,7 +15,10 @@ import { useAuth } from "@/contexts/AuthContext";
 import { wsKey } from "@/lib/workspace/scope";
 import { saveDriveToDatabase, loadDriveFromDatabase } from "@/lib/workspace/drive/sync";
 import { listQueuedDriveUploads, queueDriveUpload, removeQueuedDriveUpload } from "@/lib/workspace/drive/offlineFiles";
+import { getWorkspaceBlob, putWorkspaceBlob, deleteWorkspaceBlob } from "@/lib/workspace/localStore";
+import { useWorkspaceSession } from "@/components/workspace/WorkspaceGate";
 import { supabase } from "@/integrations/appwrite/client";
+import { isWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
 import { toast } from "@/hooks/use-toast";
 
 export interface DriveUploadedFile {
@@ -28,6 +31,7 @@ export interface DriveUploadedFile {
   updatedAt: string;
   starred?: boolean;
   storagePath?: string;
+  syncStatus?: "pending" | "synced";
 }
 
 export interface DriveFolder {
@@ -226,6 +230,8 @@ export default function DriveList() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth() as any;
+  const workspaceSession = useWorkspaceSession();
+  const driveUserId = workspaceSession.userId || user?.id || "";
 
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -565,20 +571,58 @@ export default function DriveList() {
 
   useEffect(() => {
     const flushQueuedUploads = async () => {
-      if (!navigator.onLine) return;
-      const queued = await listQueuedDriveUploads();
+      if (!navigator.onLine || workspaceSession.offline || isWorkspaceOfflineMode() || !driveUserId) return;
+      const prefix = `${driveUserId}/`;
+      const queued = (await listQueuedDriveUploads()).filter((upload) => upload.path.startsWith(prefix));
+      const syncedPaths = new Set<string>();
+
       for (const upload of queued) {
-        const { error } = await supabase.storage.from("workspace-drive").upload(upload.path, upload.file, {
-          contentType: upload.type,
-          upsert: true,
-        });
-        if (!error) await removeQueuedDriveUpload(upload.path);
+        try {
+          const { error } = await supabase.storage.from("workspace-drive").upload(upload.path, upload.file, {
+            contentType: upload.type,
+            upsert: true,
+          });
+          if (!error) {
+            await removeQueuedDriveUpload(upload.path);
+            syncedPaths.add(upload.path);
+          }
+        } catch (error) {
+          console.warn("[drive-sync] Queued upload will retry", error);
+        }
+      }
+
+      // Backups include the account-scoped blob store. Rebuild any missing
+      // upload queue entries from local metadata + the original local bytes.
+      const localFiles = getLocalUploadedFiles();
+      for (const file of localFiles) {
+        if (!file.storagePath || !file.storagePath.startsWith(prefix) || file.syncStatus === "synced" || syncedPaths.has(file.storagePath)) continue;
+        const local = await getWorkspaceBlob(file.id).catch(() => null);
+        if (!local) continue;
+        try {
+          const { error } = await supabase.storage.from("workspace-drive").upload(file.storagePath, local.blob, {
+            contentType: file.type || local.type,
+            upsert: true,
+          });
+          if (!error) syncedPaths.add(file.storagePath);
+        } catch (error) {
+          console.warn("[drive-sync] Restored local file will retry", error);
+        }
+      }
+
+      if (syncedPaths.size) {
+        const next = getLocalUploadedFiles().map((file) =>
+          file.storagePath && syncedPaths.has(file.storagePath)
+            ? { ...file, syncStatus: "synced" as const, updatedAt: new Date().toISOString() }
+            : file
+        );
+        saveLocalUploadedFiles(next);
+        setUploadedFiles(next);
       }
     };
     void flushQueuedUploads();
     window.addEventListener("online", flushQueuedUploads);
     return () => window.removeEventListener("online", flushQueuedUploads);
-  }, []);
+  }, [driveUserId, workspaceSession.offline]);
 
   // Handlers
   const toggleStar = (id: string) => {
@@ -637,26 +681,33 @@ export default function DriveList() {
     const added: DriveUploadedFile[] = [];
     for (const file of Array.from(filesList)) {
       const uploadId = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      const storagePath = user?.id ? `${user.id}/root/${uploadId}-${file.name}` : undefined;
-      added.push({
+      const storagePath = driveUserId ? `${driveUserId}/root/${uploadId}-${file.name}` : undefined;
+      // Persist the original bytes locally before attempting any network upload.
+      await putWorkspaceBlob(uploadId, file, file.name);
+      const record: DriveUploadedFile = {
         id: uploadId,
         name: file.name,
-        size: file.size || 1024 * 50,
+        size: file.size,
         type: file.type || "application/octet-stream",
         folderId: currentFolderId || undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         storagePath,
-      });
-      if (storagePath && navigator.onLine) {
-        const { error } = await supabase.storage.from("workspace-drive").upload(storagePath, file, { upsert: true });
-        if (error) {
+        syncStatus: "pending",
+      };
+
+      if (storagePath && navigator.onLine && !workspaceSession.offline && !isWorkspaceOfflineMode()) {
+        try {
+          const { error } = await supabase.storage.from("workspace-drive").upload(storagePath, file, { upsert: true });
+          if (!error) record.syncStatus = "synced";
+          else await queueDriveUpload(storagePath, file);
+        } catch {
           await queueDriveUpload(storagePath, file);
-          toast({ title: `${file.name} saved offline`, description: "It will upload automatically when the connection returns." });
         }
       } else if (storagePath) {
         await queueDriveUpload(storagePath, file);
       }
+      added.push(record);
       logDriveActivity("Uploaded file", file.name);
     }
 
@@ -790,7 +841,7 @@ export default function DriveList() {
       .filter((u) => trashedIds.has(u.id) && u.storagePath)
       .map((u) => u.storagePath)
       .filter((path): path is string => Boolean(path));
-    if (storedPaths.length > 0 && navigator.onLine) {
+    if (storedPaths.length > 0 && navigator.onLine && !workspaceSession.offline && !isWorkspaceOfflineMode()) {
       const { error } = await supabase.storage.from("workspace-drive").remove(storedPaths);
       if (error) {
         toast({ title: "Stored files could not be removed", description: "Trash was not emptied. Please try again when the connection is stable.", variant: "destructive" });
