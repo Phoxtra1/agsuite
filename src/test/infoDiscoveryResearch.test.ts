@@ -13,6 +13,8 @@ describe("Info Discovery source foundation", () => {
 
   it("registers institutional, specialist and research repository sources with explicit review status", () => {
     expect(DISCOVERY_SOURCES.length).toBeGreaterThanOrEqual(20);
+    expect(new Set(DISCOVERY_SOURCES.map(source => source.id)).size).toBe(DISCOVERY_SOURCES.length);
+    expect(new Set(KNOWLEDGE_SUBJECTS.map(subject => subject.id)).size).toBe(KNOWLEDGE_SUBJECTS.length);
     expect(DISCOVERY_SOURCES.some(source => source.id === "ghana-statistical-service")).toBe(true);
     expect(DISCOVERY_SOURCES.some(source => source.id === "pubmed")).toBe(true);
     expect(DISCOVERY_SOURCES.some(source => source.id === "zenodo")).toBe(true);
@@ -25,6 +27,7 @@ describe("Info Discovery source foundation", () => {
     expect(related).toContain("skills");
     expect(related).toContain("employment");
     expect(related).toContain("occupations");
+    expect(related.length).toBeLessThan(KNOWLEDGE_SUBJECTS.length);
     expect(KNOWLEDGE_SUBJECTS.some(subject => subject.id === "education")).toBe(true);
   });
 
