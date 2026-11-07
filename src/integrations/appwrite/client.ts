@@ -842,17 +842,36 @@ const appwriteSupabase = {
  * the remote provider; no silent provider fallback is allowed.
  */
 const env = (import.meta as any).env || {};
-const backendProvider = String(env.VITE_BACKEND_PROVIDER || "supabase").toLowerCase();
+// Appwrite is the configured Workspace/auth provider in this repository and
+// the provider declared by .env.example. Do not silently make Supabase the
+// default just because optional Supabase variables are absent.
+const configuredProvider = String(env.VITE_BACKEND_PROVIDER || "").trim().toLowerCase();
+const backendProvider = configuredProvider || "appwrite";
 if (backendProvider !== "appwrite" && backendProvider !== "supabase") {
   throw new Error("Unsupported VITE_BACKEND_PROVIDER. Choose appwrite or supabase.");
 }
-const supabaseUrl = String(env.VITE_SUPABASE_URL || "").trim();
-const supabaseAnonKey = String(
+const configuredSupabaseUrl = String(env.VITE_SUPABASE_URL || "").trim();
+const configuredSupabaseAnonKey = String(
   env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY || ""
 ).trim();
-if (backendProvider === "supabase" && (!supabaseUrl || !supabaseAnonKey)) {
-  throw new Error("Supabase provider selected but VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing. Never use a service-role key in the browser.");
+const supabaseConfigurationMissing = backendProvider === "supabase" &&
+  (!configuredSupabaseUrl || !configuredSupabaseAnonKey);
+
+// A missing optional Supabase configuration must never crash module loading
+// for the whole application. Keep the explicitly selected provider (no silent
+// Appwrite fallback), use a deliberately invalid endpoint, and let cloud
+// operations return normal request errors while public/local UI still renders.
+// Authentication becomes available as soon as the correct public URL/key are
+// configured. A service-role key must never be used in browser code.
+if (supabaseConfigurationMissing) {
+  console.error(
+    "[Amineva backend] Supabase was explicitly selected but its public URL/key are missing. " +
+    "Pages will remain available, but Supabase-backed sign-in and cloud operations cannot work until configured."
+  );
 }
+const supabaseUrl = configuredSupabaseUrl || "https://missing-supabase-configuration.invalid";
+const supabaseAnonKey = configuredSupabaseAnonKey || "missing-public-key";
+
 export const supabase: any = backendProvider === "supabase"
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
