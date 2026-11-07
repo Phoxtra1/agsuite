@@ -20,6 +20,10 @@ const Landing = lazyWithRetry(() => import("./pages/landing/Landing"));
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const AboutUs = lazyWithRetry(() => import("./pages/landing/AboutUs"));
 const InfoDiscoveryPage = lazyWithRetry(() => import("./pages/landing/InfoDiscoveryPage"));
+const GetStartedPage = lazyWithRetry(() => import("./pages/GetStartedPage"));
+const BillingPage = lazyWithRetry(() => import("./pages/landing/BillingPage"));
+const PortalLayout = lazyWithRetry(() => import("./components/portal/PortalLayout"));
+const PortalAuthGate = lazyWithRetry(() => import("./components/auth/PortalAuthGate"));
 const AminevaImpactPage = lazyWithRetry(() => import("./pages/landing/AminevaImpactPage"));
 const DipaAIPage = lazyWithRetry(() => import("./pages/landing/DipaAIPage"));
 const InventraPage = lazyWithRetry(() => import("./pages/landing/InventraPage"));
@@ -186,9 +190,23 @@ function AppRoutes() {
         {/* Landing pages */}
         <Route path="/" element={<Landing />}>
           <Route index element={<PublicHome />} />
-          <Route path="info-discovery" element={<InfoDiscoveryPage />} />
-          <Route path="info-discovery/:categorySlug" element={<InfoDiscoveryPage />} />
-          <Route path="info-discovery/:categorySlug/:topicSlug" element={<InfoDiscoveryPage />} />
+          <Route path="get-started" element={<GetStartedPage />} />
+          <Route
+            path="info-discovery"
+            element={<PortalAuthGate><PortalLayout><InfoDiscoveryPage /></PortalLayout></PortalAuthGate>}
+          />
+          <Route
+            path="info-discovery/:categorySlug"
+            element={<PortalAuthGate><PortalLayout><InfoDiscoveryPage /></PortalLayout></PortalAuthGate>}
+          />
+          <Route
+            path="info-discovery/:categorySlug/:topicSlug"
+            element={<PortalAuthGate><PortalLayout><InfoDiscoveryPage /></PortalLayout></PortalAuthGate>}
+          />
+          <Route
+            path="payments"
+            element={<PortalAuthGate><PortalLayout><BillingPage /></PortalLayout></PortalAuthGate>}
+          />
           <Route path="about-us" element={<AboutUs />} />
           <Route path="impact" element={<AminevaImpactPage />} />
           <Route path="impact/:initiativeId" element={<AminevaImpactPage />} />
