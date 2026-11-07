@@ -499,7 +499,7 @@ export async function restoreWorkspaceLocalBackup(input: unknown): Promise<{ rec
           type: item.type || "application/octet-stream",
           size: item.size,
           updatedAt: item.updatedAt,
-          blob: new Blob([bytes], { type: item.type || "application/octet-stream" }),
+          blob: new Blob([new Uint8Array(bytes)], { type: item.type || "application/octet-stream" }),
         } satisfies StoredBlob);
         restoredBlobs++;
       }

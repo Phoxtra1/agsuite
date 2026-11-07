@@ -498,10 +498,9 @@ const authAdapter = {
 
       // Account creation must succeed against the real identity provider.
       await account.deleteSession("current").catch(() => null);
-      const createdUser = await account.create(userId, cleanEmail, password, name);
-
+      let createdUser: any;
       try {
-        await account.create(userId, cleanEmail, password, name);
+        createdUser = await account.create(userId, cleanEmail, password, name);
       } catch (createErr: any) {
         const createMsg = createErr?.message || "";
         const createCode = createErr?.code;
@@ -539,11 +538,13 @@ const authAdapter = {
         app_metadata: { provider: "email" },
       };
 
-      const formattedSession = {
-        access_token: session.$id,
-        expires_at: session.expire ? Math.floor(new Date(session.expire).getTime() / 1000) : Math.floor(Date.now() / 1000) + 86400,
-        user: formattedUser,
-      } : null;
+      const formattedSession = session
+        ? {
+            access_token: session.$id,
+            expires_at: session.expire ? Math.floor(new Date(session.expire).getTime() / 1000) : Math.floor(Date.now() / 1000) + 86400,
+            user: formattedUser,
+          }
+        : null;
 
       cachedAuthSession = {
         data: { data: { session: formattedSession }, error: null },
