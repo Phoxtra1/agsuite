@@ -75,7 +75,7 @@ export default function AuthCard({
         // Workspace is the shared productivity environment. Its own
         // WorkspaceGate provisions access after authentication; it must not
         // be blocked by another product's registration metadata.
-        if (product.id !== "workspace") {
+        if (product.id !== "workspace" && product.id !== "information-discovery") {
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             const access = await loadAppAccess(session.user.id, product.id);
@@ -88,7 +88,9 @@ export default function AuthCard({
         }
       }
 
-      const productDestination = /workspace/i.test(`${product.id} ${product.name}`)
+      const productDestination = product.id === "information-discovery"
+        ? "/info-discovery"
+        : /workspace/i.test(`${product.id} ${product.name}`)
         ? "/workspace"
         : product.url
         ? `${product.url}${product.id === 'agstock' ? '/shop' : product.id === 'agis' ? '/client' : ''}`
