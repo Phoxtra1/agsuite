@@ -5,7 +5,6 @@ import {
   ArrowRight,
   BookOpen,
   Compass,
-  ExternalLink,
   Globe2,
   Moon,
   Search,
