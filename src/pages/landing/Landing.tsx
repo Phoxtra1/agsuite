@@ -46,10 +46,10 @@ export default function Landing() {
               ))}
               <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground" aria-label="Toggle appearance settings"><Settings className="h-4 w-4" /> Settings</button>
               <Link
-                to={isAuthenticated ? "/info-discovery" : "/get-started?mode=register"}
+                to="/info-discovery"
                 className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
               >
-                {isAuthenticated ? "Open Portal" : "Get Started"}
+                Get Started
               </Link>
             </nav>
 
@@ -75,11 +75,11 @@ export default function Landing() {
                   ))}
                   <button type="button" onClick={() => { setTheme(theme === "dark" ? "light" : "dark"); setMobileOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-foreground hover:bg-accent/10"><Settings className="h-4 w-4" /> Settings <span className="ml-auto text-xs text-muted-foreground">{theme === "dark" ? "Dark mode" : "Light mode"}</span></button>
                   <Link
-                    to={isAuthenticated ? "/info-discovery" : "/get-started?mode=register"}
+                    to="/info-discovery"
                     onClick={() => setMobileOpen(false)}
                     className="mt-2 flex items-center justify-center rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground"
                   >
-                    {isAuthenticated ? "Open Portal" : "Get Started"}
+                    Get Started
                   </Link>
                 </div>
               </motion.div>
