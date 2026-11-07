@@ -827,15 +827,15 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
   return (
     <section className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><BookOpen className="h-4 w-4 text-primary" /> Research publication search</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Search Crossref, OpenAlex and Zenodo research metadata. A DOI or Crossref record confirms that metadata was registered, not that the research findings are correct, independently replicated, peer-reviewed or freely accessible.</p></div>
-        <Badge variant="outline">Crossref · OpenAlex · Zenodo</Badge>
+        <div><div className="flex items-center gap-2 text-sm font-semibold"><BookOpen className="h-4 w-4 text-primary" /> Research publication search</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Search Crossref, OpenAlex, Zenodo, PubMed and Europe PMC research metadata. A DOI or Crossref record confirms that metadata was registered, not that the research findings are correct, independently replicated, peer-reviewed or freely accessible.</p></div>
+        <Badge variant="outline">Crossref · OpenAlex · Zenodo · PubMed · Europe PMC</Badge>
       </div>
       <form onSubmit={runSearch} className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Input value={query} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)} placeholder="Search a subject, question or research topic" aria-label="Search research publications" />
         <Button type="submit" disabled={loading || query.trim().length < 3} className="sm:min-w-32">{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Search</Button>
       </form>
       {error && <p role="status" className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">{error}</p>}
-      {retrievedAt && <p className="mt-3 text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()} · Repositories: Crossref, OpenAlex and Zenodo · Retrieval time is not publication time.</p>}
+      {retrievedAt && <p className="mt-3 text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()} · Repositories: Crossref, OpenAlex, Zenodo, PubMed and Europe PMC · Retrieval time is not publication time.</p>}
       {records.length > 0 && <div className="mt-4 space-y-3">
         {records.map((record, index) => <article key={record.doi || record.url || index} className="rounded-xl border border-border bg-background/60 p-4">
           <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Publication year not supplied"}</Badge><span className="text-[11px] text-muted-foreground">{record.type}</span></div>
