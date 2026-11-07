@@ -59,7 +59,7 @@ Workspace productivity editing should not depend on an always-available cloud ba
 - Synchronise changed records selectively and in batches; do not upload on every keystroke.
 - Avoid unnecessary polling, realtime subscriptions, repeated full-document writes and redundant version copies.
 - Provide clear backup/export options. Local browser storage is device- and browser-profile-specific and is not a substitute for a separate backup.
-- Never treat a network failure as proof that a user signed out. Preserve local account scope on an auth-service outage, while keeping authentication fail-closed until a valid session or approved offline-unlock method exists.
+- Never treat a network failure as proof that a user signed out. Preserve local account scope on an auth-service outage. A previously enrolled trusted device may use a separate local passphrase to access only that account’s local Workspace cache; this is not a cloud session or online entitlement.
 - Do not silently merge two users' private local records. Account-scope adoption must be explicit, traceable and conflict-aware.
 
 ## 5. Supabase target responsibilities
@@ -74,9 +74,9 @@ It should manage only the cloud capabilities that need a shared authoritative se
 - Central customer identity and billing records.
 - Payment references and server-verified transaction states.
 - Subscription records and product entitlements.
-- Minimal Workspace metadata and selectively synchronised Workspace copies.
+- Minimal Workspace metadata and selectively synchronised Workspace copies, only if the selected cloud provider is available. Local editing must continue without this service.
 
-Do not store the public Information Discovery catalogue, static application descriptions, every public search result, or all Workspace editing activity in Supabase.
+Do not store the public Information Discovery catalogue, static application descriptions, every public search result, or all Workspace editing activity in Supabase. The active Workspace cloud adapter must remain replaceable; see `docs/WORKSPACE_LOCAL_FIRST_BACKEND_STRATEGY.md`.
 
 Use Row Level Security and server-side verification for private records, organisation membership, payment status and entitlements. Never expose service-role credentials in the browser.
 
