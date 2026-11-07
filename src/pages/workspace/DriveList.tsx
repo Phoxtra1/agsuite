@@ -342,7 +342,7 @@ export default function DriveList() {
     saveItemNames(nextItemNames);
     localStorage.setItem(wsKey(STORAGE_DRIVE_NAME_KEY), nextDriveName);
 
-    // Persist immediately to Supabase
+    // Persist locally first; the cloud state is a replaceable sync destination.
     syncWithDatabase(
       nextFolders,
       nextUploads,
@@ -751,7 +751,12 @@ export default function DriveList() {
     }
 
     const nextUploads = [...added, ...uploadedFiles];
-    toast({ title: "Files uploaded", description: `${added.length} file(s) added to Drive.` });
+    toast({
+      title: workspaceSession.offline || !navigator.onLine ? "Files saved on this device" : "Files added to Drive",
+      description: workspaceSession.offline || !navigator.onLine
+        ? `${added.length} file(s) are saved locally and queued for upload when you sign in online.`
+        : `${added.length} file(s) added to Drive.`,
+    });
     updateAndSaveState(folders, nextUploads, starredIds, pinnedIds, trashedIds, itemFolders, itemNames, driveName);
     loadDriveContent();
   };
