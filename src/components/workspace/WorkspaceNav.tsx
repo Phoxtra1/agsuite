@@ -113,7 +113,7 @@ export function WorkspaceNav() {
           <img src={amvLogo} alt="" className="h-9 w-9 rounded-full" />
           <div className="leading-tight flex-1">
             <div className="text-sm font-semibold text-foreground">Workspace</div>
-            <div className="text-[11px] text-muted-foreground">Amineva Suite</div>
+            <div className="text-[11px] text-muted-foreground">Info Discovery</div>
           </div>
           <button
             aria-label="Close menu"
@@ -181,10 +181,10 @@ export function WorkspaceNav() {
             </div>
           </div>
           <button
-            onClick={() => navigate("/suite")}
+            onClick={() => navigate("/info-discovery")}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to Suite
+            <ArrowLeft className="h-3.5 w-3.5" /> Back to Info Discovery
           </button>
           <button
             onClick={() => workspaceSession.offline ? window.location.reload() : logout?.()}
