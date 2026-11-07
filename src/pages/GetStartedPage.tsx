@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { Compass, ShieldCheck, Wallet, BriefcaseBusiness } from "lucide-react";
+import { Compass, BriefcaseBusiness } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthCard from "@/components/home/AuthCard";
 import type { ProductData } from "@/types/product";
@@ -9,7 +9,7 @@ const portalAccount: ProductData = {
   id: "information-discovery",
   name: "Info Discovery",
   shortName: "Amineva Global",
-  description: "One account for Info Discovery, Workspace and Payments & Billing.",
+  description: "Explore Info Discovery.",
   status: "live",
   order: 0,
 };
@@ -32,13 +32,13 @@ export default function GetStartedPage() {
       <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,440px)] lg:gap-16">
         <section className="max-w-2xl">
           <div className="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-            <Compass className="h-4 w-4" /> Amineva Global account
+            <Compass className="h-4 w-4" />
           </div>
           <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
-            One account. One Info Discovery portal.
+            Welcome to Amineva Global
           </h1>
           <p className="mt-5 text-base leading-8 text-muted-foreground">
-            Sign in or create your account once. You will enter Info Discovery first, with Workspace and Payments &amp; Billing available from the same portal and the same signed-in account.
+            Sign in to continue to your selected service.
           </p>
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-border bg-card p-4">
@@ -51,19 +51,10 @@ export default function GetStartedPage() {
               <h2 className="mt-3 text-sm font-semibold">Workspace</h2>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">Open Docs, Sheets, Slides, Forms and Drive without a second login.</p>
             </div>
-            <div className="rounded-2xl border border-border bg-card p-4">
-              <Wallet className="h-5 w-5 text-accent" />
-              <h2 className="mt-3 text-sm font-semibold">Payments &amp; Billing</h2>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">Manage service quotations, invoices and payment records from the same account.</p>
-            </div>
           </div>
-          <p className="mt-7 flex items-center gap-2 text-xs text-muted-foreground">
-            <ShieldCheck className="h-4 w-4 shrink-0 text-accent" />
-            Your account is the shared sign-in for the portal. Individual products may keep their own operational systems.
-          </p>
         </section>
 
-        <section className="w-full" aria-label="Sign in or create an Amineva Global account">
+        <section className="w-full" aria-label="Sign in or create an account">
           <AuthCard
             product={portalAccount}
             authTab={authTab}
@@ -74,9 +65,6 @@ export default function GetStartedPage() {
             setPassword={setPassword}
             onChangeSelection={() => navigate("/", { replace: true })}
           />
-          <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">
-            After successful sign-in, Info Discovery opens. Workspace does not ask you to register or sign in again.
-          </p>
         </section>
       </div>
     </main>
