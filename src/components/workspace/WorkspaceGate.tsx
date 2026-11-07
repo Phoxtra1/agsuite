@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/appwrite/client";
 import { loadAppProfile, type AppProfile } from "@/lib/auth/appProfile";
 import { setWorkspaceUser } from "@/lib/workspace/scope";
 import {
-  disableOfflineWorkspace,
   enrollOfflineWorkspace,
   getOfflineAccessProfile,
   hasOfflineAccess,
@@ -243,12 +242,6 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
       profile: null,
       offline: true,
     });
-  };
-
-  const handleDisableOfflineAccess = async () => {
-    if (!effectiveUserId) return;
-    await disableOfflineWorkspace(effectiveUserId);
-    setEnableAvailable(true);
   };
 
   if (isLoading || (effectiveUserId && resolving && !session) || (!effectiveUserId && !isAuthenticated && !offlineProfileLoaded)) {
