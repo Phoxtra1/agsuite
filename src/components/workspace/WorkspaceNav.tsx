@@ -1,4 +1,5 @@
 import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
 import { LayoutGrid, FolderOpen, FileText, Sheet as SheetIcon, Presentation, ClipboardList, ArrowLeft, LogOut, Menu, X, Download, Upload, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -37,7 +38,7 @@ export function WorkspaceNav() {
       document.body.appendChild(anchor);
       anchor.click();
       anchor.remove();
-      URL.revokeObjectURL(url);
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
       toast.success("Workspace backup exported.");
     } catch (error: any) {
       toast.error(error?.message || "Could not export Workspace backup.");
@@ -46,7 +47,7 @@ export function WorkspaceNav() {
     }
   };
 
-  const restoreBackup = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const restoreBackup = async (event: ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
     setBackupBusy(true);
