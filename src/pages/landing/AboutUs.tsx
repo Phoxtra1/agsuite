@@ -23,7 +23,7 @@ const AboutUs: FC = () => (
           <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary-foreground"><Compass className="h-4 w-4" /> About Amineva Global</span>
           <h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">Information Discovery System</h1>
           <p className="mx-auto mt-6 max-w-3xl text-base leading-8 text-primary-foreground/85 md:text-xl">Amineva Global is focused on making useful information easier to discover, understand, compare and apply. We organise information around real questions and decisions, while keeping its source, context and limitations visible.</p>
-          <Link to="/info-discovery" className="mt-9 inline-flex items-center gap-2 rounded-xl bg-accent px-7 py-3.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent/90">Explore Info Discovery <ArrowRight className="h-4 w-4" /></Link>
+          <Link to="/info-discovery" className="mt-9 inline-flex items-center gap-2 rounded-xl bg-accent px-7 py-3.5 text-sm font-semibold text-accent-foreground transition hover:bg-accent/90">Explore Information Discovery <ArrowRight className="h-4 w-4" /></Link>
         </motion.div>
       </div>
     </section>
@@ -76,7 +76,7 @@ const AboutUs: FC = () => (
       <Globe2 className="mx-auto h-8 w-8 text-accent" />
       <h2 className="mt-4 text-3xl font-bold text-primary-foreground md:text-4xl">Explore information with greater clarity.</h2>
       <p className="mx-auto mt-4 max-w-2xl text-sm leading-7 text-primary-foreground/80">Start with a question, explore the subject structure and follow the evidence to the sources that matter.</p>
-      <Link to="/info-discovery" className="mt-8 inline-flex items-center gap-2 rounded-xl bg-accent px-7 py-3.5 text-sm font-semibold text-accent-foreground hover:bg-accent/90">Open Info Discovery <ArrowRight className="h-4 w-4" /></Link>
+      <Link to="/info-discovery" className="mt-8 inline-flex items-center gap-2 rounded-xl bg-accent px-7 py-3.5 text-sm font-semibold text-accent-foreground hover:bg-accent/90">Open Information Discovery <ArrowRight className="h-4 w-4" /></Link>
     </section>
   </main>
 );
