@@ -6,7 +6,7 @@ import { formatAuthError, isAlreadyRegisteredError } from "@/lib/auth";
 import { getProductRedirectUrl } from "@/lib/productRouting";
 import { loadAppAccess } from "@/lib/auth/appAccess";
 import { Mail } from "lucide-react";
-import { supabase } from "@/integrations/appwrite/client";
+import { supabase, assertSupabaseConfigured } from "@/integrations/supabase/client";
 
 interface AuthCardProps {
   product: ProductData;
@@ -76,6 +76,7 @@ export default function AuthCard({
         // WorkspaceGate provisions access after authentication; it must not
         // be blocked by another product's registration metadata.
         if (product.id !== "workspace" && product.id !== "information-discovery") {
+          assertSupabaseConfigured();
           const { data: { session } } = await supabase.auth.getSession();
           if (session?.user) {
             const access = await loadAppAccess(session.user.id, product.id);
