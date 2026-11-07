@@ -567,7 +567,7 @@ export default function DriveList() {
 
   useEffect(() => {
     loadDriveContent();
-  }, [activeTab]);
+  }, [activeTab, driveUserId]);
 
   useEffect(() => {
     const flushQueuedUploads = async () => {
@@ -833,20 +833,26 @@ export default function DriveList() {
           storagePath: newStoragePath,
           syncStatus: "pending",
         };
-        const localBlob = await getWorkspaceBlob(fileRef.id).catch(() => null);
-        if (localBlob) {
-          await putWorkspaceBlob(newUpload.id, localBlob.blob, newTitle);
-          if (newStoragePath) {
-            if (navigator.onLine && !workspaceSession.offline && !isWorkspaceOfflineMode()) {
-              const { error } = await supabase.storage.from("workspace-drive").upload(newStoragePath, localBlob.blob, {
-                contentType: fileRef.type || localBlob.type,
-                upsert: true,
-              });
-              if (!error) newUpload.syncStatus = "synced";
-              else await queueDriveUpload(newStoragePath, localBlob.blob, newTitle, fileRef.type || localBlob.type);
-            } else {
-              await queueDriveUpload(newStoragePath, localBlob.blob, newTitle, fileRef.type || localBlob.type);
-            }
+        let sourceBlob = (await getWorkspaceBlob(fileRef.id).catch(() => null))?.blob ?? null;
+        if (!sourceBlob && fileRef.storagePath && navigator.onLine && !workspaceSession.offline && !isWorkspaceOfflineMode()) {
+          const { data, error } = await supabase.storage.from("workspace-drive").download(fileRef.storagePath);
+          if (!error && data) {
+            sourceBlob = data;
+            await putWorkspaceBlob(fileRef.id, data, fileRef.name);
+          }
+        }
+        if (!sourceBlob) throw new Error("The original file is not available locally. Reconnect to Drive storage and try again.");
+        await putWorkspaceBlob(newUpload.id, sourceBlob, newTitle);
+        if (newStoragePath) {
+          if (navigator.onLine && !workspaceSession.offline && !isWorkspaceOfflineMode()) {
+            const { error } = await supabase.storage.from("workspace-drive").upload(newStoragePath, sourceBlob, {
+              contentType: fileRef.type || sourceBlob.type,
+              upsert: true,
+            });
+            if (!error) newUpload.syncStatus = "synced";
+            else await queueDriveUpload(newStoragePath, sourceBlob, newTitle, fileRef.type || sourceBlob.type);
+          } else {
+            await queueDriveUpload(newStoragePath, sourceBlob, newTitle, fileRef.type || sourceBlob.type);
           }
         }
         const nextUploads = [newUpload, ...uploadedFiles];
@@ -1122,6 +1128,10 @@ export default function DriveList() {
 
   // Share Item Link
   const handleShareItem = (item: DriveItem) => {
+    if (workspaceSession.offline || isWorkspaceOfflineMode() || !navigator.onLine) {
+      toast({ title: "Drive sharing requires a connection", description: "Your local files remain available; create a share link after signing in online.", variant: "destructive" });
+      return;
+    }
     const shareLink = `${window.location.origin}/drive/shared/${item.id}`;
     navigator.clipboard.writeText(shareLink);
     toast({
