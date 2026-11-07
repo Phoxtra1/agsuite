@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/appwrite/client";
+import { supabase, assertSupabaseConfigured } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -89,6 +89,7 @@ export default function Recovery() {
 
     setLoading(true);
     try {
+      assertSupabaseConfigured();
       const redirectTarget = `/auth/reset-password${productKey ? `?product=${productKey}` : ''}`;
       const { error: resetError } = await supabase.auth.resetPasswordForEmail(trimmed, {
         redirectTo: `${window.location.origin}/auth/callback?returnTo=${encodeURIComponent(redirectTarget)}`,
