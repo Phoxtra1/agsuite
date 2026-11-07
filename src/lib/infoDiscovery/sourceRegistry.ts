@@ -458,19 +458,20 @@ export const KNOWLEDGE_SUBJECTS: KnowledgeSubject[] = [
 export function findRelatedSubjects(subjectIds: string[]): KnowledgeSubject[] {
   const byId = new Map(KNOWLEDGE_SUBJECTS.map(subject => [subject.id, subject]));
   const selected = new Set<string>();
-  const pending = [...subjectIds];
+  const pending = subjectIds.map(id => ({ id, depth: 0 }));
 
-  // Traverse relationships until no new subject can be reached. This keeps
-  // multi-discipline discovery independent of the order in which taxonomy
-  // entries happen to be declared.
+  // Include the selected subjects, their direct links and one related layer.
+  // A bounded traversal keeps cross-disciplinary discovery useful without
+  // expanding one broad topic into the entire connected taxonomy.
   while (pending.length) {
-    const id = pending.shift()!;
-    if (selected.has(id)) continue;
-    selected.add(id);
-    const subject = byId.get(id);
+    const current = pending.shift()!;
+    if (selected.has(current.id)) continue;
+    selected.add(current.id);
+    if (current.depth >= 2) continue;
+    const subject = byId.get(current.id);
     if (!subject) continue;
     for (const relatedId of [...subject.parentIds, ...subject.relatedIds]) {
-      if (!selected.has(relatedId)) pending.push(relatedId);
+      if (!selected.has(relatedId)) pending.push({ id: relatedId, depth: current.depth + 1 });
     }
   }
   return KNOWLEDGE_SUBJECTS.filter(subject => selected.has(subject.id));
