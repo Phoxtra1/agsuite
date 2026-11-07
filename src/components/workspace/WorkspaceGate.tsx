@@ -275,12 +275,12 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
       return <OfflineUnlockScreen email={offlineProfile.email} onUnlock={handleOfflineUnlock} />;
     }
     const next = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/?authRedirect=${next}`} replace />;
+    return <Navigate to={`/get-started?returnTo=${next}`} replace />;
   }
 
   if (!session) {
     const next = encodeURIComponent(location.pathname + location.search);
-    return <Navigate to={`/?authRedirect=${next}`} replace />;
+    return <Navigate to={`/get-started?returnTo=${next}`} replace />;
   }
 
   return (

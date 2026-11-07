@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutGrid, FolderOpen, FileText, Sheet as SheetIcon, Presentation, ClipboardList, ArrowLeft, LogOut, Menu, X, Download, Upload, Lock } from "lucide-react";
+import { LayoutGrid, FolderOpen, FileText, Sheet as SheetIcon, Presentation, ClipboardList, LogOut, Menu, X, Download, Upload, Lock, Compass, Wallet } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspaceSession } from "@/components/workspace/WorkspaceGate";
 import { createWorkspaceLocalBackup, restoreWorkspaceLocalBackup } from "@/lib/workspace/localStore";
@@ -9,7 +9,9 @@ import { toast } from "sonner";
 import amvLogo from "@/assets/amv_global_logo.png";
 
 const items = [
-  { to: "/workspace", icon: LayoutGrid, label: "Dashboard", end: true },
+  { to: "/info-discovery", icon: Compass, label: "Information Discovery System" },
+  { to: "/payments", icon: Wallet, label: "Payments & Billing" },
+  { to: "/workspace", icon: LayoutGrid, label: "Workspace Dashboard", end: true },
   { to: "/workspace/docs", icon: FileText, label: "Amineva Docs" },
   { to: "/workspace/sheets", icon: SheetIcon, label: "Amineva Sheets" },
   { to: "/workspace/slides", icon: Presentation, label: "Amineva Slides" },
@@ -176,15 +178,15 @@ export function WorkspaceNav() {
               {(user?.email?.[0] || "U").toUpperCase()}
             </div>
             <div className="min-w-0 text-xs">
-              <div className="font-medium text-foreground truncate">{user?.email || "Signed in"}</div>
+              <div className="font-medium text-foreground truncate">{workspaceSession.email || user?.email || "Signed in"}</div>
               <div className="text-muted-foreground">Workspace account</div>
             </div>
           </div>
           <button
-            onClick={() => navigate("/suite")}
+            onClick={() => navigate("/info-discovery")}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to Suite
+            <Compass className="h-3.5 w-3.5" /> Information Discovery
           </button>
           <button
             onClick={() => workspaceSession.offline ? window.location.reload() : logout?.()}

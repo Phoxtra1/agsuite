@@ -108,3 +108,22 @@ Before changing production configuration, report:
 8. What is genuinely deployed versus only committed or preview-built.
 
 Do not change global provider settings, run migrations, delete collections, restart infrastructure or migrate product accounts until this report and rollback plan are complete.
+
+## Public account entry and authenticated portal
+
+The public entry flow is now implemented in the existing application:
+
+1. A visitor lands on the public Amineva Global homepage. Its description defines Amineva Global as an **Information Discovery System**, not as a generic digital-products or IT-services company.
+2. The public **Get Started** action opens `/get-started`, where one shared account form supports sign-in and account registration.
+3. A successful sign-in opens `/info-discovery`. Account verification also returns to this portal.
+4. The signed-in portal navigation contains **Information Discovery**, **Workspace**, and **Payments & Billing**.
+5. Workspace uses the same application authentication context. Moving from the portal to `/workspace` must not request another registration or login. The existing Workspace gate may initialise its Workspace access profile, but it must reuse the already authenticated account.
+6. Payments & Billing is a portal area under the same account.
+
+The portal navigation does not mean all operational product databases are being consolidated. It is one account/session and one user-facing portal, while product systems can remain separate behind controlled integrations.
+
+### Payment-provider boundary
+
+The Payments & Billing page is a portal entry and billing information surface only until a supported provider is actually configured. At this point there is no verified Paystack, Flutterwave, Stripe or other payment-provider connection in the repository. Do not add a fake checkout, mark an invoice paid from the browser, invent provider keys or display fabricated transaction history. Connect the existing provider account, secrets, webhook and server-side verification only after the owner confirms which provider is to be used.
+
+The existing billing design supports free Workspace access, subscriptions for AgroClimate, SikaSem and Adesua, and service quotations/invoices for DataLens. Prices and actual checkout products must come from an approved billing catalogue; do not invent them.

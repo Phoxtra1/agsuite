@@ -38,7 +38,7 @@ const getCountryName = (countryCode: string): string => {
 
 const companyLinks = [
   { label: "About Us", to: "/about-us" },
-  { label: "Information Discovery", to: "/info-discovery" },
+  { label: "Information Discovery System", to: "/info-discovery" },
   { label: "Amineva Impact", to: "/impact" },
 ];
 
@@ -117,11 +117,10 @@ export default function GlobalFooter() {
             </span>
           </Link>
           <p className="mb-2 text-xs font-medium uppercase tracking-[0.16em] text-amber-300">
-            Connect Verify Grow
+            Information Discovery System
           </p>
           <p className="text-sm leading-relaxed text-white/65">
-            Building digital products and practical technology solutions for businesses,
-            institutions and communities.
+            Amineva Global is an Information Discovery System that organises knowledge into connected subject areas, guided investigations, evidence standards and original sources. It helps people and organisations understand a subject, assess information and identify informed next steps.
           </p>
         </div>
 
