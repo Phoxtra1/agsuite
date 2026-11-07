@@ -3,7 +3,7 @@
  * Non-blocking: failures are silently logged, never interrupting the user.
  */
 
-import { supabase } from "@/integrations/appwrite/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 
 /** Generate a simple device fingerprint from browser properties */
 function getDeviceFingerprint(): string {
@@ -26,6 +26,7 @@ function getDeviceFingerprint(): string {
 
 /** Call after successful login to check for new device and send alert if needed */
 export async function checkLoginDevice(): Promise<void> {
+  if (!isSupabaseConfigured) return;
   try {
     const fingerprint = getDeviceFingerprint();
 
