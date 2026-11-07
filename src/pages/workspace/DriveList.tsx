@@ -792,6 +792,7 @@ export default function DriveList() {
   const handleDuplicateItem = async (item: DriveItem) => {
     try {
       let newId = "";
+      let nextUploadsForState = uploadedFiles;
       const newTitle = `Copy of ${item.title}`;
       if (item.kind === "doc") {
         const copy = await duplicateDocument(item.originalRef);
@@ -861,7 +862,7 @@ export default function DriveList() {
           }
         }
         const nextUploads = [newUpload, ...uploadedFiles];
-        setUploadedFiles(nextUploads);
+        nextUploadsForState = nextUploads;
         newId = newUpload.id;
       }
 
@@ -872,7 +873,7 @@ export default function DriveList() {
         }
         logDriveActivity("Duplicated item", newTitle);
         toast({ title: "Item duplicated", description: `Created copy "${newTitle}"` });
-        updateAndSaveState(folders, uploadedFiles, starredIds, pinnedIds, trashedIds, nextItemFlds, itemNames, driveName);
+        updateAndSaveState(folders, nextUploadsForState, starredIds, pinnedIds, trashedIds, nextItemFlds, itemNames, driveName);
         loadDriveContent();
       }
     } catch (err) {
