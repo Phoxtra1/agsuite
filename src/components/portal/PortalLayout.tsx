@@ -1,7 +1,7 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
-import { Compass, BriefcaseBusiness, Wallet, LogOut, Menu, X, Sun, Moon, Settings } from "lucide-react";
+import { Compass, BriefcaseBusiness, Wallet, LogOut, Menu, X, Sun, Moon } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import amvLogo from "@/assets/amv_global_logo.png";
@@ -12,7 +12,7 @@ const links = [
   { to: "/payments", label: "Payments & Billing", icon: Wallet },
 ];
 
-export default function PortalLayout({ children }: { children: React.ReactNode }) {
+export default function PortalLayout({ children }: { children: ReactNode }) {
   const { user, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
