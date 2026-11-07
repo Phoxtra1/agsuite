@@ -25,6 +25,7 @@ import { VisaChecker } from "@/components/infoDiscovery/VisaChecker";
 import { SavedTopicsDrawer } from "@/components/infoDiscovery/SavedTopicsDrawer";
 import { PopularAndRecent } from "@/components/infoDiscovery/PopularAndRecent";
 import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracker";
+import { DISCOVERY_SOURCES, KNOWLEDGE_SUBJECTS } from "@/lib/infoDiscovery/sourceRegistry";
 
 type Topic = { title: string; description: string; questions: string[] };
 type Section = { title: string; description: string; items: Topic[] };
@@ -1842,6 +1843,7 @@ export default function InfoDiscoveryPage() {
               <div className="grid gap-4 md:grid-cols-2">{categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className="group flex h-full flex-col rounded-2xl border border-t-4 border-t-accent/70 border-border bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-xl"><div className="mb-4 flex items-start justify-between"><span className="rounded-xl border border-primary/10 bg-primary/10 p-3 text-primary"><category.icon className="h-6 w-6" /></span><ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary" /></div><h3 className="text-lg font-semibold">{category.title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{category.summary}</p><div className="mt-4 flex flex-wrap gap-1.5">{category.sections.slice(0, 3).map(section => <span key={section.title} className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{section.title}</span>)}</div><div className="mt-4 flex items-center border-t border-border pt-3 text-xs font-semibold text-primary">Open subject menu <ChevronRight className="ml-1 h-4 w-4" /></div></button>)}</div>
             </div>
             <ResearchPanel />
+            <InstitutionalSourceDirectory />
             <div className="rounded-2xl border border-border bg-card shadow-sm p-5"><div className="flex items-start gap-3"><FileCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" /><div><h2 className="font-semibold">How information is classified</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Official records, statistical estimates, research publications, reported experiences and analytical interpretations are not interchangeable. Every important claim should be checked against its original publisher, date, jurisdiction, method and verification status.</p></div></div></div>
           </section>}
         </div>
@@ -1856,6 +1858,48 @@ export default function InfoDiscoveryPage() {
         />
       )}
     </main>
+  );
+}
+
+function InstitutionalSourceDirectory() {
+  return (
+    <section className="rounded-2xl border border-border bg-card p-5 shadow-sm md:p-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2 text-sm font-semibold"><Database className="h-4 w-4 text-primary" /> Institutional and specialist source directory</div>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-muted-foreground">
+            A starting registry of institutional publishers, research indexes and specialist data services. These are source routes—not endorsements of every item they publish.
+          </p>
+        </div>
+        <Badge variant="outline">{DISCOVERY_SOURCES.length} registered sources</Badge>
+      </div>
+      <div className="mt-4 flex flex-wrap gap-1.5">
+        {KNOWLEDGE_SUBJECTS.map(subject => (
+          <Badge key={subject.id} variant="secondary" className="font-normal">{subject.label}</Badge>
+        ))}
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2">
+        {DISCOVERY_SOURCES.map(source => (
+          <article key={source.id} className="rounded-xl border border-border bg-background/60 p-3">
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs font-semibold">{source.name}</span>
+              <Badge variant="outline" className="text-[9px]">{source.sourceKind.replace("-", " ")}</Badge>
+            </div>
+            <p className="mt-1 text-[11px] leading-5 text-muted-foreground">{source.description}</p>
+            <div className="mt-2 flex flex-wrap gap-1">
+              {source.subjects.slice(0, 4).map(subject => <span key={subject} className="rounded-full bg-muted px-2 py-0.5 text-[9px] text-muted-foreground">{subject.replace(/-/g, " ")}</span>)}
+            </div>
+            <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-2">
+              <span className="text-[9px] text-muted-foreground">Publisher listed · individual records require review</span>
+              <a href={source.canonicalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-primary hover:underline">Visit source <ExternalLink className="h-3 w-3" /></a>
+            </div>
+          </article>
+        ))}
+      </div>
+      <p className="mt-3 text-[10px] leading-5 text-muted-foreground">
+        Verification rule: a recognised publisher or registered DOI does not automatically verify a document's accuracy, currency, methodology or conclusions. Each specific record must be checked for its original URL, author, date, jurisdiction, document type and evidence before it can receive record-level verified status.
+      </p>
+    </section>
   );
 }
 
