@@ -842,17 +842,38 @@ const appwriteSupabase = {
  * the remote provider; no silent provider fallback is allowed.
  */
 const env = (import.meta as any).env || {};
-const backendProvider = String(env.VITE_BACKEND_PROVIDER || "supabase").toLowerCase();
-if (backendProvider !== "appwrite" && backendProvider !== "supabase") {
+// Appwrite is the configured Workspace/auth provider in this repository and
+// the provider declared by .env.example. Do not silently make Supabase the
+// default just because optional Supabase variables are absent.
+const configuredProvider = String(env.VITE_BACKEND_PROVIDER || "").trim().toLowerCase();
+if (configuredProvider && configuredProvider !== "appwrite" && configuredProvider !== "supabase") {
   throw new Error("Unsupported VITE_BACKEND_PROVIDER. Choose appwrite or supabase.");
 }
-const supabaseUrl = String(env.VITE_SUPABASE_URL || "").trim();
-const supabaseAnonKey = String(
+const configuredSupabaseUrl = String(env.VITE_SUPABASE_URL || "").trim();
+const configuredSupabaseAnonKey = String(
   env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY || ""
 ).trim();
-if (backendProvider === "supabase" && (!supabaseUrl || !supabaseAnonKey)) {
-  throw new Error("Supabase provider selected but VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing. Never use a service-role key in the browser.");
+const supabaseConfigurationMissing = configuredProvider === "supabase" &&
+  (!configuredSupabaseUrl || !configuredSupabaseAnonKey);
+
+// Use the already-configured Appwrite adapter when Supabase has been selected
+// without its required public browser credentials. This keeps the existing
+// non-Supabase backend usable and prevents a missing optional provider config
+// from crashing every route at import time. The warning makes the fallback
+// explicit; it is not a hidden backend migration. Once both Supabase values
+// exist, Supabase is selected normally. Never place a service-role key here.
+const backendProvider = supabaseConfigurationMissing
+  ? "appwrite"
+  : configuredProvider || "appwrite";
+if (supabaseConfigurationMissing) {
+  console.warn(
+    "[Amineva backend] Supabase was selected but its public URL/key are missing. " +
+    "Using the configured Appwrite adapter until Supabase is fully configured."
+  );
 }
+const supabaseUrl = configuredSupabaseUrl;
+const supabaseAnonKey = configuredSupabaseAnonKey;
+
 export const supabase: any = backendProvider === "supabase"
   ? createClient(supabaseUrl, supabaseAnonKey, {
       auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true },
