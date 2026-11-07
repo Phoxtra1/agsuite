@@ -122,7 +122,7 @@ export const DISCOVERY_SOURCES: DiscoverySource[] = [
     description: "Satellite and model-derived meteorological and solar data with documented spatial and temporal limitations.",
     reviewStatus: "listed-pending-record-review",
     recordLevelVerificationRequired: true,
-  },,
+  },
   {
     "id": "ghana-statistical-service",
     "name": "Ghana Statistical Service",
