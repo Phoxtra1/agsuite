@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowRight, Compass, ShieldCheck, Wallet, BriefcaseBusiness } from "lucide-react";
+import { Compass, ShieldCheck, Wallet, BriefcaseBusiness } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthCard from "@/components/home/AuthCard";
 import type { ProductData } from "@/types/product";
