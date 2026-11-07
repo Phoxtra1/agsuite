@@ -2,10 +2,21 @@ import { lazy, type ComponentType } from "react";
 
 const RELOAD_KEY = "__amv_chunk_reload";
 
+function readReloadFlag(): boolean {
+  try { return sessionStorage.getItem(RELOAD_KEY) === "1"; } catch { return false; }
+}
+
+function writeReloadFlag(): void {
+  try { sessionStorage.setItem(RELOAD_KEY, "1"); } catch { /* storage may be unavailable */ }
+}
+
+function clearReloadFlag(): void {
+  try { sessionStorage.removeItem(RELOAD_KEY); } catch { /* storage may be unavailable */ }
+}
+
 /**
- * React.lazy wrapper that survives stale deploys.
- * When a hashed chunk no longer exists (new build shipped while the tab was open),
- * the dynamic import rejects and we do a single hard reload to fetch the new index.
+ * React.lazy wrapper that survives stale deploys and unavailable browser storage.
+ * A failed dynamic import triggers one cache/service-worker reset and reload.
  */
 export function lazyWithRetry<T extends ComponentType<any>>(
   factory: () => Promise<{ default: T }>,
@@ -13,12 +24,11 @@ export function lazyWithRetry<T extends ComponentType<any>>(
   return lazy(async () => {
     try {
       const mod = await factory();
-      sessionStorage.removeItem(RELOAD_KEY);
+      clearReloadFlag();
       return mod;
     } catch (err) {
-      if (sessionStorage.getItem(RELOAD_KEY) !== "1") {
-        sessionStorage.setItem(RELOAD_KEY, "1");
-        // Drop any stale caches/service workers holding the old asset manifest.
+      if (!readReloadFlag()) {
+        writeReloadFlag();
         try {
           if ("serviceWorker" in navigator) {
             const regs = await navigator.serviceWorker.getRegistrations();
@@ -29,10 +39,9 @@ export function lazyWithRetry<T extends ComponentType<any>>(
             await Promise.allSettled(keys.map((k) => caches.delete(k)));
           }
         } catch {
-          /* best effort */
+          /* best effort: the retry must still happen */
         }
         window.location.reload();
-        // Never resolves; the page is reloading.
         return new Promise<{ default: T }>(() => {});
       }
       throw err;
