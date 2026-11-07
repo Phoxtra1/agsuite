@@ -13,6 +13,7 @@ import {
   getOfflineAccessProfile,
   hasOfflineAccess,
   setWorkspaceOfflineMode,
+  selectOfflineAccessProfile,
   unlockOfflineWorkspace,
 } from "@/lib/workspace/localAccess";
 
@@ -213,6 +214,7 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
       }
 
       const enrolled = await hasOfflineAccess(effectiveUserId).catch(() => false);
+      if (enrolled) selectOfflineAccessProfile(effectiveUserId);
       if (cancelled) return;
       setEnableAvailable(!enrolled);
       setSession({
