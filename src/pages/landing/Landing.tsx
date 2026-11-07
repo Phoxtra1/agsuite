@@ -3,6 +3,7 @@ import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Settings } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { useAuth } from "@/contexts/AuthContext";
 import amvLogo from "@/assets/amv_global_logo.png";
 import GlobalFooter from "@/components/layout/GlobalFooter";
 
@@ -18,10 +19,12 @@ export default function Landing() {
   const isHome = location.pathname === "/";
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
+  const { isAuthenticated } = useAuth();
+  const isAccountPortal = location.pathname.startsWith("/info-discovery") || location.pathname.startsWith("/payments");
 
   return (
     <div className="min-h-screen bg-background">
-      {!isHome && (
+      {!isHome && !isAccountPortal && (
         <header className="sticky top-0 z-50 border-b border-border bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/80">
           <div className="max-w-7xl mx-auto flex items-center justify-between h-16 px-6">
             <Link to="/" className="flex items-center gap-3">
@@ -42,6 +45,12 @@ export default function Landing() {
                 </Link>
               ))}
               <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground" aria-label="Toggle appearance settings"><Settings className="h-4 w-4" /> Settings</button>
+              <Link
+                to={isAuthenticated ? "/info-discovery" : "/get-started?mode=register"}
+                className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              >
+                {isAuthenticated ? "Open Portal" : "Get Started"}
+              </Link>
             </nav>
 
             <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
@@ -65,6 +74,13 @@ export default function Landing() {
                     </Link>
                   ))}
                   <button type="button" onClick={() => { setTheme(theme === "dark" ? "light" : "dark"); setMobileOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-foreground hover:bg-accent/10"><Settings className="h-4 w-4" /> Settings <span className="ml-auto text-xs text-muted-foreground">{theme === "dark" ? "Dark mode" : "Light mode"}</span></button>
+                  <Link
+                    to={isAuthenticated ? "/info-discovery" : "/get-started?mode=register"}
+                    onClick={() => setMobileOpen(false)}
+                    className="mt-2 flex items-center justify-center rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground"
+                  >
+                    {isAuthenticated ? "Open Portal" : "Get Started"}
+                  </Link>
                 </div>
               </motion.div>
             )}
@@ -74,7 +90,7 @@ export default function Landing() {
 
       <Outlet />
 
-      {!isHome && <GlobalFooter />}
+      {!isHome && !isAccountPortal && <GlobalFooter />}
     </div>
   );
 }
