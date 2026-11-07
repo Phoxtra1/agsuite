@@ -19,7 +19,6 @@ const ITERATIONS = 310_000;
 const MIN_PASSPHRASE_LENGTH = 12;
 const MAX_ATTEMPTS = 5;
 const LOCKOUT_MS = 60_000;
-const AAD = new TextEncoder().encode("amineva-workspace-offline-access-v1");
 
 interface OfflineProfile {
   userId: string;
@@ -142,6 +141,12 @@ export async function getOfflineAccessProfile(): Promise<{ userId: string; email
 
 export async function hasOfflineAccess(userId: string): Promise<boolean> {
   return !!(await getProfile(userId));
+}
+
+/** Remember which enrolled account was most recently used on this device. */
+export function selectOfflineAccessProfile(userId: string): void {
+  if (!userId || userId === "anon" || userId === "local-user") return;
+  try { localStorage.setItem(LAST_PROFILE_KEY, userId); } catch { /* optional */ }
 }
 
 export async function enrollOfflineWorkspace(userId: string, email: string, passphrase: string): Promise<void> {
