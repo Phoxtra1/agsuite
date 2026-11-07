@@ -1,7 +1,8 @@
 import { supabase } from "@/integrations/appwrite/client";
 import { getWorkspaceUser } from "@/lib/workspace/scope";
 import { readWorkspaceCollection, writeWorkspaceCollection } from "@/lib/workspace/localStore";
-import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
+import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId, suppressTombstonedRemoteRows, isWorkspaceRecordDeleted } from "@/lib/workspace/remoteSync";
+import { isWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
 
 const TBL = "workspace_documents";
 const toRow = (d: WorkspaceDocument, userId: string) => ({ ...d, owner_id: isRealUser(d.owner_id) ? d.owner_id : userId });
@@ -41,6 +42,7 @@ async function saveLocalDocs(records: WorkspaceDocument[]): Promise<void> {
 }
 
 async function getAuthenticatedUserId(): Promise<string> {
+  if (isWorkspaceOfflineMode()) return getWorkspaceUser();
   try {
     const getUserPromise = supabase.auth.getUser();
     const timeoutPromise = new Promise<{ data: { user: null }; error: any }>((resolve) =>
@@ -59,7 +61,7 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
   if (!userId) return [];
 
   const local = await getLocalDocs();
-  if (typeof navigator !== "undefined" && !navigator.onLine) return local;
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return local;
   try {
     const queryPromise = supabase
       .from("workspace_documents" as any)
@@ -74,7 +76,8 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
     if (!error && data && Array.isArray(data)) {
-      const merged = reconcile({ table: TBL, local: await getLocalDocs(), remote: data as any as WorkspaceDocument[], userId, updatedAt: (d) => d.updated_at, toRow });
+      const remoteRows = await suppressTombstonedRemoteRows(TBL, data as any as WorkspaceDocument[]);
+      const merged = reconcile({ table: TBL, local: await getLocalDocs(), remote: remoteRows, userId, updatedAt: (d) => d.updated_at, toRow });
       await saveLocalDocs(merged);
       return merged;
     }
@@ -87,7 +90,8 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
 export async function getDocument(id: string): Promise<WorkspaceDocument | null> {
   const local = await getLocalDocs();
   const cached = local.find((d) => d.id === id);
-  if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
+  if (cached || isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
+  if (await isWorkspaceRecordDeleted(TBL, id)) return null;
   try {
     const userId = await getAuthenticatedUserId();
     if (!userId) return null;
@@ -156,7 +160,7 @@ export async function deleteDocument(id: string): Promise<boolean> {
   const local = await getLocalDocs();
   const filtered = local.filter((d) => d.id !== id);
   await saveLocalDocs(filtered);
-  deleteRemote(TBL, id);
+  await deleteRemote(TBL, id);
   return true;
 }
 
@@ -183,6 +187,7 @@ export async function duplicateDocument(doc: WorkspaceDocument): Promise<Workspa
 }
 
 export async function snapshotVersion(documentId: string, content_json: any) {
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return;
   try {
     const { data: u } = await supabase.auth.getUser();
     await supabase
@@ -200,6 +205,7 @@ function genToken() {
 }
 
 export async function listShares(documentId: string): Promise<DocumentShare[]> {
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return [];
   try {
     const { data, error } = await supabase
       .from("workspace_document_shares" as any)
@@ -212,6 +218,7 @@ export async function listShares(documentId: string): Promise<DocumentShare[]> {
 }
 
 export async function createShare(documentId: string, mode: "view" | "edit"): Promise<DocumentShare | null> {
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return null;
   try {
     const { data: u } = await supabase.auth.getUser();
     const { data, error } = await supabase
@@ -221,18 +228,11 @@ export async function createShare(documentId: string, mode: "view" | "edit"): Pr
       .single();
     if (!error && data) return data as any;
   } catch {}
-  return {
-    id: `share-${Date.now()}`,
-    document_id: documentId,
-    token: genToken(),
-    mode,
-    revoked: false,
-    expires_at: null,
-    created_at: new Date().toISOString(),
-  };
+  return null;
 }
 
 export async function revokeShare(id: string) {
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return;
   try {
     await supabase.from("workspace_document_shares" as any).update({ revoked: true }).eq("id", id);
   } catch {}
@@ -249,6 +249,7 @@ export interface SharedDocPayload {
 }
 
 export async function fetchSharedDocument(token: string): Promise<SharedDocPayload | null> {
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return null;
   try {
     const { data, error } = await (supabase.rpc as any)("get_shared_document", { _token: token });
     if (!error && data) {
@@ -265,6 +266,7 @@ export async function pushSharedDocument(
   content_text: string,
   title?: string
 ): Promise<boolean> {
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return false;
   try {
     const { data, error } = await (supabase.rpc as any)("update_shared_document", {
       _token: token,
@@ -278,6 +280,7 @@ export async function pushSharedDocument(
 }
 
 export async function invalidateShareToken(token: string): Promise<boolean> {
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return false;
   try {
     const { error } = await supabase
       .from("workspace_document_shares" as any)

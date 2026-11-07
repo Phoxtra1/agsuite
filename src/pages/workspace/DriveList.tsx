@@ -14,8 +14,11 @@ import { listForms, createForm, duplicateForm, type FormDocument } from "@/lib/w
 import { useAuth } from "@/contexts/AuthContext";
 import { wsKey } from "@/lib/workspace/scope";
 import { saveDriveToDatabase, loadDriveFromDatabase } from "@/lib/workspace/drive/sync";
-import { listQueuedDriveUploads, queueDriveUpload, removeQueuedDriveUpload } from "@/lib/workspace/drive/offlineFiles";
+import { listQueuedDriveUploads, queueDriveUpload, removeQueuedDriveUpload, listQueuedDriveDeletes, queueDriveDelete, removeQueuedDriveDelete } from "@/lib/workspace/drive/offlineFiles";
+import { getWorkspaceBlob, putWorkspaceBlob, deleteWorkspaceBlob } from "@/lib/workspace/localStore";
+import { useWorkspaceSession } from "@/components/workspace/WorkspaceGate";
 import { supabase } from "@/integrations/appwrite/client";
+import { isWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
 import { toast } from "@/hooks/use-toast";
 
 export interface DriveUploadedFile {
@@ -28,6 +31,7 @@ export interface DriveUploadedFile {
   updatedAt: string;
   starred?: boolean;
   storagePath?: string;
+  syncStatus?: "pending" | "synced";
 }
 
 export interface DriveFolder {
@@ -226,6 +230,8 @@ export default function DriveList() {
   const navigate = useNavigate();
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth() as any;
+  const workspaceSession = useWorkspaceSession();
+  const driveUserId = workspaceSession.userId || user?.id || "";
 
   const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
@@ -336,7 +342,7 @@ export default function DriveList() {
     saveItemNames(nextItemNames);
     localStorage.setItem(wsKey(STORAGE_DRIVE_NAME_KEY), nextDriveName);
 
-    // Persist immediately to Supabase
+    // Persist locally first; the cloud state is a replaceable sync destination.
     syncWithDatabase(
       nextFolders,
       nextUploads,
@@ -561,24 +567,101 @@ export default function DriveList() {
 
   useEffect(() => {
     loadDriveContent();
-  }, [activeTab]);
+  }, [activeTab, driveUserId]);
 
   useEffect(() => {
     const flushQueuedUploads = async () => {
-      if (!navigator.onLine) return;
-      const queued = await listQueuedDriveUploads();
+      if (!navigator.onLine || workspaceSession.offline || isWorkspaceOfflineMode() || !driveUserId) return;
+      const prefix = `${driveUserId}/`;
+      const queued = (await listQueuedDriveUploads()).filter((upload) => upload.path.startsWith(prefix));
+      const syncedPaths = new Set<string>();
+
       for (const upload of queued) {
-        const { error } = await supabase.storage.from("workspace-drive").upload(upload.path, upload.file, {
-          contentType: upload.type,
-          upsert: true,
-        });
-        if (!error) await removeQueuedDriveUpload(upload.path);
+        try {
+          const { error } = await supabase.storage.from("workspace-drive").upload(upload.path, upload.file, {
+            contentType: upload.type,
+            upsert: true,
+          });
+          if (!error) {
+            await removeQueuedDriveUpload(upload.path);
+            syncedPaths.add(upload.path);
+          }
+        } catch (error) {
+          console.warn("[drive-sync] Queued upload will retry", error);
+        }
+      }
+
+      // Backups include the account-scoped blob store. Rebuild any missing
+      // upload queue entries from local metadata + the original local bytes.
+      const localFiles = getLocalUploadedFiles();
+      for (const file of localFiles) {
+        if (!file.storagePath || !file.storagePath.startsWith(prefix) || file.syncStatus === "synced" || syncedPaths.has(file.storagePath)) continue;
+        const local = await getWorkspaceBlob(file.id).catch(() => null);
+        if (!local) continue;
+        try {
+          const { error } = await supabase.storage.from("workspace-drive").upload(file.storagePath, local.blob, {
+            contentType: file.type || local.type,
+            upsert: true,
+          });
+          if (!error) syncedPaths.add(file.storagePath);
+        } catch (error) {
+          console.warn("[drive-sync] Restored local file will retry", error);
+        }
+      }
+
+      if (syncedPaths.size) {
+        const next = getLocalUploadedFiles().map((file) =>
+          file.storagePath && syncedPaths.has(file.storagePath)
+            ? { ...file, syncStatus: "synced" as const, updatedAt: new Date().toISOString() }
+            : file
+        );
+        saveLocalUploadedFiles(next);
+        setUploadedFiles(next);
+      }
+
+      const queuedDeletes = (await listQueuedDriveDeletes()).filter((item) => item.path.startsWith(prefix));
+      for (const item of queuedDeletes) {
+        try {
+          const { error } = await supabase.storage.from("workspace-drive").remove([item.path]);
+          if (!error) await removeQueuedDriveDelete(item.path);
+        } catch (error) {
+          console.warn("[drive-sync] Queued file deletion will retry", error);
+        }
       }
     };
     void flushQueuedUploads();
     window.addEventListener("online", flushQueuedUploads);
     return () => window.removeEventListener("online", flushQueuedUploads);
-  }, []);
+  }, [driveUserId, workspaceSession.offline]);
+
+
+  const handleDownloadFile = async (file: DriveUploadedFile) => {
+    try {
+      let blob = (await getWorkspaceBlob(file.id))?.blob ?? null;
+      if (!blob && file.storagePath && navigator.onLine && !workspaceSession.offline && !isWorkspaceOfflineMode()) {
+        const { data, error } = await supabase.storage.from("workspace-drive").download(file.storagePath);
+        if (!error && data) {
+          blob = data;
+          await putWorkspaceBlob(file.id, data, file.name);
+        }
+      }
+      if (!blob) {
+        toast({ title: "File is not available on this device", description: "Reconnect to the account's Drive storage and try again.", variant: "destructive" });
+        return;
+      }
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = file.name || "download";
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+    } catch (error) {
+      console.error("[drive] File download failed", error);
+      toast({ title: "Download failed", description: "The local file could not be opened.", variant: "destructive" });
+    }
+  };
 
   // Handlers
   const toggleStar = (id: string) => {
@@ -637,31 +720,43 @@ export default function DriveList() {
     const added: DriveUploadedFile[] = [];
     for (const file of Array.from(filesList)) {
       const uploadId = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
-      const storagePath = user?.id ? `${user.id}/root/${uploadId}-${file.name}` : undefined;
-      added.push({
+      const storagePath = driveUserId ? `${driveUserId}/root/${uploadId}-${file.name}` : undefined;
+      // Persist the original bytes locally before attempting any network upload.
+      await putWorkspaceBlob(uploadId, file, file.name);
+      const record: DriveUploadedFile = {
         id: uploadId,
         name: file.name,
-        size: file.size || 1024 * 50,
+        size: file.size,
         type: file.type || "application/octet-stream",
         folderId: currentFolderId || undefined,
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         storagePath,
-      });
-      if (storagePath && navigator.onLine) {
-        const { error } = await supabase.storage.from("workspace-drive").upload(storagePath, file, { upsert: true });
-        if (error) {
+        syncStatus: "pending",
+      };
+
+      if (storagePath && navigator.onLine && !workspaceSession.offline && !isWorkspaceOfflineMode()) {
+        try {
+          const { error } = await supabase.storage.from("workspace-drive").upload(storagePath, file, { upsert: true });
+          if (!error) record.syncStatus = "synced";
+          else await queueDriveUpload(storagePath, file);
+        } catch {
           await queueDriveUpload(storagePath, file);
-          toast({ title: `${file.name} saved offline`, description: "It will upload automatically when the connection returns." });
         }
       } else if (storagePath) {
         await queueDriveUpload(storagePath, file);
       }
+      added.push(record);
       logDriveActivity("Uploaded file", file.name);
     }
 
     const nextUploads = [...added, ...uploadedFiles];
-    toast({ title: "Files uploaded", description: `${added.length} file(s) added to Drive.` });
+    toast({
+      title: workspaceSession.offline || !navigator.onLine ? "Files saved on this device" : "Files added to Drive",
+      description: workspaceSession.offline || !navigator.onLine
+        ? `${added.length} file(s) are saved locally and queued for upload when you sign in online.`
+        : `${added.length} file(s) added to Drive.`,
+    });
     updateAndSaveState(folders, nextUploads, starredIds, pinnedIds, trashedIds, itemFolders, itemNames, driveName);
     loadDriveContent();
   };
@@ -697,6 +792,7 @@ export default function DriveList() {
   const handleDuplicateItem = async (item: DriveItem) => {
     try {
       let newId = "";
+      let nextUploadsForState = uploadedFiles;
       const newTitle = `Copy of ${item.title}`;
       if (item.kind === "doc") {
         const copy = await duplicateDocument(item.originalRef);
@@ -732,15 +828,41 @@ export default function DriveList() {
         }
       } else if (item.kind === "upload") {
         const fileRef = item.originalRef as DriveUploadedFile;
+        const newIdValue = `upload-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`;
+        const newStoragePath = driveUserId ? `${driveUserId}/root/${newIdValue}-${newTitle}` : undefined;
         const newUpload: DriveUploadedFile = {
           ...fileRef,
-          id: `upload-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+          id: newIdValue,
           name: newTitle,
           createdAt: new Date().toISOString(),
-          updatedAt: new Date().toISOString()
+          updatedAt: new Date().toISOString(),
+          storagePath: newStoragePath,
+          syncStatus: "pending",
         };
+        let sourceBlob = (await getWorkspaceBlob(fileRef.id).catch(() => null))?.blob ?? null;
+        if (!sourceBlob && fileRef.storagePath && navigator.onLine && !workspaceSession.offline && !isWorkspaceOfflineMode()) {
+          const { data, error } = await supabase.storage.from("workspace-drive").download(fileRef.storagePath);
+          if (!error && data) {
+            sourceBlob = data;
+            await putWorkspaceBlob(fileRef.id, data, fileRef.name);
+          }
+        }
+        if (!sourceBlob) throw new Error("The original file is not available locally. Reconnect to Drive storage and try again.");
+        await putWorkspaceBlob(newUpload.id, sourceBlob, newTitle);
+        if (newStoragePath) {
+          if (navigator.onLine && !workspaceSession.offline && !isWorkspaceOfflineMode()) {
+            const { error } = await supabase.storage.from("workspace-drive").upload(newStoragePath, sourceBlob, {
+              contentType: fileRef.type || sourceBlob.type,
+              upsert: true,
+            });
+            if (!error) newUpload.syncStatus = "synced";
+            else await queueDriveUpload(newStoragePath, sourceBlob, newTitle, fileRef.type || sourceBlob.type);
+          } else {
+            await queueDriveUpload(newStoragePath, sourceBlob, newTitle, fileRef.type || sourceBlob.type);
+          }
+        }
         const nextUploads = [newUpload, ...uploadedFiles];
-        setUploadedFiles(nextUploads);
+        nextUploadsForState = nextUploads;
         newId = newUpload.id;
       }
 
@@ -751,7 +873,7 @@ export default function DriveList() {
         }
         logDriveActivity("Duplicated item", newTitle);
         toast({ title: "Item duplicated", description: `Created copy "${newTitle}"` });
-        updateAndSaveState(folders, uploadedFiles, starredIds, pinnedIds, trashedIds, nextItemFlds, itemNames, driveName);
+        updateAndSaveState(folders, nextUploadsForState, starredIds, pinnedIds, trashedIds, nextItemFlds, itemNames, driveName);
         loadDriveContent();
       }
     } catch (err) {
@@ -790,12 +912,18 @@ export default function DriveList() {
       .filter((u) => trashedIds.has(u.id) && u.storagePath)
       .map((u) => u.storagePath)
       .filter((path): path is string => Boolean(path));
-    if (storedPaths.length > 0 && navigator.onLine) {
+    if (storedPaths.length > 0 && navigator.onLine && !workspaceSession.offline && !isWorkspaceOfflineMode()) {
       const { error } = await supabase.storage.from("workspace-drive").remove(storedPaths);
       if (error) {
         toast({ title: "Stored files could not be removed", description: "Trash was not emptied. Please try again when the connection is stable.", variant: "destructive" });
         return;
       }
+      for (const path of storedPaths) await removeQueuedDriveUpload(path);
+    } else {
+      for (const path of storedPaths) await queueDriveDelete(path);
+    }
+    for (const file of uploadedFiles.filter((item) => trashedIds.has(item.id))) {
+      await deleteWorkspaceBlob(file.id);
     }
 
     const nextItemFlds = { ...itemFolders };
@@ -873,7 +1001,7 @@ export default function DriveList() {
   };
 
   // Permanent Purge
-  const handlePurgeItem = (item: DriveItem) => {
+  const handlePurgeItem = async (item: DriveItem) => {
     if (!window.confirm(`Permanently delete "${item.title}"? This cannot be undone.`)) return;
 
     let nextFolders = [...folders];
@@ -882,6 +1010,20 @@ export default function DriveList() {
     if (item.kind === "folder") {
       nextFolders = folders.filter((f) => f.id !== item.id);
     } else if (item.kind === "upload") {
+      const file = item.originalRef as DriveUploadedFile;
+      if (file.storagePath) {
+        if (navigator.onLine && !workspaceSession.offline && !isWorkspaceOfflineMode()) {
+          const { error } = await supabase.storage.from("workspace-drive").remove([file.storagePath]);
+          if (error) {
+            toast({ title: "File could not be deleted from Drive", description: "The local copy has been kept. Try again when the connection is stable.", variant: "destructive" });
+            return;
+          }
+          await removeQueuedDriveUpload(file.storagePath);
+        } else {
+          await queueDriveDelete(file.storagePath);
+        }
+      }
+      await deleteWorkspaceBlob(item.id);
       nextUploads = uploadedFiles.filter((u) => u.id !== item.id);
     }
 
@@ -992,6 +1134,10 @@ export default function DriveList() {
 
   // Share Item Link
   const handleShareItem = (item: DriveItem) => {
+    if (workspaceSession.offline || isWorkspaceOfflineMode() || !navigator.onLine) {
+      toast({ title: "Drive sharing requires a connection", description: "Your local files remain available; create a share link after signing in online.", variant: "destructive" });
+      return;
+    }
     const shareLink = `${window.location.origin}/drive/shared/${item.id}`;
     navigator.clipboard.writeText(shareLink);
     toast({
@@ -2233,7 +2379,7 @@ export default function DriveList() {
                   {selectedItem.kind === "upload" && (
                     <button
                       onClick={() => {
-                        toast({ title: "Downloading file...", description: selectedItem.title });
+                        void handleDownloadFile(selectedItem.originalRef as DriveUploadedFile);
                         setSelectedItem(null);
                       }}
                       className="px-4 py-2 rounded-xl bg-sky-600 text-white text-sm font-medium hover:bg-sky-500"

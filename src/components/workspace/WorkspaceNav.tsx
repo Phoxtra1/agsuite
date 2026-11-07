@@ -1,7 +1,11 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
+import type { ChangeEvent } from "react";
 import { NavLink, useNavigate } from "react-router-dom";
-import { LayoutGrid, FolderOpen, FileText, Sheet as SheetIcon, Presentation, ClipboardList, ArrowLeft, LogOut, Menu, X } from "lucide-react";
+import { LayoutGrid, FolderOpen, FileText, Sheet as SheetIcon, Presentation, ClipboardList, ArrowLeft, LogOut, Menu, X, Download, Upload, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
+import { useWorkspaceSession } from "@/components/workspace/WorkspaceGate";
+import { createWorkspaceLocalBackup, restoreWorkspaceLocalBackup } from "@/lib/workspace/localStore";
+import { toast } from "sonner";
 import amvLogo from "@/assets/amv_global_logo.png";
 
 const items = [
@@ -15,8 +19,55 @@ const items = [
 
 export function WorkspaceNav() {
   const { user, logout } = useAuth() as any;
+  const workspaceSession = useWorkspaceSession();
   const navigate = useNavigate();
+  const restoreInputRef = useRef<HTMLInputElement>(null);
+  const [backupBusy, setBackupBusy] = useState(false);
   const [open, setOpen] = useState(false);
+
+
+  const exportBackup = async () => {
+    setBackupBusy(true);
+    try {
+      const backup = await createWorkspaceLocalBackup();
+      const blob = new Blob([JSON.stringify(backup)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement("a");
+      anchor.href = url;
+      anchor.download = `amineva-workspace-${backup.userId}-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      window.setTimeout(() => URL.revokeObjectURL(url), 1000);
+      toast.success("Workspace backup exported.");
+    } catch (error: any) {
+      toast.error(error?.message || "Could not export Workspace backup.");
+    } finally {
+      setBackupBusy(false);
+    }
+  };
+
+  const restoreBackup = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setBackupBusy(true);
+    try {
+      const raw = await file.text();
+      const backup = JSON.parse(raw);
+      const confirmed = window.confirm(
+        "Restore this backup into the currently active account? Newer local records will be kept; matching older records and cached files may be replaced."
+      );
+      if (!confirmed) return;
+      const result = await restoreWorkspaceLocalBackup(backup);
+      toast.success(`Backup restored: ${result.records} records, ${result.blobs} Drive files, ${result.settings} settings.`);
+      window.location.reload();
+    } catch (error: any) {
+      toast.error(error?.message || "Could not restore Workspace backup.");
+    } finally {
+      setBackupBusy(false);
+      if (restoreInputRef.current) restoreInputRef.current.value = "";
+    }
+  };
 
   useEffect(() => {
     const preload = () => {
@@ -95,6 +146,31 @@ export function WorkspaceNav() {
         </nav>
 
         <div className="p-3 border-t border-border space-y-2">
+          <input
+            ref={restoreInputRef}
+            type="file"
+            accept="application/json,.json"
+            className="hidden"
+            onChange={restoreBackup}
+          />
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={exportBackup}
+              disabled={backupBusy}
+              className="flex items-center justify-center gap-2 rounded-lg border border-border px-2 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+            >
+              <Download className="h-3.5 w-3.5" /> Export backup
+            </button>
+            <button
+              type="button"
+              onClick={() => restoreInputRef.current?.click()}
+              disabled={backupBusy}
+              className="flex items-center justify-center gap-2 rounded-lg border border-border px-2 py-2 text-xs text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-50"
+            >
+              <Upload className="h-3.5 w-3.5" /> Restore backup
+            </button>
+          </div>
           <div className="flex items-center gap-3 px-3 py-2 rounded-lg bg-muted/40">
             <div className="h-8 w-8 rounded-full bg-accent/20 text-accent flex items-center justify-center text-xs font-semibold">
               {(user?.email?.[0] || "U").toUpperCase()}
@@ -111,10 +187,11 @@ export function WorkspaceNav() {
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Suite
           </button>
           <button
-            onClick={() => logout?.()}
+            onClick={() => workspaceSession.offline ? window.location.reload() : logout?.()}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition"
           >
-            <LogOut className="h-3.5 w-3.5" /> Sign out
+            {workspaceSession.offline ? <Lock className="h-3.5 w-3.5" /> : <LogOut className="h-3.5 w-3.5" />}
+            {workspaceSession.offline ? "Lock Workspace" : "Sign out"}
           </button>
         </div>
       </aside>

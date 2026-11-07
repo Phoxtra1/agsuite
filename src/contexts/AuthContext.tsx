@@ -12,6 +12,7 @@ import { clearLast2FAVerified } from "@/lib/stepUpAuth";
 import { checkLoginDevice } from "@/lib/auth/loginAlert";
 import { resetClientState } from "@/lib/auth/resetClientState";
 import { setWorkspaceUser } from "@/lib/workspace/scope";
+import { setWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
 import { useQueryClient } from "@tanstack/react-query";
 
 type AuthUser = {
@@ -60,6 +61,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // (sign-in, sign-out, account switch in same tab).
   const handleUserChange = useCallback(
     (nextUserId: string | null) => {
+      if (nextUserId) setWorkspaceOfflineMode(false);
       if (lastUserIdRef.current !== nextUserId) {
         resetClientState(queryClient);
         // Bind every Workspace offline cache to the new account and drop
@@ -198,6 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await supabase.auth.signOut();
       clearLast2FAVerified();
+      setWorkspaceOfflineMode(false);
       setUser(null);
       setIsAuthenticated(false);
       // Wipe all per-user caches so the next account starts cold.

@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/appwrite/client";
 import type { Json } from "@/integrations/supabase/types";
+import { isWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
 
 export interface DBBackupState {
   folders: any[];
@@ -14,10 +15,10 @@ export interface DBBackupState {
 
 export async function saveDriveToDatabase(state: DBBackupState) {
   try {
+    if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return;
 
-    if (typeof navigator !== "undefined" && !navigator.onLine) return;
     await supabase
       .from("workspace_drive_state")
       .upsert({ user_id: user.id, state_json: state as unknown as Json }, { onConflict: "user_id" });
@@ -28,10 +29,10 @@ export async function saveDriveToDatabase(state: DBBackupState) {
 
 export async function loadDriveFromDatabase(): Promise<DBBackupState | null> {
   try {
+    if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return null;
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return null;
 
-    if (typeof navigator !== "undefined" && !navigator.onLine) return null;
     const { data } = await supabase
       .from("workspace_drive_state")
       .select("state_json")

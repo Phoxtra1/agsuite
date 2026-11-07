@@ -1,7 +1,7 @@
 # Amineva Global — backend audit findings
 
 **Repository inspected:** Phoxtra1/agsuite  
-**Inspection date:** 6 November 2026  
+**Inspection date:** 7 November 2026  
 **Scope:** Active frontend integrations, Workspace persistence, and checked-in Supabase migration files.  
 **Important:** This is a source-code audit. It does not prove the status of a hosted Supabase project, Appwrite database, Fly.io machine, DNS or SSL certificate.
 
@@ -42,7 +42,7 @@ Drive stores folders, file metadata, shares and activity in localStorage. Before
 - Offline file upload and preview tests.
 - Conflict handling and failed remote-sync tests.
 - Explicit backup/export and restore workflow review.
-- Offline access still remains subject to WorkspaceGate authentication. Preserving the local scope is not the same as granting an unverified offline login; an approved local-unlock design is still required if Workspace must be accessible while the identity backend is down.
+- The original audit left trusted-device offline access outstanding. The follow-up branch now adds an explicit device-passphrase unlock, separate from cloud authentication. Real-browser tests are still required before treating it as production-validated.
 
 ## 3. Existing Supabase schema coverage
 
@@ -86,7 +86,7 @@ These are migration-level findings; they require review against the actual deplo
 2. The admin_credentials migration seeds a built-in administrator identifier and a PIN hash derived from a known static PIN and salt. Treat this as a credential exposure risk. Remove/rotate the legacy credential through a controlled security migration before production use; do not expose or reuse the seed credential.
 3. ACS migrations include a sync_acs_data_lake function that deletes rows from several ACS tables before rebuilding them. Its invocation frequency, permissions, data-retention requirements and database load must be reviewed before any central backend consolidation.
 4. Some older migrations grant broad authenticated read/update/delete access to shared operational tables (for example inbound messages and ACS records). Review the final effective policies, not only individual migration statements.
-5. The checked-in .env.example sets VITE_DISABLE_PRODUCT_AUTH=true. The Appwrite adapter can create a synthetic, temporary offline identity when sign-in fails at the network layer under this flag. This is not a verified account session and must not be enabled as a production authentication substitute. The production value and Lovable secrets must be checked before release.
+5. The original .env.example value enabled VITE_DISABLE_PRODUCT_AUTH. The follow-up branch changes the example to false and removes the adapter’s synthetic offline identity/session path entirely. Verify the deployed Lovable environment does not rely on this deprecated flag; real sign-in failures must remain authentication failures.
 
 No security migration was applied as part of this audit.
 
@@ -102,3 +102,27 @@ Before switching the live client to Supabase:
 7. Test rollback, backup and account mapping before production cutover.
 
 Do not place a Supabase service-role key in frontend code. Do not run old migrations blindly against an existing project. Do not delete the Appwrite adapter or data until a verified migration and rollback plan exists.
+
+## 7. Follow-up implementation after the 6 November audit
+
+The current branch `workspace-offline-access-and-sync-safety` adds the previously outstanding trusted-device entry flow and sync safeguards:
+
+- An authenticated user can enrol an optional 12+ character local device passphrase. The passphrase itself is not stored; a salted PBKDF2 verifier is kept in a separate IndexedDB database.
+- A previously enrolled account can unlock its own Workspace data during an identity-service outage without creating an authenticated cloud session or synthetic user.
+- Offline mode explicitly pauses Workspace cloud reads/writes and disables cloud-only sharing/version operations.
+- Local deletions are recorded as tombstones before remote deletion is attempted. Tombstones remain until the cloud delete succeeds, and stale remote rows are filtered during a list reconciliation.
+- The Appwrite adapter no longer manufactures synthetic temporary user IDs or auth tokens when sign-in/registration fails because of a network outage.
+
+**Security limitation:** the device passphrase is an access gate, not encryption of the Workspace IndexedDB contents. This does not replace operating-system login, disk encryption, or independent backup.
+
+These changes still require automated CI and real-browser validation across sign-in, auth outage, refresh/restart, device unlock, account switching, sync retries, and deletion recovery. They do not confirm production deployment, hosted Appwrite health, live Supabase connection, or the contents of a hosted database.
+
+
+## 8. Additional restoration and provider-independence work in the follow-up branch
+
+- `docs/WORKSPACE_LOCAL_FIRST_BACKEND_STRATEGY.md` records the local-first rule, the currently verified Appwrite provider, the proposed (not connected) central Supabase role, capabilities that require a live cloud service, and a safe provider migration sequence.
+- Workspace Navigation now exposes account-bound JSON backup and restore controls. The backup includes IndexedDB editor records, cached Drive file bytes and scoped small settings. Restore rejects a different account's backup and does not overwrite newer local records.
+- Offline lock and backup/restore controls are implemented in the existing Workspace navigation, not as a second workspace application.
+- Pending local deletions are tracked as account-scoped tombstones and filtered from list and direct-record retrieval until remote deletion succeeds.
+
+The JSON backup can be large because Drive file bytes are embedded as Base64. Users should store exports on a separate trusted device or drive. This is a user-controlled backup route, not cloud replication.

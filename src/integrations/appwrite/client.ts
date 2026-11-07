@@ -496,8 +496,9 @@ const authAdapter = {
       const name = options?.data?.name || cleanEmail.split("@")[0];
       const userId = ID.unique();
 
-      // Ensure any existing session is cleared before user creation and session creation
+      // Account creation must succeed against the real identity provider.
       await account.deleteSession("current").catch(() => null);
+      const createdUser = await account.create(userId, cleanEmail, password, name);
 
       try {
         await account.create(userId, cleanEmail, password, name);
@@ -517,7 +518,7 @@ const authAdapter = {
 
       // Auto sign-in post registration
       let session: any = null;
-      let user: any = null;
+      let user: any = createdUser;
       try {
         await account.deleteSession("current").catch(() => null);
         session = await account.createEmailPasswordSession(cleanEmail, password);
@@ -527,14 +528,14 @@ const authAdapter = {
         throw new Error("Account created, but sign-in could not be completed. Please sign in normally. " + ((sessionError as any)?.message || ""));
       }
 
-      if (options?.data && user?.$id) {
-        try { await account.updatePrefs(options.data); } catch {}
+      if (options?.data && user?.$id && session) {
+        try { await account.updatePrefs(options.data); } catch { /* profile metadata can retry later */ }
       }
 
       const formattedUser = {
-        id: user.$id || userId,
-        email: user.email || cleanEmail,
-        user_metadata: { name: user.name || name, ...options?.data },
+        id: user?.$id || createdUser.$id || userId,
+        email: user?.email || cleanEmail,
+        user_metadata: { name: user?.name || name, ...options?.data },
         app_metadata: { provider: "email" },
       };
 
@@ -542,14 +543,14 @@ const authAdapter = {
         access_token: session.$id,
         expires_at: session.expire ? Math.floor(new Date(session.expire).getTime() / 1000) : Math.floor(Date.now() / 1000) + 86400,
         user: formattedUser,
-      };
+      } : null;
 
       cachedAuthSession = {
         data: { data: { session: formattedSession }, error: null },
         timestamp: Date.now(),
       };
 
-      // Best effort non-blocking profile creation in profiles collection
+      // Best effort non-blocking profile creation; never used as an auth substitute.
       databases.createDocument(APPWRITE_DB_ID, "profiles", ID.unique(), {
         userId: formattedUser.id,
         email: formattedUser.email,
@@ -558,10 +559,7 @@ const authAdapter = {
       }).catch(() => null);
 
       return {
-        data: {
-          user: formattedUser,
-          session: formattedSession,
-        },
+        data: { user: formattedUser, session: formattedSession },
         error: null,
       };
     } catch (err: any) {
