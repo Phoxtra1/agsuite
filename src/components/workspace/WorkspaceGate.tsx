@@ -10,6 +10,7 @@ import { loadAppProfile, type AppProfile } from "@/lib/auth/appProfile";
 import { setWorkspaceUser } from "@/lib/workspace/scope";
 import {
   enrollOfflineWorkspace,
+  disableOfflineWorkspace,
   getOfflineAccessProfile,
   hasOfflineAccess,
   setWorkspaceOfflineMode,
@@ -173,6 +174,7 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
   const [offlineProfileLoaded, setOfflineProfileLoaded] = useState(false);
   const [offlineSession, setOfflineSession] = useState(false);
   const [enableAvailable, setEnableAvailable] = useState(false);
+  const [offlineAccessEnabled, setOfflineAccessEnabled] = useState(false);
 
   const effectiveUserId = user?.id || null;
 
@@ -216,6 +218,8 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
       const enrolled = await hasOfflineAccess(effectiveUserId).catch(() => false);
       if (enrolled) selectOfflineAccessProfile(effectiveUserId);
       if (cancelled) return;
+      setOfflineAccessEnabled(enrolled);
+      if (enrolled) setOfflineProfile({ userId: effectiveUserId, email: user?.email ?? "" });
       setEnableAvailable(!enrolled);
       setSession({
         userId: effectiveUserId,
@@ -244,6 +248,18 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
       profile: null,
       offline: true,
     });
+  };
+
+  const handleDisableOfflineAccess = async () => {
+    if (!effectiveUserId || !window.confirm("Disable offline unlocking for this account on this device? Your locally saved Workspace files will remain on this device.")) return;
+    try {
+      await disableOfflineWorkspace(effectiveUserId);
+      setOfflineAccessEnabled(false);
+      setEnableAvailable(true);
+      setOfflineProfile(null);
+    } catch (error: any) {
+      console.error("[workspace-offline] Could not disable local access", error);
+    }
   };
 
   if (isLoading || (effectiveUserId && resolving && !session) || (!effectiveUserId && !isAuthenticated && !offlineProfileLoaded)) {
@@ -278,8 +294,23 @@ export function WorkspaceGate({ children }: { children: React.ReactNode }) {
         <OfflineEnrollmentPrompt
           userId={session.userId}
           email={session.email}
-          onComplete={() => setEnableAvailable(false)}
+          onComplete={() => {
+            setEnableAvailable(false);
+            setOfflineAccessEnabled(true);
+            setOfflineProfile({ userId: session.userId, email: session.email });
+          }}
         />
+      )}
+      {isAuthenticated && offlineAccessEnabled && (
+        <div className="mx-auto mb-3 flex max-w-5xl justify-end px-4">
+          <button
+            type="button"
+            onClick={handleDisableOfflineAccess}
+            className="text-xs text-muted-foreground underline hover:text-foreground"
+          >
+            Disable offline access on this device
+          </button>
+        </div>
       )}
       {children}
     </Ctx.Provider>
