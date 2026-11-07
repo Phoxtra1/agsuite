@@ -842,12 +842,14 @@ const appwriteSupabase = {
  * the remote provider; no silent provider fallback is allowed.
  */
 const env = (import.meta as any).env || {};
-const backendProvider = String(env.VITE_BACKEND_PROVIDER || "appwrite").toLowerCase();
+const backendProvider = String(env.VITE_BACKEND_PROVIDER || "supabase").toLowerCase();
 if (backendProvider !== "appwrite" && backendProvider !== "supabase") {
   throw new Error("Unsupported VITE_BACKEND_PROVIDER. Choose appwrite or supabase.");
 }
 const supabaseUrl = String(env.VITE_SUPABASE_URL || "").trim();
-const supabaseAnonKey = String(env.VITE_SUPABASE_ANON_KEY || "").trim();
+const supabaseAnonKey = String(
+  env.VITE_SUPABASE_ANON_KEY || env.VITE_SUPABASE_PUBLISHABLE_KEY || ""
+).trim();
 if (backendProvider === "supabase" && (!supabaseUrl || !supabaseAnonKey)) {
   throw new Error("Supabase provider selected but VITE_SUPABASE_URL or VITE_SUPABASE_ANON_KEY is missing. Never use a service-role key in the browser.");
 }
