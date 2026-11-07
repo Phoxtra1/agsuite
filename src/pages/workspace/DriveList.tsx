@@ -843,9 +843,9 @@ export default function DriveList() {
                 upsert: true,
               });
               if (!error) newUpload.syncStatus = "synced";
-              else await queueDriveUpload(newStoragePath, localBlob.blob as File);
+              else await queueDriveUpload(newStoragePath, localBlob.blob, newTitle, fileRef.type || localBlob.type);
             } else {
-              await queueDriveUpload(newStoragePath, localBlob.blob as File);
+              await queueDriveUpload(newStoragePath, localBlob.blob, newTitle, fileRef.type || localBlob.type);
             }
           }
         }
