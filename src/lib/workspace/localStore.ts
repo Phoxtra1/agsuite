@@ -377,7 +377,7 @@ export async function createWorkspaceLocalBackup(): Promise<WorkspaceLocalBackup
   }
   const db = await openDatabase();
   const lower = `${userId}::`;
-  const upper = `${userId}::\\uffff`;
+  const upper = `${userId}::\uffff`;
   const range = IDBKeyRange.bound(lower, upper);
 
   const recordTx = db.transaction(RECORDS_STORE, "readonly");
