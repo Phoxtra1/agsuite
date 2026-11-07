@@ -491,52 +491,30 @@ const authAdapter = {
       const cleanEmail = email.trim();
       const name = options?.data?.name || cleanEmail.split("@")[0];
       const userId = ID.unique();
-      let createdUser: any = null;
 
-      // Ensure any existing session is cleared before user creation and session creation
+      // Account creation must succeed against the real identity provider.
       await account.deleteSession("current").catch(() => null);
+      const createdUser = await account.create(userId, cleanEmail, password, name);
 
-      try {
-        const createPromise = account.create(userId, cleanEmail, password, name);
-        const timeoutPromise = new Promise((_, reject) =>
-          setTimeout(() => reject(new Error("Failed to fetch")), 600)
-        );
-        createdUser = await Promise.race([createPromise, timeoutPromise]);
-      } catch (createErr: any) {
-        const createMsg = createErr?.message || "";
-        const createCode = createErr?.code;
-        const createType = createErr?.type;
-
-        if (createCode === 409 || createType === "user_already_exists" || createMsg.includes("already exists")) {
-          return {
-            data: { user: null, session: null },
-            error: { message: "This email address is already registered. Every app in Amineva Suite requires an isolated email address and user account." },
-          };
-        }
-        throw createErr;
-      }
-
-      // Auto sign-in post registration
+      // A real session is required before the UI treats the user as authenticated.
       let session: any = null;
-      let user: any = null;
+      let user: any = createdUser;
       try {
         await account.deleteSession("current").catch(() => null);
         session = await account.createEmailPasswordSession(cleanEmail, password);
         user = await account.get();
       } catch {
-        // The account may exist, but without a real session it is not authenticated.
-        // Keep the actual account response only; never mint a synthetic access token.
-        user = createdUser || null;
+        // Account creation may have succeeded, but do not fabricate a session.
       }
 
-      if (options?.data && user?.$id) {
-        try { await account.updatePrefs(options.data); } catch {}
+      if (options?.data && user?.$id && session) {
+        try { await account.updatePrefs(options.data); } catch { /* profile metadata can retry later */ }
       }
 
       const formattedUser = {
-        id: user.$id || userId,
-        email: user.email || cleanEmail,
-        user_metadata: { name: user.name || name, ...options?.data },
+        id: user?.$id || createdUser.$id || userId,
+        email: user?.email || cleanEmail,
+        user_metadata: { name: user?.name || name, ...options?.data },
         app_metadata: { provider: "email" },
       };
 
@@ -551,7 +529,7 @@ const authAdapter = {
         timestamp: Date.now(),
       };
 
-      // Best effort non-blocking profile creation in profiles collection
+      // Best effort non-blocking profile creation; never used as an auth substitute.
       databases.createDocument(APPWRITE_DB_ID, "profiles", ID.unique(), {
         userId: formattedUser.id,
         email: formattedUser.email,
@@ -560,41 +538,19 @@ const authAdapter = {
       }).catch(() => null);
 
       return {
-        data: {
-          user: formattedUser,
-          session: formattedSession,
-        },
+        data: { user: formattedUser, session: formattedSession },
         error: null,
       };
     } catch (err: any) {
       invalidateAuthCache();
-      const msg = err?.message || "";
-
-      if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("networkerror")) {
-        const disableAuth = (import.meta as any).env?.VITE_DISABLE_PRODUCT_AUTH === "true";
-        if (disableAuth) {
-          const cleanEmail = email.trim();
-          const fallbackId = `offline_${Date.now()}`;
-          const formattedUser = {
-            id: fallbackId,
-            email: cleanEmail,
-            user_metadata: { name: options?.data?.name || cleanEmail.split("@")[0], ...options?.data },
-            app_metadata: { provider: "email" },
-          };
-          const formattedSession = {
-            access_token: `sess_${fallbackId}`,
-            expires_at: Math.floor(Date.now() / 1000) + 86400,
-            user: formattedUser,
-          };
-          cachedAuthSession = {
-            data: { data: { session: formattedSession }, error: null },
-          if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("networkerror")) {
+      const message = err?.message || "Registration failed";
+      if (message.toLowerCase().includes("failed to fetch") || message.toLowerCase().includes("networkerror")) {
         return {
           data: { user: null, session: null },
           error: { message: "Network error: Unable to connect to authentication server. Please check your connection or try again." },
         };
       }
-      return { data: { user: null, session: null }, error: { message: msg || "Registration failed" } };
+      return { data: { user: null, session: null }, error: { message } };
     }
   },
 
