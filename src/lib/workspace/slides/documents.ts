@@ -429,7 +429,7 @@ export async function deleteDeck(id: string): Promise<boolean> {
   const local = await getLocalDecks();
   const filtered = local.filter((d) => d.id !== id);
   await saveLocalDecks(filtered);
-  deleteRemote(TBL, id);
+  await deleteRemote(TBL, id);
   return true;
 }
 
