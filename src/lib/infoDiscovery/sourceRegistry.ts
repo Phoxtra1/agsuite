@@ -122,8 +122,321 @@ export const DISCOVERY_SOURCES: DiscoverySource[] = [
     description: "Satellite and model-derived meteorological and solar data with documented spatial and temporal limitations.",
     reviewStatus: "listed-pending-record-review",
     recordLevelVerificationRequired: true,
+  },,
+  {
+    "id": "ghana-statistical-service",
+    "name": "Ghana Statistical Service",
+    "publisher": "Ghana Statistical Service",
+    "canonicalUrl": "https://statsghana.gov.gh/",
+    "access": "open-web",
+    "sourceKind": "institutional",
+    "subjects": [
+      "ghana",
+      "statistics",
+      "population",
+      "economics",
+      "labour",
+      "agriculture"
+    ],
+    "jurisdictions": [
+      "ghana"
+    ],
+    "description": "Official Ghanaian national statistics, census, surveys and statistical releases.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
   },
-];
+  {
+    "id": "bank-of-ghana",
+    "name": "Bank of Ghana",
+    "publisher": "Bank of Ghana",
+    "canonicalUrl": "https://www.bog.gov.gh/",
+    "access": "open-web",
+    "sourceKind": "institutional",
+    "subjects": [
+      "ghana",
+      "finance",
+      "banking",
+      "monetary-policy",
+      "economics"
+    ],
+    "jurisdictions": [
+      "ghana"
+    ],
+    "description": "Central-bank publications, monetary and financial statistics, policy and regulatory information.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "ghana-revenue-authority",
+    "name": "Ghana Revenue Authority",
+    "publisher": "Ghana Revenue Authority",
+    "canonicalUrl": "https://gra.gov.gh/",
+    "access": "open-web",
+    "sourceKind": "institutional",
+    "subjects": [
+      "ghana",
+      "tax",
+      "customs",
+      "business",
+      "trade",
+      "compliance"
+    ],
+    "jurisdictions": [
+      "ghana"
+    ],
+    "description": "Official tax, customs, taxpayer guidance and revenue administration information.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "office-registrar-companies",
+    "name": "Office of the Registrar of Companies",
+    "publisher": "Office of the Registrar of Companies, Ghana",
+    "canonicalUrl": "https://orc.gov.gh/",
+    "access": "open-web",
+    "sourceKind": "institutional",
+    "subjects": [
+      "ghana",
+      "business",
+      "company-registration",
+      "corporate-compliance"
+    ],
+    "jurisdictions": [
+      "ghana"
+    ],
+    "description": "Official company and business registration information, forms and regulatory notices.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "ghana-health-service",
+    "name": "Ghana Health Service",
+    "publisher": "Ghana Health Service",
+    "canonicalUrl": "https://ghs.gov.gh/",
+    "access": "open-web",
+    "sourceKind": "institutional",
+    "subjects": [
+      "ghana",
+      "health",
+      "public-health",
+      "health-services"
+    ],
+    "jurisdictions": [
+      "ghana"
+    ],
+    "description": "National public-health programmes, service information and official health notices.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "ghana-education-service",
+    "name": "Ghana Education Service",
+    "publisher": "Ghana Education Service",
+    "canonicalUrl": "https://ges.gov.gh/",
+    "access": "open-web",
+    "sourceKind": "institutional",
+    "subjects": [
+      "ghana",
+      "education",
+      "schools",
+      "curriculum",
+      "teaching"
+    ],
+    "jurisdictions": [
+      "ghana"
+    ],
+    "description": "Official pre-tertiary education administration, school and education-sector information.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "imf-data",
+    "name": "IMF Data",
+    "publisher": "International Monetary Fund",
+    "canonicalUrl": "https://www.imf.org/en/Data",
+    "access": "open-web",
+    "sourceKind": "institutional",
+    "subjects": [
+      "economics",
+      "finance",
+      "monetary-policy",
+      "trade",
+      "public-finance"
+    ],
+    "jurisdictions": [
+      "global",
+      "national"
+    ],
+    "description": "International macroeconomic, financial and country surveillance datasets and publications.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "oecd-data",
+    "name": "OECD Data Explorer",
+    "publisher": "Organisation for Economic Co-operation and Development",
+    "canonicalUrl": "https://data-explorer.oecd.org/",
+    "access": "open-web",
+    "sourceKind": "institutional",
+    "subjects": [
+      "economics",
+      "education",
+      "employment",
+      "trade",
+      "development"
+    ],
+    "jurisdictions": [
+      "global",
+      "member-countries"
+    ],
+    "description": "Comparable statistical datasets and indicators, with coverage depending on each series.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "wipo",
+    "name": "World Intellectual Property Organization",
+    "publisher": "WIPO",
+    "canonicalUrl": "https://www.wipo.int/",
+    "access": "open-web",
+    "sourceKind": "institutional",
+    "subjects": [
+      "intellectual-property",
+      "patents",
+      "trademarks",
+      "innovation",
+      "business"
+    ],
+    "jurisdictions": [
+      "global",
+      "national"
+    ],
+    "description": "International intellectual-property treaties, guidance, statistics and registration information.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "wipo-lex",
+    "name": "WIPO Lex",
+    "publisher": "World Intellectual Property Organization",
+    "canonicalUrl": "https://www.wipo.int/wipolex/en/",
+    "access": "repository",
+    "sourceKind": "institutional",
+    "subjects": [
+      "law",
+      "intellectual-property",
+      "legislation",
+      "regulation"
+    ],
+    "jurisdictions": [
+      "global",
+      "national"
+    ],
+    "description": "Legal texts and treaty materials relating to intellectual property, organised by jurisdiction.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "pubmed",
+    "name": "PubMed",
+    "publisher": "U.S. National Library of Medicine",
+    "canonicalUrl": "https://pubmed.ncbi.nlm.nih.gov/",
+    "access": "open-api",
+    "sourceKind": "research-index",
+    "subjects": [
+      "medicine",
+      "health",
+      "biomedical-research",
+      "public-health"
+    ],
+    "jurisdictions": [
+      "global"
+    ],
+    "description": "Biomedical and life-sciences citations and abstracts; inclusion does not itself validate findings.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "europe-pmc",
+    "name": "Europe PMC",
+    "publisher": "EMBL-EBI and partners",
+    "canonicalUrl": "https://europepmc.org/",
+    "access": "open-api",
+    "sourceKind": "research-index",
+    "subjects": [
+      "medicine",
+      "health",
+      "life-sciences",
+      "biomedical-research"
+    ],
+    "jurisdictions": [
+      "global"
+    ],
+    "description": "Life-sciences literature, abstracts, grants and links to available full text.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "doaj",
+    "name": "Directory of Open Access Journals",
+    "publisher": "DOAJ",
+    "canonicalUrl": "https://doaj.org/",
+    "access": "open-api",
+    "sourceKind": "research-index",
+    "subjects": [
+      "research",
+      "journals",
+      "open-access",
+      "scholarly-publications"
+    ],
+    "jurisdictions": [
+      "global"
+    ],
+    "description": "Directory of open-access journals and article metadata; verify individual journal and article details.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "core",
+    "name": "CORE",
+    "publisher": "CORE",
+    "canonicalUrl": "https://core.ac.uk/",
+    "access": "open-api",
+    "sourceKind": "research-index",
+    "subjects": [
+      "research",
+      "repositories",
+      "open-access",
+      "scholarly-publications"
+    ],
+    "jurisdictions": [
+      "global"
+    ],
+    "description": "Aggregated discovery of research outputs from repositories and journals; check original repository records.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },
+  {
+    "id": "zenodo",
+    "name": "Zenodo",
+    "publisher": "CERN",
+    "canonicalUrl": "https://zenodo.org/",
+    "access": "repository",
+    "sourceKind": "research-index",
+    "subjects": [
+      "research",
+      "datasets",
+      "software",
+      "reports",
+      "open-science"
+    ],
+    "jurisdictions": [
+      "global"
+    ],
+    "description": "Research outputs, datasets, software and reports deposited by researchers and organisations.",
+    "reviewStatus": "listed-pending-record-review",
+    "recordLevelVerificationRequired": true
+  },];
 
 export const KNOWLEDGE_SUBJECTS: KnowledgeSubject[] = [
   { id: "education", label: "Education", parentIds: [], relatedIds: ["skills", "employment", "development"], keywords: ["school", "learning", "teaching", "qualification"] },
