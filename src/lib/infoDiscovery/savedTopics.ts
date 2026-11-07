@@ -22,7 +22,8 @@ export function getSavedTopics(): SavedTopicItem[] {
   if (typeof localStorage === "undefined") return [];
   try {
     const raw = localStorage.getItem(wsKey(STORAGE_KEY));
-    return raw ? JSON.parse(raw) : [];
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((item): item is SavedTopicItem => Boolean(item && typeof item === "object" && typeof (item as SavedTopicItem).id === "string" && typeof (item as SavedTopicItem).categorySlug === "string" && typeof (item as SavedTopicItem).topicSlug === "string")) : [];
   } catch {
     return [];
   }
@@ -148,7 +149,8 @@ export function recordRecentTopic(item: Omit<RecentTopicItem, "visitedAt">) {
   if (typeof localStorage === "undefined") return;
   try {
     const raw = localStorage.getItem(wsKey(RECENT_KEY));
-    const list: RecentTopicItem[] = raw ? JSON.parse(raw) : [];
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    const list: RecentTopicItem[] = Array.isArray(parsed) ? parsed.filter((item): item is RecentTopicItem => Boolean(item && typeof item === "object" && typeof (item as RecentTopicItem).topicTitle === "string" && typeof (item as RecentTopicItem).categorySlug === "string")) : [];
     const filtered = list.filter(
       (r) => !(r.categorySlug === item.categorySlug && r.topicSlug === item.topicSlug && r.kind === (item.kind || "topic") && r.searchQuery === item.searchQuery)
     );
@@ -163,7 +165,8 @@ export function getRecentTopics(): RecentTopicItem[] {
   if (typeof localStorage === "undefined") return [];
   try {
     const raw = localStorage.getItem(wsKey(RECENT_KEY));
-    return raw ? JSON.parse(raw) : [];
+    const parsed: unknown = raw ? JSON.parse(raw) : [];
+    return Array.isArray(parsed) ? parsed.filter((item): item is RecentTopicItem => Boolean(item && typeof item === "object" && typeof (item as RecentTopicItem).topicTitle === "string" && typeof (item as RecentTopicItem).categorySlug === "string")) : [];
   } catch {
     return [];
   }
