@@ -159,7 +159,7 @@ export async function deleteDocument(id: string): Promise<boolean> {
   const local = await getLocalDocs();
   const filtered = local.filter((d) => d.id !== id);
   await saveLocalDocs(filtered);
-  deleteRemote(TBL, id);
+  await deleteRemote(TBL, id);
   return true;
 }
 
