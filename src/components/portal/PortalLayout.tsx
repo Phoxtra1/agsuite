@@ -7,7 +7,7 @@ import { useTheme } from "@/contexts/ThemeContext";
 import amvLogo from "@/assets/amv_global_logo.png";
 
 const links = [
-  { to: "/info-discovery", label: "Information Discovery", icon: Compass },
+  { to: "/info-discovery", label: "Information Discovery System", icon: Compass },
   { to: "/workspace", label: "Workspace", icon: BriefcaseBusiness },
   { to: "/payments", label: "Payments & Billing", icon: Wallet },
 ];
