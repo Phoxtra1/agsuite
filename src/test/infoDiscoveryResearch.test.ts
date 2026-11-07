@@ -42,11 +42,13 @@ describe("Info Discovery source foundation", () => {
         primary_location: { landing_page_url: "https://publisher.example/article", source: { display_name: "Example Journal" } },
         open_access: { is_oa: true }, type: "article", keywords: [{ display_name: "education" }],
       }] }))
-      .mockResolvedValueOnce(jsonResponse({ hits: { hits: [] } }));
+      .mockResolvedValueOnce(jsonResponse({ hits: { hits: [] } }))
+      .mockResolvedValueOnce(jsonResponse({ esearchresult: { idlist: [] } }))
+      .mockResolvedValueOnce(jsonResponse({ resultList: { result: [] } }));
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await searchResearchRepositories("education policy", new AbortController().signal);
-    expect(fetchMock).toHaveBeenCalledTimes(3);
+    expect(fetchMock).toHaveBeenCalledTimes(5);
     expect(result.sourceErrors).toHaveLength(0);
     expect(result.records).toHaveLength(1);
     expect(result.records[0].sources).toEqual(expect.arrayContaining(["Crossref", "OpenAlex"]));
@@ -64,7 +66,9 @@ describe("Info Discovery source foundation", () => {
           access_right: "open", keywords: ["climate"],
           resource_type: { title: "Dataset" },
         }, links: { html: "https://zenodo.org/records/12" },
-      }] } }));
+      }] } }))
+      .mockResolvedValueOnce(jsonResponse({ esearchresult: { idlist: [] } }))
+      .mockResolvedValueOnce(jsonResponse({ resultList: { result: [] } }));
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await searchResearchRepositories("climate data", new AbortController().signal);
