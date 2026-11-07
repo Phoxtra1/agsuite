@@ -187,7 +187,7 @@ export async function duplicateDocument(doc: WorkspaceDocument): Promise<Workspa
 }
 
 export async function snapshotVersion(documentId: string, content_json: any) {
-  if (isWorkspaceOfflineMode()) return;
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return;
   try {
     const { data: u } = await supabase.auth.getUser();
     await supabase
@@ -205,7 +205,7 @@ function genToken() {
 }
 
 export async function listShares(documentId: string): Promise<DocumentShare[]> {
-  if (isWorkspaceOfflineMode()) return [];
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return [];
   try {
     const { data, error } = await supabase
       .from("workspace_document_shares" as any)
@@ -218,7 +218,7 @@ export async function listShares(documentId: string): Promise<DocumentShare[]> {
 }
 
 export async function createShare(documentId: string, mode: "view" | "edit"): Promise<DocumentShare | null> {
-  if (isWorkspaceOfflineMode()) return null;
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return null;
   try {
     const { data: u } = await supabase.auth.getUser();
     const { data, error } = await supabase
@@ -228,19 +228,11 @@ export async function createShare(documentId: string, mode: "view" | "edit"): Pr
       .single();
     if (!error && data) return data as any;
   } catch {}
-  return {
-    id: `share-${Date.now()}`,
-    document_id: documentId,
-    token: genToken(),
-    mode,
-    revoked: false,
-    expires_at: null,
-    created_at: new Date().toISOString(),
-  };
+  return null;
 }
 
 export async function revokeShare(id: string) {
-  if (isWorkspaceOfflineMode()) return;
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return;
   try {
     await supabase.from("workspace_document_shares" as any).update({ revoked: true }).eq("id", id);
   } catch {}
@@ -257,7 +249,7 @@ export interface SharedDocPayload {
 }
 
 export async function fetchSharedDocument(token: string): Promise<SharedDocPayload | null> {
-  if (isWorkspaceOfflineMode()) return null;
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return null;
   try {
     const { data, error } = await (supabase.rpc as any)("get_shared_document", { _token: token });
     if (!error && data) {
@@ -274,7 +266,7 @@ export async function pushSharedDocument(
   content_text: string,
   title?: string
 ): Promise<boolean> {
-  if (isWorkspaceOfflineMode()) return false;
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return false;
   try {
     const { data, error } = await (supabase.rpc as any)("update_shared_document", {
       _token: token,
@@ -288,7 +280,7 @@ export async function pushSharedDocument(
 }
 
 export async function invalidateShareToken(token: string): Promise<boolean> {
-  if (isWorkspaceOfflineMode()) return false;
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return false;
   try {
     const { error } = await supabase
       .from("workspace_document_shares" as any)
