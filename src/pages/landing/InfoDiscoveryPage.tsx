@@ -26,6 +26,7 @@ import { SavedTopicsDrawer } from "@/components/infoDiscovery/SavedTopicsDrawer"
 import { PopularAndRecent } from "@/components/infoDiscovery/PopularAndRecent";
 import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracker";
 import { DISCOVERY_SOURCES, KNOWLEDGE_SUBJECTS } from "@/lib/infoDiscovery/sourceRegistry";
+import { searchResearchRepositories, type ResearchRecord } from "@/lib/infoDiscovery/researchSearch";
 
 type Topic = { title: string; description: string; questions: string[] };
 type Section = { title: string; description: string; items: Topic[] };
@@ -675,37 +676,6 @@ function allTopics(category: Category) {
   return category.sections.flatMap(section => section.items.map(item => ({ ...item, section: section.title, slug: slugify(item.title) })));
 }
 
-type CrossrefItem = {
-  DOI?: string; title?: string[]; author?: { given?: string; family?: string }[];
-  "container-title"?: string[]; publisher?: string; URL?: string; type?: string;
-  published?: { "date-parts"?: number[][] }; issued?: { "date-parts"?: number[][] };
-  abstract?: string;
-};
-type ResearchRecord = {
-  title: string; doi?: string; url?: string; year?: number; authors: string;
-  publisher: string; journal: string; abstract: string; type: string;
-};
-
-async function searchCrossref(query: string, signal: AbortSignal): Promise<ResearchRecord[]> {
-  const fields = "DOI,title,author,published,issued,publisher,URL,type,container-title,abstract";
-  const url = "https://api.crossref.org/works?query.bibliographic=" + encodeURIComponent(query) + "&rows=8&select=" + fields;
-  const response = await fetch(url, { signal, headers: { Accept: "application/json" } });
-  if (!response.ok) throw new Error("Research index returned an error (" + response.status + ").");
-  const payload = await response.json();
-  const items: CrossrefItem[] = payload?.message?.items || [];
-  return items.map(item => {
-    const title = item.title?.[0] || "Untitled research record";
-    const dateParts = item.published?.["date-parts"]?.[0] || item.issued?.["date-parts"]?.[0] || [];
-    const abstract = (item.abstract || "").replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
-    return {
-      title, doi: item.DOI, url: item.URL || (item.DOI ? "https://doi.org/" + item.DOI : undefined),
-      year: dateParts[0], authors: (item.author || []).slice(0, 4).map(a => [a.given, a.family].filter(Boolean).join(" ")).join(", "),
-      publisher: item.publisher || "Publisher not supplied", journal: item["container-title"]?.[0] || "",
-      abstract: abstract.slice(0, 620), type: item.type || "Research record",
-    };
-  });
-}
-
 type WBIndicator = { value: number; date: string; footnote?: string };
 type IndicatorResult = { data?: WBIndicator; error?: string };
 type WBCountry = {
@@ -831,11 +801,17 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
     setRecords([]);
     setRetrievedAt("");
     try {
-      const results = await searchCrossref(clean, controller.signal);
+      const result = await searchResearchRepositories(clean, controller.signal);
       if (activeRequest.current !== controller) return;
-      setRecords(results);
+      setRecords(result.records);
       setRetrievedAt(new Date().toISOString());
-      if (!results.length) setError("No matching publication metadata was returned. Try different search terms.");
+      if (!result.records.length) {
+        setError(result.sourceErrors.length
+          ? "The connected research repositories could not return records. " + result.sourceErrors.map(item => item.source + ": " + item.message).join(" · ")
+          : "No matching publication metadata was returned. Try different search terms.");
+      } else if (result.sourceErrors.length) {
+        setError("Some repositories were unavailable: " + result.sourceErrors.map(item => item.source).join(", ") + ". Results from the other available repositories are shown.");
+      }
     } catch (err: any) {
       if (err?.name !== "AbortError" && activeRequest.current === controller) {
         setError(err?.message || "The research index could not be reached. Check the connection and try again.");
@@ -851,15 +827,15 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
   return (
     <section className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><BookOpen className="h-4 w-4 text-primary" /> Research publication search</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Search Crossref's publisher-deposited scholarly metadata. A DOI or Crossref record confirms that metadata was registered, not that the research findings are correct, independently replicated, peer-reviewed or freely accessible.</p></div>
-        <Badge variant="outline">Crossref metadata</Badge>
+        <div><div className="flex items-center gap-2 text-sm font-semibold"><BookOpen className="h-4 w-4 text-primary" /> Research publication search</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Search Crossref, OpenAlex and Zenodo research metadata. A DOI or Crossref record confirms that metadata was registered, not that the research findings are correct, independently replicated, peer-reviewed or freely accessible.</p></div>
+        <Badge variant="outline">Crossref · OpenAlex · Zenodo</Badge>
       </div>
       <form onSubmit={runSearch} className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Input value={query} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)} placeholder="Search a subject, question or research topic" aria-label="Search research publications" />
         <Button type="submit" disabled={loading || query.trim().length < 3} className="sm:min-w-32">{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Search</Button>
       </form>
       {error && <p role="status" className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">{error}</p>}
-      {retrievedAt && <p className="mt-3 text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()} · Metadata source: Crossref REST API · Retrieval time is not publication time.</p>}
+      {retrievedAt && <p className="mt-3 text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()} · Repositories: Crossref, OpenAlex and Zenodo · Retrieval time is not publication time.</p>}
       {records.length > 0 && <div className="mt-4 space-y-3">
         {records.map((record, index) => <article key={record.doi || record.url || index} className="rounded-xl border border-border bg-background/60 p-4">
           <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Publication year not supplied"}</Badge><span className="text-[11px] text-muted-foreground">{record.type}</span></div>
@@ -867,7 +843,7 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
           {(record.authors || record.journal || record.publisher) && <p className="mt-1 text-xs leading-5 text-muted-foreground">{[record.authors, record.journal, record.publisher].filter(Boolean).join(" · ")}</p>}
           {record.doi && <p className="mt-1 text-[11px] text-muted-foreground">DOI: <a href={"https://doi.org/" + record.doi} target="_blank" rel="noreferrer" className="font-mono text-primary underline underline-offset-2">{record.doi}</a></p>}
           {record.abstract && <p className="mt-3 text-sm leading-6 text-muted-foreground">{record.abstract}{record.abstract.length >= 620 ? "…" : ""}</p>}
-          <p className="mt-3 border-t border-border pt-3 text-[11px] leading-5 text-muted-foreground">Provenance: metadata deposited with Crossref. Check the publisher's article page for corrections, retractions, study methods, full text and publication status before relying on its conclusions.</p>
+          <p className="mt-3 border-t border-border pt-3 text-[11px] leading-5 text-muted-foreground">Verification status: metadata only. Check the original publisher or repository record for corrections, retractions, study methods, version, licence, full text and publication status before relying on conclusions.</p>
         </article>)}
       </div>}
       <p className="mt-4 text-[11px] text-muted-foreground">Crossref API documentation: <a className="underline underline-offset-2" href="https://www.crossref.org/documentation/retrieve-metadata/rest-api/" target="_blank" rel="noreferrer">publisher-deposited metadata and API use</a>.</p>
