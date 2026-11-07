@@ -202,7 +202,7 @@ export async function deleteSheet(id: string): Promise<boolean> {
   const local = await getLocalSheets();
   const filtered = local.filter((s) => s.id !== id);
   await saveLocalSheets(filtered);
-  deleteRemote(TBL, id);
+  await deleteRemote(TBL, id);
   return true;
 }
 
