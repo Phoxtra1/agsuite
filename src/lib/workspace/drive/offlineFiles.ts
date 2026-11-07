@@ -98,9 +98,9 @@ async function migrateLegacyQueueForCurrentAccount(): Promise<void> {
   db.close();
 }
 
-export async function queueDriveUpload(path: string, file: File): Promise<void> {
+export async function queueDriveUpload(path: string, file: Blob, name = (file as File).name || "file", type = file.type): Promise<void> {
   const blobId = uploadIdFromPath(path);
-  await putWorkspaceBlob(blobId, file, file.name);
+  await putWorkspaceBlob(blobId, file, name);
   const records = await getQueue();
   await saveQueue([
     ...records.filter((record) => record.path !== path),
@@ -108,8 +108,8 @@ export async function queueDriveUpload(path: string, file: File): Promise<void> 
       id: path,
       path,
       action: "upload",
-      name: file.name,
-      type: file.type || "application/octet-stream",
+      name,
+      type: type || "application/octet-stream",
       blobId,
     },
   ]);
