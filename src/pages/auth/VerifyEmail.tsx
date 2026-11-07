@@ -15,6 +15,14 @@ const PRODUCT_INFO: Record<string, {
   textMuted: string;
   description: string;
 }> = {
+  "information-discovery": {
+    name: "Information Discovery System",
+    tagline: "One account for the Amineva Global portal",
+    gradient: "from-slate-900 via-slate-950 to-slate-900",
+    accentClass: "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring",
+    textMuted: "text-slate-400",
+    description: "Your Amineva Global account is verified. Information Discovery, Workspace and Payments & Billing are available through the same signed-in portal.",
+  },
   suite: {
     name: "Amineva Global Suite",
     tagline: "The central gateway to Amineva Ecosystem",
@@ -96,6 +104,10 @@ export default function VerifyEmail() {
   }, []);
 
   const handleLaunch = () => {
+    if (productKey === "information-discovery") {
+      navigate("/info-discovery", { replace: true });
+      return;
+    }
     const dashboardUrl = getDashboardForRole(productKey, userRole);
     if (dashboardUrl.startsWith("http")) {
       window.location.assign(dashboardUrl);
