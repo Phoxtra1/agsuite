@@ -127,7 +127,7 @@ export async function listSheets(): Promise<WorkspaceSheet[]> {
     );
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
-      const remoteRows = await suppressTombstonedRemoteRows(TBL, data as any as WorkspaceSheet[][]);
+      const remoteRows = await suppressTombstonedRemoteRows(TBL, data as any as WorkspaceSheet[]);
       const merged = reconcile({ table: TBL, local: await getLocalSheets(), remote: remoteRows, userId, updatedAt: (d) => d.updated_at, toRow });
       await saveLocalSheets(merged);
       return merged;
