@@ -1241,6 +1241,43 @@ function KnowledgeCompassPage({ onBack }: { onBack: () => void }) {
     .filter(entry => !query.trim() || entry.score > 0)
     .sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title));
   const visible = query.trim() ? ranked.slice(0, 12) : ranked.slice(0, 8);
+  const [liveRecords, setLiveRecords] = useState<ResearchRecord[]>([]);
+  const [liveLoading, setLiveLoading] = useState(false);
+  const [liveError, setLiveError] = useState("");
+
+  useEffect(() => {
+    const clean = query.trim();
+    if (clean.length < 3) {
+      setLiveRecords([]);
+      setLiveError("");
+      setLiveLoading(false);
+      return;
+    }
+    const controller = new AbortController();
+    const timer = window.setTimeout(async () => {
+      setLiveLoading(true);
+      setLiveError("");
+      try {
+        const result = await searchResearchRepositories(clean, controller.signal);
+        if (!controller.signal.aborted) {
+          setLiveRecords(result.records);
+          if (result.sourceErrors.length) {
+            setLiveError("Some repositories could not be reached: " + result.sourceErrors.map(item => item.source).join(", "));
+          }
+        }
+      } catch (error) {
+        if (!controller.signal.aborted && (error as Error)?.name !== "AbortError") {
+          setLiveError("Live repository discovery is temporarily unavailable. Your curated pathways remain available.");
+        }
+      } finally {
+        if (!controller.signal.aborted) setLiveLoading(false);
+      }
+    }, 650);
+    return () => {
+      window.clearTimeout(timer);
+      controller.abort();
+    };
+  }, [query]);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -1274,12 +1311,12 @@ function KnowledgeCompassPage({ onBack }: { onBack: () => void }) {
           <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">{query.trim() ? "Selected knowledge pathways" : "Curated starting points"}</p><h2 className="mt-1 text-2xl font-semibold">{query.trim() ? "Sources aligned to your situation" : "A few places to begin"}</h2><p className="mt-1 max-w-2xl text-sm text-muted-foreground">{query.trim() ? "Recommendations are ordered by how closely their subject and purpose align with what you described." : "A small selection from a wider collection. Describe your own situation above to receive more focused recommendations."}</p></div>
           <span className="text-xs text-muted-foreground">{visible.length} shown · {ranked.length} relevant pathways</span>
         </div>
-        {visible.length ? <div className="grid gap-4 md:grid-cols-2">
+        {visible.length > 0 && <div className="grid gap-4 md:grid-cols-2">
           {visible.map(({ item }) => <article key={item.id} className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{item.subject}</Badge><span className="text-[10px] uppercase tracking-wide text-muted-foreground">{item.materialType}</span></div>
             <p className="mt-4 text-sm leading-6 text-foreground">{item.situation}</p>
             <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-accent">Recommended source</p>
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-accent">Curated starting point</p>
               <h3 className="mt-2 text-lg font-semibold leading-snug">{item.title}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{item.creator}</p>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.why}</p>
@@ -1287,7 +1324,26 @@ function KnowledgeCompassPage({ onBack }: { onBack: () => void }) {
               {item.perspective && <p className="mt-2 text-xs text-muted-foreground">{item.perspective}</p>}
             </div>
           </article>)}
-        </div> : <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center"><BookOpen className="mx-auto h-8 w-8 text-muted-foreground" /><h3 className="mt-3 font-semibold">We do not yet have a verified pathway for this situation</h3><p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Your situation may be new to this collection. Try a different way of describing what is happening, or remove the subject filter. We would rather say when a relevant recommendation is not yet available than present an unrelated source as an answer.</p><Button variant="outline" className="mt-4" onClick={() => { setQuery(""); setSubject("All subjects"); }}>Show starting points</Button></div>}
+        </div>}
+        {query.trim().length >= 3 && <section className="mt-7 rounded-2xl border border-border bg-card p-5 shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div><h3 className="font-semibold">Live research and repository discovery</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">Searching scholarly and research repositories for records related to your situation. These are metadata leads, not verified conclusions.</p></div>
+            <Badge variant="outline">Crossref · OpenAlex · Zenodo</Badge>
+          </div>
+          {liveLoading && <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Searching connected repositories…</p>}
+          {liveError && <p role="status" className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">{liveError}</p>}
+          {!liveLoading && liveRecords.length === 0 && !liveError && <p className="mt-4 text-xs text-muted-foreground">No repository records returned for this wording. Try a more specific subject or a shorter description.</p>}
+          {liveRecords.length > 0 && <div className="mt-4 space-y-3">
+            {liveRecords.map(record => <article key={record.id} className="rounded-xl border border-border bg-background/60 p-4">
+              <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Year not supplied"}</Badge><span className="text-[10px] text-muted-foreground">{record.type}</span><span className="text-[10px] text-muted-foreground">Indexed by {record.sources.join(", ")}</span></div>
+              <h4 className="mt-2 font-semibold leading-6">{record.url ? <a href={record.url} target="_blank" rel="noopener noreferrer" className="hover:text-primary hover:underline">{record.title} <ExternalLink className="inline h-3.5 w-3.5" /></a> : record.title}</h4>
+              <p className="mt-1 text-xs text-muted-foreground">{[record.authors, record.journal, record.publisher].filter(Boolean).join(" · ")}</p>
+              {record.abstract && <p className="mt-2 text-xs leading-5 text-muted-foreground">{record.abstract}</p>}
+              <p className="mt-2 text-[10px] leading-4 text-muted-foreground">Metadata-only match. Check the original publisher/repository, version, licence, corrections and methods before relying on it.</p>
+            </article>)}
+          </div>}
+        </section>}
+        {!visible.length && !liveLoading && !liveRecords.length && query.trim().length >= 3 && <div className="mt-5 rounded-2xl border border-dashed border-border bg-card p-8 text-center"><BookOpen className="mx-auto h-8 w-8 text-muted-foreground" /><h3 className="mt-3 font-semibold">No curated pathway or repository record matched yet</h3><p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Your situation may be new to this collection, or the repositories may use different terminology. Try another description or remove the subject filter. We will not invent a match.</p><Button variant="outline" className="mt-4" onClick={() => { setQuery(""); setSubject("All subjects"); }}>Show starting points</Button></div>}
         <div className="mt-8 rounded-2xl border border-border bg-muted/30 p-5">
           <h3 className="font-semibold">What this space is—and is not</h3>
           <p className="mt-2 text-sm leading-6 text-muted-foreground">Knowledge Compass is an information-discovery service, not a general web search engine or an endless list of search results. It starts with a human situation and points to a specific, relevant book, research work, report, institution or other credible source. Recommendations are curated, not generated merely because words overlap. A source is a starting point for deeper learning, not a substitute for current professional, legal, medical or financial advice.</p>
