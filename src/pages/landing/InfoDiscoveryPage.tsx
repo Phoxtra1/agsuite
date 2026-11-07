@@ -1145,6 +1145,102 @@ function ClimateExplorer() {
   );
 }
 
+
+type KnowledgePathway = {
+  id: string;
+  situation: string;
+  subject: string;
+  materialType: string;
+  title: string;
+  creator: string;
+  why: string;
+  perspective?: string;
+};
+
+const KNOWLEDGE_PATHWAYS: KnowledgePathway[] = [
+  { id: "online-business", subject: "Business and income", situation: "You want to understand how an online business can create real value and income instead of chasing quick-money promises.", materialType: "Book", title: "The Personal MBA", creator: "Josh Kaufman", why: "Introduces core business disciplines such as value creation, marketing, sales, finance and systems in accessible language." },
+  { id: "entrepreneurship", subject: "Business and income", situation: "You have an idea and want to understand how to test whether people will actually pay for it before investing heavily.", materialType: "Book", title: "The Mom Test", creator: "Rob Fitzpatrick", why: "Shows how to ask customers useful questions and avoid misleading feedback when validating an idea." },
+  { id: "personal-finance", subject: "Money and society", situation: "You want to understand why people make different financial decisions and how habits shape long-term financial outcomes.", materialType: "Book", title: "The Psychology of Money", creator: "Morgan Housel", why: "Explores the behavioural side of money, risk, patience and financial decision-making through short stories and examples." },
+  { id: "poverty", subject: "Money and society", situation: "You want to understand poverty beyond individual choices, including the economic and institutional conditions that keep communities poor.", materialType: "Book", title: "The Bottom Billion", creator: "Paul Collier", why: "Examines several development traps affecting the world's poorest countries. Its arguments are influential but debated, so compare them with newer development research." },
+  { id: "power-influence", subject: "People and influence", situation: "You want to recognise how power, influence and manipulation operate in relationships, organisations and public life.", materialType: "Book", title: "The 48 Laws of Power", creator: "Robert Greene", why: "Presents historical examples and strategic interpretations of power. Read it critically: it is not a scientific lawbook or an ethical guide." },
+  { id: "psychology", subject: "People and influence", situation: "You want a clearer introduction to how people think, make judgements and sometimes reach predictable errors.", materialType: "Book", title: "Thinking, Fast and Slow", creator: "Daniel Kahneman", why: "Introduces influential research on judgement and decision-making. Some specific findings in the wider field have since been debated or revised." },
+  { id: "culture", subject: "Culture and history", situation: "You want to understand how culture shapes identity, everyday behaviour, traditions and the way communities interpret the world.", materialType: "Book", title: "The Interpretation of Cultures", creator: "Clifford Geertz", why: "A foundational work in interpretive anthropology that explores how cultural meaning can be understood through close study of symbols and social life." },
+  { id: "african-history", subject: "Culture and history", situation: "You want to explore African history through African-centred scholarship rather than relying on accounts that begin with colonial rule.", materialType: "Book", title: "The African Origin of Civilization: Myth or Reality", creator: "Cheikh Anta Diop", why: "Presents Diop's influential arguments about African antiquity and historical identity. Read alongside contemporary archaeological and historical scholarship, including critiques." },
+  { id: "lawyer-reasoning", subject: "Law and justice", situation: "You are studying law or entering legal practice and want to strengthen the way you analyse facts, rules and arguments.", materialType: "Book", title: "Thinking Like a Lawyer", creator: "Frederick Schauer", why: "Introduces legal reasoning, rules, precedent, authority and argument. It is a conceptual introduction, not a substitute for jurisdiction-specific law." },
+  { id: "constitutional-law", subject: "Law and justice", situation: "You want to understand constitutional government, the limits of public power and the protection of individual rights.", materialType: "Book", title: "Constitutionalism: A Very Short Introduction", creator: "Nick Barber", why: "Provides a concise introduction to constitutionalism and the principles that structure and limit government. Pair it with the constitution and cases of the relevant country." },
+  { id: "science-thinking", subject: "Science and discovery", situation: "You want to understand how scientific knowledge develops, why accepted explanations change and how scientific revolutions happen.", materialType: "Book", title: "The Structure of Scientific Revolutions", creator: "Thomas S. Kuhn", why: "Introduces the influential idea of paradigm shifts in science. It is a philosophical and historical account, not a complete description of every scientific field." },
+  { id: "scientific-method", subject: "Science and discovery", situation: "You want to become more careful about evidence, experiments, uncertainty and claims presented as scientific facts.", materialType: "Book", title: "The Demon-Haunted World", creator: "Carl Sagan", why: "Encourages sceptical inquiry and evidence-based thinking, with accessible examples of how to evaluate extraordinary claims." },
+  { id: "philosophy", subject: "Philosophy and ideas", situation: "You want to begin studying philosophy and examine justice, knowledge, leadership and the good society.", materialType: "Book", title: "The Republic", creator: "Plato", why: "A foundational philosophical dialogue exploring justice, education, political order and the nature of knowledge. Different translations vary." },
+  { id: "ethics", subject: "Philosophy and ideas", situation: "You want to think more carefully about what makes an action right, what people owe one another and how to live well.", materialType: "Book", title: "Nicomachean Ethics", creator: "Aristotle", why: "Explores virtue, character, practical wisdom and human flourishing. It is a foundational text, best approached with an accessible guide or commentary." },
+  { id: "writing", subject: "Writing and communication", situation: "You want to become a stronger writer and communicate ideas clearly without relying on complicated language.", materialType: "Book", title: "On Writing: A Memoir of the Craft", creator: "Stephen King", why: "Combines a writer's memoir with practical advice on habits, revision, clarity and the craft of writing." },
+  { id: "research", subject: "Writing and communication", situation: "You want to learn how to investigate a subject, evaluate sources and produce research that other people can check.", materialType: "Book", title: "The Craft of Research", creator: "Wayne C. Booth, Gregory G. Colomb, Joseph M. Williams, Joseph Bizup and William T. FitzGerald", why: "Guides readers through developing research questions, building arguments, using evidence and communicating findings." },
+  { id: "leadership", subject: "Leadership and organisations", situation: "You have responsibility for a team and want to understand how to build trust, coordinate people and improve performance.", materialType: "Book", title: "The Effective Executive", creator: "Peter F. Drucker", why: "Focuses on contribution, time, strengths, priorities and decision-making in organisational work." },
+  { id: "negotiation", subject: "Leadership and organisations", situation: "You need to negotiate an agreement while protecting important interests and maintaining a workable relationship.", materialType: "Book", title: "Getting to Yes", creator: "Roger Fisher, William Ury and Bruce Patton", why: "Introduces principled negotiation, separating people from problems and focusing on interests and options." },
+  { id: "agriculture", subject: "Agriculture and environment", situation: "You want to understand how soil health, ecological processes and farm management connect to long-term food production.", materialType: "Book", title: "The Nature and Properties of Soils", creator: "Nyle C. Brady and Ray R. Weil", why: "A widely used textbook covering soil formation, physical and chemical properties, biology and management. Choose an edition appropriate to your course or needs." },
+  { id: "climate", subject: "Agriculture and environment", situation: "You want to understand climate change through scientific evidence, impacts and the choices available to societies.", materialType: "Assessment report", title: "IPCC Sixth Assessment Report", creator: "Intergovernmental Panel on Climate Change (IPCC)", why: "A major international scientific assessment covering climate science, impacts, adaptation and mitigation. Use the relevant working-group report and note its publication date." },
+  { id: "technology", subject: "Technology and design", situation: "You want to understand how good software is designed around real human needs rather than features alone.", materialType: "Book", title: "The Design of Everyday Things", creator: "Don Norman", why: "Explains usability, feedback, affordances and human-centred design through familiar objects and systems." },
+  { id: "data-literacy", subject: "Technology and design", situation: "You want to become better at reading charts, questioning statistics and avoiding conclusions that data cannot support.", materialType: "Book", title: "Calling Bullshit: The Art of Skepticism in a Data-Driven World", creator: "Carl T. Bergstrom and Jevin D. West", why: "Shows how misleading data claims, visualisations and statistical arguments can be identified and challenged." },
+  { id: "architecture", subject: "Creativity and the built world", situation: "You want to understand how buildings and cities influence human experience, movement and everyday life.", materialType: "Book", title: "A Pattern Language", creator: "Christopher Alexander, Sara Ishikawa and Murray Silverstein", why: "Presents a pattern-based approach to designing buildings and communities around recurring human needs." },
+  { id: "education", subject: "Learning and human development", situation: "You want to understand how people learn and how teaching can help learners develop genuine understanding.", materialType: "Book", title: "How People Learn II: Learners, Contexts, and Cultures", creator: "National Academies of Sciences, Engineering, and Medicine", why: "Synthesises research on learning across development, culture and context. It is a research-based reference rather than a step-by-step teaching manual." },
+  { id: "journalism", subject: "Society and public life", situation: "You want to understand the responsibilities of journalism and how reporting can distinguish evidence from rumour and opinion.", materialType: "Book", title: "The Elements of Journalism", creator: "Bill Kovach and Tom Rosenstiel", why: "Explains core principles of journalism, verification, independence and accountability." },
+];
+
+function KnowledgeCompassPage({ onBack }: { onBack: () => void }) {
+  const [query, setQuery] = useState("");
+  const [subject, setSubject] = useState("All subjects");
+  const subjects = ["All subjects", ...Array.from(new Set(KNOWLEDGE_PATHWAYS.map(item => item.subject)))];
+  const filtered = KNOWLEDGE_PATHWAYS.filter(item => {
+    const matchesSubject = subject === "All subjects" || item.subject === subject;
+    const haystack = [item.situation, item.subject, item.materialType, item.title, item.creator, item.why].join(" ").toLowerCase();
+    return matchesSubject && haystack.includes(query.trim().toLowerCase());
+  });
+
+  return (
+    <main className="min-h-screen bg-background text-foreground">
+      <section className="relative overflow-hidden bg-primary px-5 pb-12 pt-8 text-primary-foreground md:px-8 md:pb-14">
+        <div className="pointer-events-none absolute inset-0 bg-gradient-to-br from-accent/20 via-transparent to-primary-foreground/5" />
+        <div className="relative mx-auto max-w-6xl">
+          <div className="mb-7 flex items-center gap-2 text-xs text-primary-foreground/70">
+            <button onClick={onBack} className="hover:text-primary-foreground">Info Discovery</button><ChevronRight className="h-3.5 w-3.5" /><span className="text-primary-foreground">Knowledge Compass</span>
+          </div>
+          <div className="max-w-3xl">
+            <div className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]"><Compass className="h-3.5 w-3.5 text-accent" /> Situations into knowledge</div>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight md:text-5xl">Knowledge Compass</h1>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-primary-foreground/80 md:text-base">Sometimes the most useful knowledge is difficult to discover because you do not know the title, author or exact words to search for. Start with a situation, ambition or question. Find a carefully selected book, report or other source that can take you further.</p>
+          </div>
+          <div className="mt-7 grid gap-3 rounded-2xl border border-border/20 bg-card p-3 text-foreground shadow-xl md:grid-cols-[minmax(0,1fr)_240px]">
+            <div className="flex items-center gap-3 px-2"><Search className="h-5 w-5 shrink-0 text-muted-foreground" /><Input value={query} onChange={event => setQuery(event.target.value)} placeholder="Describe a situation, goal or subject…" aria-label="Search situations and recommendations" className="h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" /></div>
+            <select value={subject} onChange={event => setSubject(event.target.value)} aria-label="Filter by subject" className="h-11 rounded-md border border-input bg-background px-3 text-sm"><option>All subjects</option>{subjects.filter(item => item !== "All subjects").map(item => <option key={item}>{item}</option>)}</select>
+          </div>
+          <p className="mt-3 text-xs text-primary-foreground/70">Search by the situation you are facing or the person you want to become—not only by a book title.</p>
+        </div>
+      </section>
+      <section className="mx-auto max-w-6xl px-5 py-9 md:px-8">
+        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
+          <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Curated discovery</p><h2 className="mt-1 text-2xl font-semibold">A useful place to begin</h2></div>
+          <span className="text-xs text-muted-foreground">{filtered.length} recommendation{filtered.length === 1 ? "" : "s"}</span>
+        </div>
+        {filtered.length ? <div className="grid gap-4 md:grid-cols-2">
+          {filtered.map(item => <article key={item.id} className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+            <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{item.subject}</Badge><span className="text-[10px] uppercase tracking-wide text-muted-foreground">{item.materialType}</span></div>
+            <p className="mt-4 text-sm leading-6 text-foreground">{item.situation}</p>
+            <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
+              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-accent">Recommended source</p>
+              <h3 className="mt-2 text-lg font-semibold leading-snug">{item.title}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{item.creator}</p>
+              <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.why}</p>
+            </div>
+          </article>)}
+        </div> : <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center"><BookOpen className="mx-auto h-8 w-8 text-muted-foreground" /><h3 className="mt-3 font-semibold">No matching recommendation yet</h3><p className="mt-1 text-sm text-muted-foreground">Try describing the situation differently or browse another subject. New pathways can be added as the collection grows.</p></div>}
+        <div className="mt-8 rounded-2xl border border-border bg-muted/30 p-5">
+          <h3 className="font-semibold">How recommendations are selected</h3>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">Each entry should be checked against reliable bibliographic or institutional records before publication. Recommendations are selected for their relevance to the situation, not simply popularity. Where a work presents a debated interpretation, that limitation is stated. A recommendation is a starting point for learning, not a substitute for professional advice or current law.</p>
+        </div>
+      </section>
+    </main>
+  );
+}
+
 export default function InfoDiscoveryPage() {
   const { categorySlug, topicSlug } = useParams<{ categorySlug?: string; topicSlug?: string }>();
   const navigate = useNavigate();
@@ -1311,7 +1407,7 @@ export default function InfoDiscoveryPage() {
     }
   };
 
-  if (topicSlug && selected && !selectedTopic) {
+  if (categorySlug === "knowledge-compass" && !topicSlug) {\n    return <KnowledgeCompassPage onBack={() => navigate("/info-discovery")} />;\n  }\n\n  if (topicSlug && selected && !selectedTopic) {
     return <main className="mx-auto max-w-3xl px-6 py-20"><h1 className="text-2xl font-semibold">Topic not found</h1><p className="mt-2 text-muted-foreground">The requested topic is not part of this discovery area.</p><Button onClick={() => goToCategory(selected.slug)} className="mt-5">Back to {selected.title}</Button></main>;
   }
 
@@ -1421,7 +1517,7 @@ export default function InfoDiscoveryPage() {
             </div>
             <nav className="space-y-1">
               <button onClick={() => navigate("/info-discovery")} className={"flex w-full items-center justify-between rounded-lg px-3 py-2.5 text-left text-sm " + (!selected ? "bg-accent/15 font-semibold text-foreground shadow-[inset_3px_0_0_hsl(var(--accent))]" : "text-muted-foreground hover:bg-muted hover:text-foreground")}>All areas <span className="text-xs">{String(categories.length).padStart(2, "0")}</span></button>
-              {categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className={"flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm " + (selected?.slug === category.slug ? "bg-accent/15 font-semibold text-foreground shadow-[inset_3px_0_0_hsl(var(--accent))]" : "text-muted-foreground hover:bg-muted hover:text-foreground")}><category.icon className="h-4 w-4 shrink-0" /><span>{category.title}</span></button>)}
+              <button onClick={() => navigate("/info-discovery/knowledge-compass")} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-muted-foreground hover:bg-muted hover:text-foreground"><Compass className="h-4 w-4 shrink-0 text-accent" /><span>Knowledge Compass</span><span className="ml-auto rounded-full bg-accent/10 px-2 py-0.5 text-[9px] font-semibold text-accent">NEW</span></button>\n              {categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className={"flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm " + (selected?.slug === category.slug ? "bg-accent/15 font-semibold text-foreground shadow-[inset_3px_0_0_hsl(var(--accent))]" : "text-muted-foreground hover:bg-muted hover:text-foreground")}><category.icon className="h-4 w-4 shrink-0" /><span>{category.title}</span></button>)}
             </nav>
           </div>
           <div className="rounded-2xl border border-border bg-card shadow-sm p-4">
