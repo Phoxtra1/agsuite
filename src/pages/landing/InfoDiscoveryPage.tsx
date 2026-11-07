@@ -25,7 +25,7 @@ import { VisaChecker } from "@/components/infoDiscovery/VisaChecker";
 import { SavedTopicsDrawer } from "@/components/infoDiscovery/SavedTopicsDrawer";
 import { PopularAndRecent } from "@/components/infoDiscovery/PopularAndRecent";
 import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracker";
-import { DISCOVERY_SOURCES, KNOWLEDGE_SUBJECTS } from "@/lib/infoDiscovery/sourceRegistry";
+import { DISCOVERY_SOURCES, KNOWLEDGE_SUBJECTS, findRelatedSubjects } from "@/lib/infoDiscovery/sourceRegistry";
 import { searchResearchRepositories, type ResearchRecord } from "@/lib/infoDiscovery/researchSearch";
 
 type Topic = { title: string; description: string; questions: string[] };
@@ -1900,13 +1900,17 @@ function InstitutionalSourceDirectory() {
   const [scopeFilter, setScopeFilter] = useState("all");
   const filteredSources = useMemo(() => {
     const query = sourceQuery.trim().toLocaleLowerCase();
+    const matchedSubjectIds = KNOWLEDGE_SUBJECTS
+      .filter(subject => [subject.label, ...subject.keywords].some(term => term.toLocaleLowerCase().includes(query) || (query.length > 2 && query.includes(term.toLocaleLowerCase()))))
+      .map(subject => subject.id);
+    const relatedSubjectIds = new Set(findRelatedSubjects(matchedSubjectIds).map(subject => subject.id));
     return DISCOVERY_SOURCES.filter(source => {
-      const matchesQuery = !query || [
-        source.name, source.publisher, source.description,
-        ...source.subjects, ...source.jurisdictions,
+      const matchesText = !query || [
+        source.name, source.publisher, source.description, ...source.jurisdictions,
       ].join(" ").toLocaleLowerCase().includes(query);
+      const matchesSubject = !query || source.subjects.some(subject => relatedSubjectIds.has(subject));
       const matchesScope = scopeFilter === "all" || source.jurisdictions.includes(scopeFilter);
-      return matchesQuery && matchesScope;
+      return (matchesText || matchesSubject) && matchesScope;
     });
   }, [sourceQuery, scopeFilter]);
 
