@@ -456,9 +456,22 @@ export const KNOWLEDGE_SUBJECTS: KnowledgeSubject[] = [
 ];
 
 export function findRelatedSubjects(subjectIds: string[]): KnowledgeSubject[] {
-  const selected = new Set(subjectIds);
-  for (const subject of KNOWLEDGE_SUBJECTS) {
-    if (selected.has(subject.id)) subject.relatedIds.forEach(id => selected.add(id));
+  const byId = new Map(KNOWLEDGE_SUBJECTS.map(subject => [subject.id, subject]));
+  const selected = new Set<string>();
+  const pending = [...subjectIds];
+
+  // Traverse relationships until no new subject can be reached. This keeps
+  // multi-discipline discovery independent of the order in which taxonomy
+  // entries happen to be declared.
+  while (pending.length) {
+    const id = pending.shift()!;
+    if (selected.has(id)) continue;
+    selected.add(id);
+    const subject = byId.get(id);
+    if (!subject) continue;
+    for (const relatedId of [...subject.parentIds, ...subject.relatedIds]) {
+      if (!selected.has(relatedId)) pending.push(relatedId);
+    }
   }
   return KNOWLEDGE_SUBJECTS.filter(subject => selected.has(subject.id));
 }
