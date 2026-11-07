@@ -7,9 +7,9 @@ import type { ProductData } from "@/types/product";
 
 const portalAccount: ProductData = {
   id: "information-discovery",
-  name: "Information Discovery System",
+  name: "Info Discovery",
   shortName: "Amineva Global",
-  description: "One account for the Information Discovery System, Workspace and account billing.",
+  description: "One account for Info Discovery, Workspace and Payments & Billing.",
   status: "live",
   order: 0,
 };
@@ -35,15 +35,15 @@ export default function GetStartedPage() {
             <Compass className="h-4 w-4" /> Amineva Global account
           </div>
           <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
-            One account. One Information Discovery portal.
+            One account. One Info Discovery portal.
           </h1>
           <p className="mt-5 text-base leading-8 text-muted-foreground">
-            Sign in or create your account once. You will enter the Information Discovery System first, with Workspace and Payments &amp; Billing available from the same portal and the same signed-in account.
+            Sign in or create your account once. You will enter Info Discovery first, with Workspace and Payments &amp; Billing available from the same portal and the same signed-in account.
           </p>
           <div className="mt-8 grid gap-3 sm:grid-cols-3">
             <div className="rounded-2xl border border-border bg-card p-4">
               <Compass className="h-5 w-5 text-accent" />
-              <h2 className="mt-3 text-sm font-semibold">Information Discovery</h2>
+              <h2 className="mt-3 text-sm font-semibold">Info Discovery</h2>
               <p className="mt-1 text-xs leading-5 text-muted-foreground">Explore connected subjects, investigation guides and original sources.</p>
             </div>
             <div className="rounded-2xl border border-border bg-card p-4">
@@ -75,7 +75,7 @@ export default function GetStartedPage() {
             onChangeSelection={() => navigate("/", { replace: true })}
           />
           <p className="mt-4 text-center text-xs leading-5 text-muted-foreground">
-            After successful sign-in, the Information Discovery portal opens. Workspace does not ask you to register or sign in again.
+            After successful sign-in, Info Discovery opens. Workspace does not ask you to register or sign in again.
           </p>
         </section>
       </div>

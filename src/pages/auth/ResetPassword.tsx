@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/appwrite/client";
+import { supabase, isSupabaseConfigured, assertSupabaseConfigured } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -74,8 +74,16 @@ export default function ResetPassword() {
 
   useEffect(() => {
     // Check if the callback set the session correctly
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setHasSession(!!session);
+    if (!isSupabaseConfigured) {
+      setHasSession(false);
+      setCheckingSession(false);
+      return;
+    }
+    supabase.auth.getSession().then(({ data: { session }, error }) => {
+      setHasSession(!error && !!session);
+      setCheckingSession(false);
+    }).catch(() => {
+      setHasSession(false);
       setCheckingSession(false);
     });
   }, []);
@@ -99,6 +107,7 @@ export default function ResetPassword() {
 
     setLoading(true);
     try {
+      assertSupabaseConfigured();
       const { error: resetError } = await supabase.auth.updateUser({
         password: password,
       });

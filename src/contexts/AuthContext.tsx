@@ -7,7 +7,7 @@ import React, {
   useEffect,
   useRef,
 } from "react";
-import { supabase } from "@/integrations/appwrite/client";
+import { supabase, assertSupabaseConfigured, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { clearLast2FAVerified } from "@/lib/stepUpAuth";
 import { checkLoginDevice } from "@/lib/auth/loginAlert";
 import { resetClientState } from "@/lib/auth/resetClientState";
@@ -74,6 +74,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
+    if (!isSupabaseConfigured) {
+      setIsLoading(false);
+      return;
+    }
+
     // Listen for auth state changes FIRST
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
       (event, session) => {
@@ -114,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [handleUserChange]);
 
   const login = useCallback(async (email: string, password: string) => {
+    assertSupabaseConfigured();
     authActionInProgress.current = true;
     setIsLoading(true);
     try {
@@ -139,6 +145,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [handleUserChange, queryClient]);
 
   const register = useCallback(async (email: string, password: string, name?: string, registeredProduct?: string) => {
+    assertSupabaseConfigured();
     authActionInProgress.current = true;
     setIsLoading(true);
     try {
@@ -175,9 +182,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const socialLogin = useCallback(
     async (provider: "google" | "apple") => {
+      assertSupabaseConfigured();
       const { error } = await supabase.auth.signInWithOAuth({
         provider,
-        options: { redirectTo: `${window.location.origin}/auth/callback?returnTo=/suite` },
+        options: { redirectTo: `${window.location.origin}/auth/callback?returnTo=/info-discovery` },
       });
       if (error) throw error;
     },
@@ -185,10 +193,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   const sendMagicLink = useCallback(async (email: string) => {
+    assertSupabaseConfigured();
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=/suite`,
+        emailRedirectTo: `${window.location.origin}/auth/callback?returnTo=/info-discovery`,
       },
     });
     if (error) throw error;
@@ -198,7 +207,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     authActionInProgress.current = true;
     setIsLoading(true);
     try {
-      await supabase.auth.signOut();
+      if (isSupabaseConfigured) {
+        await supabase.auth.signOut();
+      }
       clearLast2FAVerified();
       setWorkspaceOfflineMode(false);
       setUser(null);

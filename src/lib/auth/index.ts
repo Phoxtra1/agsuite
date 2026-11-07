@@ -1,4 +1,4 @@
-import { supabase } from "@/integrations/appwrite/client";
+import { supabase } from "@/integrations/supabase/client";
 
 export type AuthResult<T> = { data: T } | { error: string };
 

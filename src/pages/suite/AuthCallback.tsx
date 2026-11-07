@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
-import { supabase } from "@/integrations/appwrite/client";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 
 export default function AuthCallback() {
   const [params] = useSearchParams();
@@ -11,7 +11,7 @@ export default function AuthCallback() {
     let timeoutId: number | null = null;
     let unsubscribe: (() => void) | null = null;
 
-    const returnTo = params.get("returnTo") || "/suite";
+    const returnTo = params.get("returnTo") || "/info-discovery";
 
     const finish = () => {
       if (cancelled) return;
@@ -23,6 +23,10 @@ export default function AuthCallback() {
     };
 
     (async () => {
+      if (!isSupabaseConfigured) {
+        navigate("/get-started?auth=configuration", { replace: true });
+        return;
+      }
       const code = params.get("code");
       if (code) {
         const { error } = await supabase.auth.exchangeCodeForSession(code);

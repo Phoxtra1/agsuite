@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import { account } from "@/lib/appwrite";
+import { supabase, isSupabaseConfigured } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { CheckCircle2, AlertCircle, Loader2 } from "lucide-react";
@@ -16,12 +16,12 @@ const PRODUCT_INFO: Record<string, {
   description: string;
 }> = {
   "information-discovery": {
-    name: "Information Discovery System",
+    name: "Info Discovery",
     tagline: "One account for the Amineva Global portal",
     gradient: "from-slate-900 via-slate-950 to-slate-900",
     accentClass: "bg-primary text-primary-foreground hover:bg-primary/90 focus-visible:ring-ring",
     textMuted: "text-slate-400",
-    description: "Your Amineva Global account is verified. Information Discovery, Workspace and Payments & Billing are available through the same signed-in portal.",
+    description: "Your Amineva Global account is verified. Info Discovery, Workspace and Payments & Billing are available through the same signed-in portal.",
   },
   suite: {
     name: "Amineva Global Suite",
@@ -93,14 +93,23 @@ export default function VerifyEmail() {
   const [userRole, setUserRole] = useState<string | null>(null);
 
   useEffect(() => {
-    account.get().then((user) => {
-      setIsConfirmed(user.emailVerification);
-      setUserRole((user.prefs?.role as string) || "user");
+    let active = true;
+    if (!isSupabaseConfigured) {
+      setIsConfirmed(false);
+      setLoading(false);
+      return;
+    }
+    supabase.auth.getUser().then(({ data: { user }, error }) => {
+      if (!active) return;
+      setIsConfirmed(!error && !!(user?.email_confirmed_at || user?.confirmed_at));
+      setUserRole((user?.user_metadata?.role as string) || "user");
       setLoading(false);
     }).catch(() => {
+      if (!active) return;
       setIsConfirmed(false);
       setLoading(false);
     });
+    return () => { active = false; };
   }, []);
 
   const handleLaunch = () => {
