@@ -146,6 +146,69 @@ async function searchOpenAlex(query: string, signal: AbortSignal): Promise<Resea
   }));
 }
 
+async function searchPubMed(query: string, signal: AbortSignal): Promise<ResearchRecord[]> {
+  const searchParams = new URLSearchParams({ db: "pubmed", term: query, retmode: "json", retmax: "8" });
+  const searchResponse = await fetch("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esearch.fcgi?" + searchParams, {
+    signal, headers: { Accept: "application/json" },
+  });
+  if (!searchResponse.ok) throw new Error("Search HTTP " + searchResponse.status);
+  const searchPayload = await searchResponse.json();
+  const ids: string[] = searchPayload?.esearchresult?.idlist || [];
+  if (!ids.length) return [];
+  const summaryParams = new URLSearchParams({ db: "pubmed", id: ids.join(","), retmode: "json" });
+  const summaryResponse = await fetch("https://eutils.ncbi.nlm.nih.gov/entrez/eutils/esummary.fcgi?" + summaryParams, {
+    signal, headers: { Accept: "application/json" },
+  });
+  if (!summaryResponse.ok) throw new Error("Record lookup HTTP " + summaryResponse.status);
+  const summaryPayload = await summaryResponse.json();
+  return ids.map(id => summaryPayload?.result?.[id]).filter((item: any) => item?.title).map((item: any) => {
+    const doi = item.articleids?.find((identifier: any) => identifier.idtype === "doi")?.value;
+    return {
+      id: "pubmed:" + id,
+      title: cleanText(item.title),
+      doi: doi ? normaliseDoi(doi) : undefined,
+      url: "https://pubmed.ncbi.nlm.nih.gov/" + id + "/",
+      year: Number(String(item.pubdate || "").match(/\\b(19|20)\\d{2}\\b/)?.[0]) || undefined,
+      authors: (item.authors || []).slice(0, 5).map((author: any) => author.name).filter(Boolean).join(", "),
+      publisher: item.fulljournalname || "PubMed indexed journal",
+      journal: item.fulljournalname || "",
+      abstract: "",
+      type: (item.pubtype || ["Biomedical publication"]).join(", "),
+      sources: ["PubMed"],
+      subjects: [],
+      verificationStatus: "metadata-only",
+      verificationNote: "PubMed indexing is a bibliographic discovery signal, not a quality guarantee. Check the journal, article version, corrections and full text.",
+    };
+  });
+}
+
+async function searchEuropePmc(query: string, signal: AbortSignal): Promise<ResearchRecord[]> {
+  const params = new URLSearchParams({ query, format: "json", pageSize: "8", resultType: "core" });
+  const response = await fetch("https://www.ebi.ac.uk/europepmc/webservices/rest/search?" + params, {
+    signal, headers: { Accept: "application/json" },
+  });
+  if (!response.ok) throw new Error("HTTP " + response.status);
+  const payload = await response.json();
+  const items = payload?.resultList?.result || [];
+  return items.filter((item: any) => item.title).map((item: any) => ({
+    id: "europepmc:" + (item.id || item.doi || item.title),
+    title: cleanText(item.title),
+    doi: item.doi ? normaliseDoi(item.doi) : undefined,
+    url: item.doi ? "https://doi.org/" + normaliseDoi(item.doi) : item.pmid ? "https://pubmed.ncbi.nlm.nih.gov/" + item.pmid + "/" : "https://europepmc.org/article/" + item.source + "/" + item.id,
+    year: Number(String(item.firstPublicationDate || "").slice(0, 4)) || undefined,
+    authors: cleanText(item.authorString),
+    publisher: item.journalTitle || "Europe PMC indexed source",
+    journal: item.journalTitle || "",
+    abstract: cleanText(item.abstractText).slice(0, 900),
+    type: item.pubType || "Life-sciences publication",
+    sources: ["Europe PMC"],
+    openAccess: item.isOpenAccess === "Y",
+    subjects: [],
+    verificationStatus: "metadata-only",
+    verificationNote: "Europe PMC provides literature discovery and metadata; confirm the original publisher, version, corrections and reuse licence.",
+  }));
+}
+
 async function searchZenodo(query: string, signal: AbortSignal): Promise<ResearchRecord[]> {
   const params = new URLSearchParams({ q: query, size: "8", sort: "bestmatch" });
   const response = await fetch("https://zenodo.org/api/records/?" + params.toString(), {
@@ -185,6 +248,8 @@ export async function searchResearchRepositories(
     { name: "Crossref", search: searchCrossref },
     { name: "OpenAlex", search: searchOpenAlex },
     { name: "Zenodo", search: searchZenodo },
+    { name: "PubMed", search: searchPubMed },
+    { name: "Europe PMC", search: searchEuropePmc },
   ];
   const settled = await Promise.allSettled(providers.map(provider => provider.search(query, signal)));
   if (signal.aborted) throw new DOMException("Search cancelled", "AbortError");
