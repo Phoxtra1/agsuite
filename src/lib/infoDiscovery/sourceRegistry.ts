@@ -151,7 +151,7 @@ export function findRelatedSubjects(subjectIds: string[]): KnowledgeSubject[] {
 }
 
 export function searchDiscoverySources(query: string): DiscoverySource[] {
-  const terms = query.toLocaleLowerCase().split(/[^\\p{L}\\p{N}]+/u).filter(term => term.length > 1);
+  const terms = query.toLocaleLowerCase().split(/[^\p{L}\p{N}]+/u).filter(term => term.length > 1);
   if (!terms.length) return [];
   return DISCOVERY_SOURCES
     .map(source => {
