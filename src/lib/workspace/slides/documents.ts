@@ -1,7 +1,8 @@
 import { supabase } from "@/integrations/appwrite/client";
 import { getWorkspaceUser } from "@/lib/workspace/scope";
 import { readWorkspaceCollection, writeWorkspaceCollection } from "@/lib/workspace/localStore";
-import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
+import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId, suppressTombstonedRemoteRows } from "@/lib/workspace/remoteSync";
+import { isWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
 
 export type SlideElementKind = "text" | "shape" | "image" | "table" | "chart" | "video" | "audio";
 export type ShapeKind = "rect" | "ellipse" | "triangle" | "line" | "arrow" | "star" | "banner" | "hexagon";
@@ -327,6 +328,7 @@ async function saveLocalDecks(records: WorkspaceSlideDoc[]): Promise<void> {
 }
 
 async function getAuthenticatedUserId(): Promise<string> {
+  if (isWorkspaceOfflineMode()) return getWorkspaceUser();
   try {
     const getUserPromise = supabase.auth.getUser();
     const timeoutPromise = new Promise<{ data: { user: null }; error: any }>((resolve) =>
@@ -345,7 +347,7 @@ export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
   if (!userId) return [];
 
   const local = await getLocalDecks();
-  if (typeof navigator !== "undefined" && !navigator.onLine) return local;
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return local;
   try {
     const queryPromise = supabase.from(TBL).select("*").eq("owner_id", userId).order("updated_at", { ascending: false });
     const timeoutPromise = new Promise<{ data: null; error: any }>((resolve) =>
@@ -353,7 +355,8 @@ export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
     );
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
-      const merged = reconcile({ table: TBL, local: await getLocalDecks(), remote: data as any as WorkspaceSlideDoc[], userId, updatedAt: (d) => d.updated_at, toRow });
+      const remoteRows = await suppressTombstonedRemoteRows(TBL, data as any as WorkspaceSlideDoc[][]);
+      const merged = reconcile({ table: TBL, local: await getLocalDecks(), remote: remoteRows, userId, updatedAt: (d) => d.updated_at, toRow });
       await saveLocalDecks(merged);
       return merged;
     }
@@ -366,7 +369,7 @@ export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
 export async function getDeck(id: string): Promise<WorkspaceSlideDoc | null> {
   const local = await getLocalDecks();
   const cached = local.find((d) => d.id === id);
-  if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
+  if (cached || isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
   try {
     const userId = await getAuthenticatedUserId();
     if (!userId) return null;
