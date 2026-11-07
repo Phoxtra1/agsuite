@@ -355,7 +355,7 @@ export async function listDecks(): Promise<WorkspaceSlideDoc[]> {
     );
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
     if (!error && data && Array.isArray(data)) {
-      const remoteRows = await suppressTombstonedRemoteRows(TBL, data as any as WorkspaceSlideDoc[][]);
+      const remoteRows = await suppressTombstonedRemoteRows(TBL, data as any as WorkspaceSlideDoc[]);
       const merged = reconcile({ table: TBL, local: await getLocalDecks(), remote: remoteRows, userId, updatedAt: (d) => d.updated_at, toRow });
       await saveLocalDecks(merged);
       return merged;
