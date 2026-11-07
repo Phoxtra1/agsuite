@@ -1485,7 +1485,11 @@ export default function InfoDiscoveryPage() {
     }
   };
 
-  if (categorySlug === "knowledge-compass" && !topicSlug) {\n    return <KnowledgeCompassPage onBack={() => navigate("/info-discovery")} />;\n  }\n\n  if (topicSlug && selected && !selectedTopic) {
+  if (categorySlug === "knowledge-compass" && !topicSlug) {
+    return <KnowledgeCompassPage onBack={() => navigate("/info-discovery")} />;
+  }
+
+  if (topicSlug && selected && !selectedTopic) {
     return <main className="mx-auto max-w-3xl px-6 py-20"><h1 className="text-2xl font-semibold">Topic not found</h1><p className="mt-2 text-muted-foreground">The requested topic is not part of this discovery area.</p><Button onClick={() => goToCategory(selected.slug)} className="mt-5">Back to {selected.title}</Button></main>;
   }
 
