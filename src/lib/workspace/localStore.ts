@@ -330,3 +330,196 @@ export async function moveWorkspaceBlob(fromId: string, toId: string): Promise<v
   store.delete(recordKey(scope, fromId));
   await transactionDone(tx);
 }
+
+export interface WorkspaceLocalBackup {
+  format: "amineva-workspace-backup";
+  version: 1;
+  userId: string;
+  exportedAt: string;
+  records: StoredRecord[];
+  blobs: Array<{
+    key: string;
+    scope: string;
+    id: string;
+    name: string;
+    type: string;
+    size: number;
+    updatedAt: string;
+    dataBase64: string;
+  }>;
+  localSettings: Array<{ key: string; value: string }>;
+}
+
+function bytesToBase64(bytes: Uint8Array): string {
+  let binary = "";
+  const chunkSize = 0x8000;
+  for (let offset = 0; offset < bytes.length; offset += chunkSize) {
+    binary += String.fromCharCode(...bytes.subarray(offset, offset + chunkSize));
+  }
+  return btoa(binary);
+}
+
+function base64ToBytes(base64: string): Uint8Array {
+  const binary = atob(base64);
+  const bytes = new Uint8Array(binary.length);
+  for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+  return bytes;
+}
+
+/**
+ * Export this account's local editor records, Drive file bytes and scoped
+ * small preferences as one portable JSON-compatible backup object.
+ */
+export async function createWorkspaceLocalBackup(): Promise<WorkspaceLocalBackup> {
+  const userId = getWorkspaceUser();
+  if (!userId || userId === "anon" || userId === "local-user") {
+    throw new Error("Sign in or unlock a real account before exporting Workspace data.");
+  }
+  const db = await openDatabase();
+  const lower = `${userId}::`;
+  const upper = `${userId}::\\uffff`;
+  const range = IDBKeyRange.bound(lower, upper);
+
+  const recordTx = db.transaction(RECORDS_STORE, "readonly");
+  const recordRequest = recordTx.objectStore(RECORDS_STORE).index("scope").getAll(range);
+  const records = await requestResult(recordRequest) as StoredRecord[];
+  await transactionDone(recordTx);
+
+  const blobTx = db.transaction(BLOBS_STORE, "readonly");
+  const blobRequest = blobTx.objectStore(BLOBS_STORE).index("scope").getAll(
+    IDBKeyRange.only(`${userId}::amineva_drive_blobs`)
+  );
+  const storedBlobs = await requestResult(blobRequest) as StoredBlob[];
+  await transactionDone(blobTx);
+  db.close();
+
+  const blobs = await Promise.all(storedBlobs.map(async (item) => ({
+    key: item.key,
+    scope: item.scope,
+    id: item.id,
+    name: item.name,
+    type: item.type,
+    size: item.size,
+    updatedAt: item.updatedAt,
+    dataBase64: bytesToBase64(new Uint8Array(await item.blob.arrayBuffer())),
+  })));
+
+  const localSettings: Array<{ key: string; value: string }> = [];
+  try {
+    const suffix = `::${userId}`;
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (!key || !key.startsWith("amineva_") || !key.endsWith(suffix)) continue;
+      const value = localStorage.getItem(key);
+      if (value !== null) localSettings.push({ key, value });
+    }
+  } catch {
+    // Workspace content is already included; inaccessible preferences are optional.
+  }
+
+  return {
+    format: "amineva-workspace-backup",
+    version: 1,
+    userId,
+    exportedAt: new Date().toISOString(),
+    records,
+    blobs,
+    localSettings,
+  };
+}
+
+/**
+ * Restore a backup only into the same account scope. Newer current records
+ * win over older backup entries. Drive blobs are restored independently.
+ */
+export async function restoreWorkspaceLocalBackup(input: unknown): Promise<{ records: number; blobs: number; settings: number }> {
+  const userId = getWorkspaceUser();
+  if (!userId || userId === "anon" || userId === "local-user") {
+    throw new Error("Sign in or unlock a real account before restoring Workspace data.");
+  }
+  if (!input || typeof input !== "object") throw new Error("This is not a valid Amineva Workspace backup.");
+  const backup = input as WorkspaceLocalBackup;
+  if (backup.format !== "amineva-workspace-backup" || backup.version !== 1) {
+    throw new Error("This backup format or version is not supported.");
+  }
+  if (backup.userId !== userId) {
+    throw new Error("This backup belongs to a different account. Sign in to that account before restoring it.");
+  }
+  if (!Array.isArray(backup.records) || !Array.isArray(backup.blobs) || !Array.isArray(backup.localSettings)) {
+    throw new Error("The backup is incomplete or has been modified.");
+  }
+
+  const recordPrefix = `${userId}::`;
+  const blobScope = `${userId}::amineva_drive_blobs`;
+  for (const record of backup.records) {
+    if (!record || typeof record.key !== "string" || typeof record.id !== "string" ||
+        typeof record.scope !== "string" || !record.scope.startsWith(recordPrefix) ||
+        record.key !== recordKey(record.scope, record.id)) {
+      throw new Error("The backup contains a record outside this account's local scope.");
+    }
+  }
+  for (const blob of backup.blobs) {
+    if (!blob || blob.scope !== blobScope || typeof blob.id !== "string" ||
+        blob.key !== recordKey(blobScope, blob.id) || typeof blob.dataBase64 !== "string") {
+      throw new Error("The backup contains a file outside this account's local scope.");
+    }
+  }
+
+  const db = await openDatabase();
+  const tx = db.transaction([RECORDS_STORE, BLOBS_STORE], "readwrite");
+  const recordsStore = tx.objectStore(RECORDS_STORE);
+  const blobsStore = tx.objectStore(BLOBS_STORE);
+  let restoredRecords = 0;
+  let restoredBlobs = 0;
+
+  for (const record of backup.records) {
+    const request = recordsStore.get(record.key);
+    request.onsuccess = () => {
+      const current = request.result as StoredRecord | undefined;
+      if (!current || timestampOf(record.value) >= timestampOf(current.value)) {
+        recordsStore.put(record);
+        restoredRecords++;
+      }
+    };
+  }
+
+  for (const item of backup.blobs) {
+    const request = blobsStore.get(item.key);
+    request.onsuccess = () => {
+      const current = request.result as StoredBlob | undefined;
+      const backupTime = new Date(item.updatedAt || 0).getTime();
+      const currentTime = current ? new Date(current.updatedAt || 0).getTime() : 0;
+      if (!current || backupTime >= currentTime) {
+        const bytes = base64ToBytes(item.dataBase64);
+        blobsStore.put({
+          key: item.key,
+          scope: item.scope,
+          id: item.id,
+          name: item.name,
+          type: item.type || "application/octet-stream",
+          size: item.size,
+          updatedAt: item.updatedAt,
+          blob: new Blob([bytes], { type: item.type || "application/octet-stream" }),
+        } satisfies StoredBlob);
+        restoredBlobs++;
+      }
+    };
+  }
+
+  await transactionDone(tx);
+  db.close();
+
+  let restoredSettings = 0;
+  for (const item of backup.localSettings) {
+    if (!item || typeof item.key !== "string" || !item.key.startsWith("amineva_") ||
+        !item.key.endsWith(`::${userId}`) || typeof item.value !== "string") continue;
+    try {
+      localStorage.setItem(item.key, item.value);
+      restoredSettings++;
+    } catch {
+      // Preferences can be recreated; record/blob data remains restored in IndexedDB.
+    }
+  }
+
+  return { records: restoredRecords, blobs: restoredBlobs, settings: restoredSettings };
+}
