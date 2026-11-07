@@ -417,7 +417,7 @@ export default function HomePage() {
                   <Compass className="h-4 w-4" /> Info Discovery
                 </div>
                 <p className="mt-3 text-sm leading-6 text-muted-foreground">Amineva Global is an Info Discovery system that helps people explore subjects and follow reliable sources.</p>
-                <div className="mt-6 grid grid-cols-2 gap-3" aria-label="Information discovery artwork">
+                <div className="mt-6 grid grid-cols-2 gap-3" aria-label="Info Discovery artwork">
                   <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={discoverySearch} alt="A magnifying glass exploring information" className="block h-auto w-full" loading="eager" /></div>
                   <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={connectedKnowledge} alt="Connected ideas and knowledge" className="block h-auto w-full" loading="lazy" /></div>
                   <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={researchInsight} alt="Research and evidence" className="block h-auto w-full" loading="lazy" /></div>
