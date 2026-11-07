@@ -476,27 +476,6 @@ const authAdapter = {
       invalidateAuthCache();
       const msg = err?.message || "";
       if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("networkerror")) {
-        const disableAuth = (import.meta as any).env?.VITE_DISABLE_PRODUCT_AUTH === "true";
-        if (disableAuth) {
-          const cleanEmail = email.trim();
-          const fallbackId = `offline_${Date.now()}`;
-          const formattedUser = {
-            id: fallbackId,
-            email: cleanEmail,
-            user_metadata: { name: cleanEmail.split("@")[0] },
-            app_metadata: { provider: "email" },
-          };
-          const formattedSession = {
-            access_token: `sess_${fallbackId}`,
-            expires_at: Math.floor(Date.now() / 1000) + 86400,
-            user: formattedUser,
-          };
-          cachedAuthSession = {
-            data: { data: { session: formattedSession }, error: null },
-            timestamp: Date.now(),
-          };
-          return { data: { session: formattedSession, user: formattedUser }, error: null };
-        }
         return {
           data: { session: null, user: null },
           error: { message: "Network error: Unable to connect to authentication server. Please check your connection or try again." },
@@ -512,6 +491,7 @@ const authAdapter = {
       const cleanEmail = email.trim();
       const name = options?.data?.name || cleanEmail.split("@")[0];
       const userId = ID.unique();
+      let createdUser: any = null;
 
       // Ensure any existing session is cleared before user creation and session creation
       await account.deleteSession("current").catch(() => null);
@@ -521,7 +501,7 @@ const authAdapter = {
         const timeoutPromise = new Promise((_, reject) =>
           setTimeout(() => reject(new Error("Failed to fetch")), 600)
         );
-        await Promise.race([createPromise, timeoutPromise]);
+        createdUser = await Promise.race([createPromise, timeoutPromise]);
       } catch (createErr: any) {
         const createMsg = createErr?.message || "";
         const createCode = createErr?.code;
@@ -544,9 +524,9 @@ const authAdapter = {
         session = await account.createEmailPasswordSession(cleanEmail, password);
         user = await account.get();
       } catch {
-        // If session creation fails post-account creation, construct registered user profile
-        user = { $id: userId, email: cleanEmail, name, prefs: options?.data || {} };
-        session = { $id: `sess_${userId}`, expire: new Date(Date.now() + 86400000).toISOString() };
+        // The account may exist, but without a real session it is not authenticated.
+        // Keep the actual account response only; never mint a synthetic access token.
+        user = createdUser || null;
       }
 
       if (options?.data && user?.$id) {
@@ -560,11 +540,11 @@ const authAdapter = {
         app_metadata: { provider: "email" },
       };
 
-      const formattedSession = {
-        access_token: session.$id || `sess_${userId}`,
-        expires_at: session.expire ? Math.floor(new Date(session.expire).getTime() / 1000) : Math.floor(Date.now() / 1000) + 86400,
+      const formattedSession = session ? {
+        access_token: session.$id,
+        expires_at: Math.floor(new Date(session.expire).getTime() / 1000),
         user: formattedUser,
-      };
+      } : null;
 
       cachedAuthSession = {
         data: { data: { session: formattedSession }, error: null },
@@ -608,19 +588,12 @@ const authAdapter = {
           };
           cachedAuthSession = {
             data: { data: { session: formattedSession }, error: null },
-            timestamp: Date.now(),
-          };
-          return {
-            data: { user: formattedUser, session: formattedSession },
-            error: null,
-          };
-        }
+          if (msg.toLowerCase().includes("failed to fetch") || msg.toLowerCase().includes("networkerror")) {
         return {
           data: { user: null, session: null },
           error: { message: "Network error: Unable to connect to authentication server. Please check your connection or try again." },
         };
       }
-
       return { data: { user: null, session: null }, error: { message: msg || "Registration failed" } };
     }
   },
