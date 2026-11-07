@@ -842,11 +842,13 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
           <h3 className="mt-2 font-semibold leading-6">{record.url ? <a href={record.url} target="_blank" rel="noreferrer" className="hover:text-primary hover:underline">{record.title} <ExternalLink className="inline h-3.5 w-3.5" /></a> : record.title}</h3>
           {(record.authors || record.journal || record.publisher) && <p className="mt-1 text-xs leading-5 text-muted-foreground">{[record.authors, record.journal, record.publisher].filter(Boolean).join(" · ")}</p>}
           {record.doi && <p className="mt-1 text-[11px] text-muted-foreground">DOI: <a href={"https://doi.org/" + record.doi} target="_blank" rel="noreferrer" className="font-mono text-primary underline underline-offset-2">{record.doi}</a></p>}
-          {record.abstract && <p className="mt-3 text-sm leading-6 text-muted-foreground">{record.abstract}{record.abstract.length >= 620 ? "…" : ""}</p>}
-          <p className="mt-3 border-t border-border pt-3 text-[11px] leading-5 text-muted-foreground">Verification status: metadata only. Check the original publisher or repository record for corrections, retractions, study methods, version, licence, full text and publication status before relying on conclusions.</p>
+          {record.sources?.length > 0 && <p className="mt-1 text-[10px] text-muted-foreground">Indexed by: {record.sources.join(", ")}{record.openAccess === true ? " · Open-access record" : record.openAccess === false ? " · Open access not confirmed" : ""}</p>}
+          {record.subjects?.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{record.subjects.slice(0, 5).map(subject => <Badge key={subject} variant="secondary" className="text-[9px]">{subject}</Badge>)}</div>}
+          {record.abstract && <p className="mt-3 text-sm leading-6 text-muted-foreground">{record.abstract}{record.abstract.length >= 900 ? "…" : ""}</p>}
+          <p className="mt-3 border-t border-border pt-3 text-[11px] leading-5 text-muted-foreground">Verification status: metadata only. {record.verificationNote} Verify the original publisher or repository record, corrections, retractions, version, licence and full text before relying on conclusions.</p>
         </article>)}
       </div>}
-      <p className="mt-4 text-[11px] text-muted-foreground">Crossref API documentation: <a className="underline underline-offset-2" href="https://www.crossref.org/documentation/retrieve-metadata/rest-api/" target="_blank" rel="noreferrer">publisher-deposited metadata and API use</a>.</p>
+      <p className="mt-4 text-[11px] text-muted-foreground">Search results are discovery leads, not endorsements. Verify original publisher records, dates, versions, licences and methods before relying on a result.</p>
     </section>
   );
 }
