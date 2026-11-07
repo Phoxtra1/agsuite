@@ -1,53 +1,10 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { ProductData } from "@/types/product";
-import { useCategoryProducts } from "@/hooks/useProducts";
-import { Badge } from "@/components/ui/badge";
-import { Clock, XCircle, ArrowRight, Compass, Settings, Sun, Moon } from "lucide-react";
+import { ArrowRight, Compass, Settings, Sun, Moon, Search, ShieldCheck, Globe2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import amvLogo from "@/assets/amv_global_logo.png";
-import discoverySearch from "@/assets/info-discovery/discovery-search.svg";
-import connectedKnowledge from "@/assets/info-discovery/connected-knowledge.svg";
-import researchInsight from "@/assets/info-discovery/research-insight.svg";
-import worldOfIdeas from "@/assets/info-discovery/world-of-ideas.svg";
-import AuthCard from "@/components/home/AuthCard";
-
-import { getProductIcon } from "@/lib/products";
-
-type CountryCurrencyOption = {
-  id: string;
-  label: string;
-  currencyCode: string;
-};
-
-function getProductIconSafe(productId: string) {
-  return getProductIcon(productId);
-}
-
-function getStatusBadge(status: ProductData["status"]) {
-  switch (status) {
-    case "live":
-      return <Badge className="bg-success/20 text-success text-xs">Live</Badge>;
-    case "coming_soon":
-      return (
-        <Badge variant="secondary" className="text-xs gap-1">
-          <Clock className="w-3 h-3" />
-          Coming Soon
-        </Badge>
-      );
-    case "offline":
-      return (
-        <Badge variant="destructive" className="text-xs gap-1">
-          <XCircle className="w-3 h-3" />
-          Offline
-        </Badge>
-      );
-    default:
-      return null;
-  }
-}
 
 type RegionState = { countryId: string; countryLabel: string };
 
@@ -81,18 +38,8 @@ function getTimeZone(countryId: string): string {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { products } = useCategoryProducts();
   const { theme, setTheme } = useTheme();
   const { isAuthenticated } = useAuth();
-
-  const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
-  const [authTab, setAuthTab] = useState<"signin" | "register">("signin");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
-  const [agCountry, setAgCountry] = useState<string>("");
-  const [agCurrencyCode, setAgCurrencyCode] = useState<string>("USD");
-  const [agStepConfirmed, setAgStepConfirmed] = useState<boolean>(false);
 
   const [now, setNow] = useState(() => new Date());
   useEffect(() => {
@@ -315,26 +262,22 @@ export default function HomePage() {
           </div>
         </div>
 
-        <div className="absolute bottom-12 left-8 translate-y-10 flex gap-16 text-white/80 z-10">
-          <div><div className="text-2xl font-medium text-white">99.9%</div><div className="text-sm text-white/70">Uptime SLA</div></div>
-          <div><div className="text-2xl font-medium text-white">256-bit</div><div className="text-sm text-white/70">Encryption</div></div>
+        <div className="absolute bottom-12 left-8 right-8 translate-y-4 flex flex-wrap gap-6 text-white/80 z-10">
+          <div><div className="text-lg font-medium text-white">Connected subjects</div><div className="text-xs text-white/70">Structured areas and topics</div></div>
+          <div><div className="text-lg font-medium text-white">Original sources</div><div className="text-xs text-white/70">Evidence-led investigation</div></div>
         </div>
       </div>
 
-      {/* RIGHT PANEL */}
+      {/* RIGHT PANEL — public entry to the Information Discovery System */}
       <div className="relative flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
         <div className="w-full max-w-xl">
-          {/* Primary navigation and appearance settings. Workspace is accessed from its dedicated panel below. */}
-          <div className="w-full flex justify-end gap-6 text-base font-semibold text-muted-foreground flex-wrap items-center">
-            <button type="button" className="hover:text-foreground transition cursor-pointer text-accent font-bold" onClick={() => navigate("/info-discovery")}>Info Discovery</button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => onPickProduct(workspaceProduct)}>Workspace</button>
-
-            {/* Settings with theme toggle */}
+          <div className="w-full flex flex-wrap items-center justify-end gap-4 text-sm font-semibold text-muted-foreground">
+            <button type="button" className="text-foreground transition hover:text-primary" onClick={() => navigate("/info-discovery")}>Information Discovery</button>
+            <button type="button" className="transition hover:text-foreground" onClick={() => navigate("/about-us")}>About Us</button>
+            <button type="button" className="transition hover:text-foreground" onClick={() => navigate("/faqs")}>FAQs</button>
+            <button type="button" className="transition hover:text-foreground" onClick={() => navigate("/support")}>Support</button>
             <div className="relative" ref={settingsRef}>
-              <button type="button" className="hover:text-foreground transition cursor-pointer flex items-center gap-1" onClick={() => setSettingsOpen(!settingsOpen)}>
+              <button type="button" className="inline-flex items-center gap-1 transition hover:text-foreground" onClick={() => setSettingsOpen(!settingsOpen)}>
                 <Settings className="h-4 w-4" /> Settings
               </button>
               <AnimatePresence>
@@ -344,14 +287,14 @@ export default function HomePage() {
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: 8 }}
                     transition={{ duration: 0.15 }}
-                    className="absolute right-0 mt-2 w-52 rounded-xl border border-border bg-card shadow-xl z-50 overflow-hidden"
+                    className="absolute right-0 z-50 mt-2 w-52 overflow-hidden rounded-xl border border-border bg-card shadow-xl"
                   >
-                    <div className="p-3 space-y-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Appearance</p>
+                    <div className="space-y-2 p-3">
+                      <p className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Appearance</p>
                       <button
                         type="button"
                         onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
+                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm text-foreground transition hover:bg-accent/10"
                       >
                         {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                         {theme === "dark" ? "Light Mode" : "Dark Mode"}
@@ -361,80 +304,74 @@ export default function HomePage() {
                 )}
               </AnimatePresence>
             </div>
+            <button
+              type="button"
+              onClick={() => navigate(isAuthenticated ? "/info-discovery" : "/get-started?mode=register")}
+              className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+            >
+              {isAuthenticated ? "Open Portal" : "Get Started"}
+            </button>
           </div>
 
-          {selectedProduct ? (
-            <>
-              {isAgStock && !canShowAuthCard && (
-                <div className="border border-border rounded-xl bg-card p-5 mt-8">
-                  <div className="flex items-start justify-between gap-3">
-                    <button type="button" className="text-sm text-muted-foreground hover:text-foreground transition flex items-center gap-2" onClick={onChangeSelection}>
-                      <span aria-hidden>←</span> Change product
-                    </button>
-                    <div />
-                  </div>
-                  <div className="mt-4 text-center">
-                    <div className="mx-auto w-14 h-14 rounded-full flex items-center justify-center" style={{ backgroundColor: "hsla(38,92%,50%,0.12)" }}>
-                      <span className="text-2xl" style={{ color: "hsl(38,92%,50%)" }}>📍</span>
-                    </div>
-                    <h2 className="mt-4 text-3xl font-semibold text-foreground">Where is your business located?</h2>
-                    <p className="mt-2 text-muted-foreground">This helps us set up your currency and regional settings</p>
-                  </div>
-                  <div className="mt-6 space-y-3">
-                    <label className="block text-sm font-semibold text-foreground">Select your Country</label>
-                    <select value={agCountry} onChange={(e) => handleAgCountryChange(e.target.value)} className="w-full h-12 rounded-lg border border-border bg-background px-3 text-foreground focus:outline-none focus:ring-2 focus:ring-accent">
-                      <option value="" disabled>Choose a country</option>
-                      {countryCurrencyOptions.map((opt) => (<option key={opt.id} value={opt.id}>{opt.label}</option>))}
-                    </select>
-                    {agCountry && (
-                      <div className="text-sm text-muted-foreground">Currency: <span className="text-foreground font-semibold">{selectedAgOption?.currencyCode || agCurrencyCode}</span></div>
-                    )}
-                    <div className="pt-3">
-                      <button type="button" disabled={!agCountry} onClick={() => setAgStepConfirmed(true)} className={`w-full h-12 rounded-lg font-semibold transition flex items-center justify-center gap-2 ${agCountry ? "text-white" : "bg-muted text-muted-foreground cursor-not-allowed"}`} style={agCountry ? { backgroundColor: "hsl(38,92%,35%)" } : undefined}>
-                        Continue <span aria-hidden>→</span>
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )}
+          <section className="mt-12 rounded-2xl border border-border bg-card p-6 shadow-sm md:p-8">
+            <div className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+              <Compass className="h-4 w-4" /> Information Discovery System
+            </div>
+            <h1 className="mt-4 text-3xl font-semibold leading-tight tracking-tight text-foreground md:text-4xl">
+              Discover information. Understand the evidence. Make informed next steps.
+            </h1>
+            <p className="mt-5 text-sm leading-7 text-muted-foreground md:text-base">
+              Amineva Global is an Information Discovery System. It organises knowledge into connected subject areas, guided investigation topics, key questions, evidence standards and original sources. It helps people and organisations move from a broad question to a clearer understanding of what is known, where information comes from, what remains uncertain, and what should be examined next.
+            </p>
+            <p className="mt-3 text-sm leading-7 text-muted-foreground md:text-base">
+              Instead of treating information as disconnected pages or asking people to accept an unsupported answer, the system provides a structured route through context, evidence and authoritative source material. Practical tools and services are introduced only where they genuinely support the next step.
+            </p>
+            <div className="mt-7 flex flex-wrap gap-3">
+              <button
+                type="button"
+                onClick={() => navigate("/info-discovery")}
+                className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
+              >
+                Explore Information Discovery <ArrowRight className="ml-2 h-4 w-4" />
+              </button>
+              <button
+                type="button"
+                onClick={() => navigate(isAuthenticated ? "/info-discovery" : "/get-started?mode=register")}
+                className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-background px-5 text-sm font-semibold text-foreground transition hover:bg-muted"
+              >
+                {isAuthenticated ? "Enter your portal" : "Get Started"}
+              </button>
+            </div>
+          </section>
 
-              {canShowAuthCard && (
-                <div className="mt-8">
-                  <AuthCard product={selectedProduct} authTab={authTab} setAuthTab={setAuthTab} email={email} setEmail={setEmail} password={password} setPassword={setPassword} onChangeSelection={onChangeSelection} />
-                </div>
-              )}
-            </>
-          ) : (
-            <>
-              <section className="mt-10 rounded-2xl border border-border bg-card p-6 md:p-7">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                  <Compass className="h-4 w-4" /> Information Discovery System
-                </div>
-                <h1 className="mt-3 text-2xl font-semibold leading-tight text-foreground">Understand the subject. Follow the evidence. Know what comes next.</h1>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">Amineva Global organises information into connected subject areas, investigation questions, evidence standards and original sources. Rather than returning unrelated pages or a generated answer, it helps you understand the context, examine the evidence and identify a useful next step.</p>
-                <div className="mt-6 grid grid-cols-2 gap-3" aria-label="Information discovery artwork">
-                  <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={discoverySearch} alt="A magnifying glass exploring information" className="block h-auto w-full" loading="eager" /></div>
-                  <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={connectedKnowledge} alt="Connected ideas and knowledge" className="block h-auto w-full" loading="lazy" /></div>
-                  <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={researchInsight} alt="Research and evidence" className="block h-auto w-full" loading="lazy" /></div>
-                  <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={worldOfIdeas} alt="A connected world of ideas" className="block h-auto w-full" loading="lazy" /></div>
-                </div>
-                <button type="button" onClick={() => navigate("/info-discovery")} className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
-                  Explore Information Discovery <ArrowRight className="ml-2 h-4 w-4" />
-                </button>
-              </section>
-
-            </>
-          )}
+          <div className="mt-6 grid gap-3 sm:grid-cols-3">
+            <div className="rounded-xl border border-border bg-card/70 p-4">
+              <Search className="h-5 w-5 text-primary" />
+              <h2 className="mt-3 text-sm font-semibold text-foreground">Structured discovery</h2>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">Move from a subject area to focused questions worth investigating.</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card/70 p-4">
+              <ShieldCheck className="h-5 w-5 text-primary" />
+              <h2 className="mt-3 text-sm font-semibold text-foreground">Evidence and provenance</h2>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">Understand who published information, its context and its limitations.</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card/70 p-4">
+              <Globe2 className="h-5 w-5 text-primary" />
+              <h2 className="mt-3 text-sm font-semibold text-foreground">Useful next steps</h2>
+              <p className="mt-1 text-xs leading-5 text-muted-foreground">Follow relevant original sources and practical pathways.</p>
+            </div>
+          </div>
         </div>
 
-        <div className="absolute bottom-4 left-8 right-8 flex justify-between items-center text-xs text-muted-foreground">
-          <span>© {new Date().getFullYear()} Amineva <span onClick={(e) => { if (e.detail === 3) navigate("/seal"); }} className="cursor-default select-none">Global</span>. All Rights Reserved.</span>
-          <div className="flex gap-6">
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/terms")}>Terms of Service</button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/privacy")}>Privacy Policy</button>
+        <div className="absolute bottom-4 left-8 right-8 flex items-center justify-between gap-4 text-xs text-muted-foreground">
+          <span>© {new Date().getFullYear()} Amineva Global. All Rights Reserved.</span>
+          <div className="flex gap-4">
+            <button type="button" className="transition hover:text-foreground" onClick={() => navigate("/terms")}>Terms of Service</button>
+            <button type="button" className="transition hover:text-foreground" onClick={() => navigate("/privacy")}>Privacy Policy</button>
           </div>
         </div>
       </div>
     </div>
   );
+}
 }
