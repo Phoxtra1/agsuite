@@ -1838,6 +1838,20 @@ export default function InfoDiscoveryPage() {
 }
 
 function InstitutionalSourceDirectory() {
+  const [sourceQuery, setSourceQuery] = useState("");
+  const [scopeFilter, setScopeFilter] = useState("all");
+  const filteredSources = useMemo(() => {
+    const query = sourceQuery.trim().toLocaleLowerCase();
+    return DISCOVERY_SOURCES.filter(source => {
+      const matchesQuery = !query || [
+        source.name, source.publisher, source.description,
+        ...source.subjects, ...source.jurisdictions,
+      ].join(" ").toLocaleLowerCase().includes(query);
+      const matchesScope = scopeFilter === "all" || source.jurisdictions.includes(scopeFilter);
+      return matchesQuery && matchesScope;
+    });
+  }, [sourceQuery, scopeFilter]);
+
   return (
     <section className="rounded-2xl border border-border bg-card p-5 shadow-sm md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1847,15 +1861,24 @@ function InstitutionalSourceDirectory() {
             A starting registry of institutional publishers, research indexes and specialist data services. These are source routes—not endorsements of every item they publish.
           </p>
         </div>
-        <Badge variant="outline">{DISCOVERY_SOURCES.length} registered sources</Badge>
+        <Badge variant="outline">{filteredSources.length} of {DISCOVERY_SOURCES.length} registered sources</Badge>
       </div>
-      <div className="mt-4 flex flex-wrap gap-1.5">
+      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
+        <Input value={sourceQuery} onChange={event => setSourceQuery(event.target.value)} placeholder="Find a publisher, subject, dataset or region" aria-label="Search institutional sources" />
+        <select value={scopeFilter} onChange={event => setScopeFilter(event.target.value)} aria-label="Filter sources by geographic scope" className="h-10 rounded-md border border-input bg-background px-3 text-sm sm:w-56">
+          <option value="all">All geographic scopes</option>
+          {Array.from(new Set(DISCOVERY_SOURCES.flatMap(source => source.jurisdictions))).sort().map(scope => <option key={scope} value={scope}>{scope.replace(/-/g, " ")}</option>)}
+        </select>
+      </div>
+      <div className="mt-3 flex flex-wrap gap-1.5">
         {KNOWLEDGE_SUBJECTS.map(subject => (
-          <Badge key={subject.id} variant="secondary" className="font-normal">{subject.label}</Badge>
+          <button key={subject.id} type="button" onClick={() => setSourceQuery(subject.label)} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
+            <Badge variant={sourceQuery.toLowerCase() === subject.label.toLowerCase() ? "default" : "secondary"} className="font-normal">{subject.label}</Badge>
+          </button>
         ))}
       </div>
       <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {DISCOVERY_SOURCES.map(source => (
+        {filteredSources.map(source => (
           <article key={source.id} className="rounded-xl border border-border bg-background/60 p-3">
             <div className="flex flex-wrap items-center justify-between gap-2">
               <span className="text-xs font-semibold">{source.name}</span>
@@ -1871,6 +1894,7 @@ function InstitutionalSourceDirectory() {
             </div>
           </article>
         ))}
+        {filteredSources.length === 0 && <p className="col-span-full rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">No registered source matches those filters. Try a broader subject or geographic scope.</p>}
       </div>
       <p className="mt-3 text-[10px] leading-5 text-muted-foreground">
         Verification rule: a recognised publisher or registered DOI does not automatically verify a document's accuracy, currency, methodology or conclusions. Each specific record must be checked for its original URL, author, date, jurisdiction, document type and evidence before it can receive record-level verified status.
