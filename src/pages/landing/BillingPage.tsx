@@ -106,7 +106,7 @@ export default function BillingPage() {
         </section>
         <div className="mt-8">
           <Link to="/info-discovery" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
-            <Compass className="h-4 w-4" /> Return to Information Discovery
+            <Compass className="h-4 w-4" /> Return to Info Discovery
           </Link>
         </div>
       </div>
