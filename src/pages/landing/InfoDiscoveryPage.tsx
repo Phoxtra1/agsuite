@@ -1203,15 +1203,65 @@ const KNOWLEDGE_PATHWAYS: KnowledgePathway[] = [
   { id: "advocacy", subject: "Law and justice", situation: "You want to improve the structure and clarity of legal arguments and learn how advocates present a case.", materialType: "Book", title: "Making Your Case: The Art of Persuading Judges", creator: "Antonin Scalia and Bryan A. Garner", why: "Discusses legal writing and oral advocacy, especially in the United States legal context. Local court rules, professional ethics and jurisdiction-specific law must take priority.", keywords: ["law", "advocacy", "legal writing", "litigation"], audience: "Law students and legal practitioners" },
 ];
 
+const COMPASS_INTENT_GROUPS: Record<string, string[]> = {
+  "earn money online": ["online income", "digital business", "ecommerce", "freelancing", "internet business", "make money online"],
+  "start a business": ["entrepreneurship", "business idea", "startup", "customers", "market validation", "small business"],
+  "poverty and inequality": ["poverty", "inequality", "development", "economic hardship", "low income", "underdevelopment"],
+  "culture and identity": ["culture", "traditions", "customs", "anthropology", "identity", "society"],
+  "become a lawyer": ["law", "legal reasoning", "advocacy", "court", "lawyer", "legal practice"],
+  "become a scientist": ["science", "scientific method", "research", "evidence", "experiments", "discovery"],
+  "become a writer": ["writing", "writer", "storytelling", "communication", "craft", "research"],
+  "understand people": ["psychology", "human behaviour", "decision making", "influence", "relationships", "judgement"],
+  "become a doctor": ["medicine", "medical", "clinical", "health", "diagnosis", "public health"],
+  "build technology": ["technology", "computer", "software", "engineering", "coding", "invention"],
+  "lead a team": ["leadership", "management", "organisation", "team", "negotiation", "systems"],
+  "teach better": ["teaching", "education", "learning", "classroom", "instruction"],
+  "understand africa": ["africa", "african history", "colonialism", "culture", "development"],
+  "protect the environment": ["environment", "climate", "ecology", "agriculture", "conservation"],
+};
+
+const COMPASS_STARTERS = [
+  "I want to earn money online",
+  "I want to understand people and influence",
+  "I want to become a better lawyer",
+  "I want to learn about African culture",
+  "I want to become a scientist",
+  "I want to improve my writing",
+];
+
+function compassTokens(value: string) {
+  return value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9\\s]/g, " ").split(/\\s+/).filter(token => token.length > 2);
+}
+
+function scoreCompassPathway(item: KnowledgePathway, query: string) {
+  const cleanQuery = query.trim().toLowerCase();
+  if (!cleanQuery) return 0;
+  const tokens = compassTokens(cleanQuery);
+  const itemText = [item.situation, item.subject, item.materialType, item.title, item.creator, item.why, ...(item.keywords || [])].join(" ").toLowerCase();
+  const itemTokens = new Set(compassTokens(itemText));
+  let score = 0;
+  for (const token of tokens) if (itemTokens.has(token)) score += 2;
+  if (item.situation.toLowerCase().includes(cleanQuery)) score += 8;
+  if (item.title.toLowerCase().includes(cleanQuery)) score += 5;
+  for (const [phrase, expansions] of Object.entries(COMPASS_INTENT_GROUPS)) {
+    if (cleanQuery.includes(phrase) || expansions.some(term => cleanQuery.includes(term))) {
+      const related = [phrase, ...expansions].flatMap(compassTokens);
+      for (const term of related) if (itemTokens.has(term)) score += 2;
+    }
+  }
+  return score;
+}
+
 function KnowledgeCompassPage({ onBack }: { onBack: () => void }) {
   const [query, setQuery] = useState("");
   const [subject, setSubject] = useState("All subjects");
   const subjects = ["All subjects", ...Array.from(new Set(KNOWLEDGE_PATHWAYS.map(item => item.subject)))];
-  const filtered = KNOWLEDGE_PATHWAYS.filter(item => {
-    const matchesSubject = subject === "All subjects" || item.subject === subject;
-    const haystack = [item.situation, item.subject, item.materialType, item.title, item.creator, item.why, ...(item.keywords || [])].join(" ").toLowerCase();
-    return matchesSubject && haystack.includes(query.trim().toLowerCase());
-  });
+  const ranked = KNOWLEDGE_PATHWAYS
+    .filter(item => subject === "All subjects" || item.subject === subject)
+    .map(item => ({ item, score: scoreCompassPathway(item, query) }))
+    .filter(entry => !query.trim() || entry.score > 0)
+    .sort((a, b) => b.score - a.score || a.item.title.localeCompare(b.item.title));
+  const visible = query.trim() ? ranked.slice(0, 12) : ranked.slice(0, 8);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -1224,22 +1274,29 @@ function KnowledgeCompassPage({ onBack }: { onBack: () => void }) {
           <div className="max-w-3xl">
             <div className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]"><Compass className="h-3.5 w-3.5 text-accent" /> Situations into knowledge</div>
             <h1 className="mt-4 text-3xl font-bold tracking-tight md:text-5xl">Knowledge Compass</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-primary-foreground/80 md:text-base">Sometimes the most useful knowledge is difficult to discover because you do not know the title, author or exact words to search for. Start with a situation, ambition or question. Find a carefully selected book, report or other source that can take you further.</p>
+            <p className="mt-4 max-w-2xl text-sm leading-7 text-primary-foreground/80 md:text-base">You do not need to know the right keywords, book title or author. Tell us what is happening, what you want to understand, or what you hope to become. Knowledge Compass connects that situation to a carefully selected source worth exploring.</p>
           </div>
-          <div className="mt-7 grid gap-3 rounded-2xl border border-border/20 bg-card p-3 text-foreground shadow-xl md:grid-cols-[minmax(0,1fr)_240px]">
-            <div className="flex items-center gap-3 px-2"><Search className="h-5 w-5 shrink-0 text-muted-foreground" /><Input value={query} onChange={event => setQuery(event.target.value)} placeholder="Describe a situation, goal or subject…" aria-label="Search situations and recommendations" className="h-11 border-0 bg-transparent px-0 shadow-none focus-visible:ring-0" /></div>
-            <select value={subject} onChange={event => setSubject(event.target.value)} aria-label="Filter by subject" className="h-11 rounded-md border border-input bg-background px-3 text-sm"><option>All subjects</option>{subjects.filter(item => item !== "All subjects").map(item => <option key={item}>{item}</option>)}</select>
+          <div className="mt-7 rounded-2xl border border-border/20 bg-card p-4 text-foreground shadow-xl">
+            <label htmlFor="compass-situation" className="mb-2 block text-sm font-semibold">What are you trying to understand or achieve?</label>
+            <textarea id="compass-situation" value={query} onChange={event => setQuery(event.target.value)} placeholder="Explain it in your own words. It is okay if you are unsure how to describe it…" rows={3} className="w-full resize-y rounded-xl border border-input bg-background px-3 py-3 text-sm leading-6 outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-xs text-muted-foreground">You can describe a challenge, ambition, profession, curiosity or a real-life circumstance.</p>
+              <select value={subject} onChange={event => setSubject(event.target.value)} aria-label="Narrow by subject" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option>All subjects</option>{subjects.filter(item => item !== "All subjects").map(item => <option key={item}>{item}</option>)}</select>
+            </div>
           </div>
-          <p className="mt-3 text-xs text-primary-foreground/70">Search by the situation you are facing or the person you want to become—not only by a book title.</p>
+          <div className="mt-4">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-foreground/65">Not sure how to phrase it? Start with one of these</p>
+            <div className="mt-2 flex flex-wrap gap-2">{COMPASS_STARTERS.map(starter => <button key={starter} type="button" onClick={() => setQuery(starter)} className="rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-2 text-left text-xs text-primary-foreground transition hover:bg-primary-foreground/20">{starter}</button>)}</div>
+          </div>
         </div>
       </section>
       <section className="mx-auto max-w-6xl px-5 py-9 md:px-8">
         <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">Curated discovery</p><h2 className="mt-1 text-2xl font-semibold">A useful place to begin</h2></div>
-          <span className="text-xs text-muted-foreground">{filtered.length} recommendation{filtered.length === 1 ? "" : "s"}</span>
+          <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">{query.trim() ? "Selected knowledge pathways" : "Curated starting points"}</p><h2 className="mt-1 text-2xl font-semibold">{query.trim() ? "Sources aligned to your situation" : "A few places to begin"}</h2><p className="mt-1 max-w-2xl text-sm text-muted-foreground">{query.trim() ? "Recommendations are ordered by how closely their subject and purpose align with what you described." : "A small selection from a wider collection. Describe your own situation above to receive more focused recommendations."}</p></div>
+          <span className="text-xs text-muted-foreground">{visible.length} shown · {ranked.length} relevant pathways</span>
         </div>
-        {filtered.length ? <div className="grid gap-4 md:grid-cols-2">
-          {filtered.map(item => <article key={item.id} className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
+        {visible.length ? <div className="grid gap-4 md:grid-cols-2">
+          {visible.map(({ item }) => <article key={item.id} className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
             <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{item.subject}</Badge><span className="text-[10px] uppercase tracking-wide text-muted-foreground">{item.materialType}</span></div>
             <p className="mt-4 text-sm leading-6 text-foreground">{item.situation}</p>
             <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
@@ -1247,12 +1304,15 @@ function KnowledgeCompassPage({ onBack }: { onBack: () => void }) {
               <h3 className="mt-2 text-lg font-semibold leading-snug">{item.title}</h3>
               <p className="mt-1 text-sm text-muted-foreground">{item.creator}</p>
               <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.why}</p>
+              {item.audience && <p className="mt-3 text-xs text-muted-foreground"><span className="font-semibold text-foreground">Useful for:</span> {item.audience}</p>}
+              {item.perspective && <p className="mt-2 text-xs text-muted-foreground">{item.perspective}</p>}
             </div>
           </article>)}
-        </div> : <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center"><BookOpen className="mx-auto h-8 w-8 text-muted-foreground" /><h3 className="mt-3 font-semibold">No matching recommendation yet</h3><p className="mt-1 text-sm text-muted-foreground">Try describing the situation differently or browse another subject. New pathways can be added as the collection grows.</p></div>}
+        </div> : <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center"><BookOpen className="mx-auto h-8 w-8 text-muted-foreground" /><h3 className="mt-3 font-semibold">We do not yet have a verified pathway for this situation</h3><p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Your situation may be new to this collection. Try a different way of describing what is happening, or remove the subject filter. We would rather say when a relevant recommendation is not yet available than present an unrelated source as an answer.</p><Button variant="outline" className="mt-4" onClick={() => { setQuery(""); setSubject("All subjects"); }}>Show starting points</Button></div>}
         <div className="mt-8 rounded-2xl border border-border bg-muted/30 p-5">
-          <h3 className="font-semibold">How recommendations are selected</h3>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">Each entry should be checked against reliable bibliographic or institutional records before publication. Recommendations are selected for their relevance to the situation, not simply popularity. Where a work presents a debated interpretation, that limitation is stated. A recommendation is a starting point for learning, not a substitute for professional advice or current law.</p>
+          <h3 className="font-semibold">What this space is—and is not</h3>
+          <p className="mt-2 text-sm leading-6 text-muted-foreground">Knowledge Compass is an information-discovery service, not a general web search engine or an endless list of search results. It starts with a human situation and points to a specific, relevant book, research work, report, institution or other credible source. Recommendations are curated, not generated merely because words overlap. A source is a starting point for deeper learning, not a substitute for current professional, legal, medical or financial advice.</p>
+          <p className="mt-2 text-xs leading-5 text-muted-foreground">Editorial standard: verify titles, contributors, publication details and identifiers against publisher or institutional records where available; state edition and date when relevant; explain limitations and jurisdiction; do not invent a match when evidence is insufficient.</p>
         </div>
       </section>
     </main>
