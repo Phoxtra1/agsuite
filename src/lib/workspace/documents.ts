@@ -1,7 +1,8 @@
 import { supabase } from "@/integrations/appwrite/client";
 import { getWorkspaceUser } from "@/lib/workspace/scope";
 import { readWorkspaceCollection, writeWorkspaceCollection } from "@/lib/workspace/localStore";
-import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId } from "@/lib/workspace/remoteSync";
+import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId, suppressTombstonedRemoteRows } from "@/lib/workspace/remoteSync";
+import { isWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
 
 const TBL = "workspace_documents";
 const toRow = (d: WorkspaceDocument, userId: string) => ({ ...d, owner_id: isRealUser(d.owner_id) ? d.owner_id : userId });
@@ -41,6 +42,7 @@ async function saveLocalDocs(records: WorkspaceDocument[]): Promise<void> {
 }
 
 async function getAuthenticatedUserId(): Promise<string> {
+  if (isWorkspaceOfflineMode()) return getWorkspaceUser();
   try {
     const getUserPromise = supabase.auth.getUser();
     const timeoutPromise = new Promise<{ data: { user: null }; error: any }>((resolve) =>
@@ -59,7 +61,7 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
   if (!userId) return [];
 
   const local = await getLocalDocs();
-  if (typeof navigator !== "undefined" && !navigator.onLine) return local;
+  if (isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return local;
   try {
     const queryPromise = supabase
       .from("workspace_documents" as any)
@@ -74,7 +76,8 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
     const { data, error } = await Promise.race([queryPromise, timeoutPromise]);
 
     if (!error && data && Array.isArray(data)) {
-      const merged = reconcile({ table: TBL, local: await getLocalDocs(), remote: data as any as WorkspaceDocument[], userId, updatedAt: (d) => d.updated_at, toRow });
+      const remoteRows = await suppressTombstonedRemoteRows(TBL, data as any as WorkspaceDocument[][]);
+      const merged = reconcile({ table: TBL, local: await getLocalDocs(), remote: remoteRows, userId, updatedAt: (d) => d.updated_at, toRow });
       await saveLocalDocs(merged);
       return merged;
     }
@@ -87,7 +90,7 @@ export async function listDocuments(): Promise<WorkspaceDocument[]> {
 export async function getDocument(id: string): Promise<WorkspaceDocument | null> {
   const local = await getLocalDocs();
   const cached = local.find((d) => d.id === id);
-  if (cached || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
+  if (cached || isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
   try {
     const userId = await getAuthenticatedUserId();
     if (!userId) return null;
