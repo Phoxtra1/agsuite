@@ -86,7 +86,7 @@ These are migration-level findings; they require review against the actual deplo
 2. The admin_credentials migration seeds a built-in administrator identifier and a PIN hash derived from a known static PIN and salt. Treat this as a credential exposure risk. Remove/rotate the legacy credential through a controlled security migration before production use; do not expose or reuse the seed credential.
 3. ACS migrations include a sync_acs_data_lake function that deletes rows from several ACS tables before rebuilding them. Its invocation frequency, permissions, data-retention requirements and database load must be reviewed before any central backend consolidation.
 4. Some older migrations grant broad authenticated read/update/delete access to shared operational tables (for example inbound messages and ACS records). Review the final effective policies, not only individual migration statements.
-5. The checked-in .env.example sets VITE_DISABLE_PRODUCT_AUTH=true. The Appwrite adapter can create a synthetic, temporary offline identity when sign-in fails at the network layer under this flag. This is not a verified account session and must not be enabled as a production authentication substitute. The production value and Lovable secrets must be checked before release.
+5. The original .env.example value enabled VITE_DISABLE_PRODUCT_AUTH. The follow-up branch changes the example to false and removes the adapter’s synthetic offline identity/session path entirely. Verify the deployed Lovable environment does not rely on this deprecated flag; real sign-in failures must remain authentication failures.
 
 No security migration was applied as part of this audit.
 
@@ -116,3 +116,13 @@ The current branch `workspace-offline-access-and-sync-safety` adds the previousl
 **Security limitation:** the device passphrase is an access gate, not encryption of the Workspace IndexedDB contents. This does not replace operating-system login, disk encryption, or independent backup.
 
 These changes still require automated CI and real-browser validation across sign-in, auth outage, refresh/restart, device unlock, account switching, sync retries, and deletion recovery. They do not confirm production deployment, hosted Appwrite health, live Supabase connection, or the contents of a hosted database.
+
+
+## 8. Additional restoration and provider-independence work in the follow-up branch
+
+- `docs/WORKSPACE_LOCAL_FIRST_BACKEND_STRATEGY.md` records the local-first rule, the currently verified Appwrite provider, the proposed (not connected) central Supabase role, capabilities that require a live cloud service, and a safe provider migration sequence.
+- Workspace Navigation now exposes account-bound JSON backup and restore controls. The backup includes IndexedDB editor records, cached Drive file bytes and scoped small settings. Restore rejects a different account's backup and does not overwrite newer local records.
+- Offline lock and backup/restore controls are implemented in the existing Workspace navigation, not as a second workspace application.
+- Pending local deletions are tracked as account-scoped tombstones and filtered from list and direct-record retrieval until remote deletion succeeds.
+
+The JSON backup can be large because Drive file bytes are embedded as Base64. Users should store exports on a separate trusted device or drive. This is a user-controlled backup route, not cloud replication.
