@@ -148,33 +148,39 @@ function HashNormalizer() {
 
 class RouteErrorBoundary extends React.Component<
   { children: React.ReactNode },
-  { hasError: boolean }
+  { hasError: boolean; errorMessage: string; componentStack: string }
 > {
-  state = { hasError: false };
+  state = { hasError: false, errorMessage: "", componentStack: "" };
 
-  static getDerivedStateFromError() {
-    return { hasError: true };
+  static getDerivedStateFromError(error: Error) {
+    return {
+      hasError: true,
+      errorMessage: error?.message || String(error),
+    };
   }
 
-  componentDidCatch(error: Error) {
-    console.error("[Amineva route error]", error);
+  componentDidCatch(error: Error, info: React.ErrorInfo) {
+    console.error("[Amineva route error]", error, info.componentStack);
+    this.setState({ errorMessage: error?.message || String(error), componentStack: info.componentStack || "" });
   }
 
   render() {
     if (this.state.hasError) {
       return (
         <main className="flex min-h-[60vh] items-center justify-center bg-background px-5 py-12 text-foreground">
-          <section className="w-full max-w-lg rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
+          <section className="w-full max-w-2xl rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
             <h1 className="text-xl font-semibold">This page could not be loaded</h1>
             <p className="mt-2 text-sm leading-6 text-muted-foreground">
-              The page encountered a loading problem. You can retry it without losing access to the rest of Amineva Global.
+              The application caught an error while rendering this route. The technical detail below identifies the failing module so it can be corrected.
             </p>
+            <pre role="alert" className="mt-4 max-h-36 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted p-3 text-left text-xs text-foreground">{this.state.errorMessage || "Error detail unavailable"}</pre>
+            {this.state.componentStack && <details className="mt-3 text-left text-xs text-muted-foreground"><summary className="cursor-pointer">Component trace</summary><pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap break-words rounded-lg bg-muted p-3">{this.state.componentStack}</pre></details>}
             <button
               type="button"
-              onClick={() => window.location.reload()}
+              onClick={() => window.location.assign(window.location.pathname + "?sw=off&recovery=" + Date.now())}
               className="mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-primary px-5 text-sm font-medium text-primary-foreground hover:opacity-90"
             >
-              Reload page
+              Retry without service worker
             </button>
           </section>
         </main>
