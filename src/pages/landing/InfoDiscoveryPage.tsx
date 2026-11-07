@@ -1530,6 +1530,36 @@ export default function InfoDiscoveryPage() {
       </section>
 
 
+      {!selected && !selectedTopic && (
+        <section aria-labelledby="info-discovery-pillars" className="mx-auto max-w-7xl px-5 pt-8 md:px-8">
+          <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
+            <div className="border-b border-border bg-gradient-to-r from-primary/[0.08] via-card to-accent/[0.08] p-6 md:p-8">
+              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">The foundation of Info Discovery</p>
+              <h2 id="info-discovery-pillars" className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">Information should be discoverable because it is relevant—not merely because it is visible.</h2>
+              <p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">Info Discovery is organised around the information a person actually needs. Its purpose is to help uncover relevant knowledge, including material that may be difficult to find through conventional keyword searches or online rankings. Search visibility and SEO are not our measure of what matters.</p>
+            </div>
+            <div className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-5">
+              {[
+                { number: "01", title: "Relevance", description: "Prioritise information that genuinely addresses the need—not simply information that ranks highly or attracts traffic." },
+                { number: "02", title: "Context", description: "Understand the circumstances, purpose, location, people and decisions behind the question." },
+                { number: "03", title: "Specificity", description: "Guide people towards precise subjects, resources and details instead of overwhelming them with loosely related results." },
+                { number: "04", title: "Knowledge coverage", description: "Connect knowledge across disciplines, institutions, specialist sources and different areas of life and work." },
+                { number: "05", title: "Discoverability", description: "Help surface useful information that may be overlooked, obscure or difficult to locate through ordinary search." },
+              ].map(pillar => (
+                <article key={pillar.number} className="bg-card p-5 md:p-4 xl:p-5">
+                  <span className="text-xs font-bold tracking-[0.16em] text-accent">{pillar.number}</span>
+                  <h3 className="mt-2 text-base font-semibold">{pillar.title}</h3>
+                  <p className="mt-2 text-xs leading-6 text-muted-foreground">{pillar.description}</p>
+                </article>
+              ))}
+            </div>
+            <div className="border-t border-border px-6 py-4 text-xs leading-6 text-muted-foreground md:px-8">
+              <span className="font-semibold text-foreground">Our distinction:</span> conventional search engines are strongly shaped by what is published, indexed and ranked online. Info Discovery is designed to organise and connect knowledge by relevance and context. Finding material that is not publicly accessible still requires a legitimate source, collection or authorised connection; the system will not pretend to retrieve information it cannot access.
+            </div>
+          </div>
+        </section>
+      )}
+
       {selected?.slug === "career-development-education" && (
         <section aria-label="Career development resources" className="mx-auto max-w-7xl px-5 pt-7 md:px-8">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
