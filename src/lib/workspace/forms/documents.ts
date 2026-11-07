@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/appwrite/client";
 import { getWorkspaceUser } from "@/lib/workspace/scope";
 import { readWorkspaceCollection, writeWorkspaceCollection } from "@/lib/workspace/localStore";
-import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId, suppressTombstonedRemoteRows } from "@/lib/workspace/remoteSync";
+import { reconcile, scheduleRemote, upsertRemote, deleteRemote, isRealUser, isRemoteId, suppressTombstonedRemoteRows, isWorkspaceRecordDeleted } from "@/lib/workspace/remoteSync";
 import { isWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
 
 export interface FormTheme {
@@ -403,6 +403,7 @@ export async function getFormById(id: string): Promise<FormDocument | null> {
   const local = await getLocalForms();
   const cached = local.find((f) => f.id === id || f.formCode === id);
   if (cached || isWorkspaceOfflineMode() || (typeof navigator !== "undefined" && !navigator.onLine)) return cached ?? null;
+  if (await isWorkspaceRecordDeleted(TBL, id)) return null;
 
   try {
     const userId = await getAuthenticatedUserId();
