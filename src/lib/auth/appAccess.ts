@@ -21,21 +21,40 @@ export interface AppAccess {
 
 export async function loadAppAccess(userId: string, appSlug: string): Promise<AppAccess> {
   try {
-    const res = await databases.listDocuments(DB_ID, MODULE_ACCESS_COLLECTION_ID, [
-      Query.equal("userId", userId),
-      Query.equal("moduleId", appSlug),
-      Query.limit(1),
-    ]);
+    if (activeBackendProvider === "supabase") {
+      const { data: rows, error } = await supabase
+        .from(MODULE_ACCESS_COLLECTION_ID)
+        .select("moduleId, granted")
+        .eq("userId", userId)
+        .eq("moduleId", appSlug)
+        .limit(1);
+      if (!error && rows && rows.length > 0) {
+        const row = rows[0] as { moduleId?: string; granted?: boolean };
+        return {
+          allowed: row.granted ?? true,
+          appSlug,
+          appId: row.moduleId as string,
+          role: "user",
+          permissions: {},
+        };
+      }
+    } else {
+      const res = await databases.listDocuments(DB_ID, MODULE_ACCESS_COLLECTION_ID, [
+        Query.equal("userId", userId),
+        Query.equal("moduleId", appSlug),
+        Query.limit(1),
+      ]);
 
-    if (res.documents.length > 0) {
-      const doc = res.documents[0];
-      return {
-        allowed: doc.granted ?? true,
-        appSlug,
-        appId: doc.moduleId as string,
-        role: "user",
-        permissions: {},
-      };
+      if (res.documents.length > 0) {
+        const doc = res.documents[0];
+        return {
+          allowed: doc.granted ?? true,
+          appSlug,
+          appId: doc.moduleId as string,
+          role: "user",
+          permissions: {},
+        };
+      }
     }
 
     // Check user metadata / prefs registered_product for per-app isolation
