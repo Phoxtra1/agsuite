@@ -1287,67 +1287,59 @@ function KnowledgeCompassPage({ onBack }: { onBack: () => void }) {
             <button onClick={onBack} className="hover:text-primary-foreground">Info Discovery</button><ChevronRight className="h-3.5 w-3.5" /><span className="text-primary-foreground">Knowledge Compass</span>
           </div>
           <div className="max-w-3xl">
-            <div className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.16em]"><Compass className="h-3.5 w-3.5 text-accent" /> Situations into knowledge</div>
-            <h1 className="mt-4 text-3xl font-bold tracking-tight md:text-5xl">Knowledge Compass</h1>
-            <p className="mt-4 max-w-2xl text-sm leading-7 text-primary-foreground/80 md:text-base">You do not need to know the right keywords, book title or author. Tell us what is happening, what you want to understand, or what you hope to become. Knowledge Compass connects that situation to a carefully selected source worth exploring.</p>
+            <h1 className="text-3xl font-bold tracking-tight md:text-5xl">Knowledge Compass</h1>
           </div>
           <div className="mt-7 rounded-2xl border border-border/20 bg-card p-4 text-foreground shadow-xl">
-            <label htmlFor="compass-situation" className="mb-2 block text-sm font-semibold">What are you trying to understand or achieve?</label>
-            <textarea id="compass-situation" value={query} onChange={event => setQuery(event.target.value)} placeholder="Explain it in your own words. It is okay if you are unsure how to describe it…" rows={3} className="w-full resize-y rounded-xl border border-input bg-background px-3 py-3 text-sm leading-6 outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
-            <div className="mt-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-xs text-muted-foreground">You can describe a challenge, ambition, profession, curiosity or a real-life circumstance.</p>
+            <label htmlFor="compass-situation" className="mb-2 block text-sm font-semibold">What would you like to explore?</label>
+            <textarea id="compass-situation" value={query} onChange={event => setQuery(event.target.value)} placeholder="Enter a topic, interest or question..." rows={2} className="w-full resize-y rounded-xl border border-input bg-background px-3 py-3 text-sm leading-6 outline-none transition focus-visible:ring-2 focus-visible:ring-ring" />
+            <div className="mt-3 flex justify-end">
               <select value={subject} onChange={event => setSubject(event.target.value)} aria-label="Narrow by subject" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option>All subjects</option>{subjects.filter(item => item !== "All subjects").map(item => <option key={item}>{item}</option>)}</select>
             </div>
           </div>
           <div className="mt-4">
-            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-foreground/65">Not sure how to phrase it? Start with one of these</p>
+            <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary-foreground/65">Try a search</p>
             <div className="mt-2 flex flex-wrap gap-2">{COMPASS_STARTERS.map(starter => <button key={starter} type="button" onClick={() => setQuery(starter)} className="rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-3 py-2 text-left text-xs text-primary-foreground transition hover:bg-primary-foreground/20">{starter}</button>)}</div>
           </div>
         </div>
       </section>
       <section className="mx-auto max-w-6xl px-5 py-9 md:px-8">
-        <div className="mb-6 flex flex-wrap items-end justify-between gap-3">
-          <div><p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent">{query.trim() ? "Selected knowledge pathways" : "Curated starting points"}</p><h2 className="mt-1 text-2xl font-semibold">{query.trim() ? "Sources aligned to your situation" : "A few places to begin"}</h2><p className="mt-1 max-w-2xl text-sm text-muted-foreground">{query.trim() ? "Recommendations are ordered by how closely their subject and purpose align with what you described." : "A small selection from a wider collection. Describe your own situation above to receive more focused recommendations."}</p></div>
-          <span className="text-xs text-muted-foreground">{visible.length} shown · {ranked.length} relevant pathways</span>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h2 className="text-lg font-semibold">{query.trim() ? "Search matches" : "Suggested resources"}</h2>
+          <span className="text-xs text-muted-foreground">{visible.length} of {ranked.length}</span>
         </div>
-        {visible.length > 0 && <div className="grid gap-4 md:grid-cols-2">
-          {visible.map(({ item }) => <article key={item.id} className="flex flex-col rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md">
-            <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{item.subject}</Badge><span className="text-[10px] uppercase tracking-wide text-muted-foreground">{item.materialType}</span></div>
-            <p className="mt-4 text-sm leading-6 text-foreground">{item.situation}</p>
-            <div className="mt-4 rounded-xl border border-accent/20 bg-accent/5 p-4">
-              <p className="text-[10px] font-semibold uppercase tracking-[0.15em] text-accent">Curated starting point</p>
-              <h3 className="mt-2 text-lg font-semibold leading-snug">{item.title}</h3>
-              <p className="mt-1 text-sm text-muted-foreground">{item.creator}</p>
-              <p className="mt-3 text-sm leading-6 text-muted-foreground">{item.why}</p>
-              {item.audience && <p className="mt-3 text-xs text-muted-foreground"><span className="font-semibold text-foreground">Useful for:</span> {item.audience}</p>}
-              {item.perspective && <p className="mt-2 text-xs text-muted-foreground">{item.perspective}</p>}
+        {visible.length > 0 && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          {visible.map(({ item }) => <article key={item.id} className="min-w-0 rounded-xl border border-border bg-card p-3 shadow-sm transition hover:border-accent/40 hover:shadow-md">
+            <div className="flex flex-wrap items-center gap-1.5">
+              <Badge variant="secondary" className="max-w-full truncate text-[10px]">{item.subject}</Badge>
+              <span className="text-[9px] uppercase tracking-wide text-muted-foreground">{item.materialType}</span>
             </div>
+            <h3 className="mt-2 text-sm font-semibold leading-5">{item.title}</h3>
+            <p className="mt-1 text-[11px] leading-4 text-muted-foreground line-clamp-1">{item.creator}</p>
+            <p className="mt-2 text-xs leading-5 text-muted-foreground line-clamp-3">{item.why}</p>
           </article>)}
         </div>}
-        {query.trim().length >= 3 && <section className="mt-7 rounded-2xl border border-border bg-card p-5 shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-3">
-            <div><h3 className="font-semibold">Live research and repository discovery</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">Searching scholarly and research repositories for records related to your situation. These are metadata leads, not verified conclusions.</p></div>
-            <Badge variant="outline">Crossref · OpenAlex · Zenodo</Badge>
-          </div>
-          {liveLoading && <p className="mt-4 flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Searching connected repositories…</p>}
-          {liveError && <p role="status" className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">{liveError}</p>}
-          {!liveLoading && liveRecords.length === 0 && !liveError && <p className="mt-4 text-xs text-muted-foreground">No repository records returned for this wording. Try a more specific subject or a shorter description.</p>}
-          {liveRecords.length > 0 && <div className="mt-4 space-y-3">
-            {liveRecords.map(record => <article key={record.id} className="rounded-xl border border-border bg-background/60 p-4">
-              <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Year not supplied"}</Badge><span className="text-[10px] text-muted-foreground">{record.type}</span><span className="text-[10px] text-muted-foreground">Indexed by {record.sources.join(", ")}</span></div>
-              <h4 className="mt-2 font-semibold leading-6">{record.title}</h4>
-              <p className="mt-1 text-xs text-muted-foreground">{[record.authors, record.journal, record.publisher].filter(Boolean).join(" · ")}</p>
-              {record.abstract && <p className="mt-2 text-xs leading-5 text-muted-foreground">{record.abstract}</p>}
-              <p className="mt-2 text-[10px] leading-4 text-muted-foreground">Metadata-only match. Check the original publisher/repository, version, licence, corrections and methods before relying on it.</p>
+        {query.trim().length >= 3 && <section className="mt-5">
+          <h3 className="mb-3 text-base font-semibold">Related research</h3>
+          {liveLoading && <p className="mb-3 flex items-center gap-2 text-xs text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Searching...</p>}
+          {liveError && <p role="status" className="mb-3 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">{liveError}</p>}
+          {!liveLoading && liveRecords.length === 0 && !liveError && <p className="text-xs text-muted-foreground">No research results found.</p>}
+          {liveRecords.length > 0 && <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
+            {liveRecords.map(record => <article key={record.id} className="min-w-0 rounded-lg border border-border bg-card p-3">
+              <div className="flex flex-wrap items-center gap-1.5 text-[10px] text-muted-foreground">
+                <Badge variant="secondary" className="text-[9px]">{record.year || "Year not supplied"}</Badge>
+                <span>{record.type}</span>
+              </div>
+              <h4 className="mt-2 text-sm font-semibold leading-5 line-clamp-2">{record.title}</h4>
+              <p className="mt-1 text-[10px] leading-4 text-muted-foreground line-clamp-1">{[record.authors, record.journal, record.publisher].filter(Boolean).join(" · ")}</p>
+              <p className="mt-1 text-[10px] leading-4 text-muted-foreground">Source: {record.sources.join(", ")}</p>
+              {record.abstract && <p className="mt-2 text-xs leading-5 text-muted-foreground line-clamp-3">{record.abstract}</p>}
             </article>)}
           </div>}
         </section>}
-        {!visible.length && !liveLoading && !liveRecords.length && query.trim().length >= 3 && <div className="mt-5 rounded-2xl border border-dashed border-border bg-card p-8 text-center"><BookOpen className="mx-auto h-8 w-8 text-muted-foreground" /><h3 className="mt-3 font-semibold">No curated pathway or repository record matched yet</h3><p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-muted-foreground">Your situation may be new to this collection, or the repositories may use different terminology. Try another description or remove the subject filter. We will not invent a match.</p><Button variant="outline" className="mt-4" onClick={() => { setQuery(""); setSubject("All subjects"); }}>Show starting points</Button></div>}
-        <div className="mt-8 rounded-2xl border border-border bg-muted/30 p-5">
-          <h3 className="font-semibold">What this space is—and is not</h3>
-          <p className="mt-2 text-sm leading-6 text-muted-foreground">Knowledge Compass is an information-discovery service, not a general web search engine or an endless list of search results. It starts with a human situation and points to a specific, relevant book, research work, report, institution or other credible source. Recommendations are curated, not generated merely because words overlap. A source is a starting point for deeper learning, not a substitute for current professional, legal, medical or financial advice.</p>
-          <p className="mt-2 text-xs leading-5 text-muted-foreground">Editorial standard: verify titles, contributors, publication details and identifiers against publisher or institutional records where available; state edition and date when relevant; explain limitations and jurisdiction; do not invent a match when evidence is insufficient.</p>
-        </div>
+        {!visible.length && !liveLoading && !liveRecords.length && query.trim().length >= 3 && <div className="mt-5 rounded-xl border border-dashed border-border bg-card p-5 text-center">
+          <p className="text-sm font-medium">No matching resources found.</p>
+          <Button variant="outline" size="sm" className="mt-3" onClick={() => { setQuery(""); setSubject("All subjects"); }}>Clear search</Button>
+        </div>}
       </section>
     </main>
   );
