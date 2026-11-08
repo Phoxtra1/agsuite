@@ -28,7 +28,8 @@ import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracke
 import { searchResearchRepositories, type ResearchRecord } from "@/lib/infoDiscovery/researchSearch";
 
 type CultureProfile = { community: string; history: string; wayOfLife: string; traditions: string; music: string };
-type Topic = { title: string; description: string; questions: string[]; culture?: CultureProfile };
+type FestivalProfile = { origin: string; meaning: string; celebration: string; location: string };
+type Topic = { title: string; description: string; questions: string[]; culture?: CultureProfile; festival?: FestivalProfile };
 type Section = { title: string; description: string; items: Topic[] };
 type Source = { name: string; scope: string; type: string; url: string };
 type ProductLink = { label: string; href: string; introduction: string };
@@ -48,6 +49,12 @@ const cultureTopic = (country: string, community: string, history: string, wayOf
     "Which musical styles, instruments, songs and dances are associated with the community?"
   ],
   culture: { community, history, wayOfLife, traditions, music }
+});
+const festivalTopic = (title: string, origin: string, meaning: string, celebration: string, location: string): Topic => ({
+  title,
+  description: `Discover the origins, cultural meaning and celebration of ${title}, including where the event takes place.`,
+  questions: [],
+  festival: { origin, meaning, celebration, location }
 });
 const categories: Category[] = [
   {
@@ -155,6 +162,39 @@ const categories: Category[] = [
           cultureTopic("Uganda", "Baganda", "The Baganda are Uganda's largest ethnic community and are associated with the historic Kingdom of Buganda on Lake Victoria. Buganda developed influential royal, clan and administrative institutions.", "Farming, fishing, trade, education and urban employment are important. Clan identities and family networks remain significant in central Uganda and Kampala.", "Barkcloth making, the Kabaka's court, clan totems, marriage customs and royal ceremonies are notable traditions. Barkcloth is recognised by UNESCO.", "Amadinda and akadinda xylophones, royal drums, songs and Kiganda dance are central cultural forms. Contemporary music blends traditional rhythms with modern genres."),
           cultureTopic("Zambia", "Bemba", "The Bemba are a major Bantu-speaking people of northern Zambia, with historic links to the Luba-Lunda world and the Bemba kingdom under the Chitimukulu.", "Farming, fishing, trade and wage employment are important. Matrilineal clan and family networks are prominent in many communities, while Copperbelt migration shapes modern life.", "Ukusefya pa Ng'wena, associated with Bemba royal history, is a major cultural event. Initiation, oral histories, pottery and basketry also feature.", "Ingoma and other group dances use drums, singing and coordinated movement. Praise songs and call-and-response accompany ceremonies."),
           cultureTopic("Zimbabwe", "Shona", "The Shona are Zimbabwe's largest ethnolinguistic group and are connected to the historic states of Great Zimbabwe. Their history includes precolonial kingdoms, colonial rule and the independence struggle.", "Crop farming, livestock keeping, trade, mining and urban work are important. Extended family and ancestral connections remain influential.", "Shona heritage includes the bira ceremony, ancestral spirit traditions, oral storytelling, mbira making and stone sculpture. Practices vary among Shona subgroups.", "The mbira dzavadzimu, hosho rattles, drums and vocal harmonies are central to bira and other performances. Shona music influences contemporary Zimbabwean genres.")
+        ]
+      },
+      {
+        title: "African festivals and celebrations",
+        description: "Explore the stories, meanings and living traditions behind celebrations across Africa.",
+        items: [
+          festivalTopic("Homowo", "The Ga people of the Greater Accra area remember a period of famine in their history and the return of food security after successful harvests.", "The name means “hooting at hunger”. It honours resilience, collective survival, gratitude and the memory of ancestors.", "Families prepare kpokpoi or kpekple, which is shared and sprinkled by traditional leaders and family heads. Celebrations include drumming, singing, dancing, processions and family gatherings.", "Ga communities across Greater Accra, Ghana, with major celebrations in Accra and Ga Mashie."),
+          festivalTopic("Aboakyer", "The Effutu people of Winneba trace the festival to ancestral traditions of offering a bushbuck to the deity Penkyi Otu.", "It expresses thanksgiving, spiritual devotion, communal identity and the relationship between the people and their traditional authorities.", "Two Asafo companies take part in a ceremonial bushbuck hunt. The animal is presented to the deity, followed by drumming, dancing, a durbar and public festivities.", "Winneba, Central Region, Ghana."),
+          festivalTopic("Hogbetsotso", "The Anlo-Ewe people commemorate their ancestors' migration from Notsie, in present-day Togo, to their current settlements in southeastern Ghana.", "The festival recalls the struggle for freedom, unity, courage and the preservation of collective memory.", "Communities hold processions, traditional dances, storytelling, clean-up activities and a durbar of chiefs. Historical accounts and family memories are shared.", "Anloga and the Anlo area of the Volta Region, Ghana."),
+          festivalTopic("Fetu Afahye", "The people of Oguaa, now Cape Coast, remember a devastating disease outbreak and the traditional purification associated with its ending.", "The celebration expresses thanksgiving, remembrance, renewal and a shared responsibility for community wellbeing.", "Traditional rites and purification activities lead into processions, drumming, dancing and a gathering of chiefs and residents.", "Cape Coast, Central Region, Ghana."),
+          festivalTopic("Damba", "Damba developed among Dagomba and neighbouring northern Ghanaian communities, with traditions linked to the birth and naming of the Prophet Muhammad and the history of chieftaincy.", "It brings together Islamic cultural influence, respect for traditional authority, community identity and royal heritage.", "Celebrations include drumming, horse processions, traditional dance, public gatherings and appearances by chiefs. The programme and religious observances vary by community.", "Dagbon, especially Tamale and Yendi in northern Ghana; related celebrations occur in other northern communities."),
+          festivalTopic("Osun-Osogbo Festival", "The annual festival grew from the sacred relationship between the people of Osogbo and Osun, the Yoruba river deity, and has been maintained through generations of community and royal custodianship.", "It honours Osun, celebrates spiritual heritage and renews the bond between the community, the river and the sacred grove.", "A sequence of rites and processions culminates in a procession to the Osun-Osogbo Sacred Grove, with prayers, offerings, music, dance and participation by devotees and visitors.", "Osogbo, Osun State, southwestern Nigeria, especially the Osun-Osogbo Sacred Grove."),
+          festivalTopic("Sango Festival of Oyo", "The festival commemorates Sango, the Yoruba deity associated with thunder and lightning, and the historical memory of the Oyo kingdom and its rulers.", "It marks the Yoruba traditional new year in Oyo and reinforces ancestral reverence, cultural identity and community solidarity.", "The multi-day celebration features rituals, red and white attire, chanting, storytelling, drumming, dancing and the sharing of new yam and palm oil.", "Oyo, Oyo State, Nigeria, including sites associated with the historic Oyo kingdom."),
+          festivalTopic("Timkat (Ethiopian Epiphany)", "Timkat is rooted in the Ethiopian Orthodox Tewahedo Church's commemoration of the baptism of Jesus Christ in the River Jordan.", "It represents spiritual renewal, blessing, faith and the importance of the church community.", "Church tabots, sacred replicas associated with the Ark, are carried in processions to water. Worshippers attend prayers and hymns, followed by the blessing and sprinkling of water and processions back to churches.", "Celebrated throughout Ethiopia, with major gatherings in Addis Ababa, Gondar and Lalibela."),
+          festivalTopic("Meskel", "Meskel commemorates the Ethiopian Orthodox tradition of the discovery of the True Cross. Its observance has a long history in the Ethiopian church.", "The celebration expresses Christian faith, spiritual hope, reconciliation and community unity.", "Communities build the Demera bonfire, decorate it with flowers and greenery, sing hymns and pray. The bonfire is lit during a public ceremony, followed by family and community gatherings.", "Across Ethiopia, with a major national gathering at Meskel Square in Addis Ababa."),
+          festivalTopic("Irreecha", "Irreecha is an Oromo thanksgiving tradition historically connected to the end of the rainy season and the transition into a new season.", "It gives thanks for life, peace, rain, fertility, harvest and the natural world, while affirming Oromo identity and unity.", "Participants gather with fresh grass and flowers, wear traditional clothing, sing, dance and offer prayers and thanksgiving near water.", "Celebrated by Oromo communities across Ethiopia, with large gatherings at Hora Arsadi in Bishoftu and in Addis Ababa."),
+          festivalTopic("Gifaataa", "Gifaataa is the Wolaita people's New Year celebration, transmitted through family and community traditions over generations.", "It welcomes a new year and emphasizes peace, reconciliation, family unity, respect for elders and social solidarity.", "People clean their surroundings, return home, resolve disputes, share traditional food and drink, receive elders' blessings, and gather around bonfires for songs and dances. The wider celebration includes horse riding and communal festivities.", "Wolaita Zone in southern Ethiopia, especially communities around Sodo."),
+          festivalTopic("Fichee-Chambalaalla", "According to Sidama oral tradition, the festival recalls a married woman who returned annually to visit her parents and relatives, bringing food to share with neighbours.", "It is a Sidama New Year celebration and a symbol of generosity, kinship, equality, social harmony and cooperation.", "The date is announced by traditional leaders after consultation. Families share buurisame, children visit neighbours, and communities hold songs, dances and public gatherings.", "Sidama communities in southern Ethiopia, including around Hawassa."),
+          festivalTopic("Moussem of Tan-Tan", "The gathering developed from seasonal meetings among Saharan nomadic communities, linked to pastoral calendars, trade and movement across desert routes.", "It preserves nomadic heritage, social exchange, hospitality, oral traditions and relationships among communities of the Sahara.", "Tribes gather for trade and social visits, camel and horse competitions, music, dance, poetry, traditional crafts and celebrations such as weddings.", "Tan-Tan in southwestern Morocco, bringing together communities from southern Morocco and neighbouring parts of northwest Africa."),
+          festivalTopic("Yennayer (Amazigh New Year)", "Yennayer follows the Amazigh agricultural calendar and marks the beginning of the year in Amazigh communities across North Africa.", "It celebrates renewal, the farming cycle, hopes for abundance, family continuity and Amazigh cultural identity.", "Families prepare special meals using grains, fruits and seasonal produce, gather across generations, share stories and music, and observe local customs that differ by region.", "Amazigh communities across Morocco, Algeria, Tunisia, Libya and other parts of North Africa; practices vary by locality."),
+          festivalTopic("Moussem of Imilchil (Marriage Festival)", "The gathering is associated with local Ait Hadiddou Amazigh communities of the High Atlas and stories surrounding marriage, family and tribal relationships.", "It provides a setting for social reunion, cultural continuity, courtship and the celebration of Amazigh identity. Popular romantic legends are part of its modern public image.", "The gathering includes a market, music, dance, traditional clothing, social visits and cultural events. The format has evolved and should not be reduced to a mass arranged-marriage event.", "Imilchil and surrounding villages in Morocco's High Atlas Mountains."),
+          festivalTopic("Gule Wamkulu", "Gule Wamkulu is a masked dance tradition associated with the Chewa people and the Nyau brotherhood, with roots in initiation and ancestral practices.", "It connects communities with ancestral knowledge, moral teaching, social commentary, rites of passage and the transmission of cultural values.", "Masked performers appear at funerals, initiation-related events and other community occasions, using dance, music and symbolic characters. Performances are guided by community customs.", "Chewa communities in Malawi, Mozambique and Zambia, especially in rural areas."),
+          festivalTopic("Umhlanga (Reed Dance)", "Umhlanga developed as a royal and community ceremony in the Swazi kingdom, bringing young women together to cut reeds for the royal residence.", "It expresses service to the community and monarchy, cultural continuity, collective identity and the value placed on young women's participation in tradition.", "Participants gather reeds, carry them in procession and perform traditional songs and dances before the royal family. Participation and ceremony follow established cultural protocols.", "Ludzidzini Royal Residence and other designated sites in Eswatini."),
+          festivalTopic("Incwala", "Incwala is an important Swazi kingship ceremony with roots in the kingdom's agricultural and royal traditions.", "It marks the traditional new year and is associated with renewal, the monarchy, national unity and the first fruits of the season.", "The multi-stage ceremony includes the gathering of sacred branches, ritual observances and collective singing and dancing involving the king and participants.", "Royal sites in Eswatini, centred on the royal residence and other places designated for the ceremony."),
+          festivalTopic("Mwaka Kogwa", "Mwaka Kogwa is a Shirazi-influenced New Year celebration whose traditions are associated with Persian cultural connections in the Indian Ocean.", "It welcomes a new year through symbolic renewal, the release of past grievances, reconciliation and community wellbeing.", "Celebrations include symbolic mock fighting with banana stems, songs, dances and communal feasting. Local customs and interpretations vary.", "Makunduchi in southern Zanzibar, Tanzania."),
+          festivalTopic("Maulidi ya Lamu", "The Lamu Maulidi celebrations developed around the commemoration of the birth of Prophet Muhammad and the long-standing Islamic learning traditions of the Swahili coast.", "It brings together religious devotion, scholarship, hospitality and the shared Swahili Muslim heritage of the Indian Ocean coast.", "Visitors and residents attend prayers, recitations, religious poetry, processions and cultural activities, alongside community hospitality and local events.", "Lamu Old Town and Lamu Island, Kenya."),
+          festivalTopic("Grand Magal of Touba", "The Magal commemorates the 1895 exile of Sheikh Amadou Bamba by the French colonial authorities, an important event in the history of the Mouride Muslim brotherhood.", "It honours religious devotion, perseverance, service and the teachings of Sheikh Amadou Bamba.", "Pilgrims travel to Touba for prayers, Quran recitations, religious gatherings, charitable hospitality and visits to important religious sites.", "Touba, Senegal."),
+          festivalTopic("Kankurang Manding Initiation", "The Kankurang is a masked figure connected to Manding initiation traditions and the transmission of community law and knowledge.", "It represents protection, discipline, social order, ancestral authority and the education of younger generations.", "A masked performer appears during initiation periods and community ceremonies, accompanied by songs, drumming and processions. The practice follows specific community rules and meanings.", "Manding communities in The Gambia and Senegal, including areas around Casamance and the Senegambian region."),
+          festivalTopic("Sanké Mon", "Sanké Mon is a collective fishing rite linked to the founding history of San and to the seasonal cycle of the Sanké pond.", "It marks the beginning of the rainy season and reinforces cooperation, peace, solidarity and shared responsibility for water resources.", "Community members gather for a collective fishing event, accompanied by music, dance, arts, crafts and customary observances.", "San in the Ségou Region of Mali, at the Sanké pond."),
+          festivalTopic("Yaaral and Degal", "These seasonal gatherings are associated with Fulani pastoral communities moving cattle to and from the inland Niger Delta's floodplains.", "They celebrate pastoral knowledge, cattle heritage, seasonal cooperation, social bonds and the relationship between people, livestock and the environment.", "Communities gather for cattle crossings, decorated herds, poetry, music, dancing and public competitions. The timing follows the flood and grazing cycle.", "The inland Niger Delta in Mali, especially around Diafarabé and the region of Djenné."),
+          festivalTopic("Famadihana (Turning of the Bones)", "Famadihana developed among some Malagasy communities as a family ancestral rite connected to the rewrapping and remembrance of deceased relatives.", "It expresses respect for ancestors, family continuity, remembrance and the enduring bonds between generations.", "Relatives gather, open family tombs according to local custom, rewrap ancestral remains in fresh shrouds, carry them with music and dancing, and share a communal meal. Practices vary and not all Malagasy communities observe it.", "Practised by some communities in the central highlands of Madagascar."),
+          festivalTopic("Lake of Stars Festival", "Founded in the 2000s, Lake of Stars is a contemporary Malawian arts and music festival created to showcase local creativity and connect Malawian performers with international artists.", "It promotes contemporary African music, creative exchange, tourism and cultural collaboration rather than an ancient ritual tradition.", "The programme features live music, dance, visual arts, food and cultural events, with Malawian and international performers.", "Held at venues around Lake Malawi; the host location can vary by edition."),
+          festivalTopic("Cape Town Minstrel Carnival (Kaapse Klopse)", "The carnival has roots in Cape Town's enslaved and working-class communities and developed through New Year street celebrations, performance and local musical traditions.", "It reflects resilience, creativity, community belonging and the cultural history of Cape Town's Coloured communities.", "Organised minstrel troupes parade in colourful uniforms with brass bands, banjos, singing, dancing and competitions.", "Cape Town, Western Cape, South Africa, particularly the city centre and community parade routes.")
         ]
       }
     ],
@@ -1567,13 +1607,13 @@ export default function InfoDiscoveryPage() {
     }
   }, [selected, selectedTopic]);
 
-  const filteredSections = useMemo(() => selected?.sections.map(section => ({ ...section, items: section.items.filter(item => (sectionFilter === "all" || section.title === sectionFilter) && normalise([item.title, item.description, ...item.questions, item.culture?.community || "", item.culture?.history || "", item.culture?.wayOfLife || "", item.culture?.traditions || "", item.culture?.music || ""].join(" ")).includes(normalise(topicFilter.trim()))) })).filter(section => section.items.length > 0) || [], [selected, sectionFilter, topicFilter]);
+  const filteredSections = useMemo(() => selected?.sections.map(section => ({ ...section, items: section.items.filter(item => (sectionFilter === "all" || section.title === sectionFilter) && normalise([item.title, item.description, ...item.questions, item.culture?.community || "", item.culture?.history || "", item.culture?.wayOfLife || "", item.culture?.traditions || "", item.culture?.music || "", item.festival?.origin || "", item.festival?.meaning || "", item.festival?.celebration || "", item.festival?.location || ""].join(" ")).includes(normalise(topicFilter.trim()))) })).filter(section => section.items.length > 0) || [], [selected, sectionFilter, topicFilter]);
   const searchIndex = useMemo(() => categories.flatMap(category => [
     { kind: "area" as const, label: category.title, detail: category.summary, category, slug: category.slug },
     ...allTopics(category).map(item => ({
       kind: "topic" as const,
       label: item.title,
-      detail: [item.section, item.description, item.questions.join(" "), item.culture?.community || "", item.culture?.history || "", item.culture?.wayOfLife || "", item.culture?.traditions || "", item.culture?.music || "", category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : "", category.slug === "agriculture-climate-intelligence" ? AGRICULTURE_SEARCH_TERMS[item.slug] || "" : "", category.slug === "travel-destination" ? TRAVEL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "operational-intelligence" ? OPERATIONAL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "financial-operations" ? FINANCIAL_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
+      detail: [item.section, item.description, item.questions.join(" "), item.culture?.community || "", item.culture?.history || "", item.culture?.wayOfLife || "", item.culture?.traditions || "", item.culture?.music || "", item.festival?.origin || "", item.festival?.meaning || "", item.festival?.celebration || "", item.festival?.location || "", category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : "", category.slug === "agriculture-climate-intelligence" ? AGRICULTURE_SEARCH_TERMS[item.slug] || "" : "", category.slug === "travel-destination" ? TRAVEL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "operational-intelligence" ? OPERATIONAL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "financial-operations" ? FINANCIAL_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
       category,
       slug: item.slug,
     })),
@@ -1915,6 +1955,23 @@ export default function InfoDiscoveryPage() {
               <p className="mt-1 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">
                 {selectedTopic.description}
               </p>
+              {selectedTopic.festival && (
+                <section className="mt-6 space-y-3" aria-label="Festival profile">
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {[
+                      { title: "Origins", text: selectedTopic.festival.origin },
+                      { title: "Cultural meaning", text: selectedTopic.festival.meaning },
+                      { title: "How it is celebrated", text: selectedTopic.festival.celebration },
+                      { title: "Where it takes place", text: selectedTopic.festival.location },
+                    ].map((item) => (
+                      <div key={item.title} className="rounded-xl border border-border bg-background/70 p-4">
+                        <h3 className="text-sm font-semibold">{item.title}</h3>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
               {selectedTopic.culture && (
                 <section className="mt-6 space-y-3" aria-label="Cultural profile">
                   <div className="flex flex-wrap items-center gap-2">
@@ -1937,7 +1994,7 @@ export default function InfoDiscoveryPage() {
                 </section>
               )}
 
-              {!selectedTopic.culture && <div className="mt-6">
+              {!selectedTopic.culture && !selectedTopic.festival && <div className="mt-6">
                 <h3 className="text-sm font-semibold text-foreground">Questions to answer</h3>
                 <div className="mt-3 grid gap-2 md:grid-cols-2">
                   {selectedTopic.questions.map(q => (
@@ -1950,7 +2007,7 @@ export default function InfoDiscoveryPage() {
               </div>}
 
               {/* Ask about this topic alongside evidence checklist */}
-              {!selectedTopic.culture && <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {!selectedTopic.culture && !selectedTopic.festival && <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <AskTopicPanel
                   topicTitle={selectedTopic.title}
                   categoryTitle={selected.title}
@@ -1974,7 +2031,7 @@ export default function InfoDiscoveryPage() {
               </div>}
 
               {/* Project main goal & number to track for schools & organisations */}
-              {!selectedTopic.culture && <ProjectGoalTracker
+              {!selectedTopic.culture && !selectedTopic.festival && <ProjectGoalTracker
                 mainGoal={mainGoal}
                 onChangeMainGoal={setMainGoal}
                 numberToTrack={numberToTrack}
@@ -1982,7 +2039,7 @@ export default function InfoDiscoveryPage() {
               />}
             </article>
 
-            {!selectedTopic.culture && <ResearchPanel initialQuery={selectedTopic.title} />}
+            {!selectedTopic.culture && !selectedTopic.festival && <ResearchPanel initialQuery={selectedTopic.title} />}
             <CategoryProductPanel product={selected.product} />
             {selected.slug === "travel-destination" && (
               <>
@@ -1992,7 +2049,7 @@ export default function InfoDiscoveryPage() {
             )}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
 
-            {!selectedTopic.culture && <p className="text-[11px] text-muted-foreground">
+            {!selectedTopic.culture && !selectedTopic.festival && <p className="text-[11px] text-muted-foreground">
               This topic guide is an investigation structure. It does not itself certify a current visa rule, price, job vacancy, crop condition or organisational finding.
             </p>}
           </section>}
