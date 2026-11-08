@@ -1756,6 +1756,7 @@ export default function InfoDiscoveryPage() {
                   categoryTitle={selected.title}
                   description={selectedTopic.description}
                   questions={selectedTopic.questions}
+                  referenceSources={selected.sources}
                 />
 
                 <div className="rounded-xl border border-border p-4 flex flex-col justify-between">
