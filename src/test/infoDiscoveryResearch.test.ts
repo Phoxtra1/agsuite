@@ -58,6 +58,23 @@ describe("Info Discovery source foundation", () => {
     expect(result.records[0].verificationStatus).toBe("metadata-only");
   });
 
+  it("preserves PubMed identifiers when mapping record summaries", async () => {
+    vi.stubGlobal("fetch", vi.fn(async (url: string) => {
+      if (url.includes("esearch.fcgi")) return jsonResponse({ esearchresult: { idlist: ["12345678", "99999999"] } });
+      if (url.includes("esummary.fcgi")) return jsonResponse({ result: {
+        "12345678": { title: "Health research", pubdate: "2024 Jan", articleids: [], authors: [] },
+      } });
+      return jsonResponse({});
+    }));
+
+    const result = await searchResearchRepositories("health", new AbortController().signal);
+    expect(result.sourceErrors).toHaveLength(0);
+    expect(result.records).toHaveLength(1);
+    expect(result.records[0].id).toBe("pubmed:12345678");
+    expect(result.records[0].url).toBe("https://pubmed.ncbi.nlm.nih.gov/12345678/");
+    expect(result.records[0].year).toBe(2024);
+  });
+
   it("returns available records when one repository is unavailable", async () => {
     const fetchMock = vi.fn()
       .mockResolvedValueOnce(jsonResponse({ message: { items: [] } }))

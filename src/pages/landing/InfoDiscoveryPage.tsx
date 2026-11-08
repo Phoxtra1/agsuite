@@ -361,7 +361,7 @@ const categories: Category[] = [
       { name: "NIST Cybersecurity Framework 2.0", scope: "Govern, identify, protect, detect, respond and recover outcomes for cybersecurity risk", type: "Official standards guidance", url: "https://www.nist.gov/cyberframework" },
       { name: "ISO 31000 Risk Management", scope: "Principles and guidance for managing organisational risk", type: "International standards guidance", url: "https://www.iso.org/iso-31000-risk-management.html" },
     ],
-  },,
+  },
 
   {
     slug: "regulatory-risk-discovery", title: "Regulatory Risk Discovery", icon: ShieldCheck,
