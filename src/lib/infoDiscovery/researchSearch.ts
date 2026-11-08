@@ -161,14 +161,15 @@ async function searchPubMed(query: string, signal: AbortSignal): Promise<Researc
   });
   if (!summaryResponse.ok) throw new Error("Record lookup HTTP " + summaryResponse.status);
   const summaryPayload = await summaryResponse.json();
-  return ids.map(id => summaryPayload?.result?.[id]).filter((item: any) => item?.title).map((item: any) => {
+  return ids.map(id => ({ id, item: summaryPayload?.result?.[id] }))
+    .filter(({ item }) => item?.title).map(({ id, item }) => {
     const doi = item.articleids?.find((identifier: any) => identifier.idtype === "doi")?.value;
     return {
       id: "pubmed:" + id,
       title: cleanText(item.title),
       doi: doi ? normaliseDoi(doi) : undefined,
       url: "https://pubmed.ncbi.nlm.nih.gov/" + id + "/",
-      year: Number(String(item.pubdate || "").match(/\\b(19|20)\\d{2}\\b/)?.[0]) || undefined,
+      year: Number(String(item.pubdate || "").match(/\b(19|20)\d{2}\b/)?.[0]) || undefined,
       authors: (item.authors || []).slice(0, 5).map((author: any) => author.name).filter(Boolean).join(", "),
       publisher: item.fulljournalname || "PubMed indexed journal",
       journal: item.fulljournalname || "",
