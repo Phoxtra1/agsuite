@@ -782,6 +782,43 @@ const categories: Category[] = [
   },
 ];
 
+
+/* Keep these as independent discovery areas in the main area list.
+   Culture and Tradition contains only cultural communities and festivals. */
+const cultureCategory = categories.find(category => category.slug === "culture-and-tradition");
+const kingdomsSection = cultureCategory?.sections.find(section => section.title === "Major African kingdoms");
+const touristSitesSection = cultureCategory?.sections.find(section => section.title === "Tourist sites in Africa");
+
+if (cultureCategory) {
+  cultureCategory.sections = cultureCategory.sections.filter(
+    section => section.title !== "Major African kingdoms" && section.title !== "Tourist sites in Africa"
+  );
+}
+
+if (kingdomsSection) {
+  categories.push({
+    slug: "african-kingdoms",
+    title: "African Kingdoms",
+    icon: Landmark,
+    summary: "Explore major historical kingdoms and royal states that shaped the African continent.",
+    purpose: "Discover major African kingdoms, their histories, political systems and enduring legacies.",
+    sections: [kingdomsSection],
+    sources: [],
+  });
+}
+
+if (touristSitesSection) {
+  categories.push({
+    slug: "african-tourist-sites",
+    title: "African Tourist Sites",
+    icon: Plane,
+    summary: "Discover notable historical, cultural and natural attractions across Africa.",
+    purpose: "Explore notable destinations across Africa, including heritage sites, landscapes and natural attractions.",
+    sections: [touristSitesSection],
+    sources: [],
+  });
+}
+
 const HERO_SCENES = [
   { label: "Knowledge", line: "Explore the subjects, evidence and decisions that shape education, work, organisations and everyday life.", bg: "radial-gradient(circle at 20% 30%, hsl(var(--accent) / 0.35), transparent 55%), linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.85))" },
   { label: "World & places", line: "Learn about countries, cultures, history and how the world works.", bg: "radial-gradient(circle at 80% 20%, hsl(var(--accent) / 0.3), transparent 50%), linear-gradient(200deg, hsl(var(--primary) / 0.9), hsl(var(--primary)))" },
