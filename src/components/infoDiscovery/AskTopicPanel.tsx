@@ -6,6 +6,7 @@ interface InvestigationGuideProps {
   categoryTitle: string;
   description: string;
   questions?: string[];
+  referenceSources?: { name: string; url: string; scope: string }[];
 }
 
 /**
@@ -17,6 +18,7 @@ export function AskTopicPanel({
   topicTitle,
   categoryTitle,
   questions = [],
+  referenceSources = [],
 }: InvestigationGuideProps) {
   const steps = [
     {
@@ -63,6 +65,21 @@ export function AskTopicPanel({
           );
         })}
       </div>
+      {referenceSources.length > 0 && (
+        <div className="mt-4 border-t border-primary/15 pt-3">
+          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Sources
+          </p>
+          <ul className="space-y-2">
+            {referenceSources.slice(0, 4).map((source) => (
+              <li key={source.url} className="rounded-lg border border-border/70 bg-background/70 p-2.5 text-xs">
+                <span className="block font-semibold text-foreground">{source.name}</span>
+                <span className="mt-0.5 block leading-4 text-muted-foreground">{source.scope}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      )}
       <p className="mt-3 text-[10px] leading-4 text-muted-foreground">
         Investigation area: {categoryTitle} · Topic: {topicTitle}
       </p>
