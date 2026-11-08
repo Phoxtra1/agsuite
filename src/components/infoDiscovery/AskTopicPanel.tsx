@@ -1,12 +1,11 @@
 import React from "react";
-import { ArrowUpRight, BookOpenCheck, Compass, FileSearch, ListChecks } from "lucide-react";
+import { BookOpenCheck, Compass, FileSearch, ListChecks } from "lucide-react";
 
 interface InvestigationGuideProps {
   topicTitle: string;
   categoryTitle: string;
   description: string;
   questions?: string[];
-  referenceSources?: { name: string; url: string; scope: string }[];
 }
 
 /**
@@ -18,7 +17,6 @@ export function AskTopicPanel({
   topicTitle,
   categoryTitle,
   questions = [],
-  referenceSources = [],
 }: InvestigationGuideProps) {
   const steps = [
     {
@@ -65,30 +63,6 @@ export function AskTopicPanel({
           );
         })}
       </div>
-      {referenceSources.length > 0 && (
-        <div className="mt-4 border-t border-primary/15 pt-3">
-          <p className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
-            Original sources to begin with
-          </p>
-          <div className="space-y-2">
-            {referenceSources.slice(0, 4).map((source) => (
-              <a
-                key={source.url}
-                href={source.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="flex items-start justify-between gap-2 rounded-lg border border-border/70 bg-background/70 p-2.5 text-xs transition hover:border-primary/30 hover:bg-background"
-              >
-                <span className="min-w-0">
-                  <span className="block font-semibold text-foreground">{source.name}</span>
-                  <span className="mt-0.5 block leading-4 text-muted-foreground">{source.scope}</span>
-                </span>
-                <ArrowUpRight className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-              </a>
-            ))}
-          </div>
-        </div>
-      )}
       <p className="mt-3 text-[10px] leading-4 text-muted-foreground">
         Investigation area: {categoryTitle} · Topic: {topicTitle}
       </p>
