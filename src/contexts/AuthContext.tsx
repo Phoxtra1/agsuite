@@ -14,6 +14,7 @@ import { resetClientState } from "@/lib/auth/resetClientState";
 import { setWorkspaceUser } from "@/lib/workspace/scope";
 import { setWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
 import { useQueryClient } from "@tanstack/react-query";
+import { PUBLIC_AUTH_PAUSED } from "@/lib/auth/availability";
 
 type AuthUser = {
   id: string;
@@ -74,6 +75,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   );
 
   useEffect(() => {
+    if (PUBLIC_AUTH_PAUSED) {
+      setIsLoading(false);
+      return;
+    }
     if (!isSupabaseConfigured) {
       setIsLoading(false);
       return;

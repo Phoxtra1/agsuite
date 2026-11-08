@@ -8,6 +8,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/appwrite/client";
 import { loadAppProfile, type AppProfile } from "@/lib/auth/appProfile";
 import { setWorkspaceUser } from "@/lib/workspace/scope";
+import { PUBLIC_AUTH_PAUSED, TEMPORARY_WORKSPACE_SCOPE } from "@/lib/auth/availability";
 import {
   enrollOfflineWorkspace,
   disableOfflineWorkspace,
@@ -165,7 +166,25 @@ function OfflineEnrollmentPrompt({
   );
 }
 
+function TemporaryWorkspace({ children }: { children: React.ReactNode }) {
+  const [ready, setReady] = useState(false);
+  useEffect(() => {
+    setWorkspaceUser(TEMPORARY_WORKSPACE_SCOPE);
+    setWorkspaceOfflineMode(true);
+    setReady(true);
+    return () => { setWorkspaceOfflineMode(false); setWorkspaceUser(null); };
+  }, []);
+  if (!ready) return null;
+  return <Ctx.Provider value={{ userId: TEMPORARY_WORKSPACE_SCOPE, email: "", appId: null, profile: null, offline: true }}>{children}</Ctx.Provider>;
+}
+
 export function WorkspaceGate({ children }: { children: React.ReactNode }) {
+  return PUBLIC_AUTH_PAUSED
+    ? <TemporaryWorkspace>{children}</TemporaryWorkspace>
+    : <AuthenticatedWorkspaceGate>{children}</AuthenticatedWorkspaceGate>;
+}
+
+function AuthenticatedWorkspaceGate({ children }: { children: React.ReactNode }) {
   const { user, isAuthenticated, isLoading } = useAuth();
   const location = useLocation();
   const [session, setSession] = useState<WorkspaceSession | null>(null);

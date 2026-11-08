@@ -7,6 +7,7 @@ import { useWorkspaceSession } from "@/components/workspace/WorkspaceGate";
 import { createWorkspaceLocalBackup, restoreWorkspaceLocalBackup } from "@/lib/workspace/localStore";
 import { toast } from "sonner";
 import amvLogo from "@/assets/amv_global_logo.png";
+import { PUBLIC_AUTH_PAUSED } from "@/lib/auth/availability";
 
 const items = [
   { to: "/workspace", icon: LayoutGrid, label: "Dashboard", end: true },
@@ -176,8 +177,8 @@ export function WorkspaceNav() {
               {(user?.email?.[0] || "U").toUpperCase()}
             </div>
             <div className="min-w-0 text-xs">
-              <div className="font-medium text-foreground truncate">{user?.email || "Signed in"}</div>
-              <div className="text-muted-foreground">Workspace account</div>
+              <div className="font-medium text-foreground truncate">{PUBLIC_AUTH_PAUSED ? "Guest Workspace" : user?.email || "Signed in"}</div>
+              <div className="text-muted-foreground">{PUBLIC_AUTH_PAUSED ? "Saved on this device" : "Workspace account"}</div>
             </div>
           </div>
           <button
@@ -186,13 +187,13 @@ export function WorkspaceNav() {
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Info Discovery
           </button>
-          <button
+          {!PUBLIC_AUTH_PAUSED && <button
             onClick={() => workspaceSession.offline ? window.location.reload() : logout?.()}
             className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-destructive/10 hover:text-destructive transition"
           >
             {workspaceSession.offline ? <Lock className="h-3.5 w-3.5" /> : <LogOut className="h-3.5 w-3.5" />}
             {workspaceSession.offline ? "Lock Workspace" : "Sign out"}
-          </button>
+          </button>}
         </div>
       </aside>
     </>

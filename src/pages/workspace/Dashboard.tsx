@@ -108,8 +108,7 @@ export default function WorkspaceDashboard() {
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-foreground">Welcome back, {first}.</h1>
         <p className="text-muted-foreground mt-1 text-sm sm:text-base">
-          Signed in as <span className="font-medium text-foreground">{email}</span>. Everything below
-          belongs to this account only.
+          {email ? <>Signed in as <span className="font-medium text-foreground">{email}</span>. Everything below belongs to this account only.</> : "Guest Workspace · Saved on this device"}
         </p>
       </header>
 

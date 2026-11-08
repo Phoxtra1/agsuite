@@ -15,6 +15,7 @@ import worldOfIdeas from "@/assets/info-discovery/world-of-ideas.svg";
 import AuthCard from "@/components/home/AuthCard";
 
 import { getProductIcon } from "@/lib/products";
+import { PUBLIC_AUTH_PAUSED, publicEntryPath } from "@/lib/auth/availability";
 
 type CountryCurrencyOption = {
   id: string;
@@ -137,6 +138,10 @@ export default function HomePage() {
   // Workspace sign-in card instead of leaving the user at product selection.
   useEffect(() => {
     const requestedPath = new URLSearchParams(window.location.search).get("authRedirect");
+    if (PUBLIC_AUTH_PAUSED) {
+      if (requestedPath) navigate(publicEntryPath(requestedPath), { replace: true });
+      return;
+    }
     if (!requestedPath || !decodeURIComponent(requestedPath).startsWith("/workspace") || !workspaceProduct) return;
     if (isAuthenticated) {
       navigate("/workspace", { replace: true });
@@ -147,6 +152,7 @@ export default function HomePage() {
   }, [workspaceProduct, isAuthenticated, navigate]);
 
   const canShowAuthCard = useMemo(() => {
+    if (PUBLIC_AUTH_PAUSED) return false;
     const s = `${selectedProduct?.id || ""} ${selectedProduct?.name || ""} ${selectedProduct?.url || ""}`.toLowerCase();
     if (s.includes("sikas") || s.includes("aminevaops") || s.includes("ops.amineva.com")) return false;
     if (isAgStock) return agStepConfirmed;
@@ -162,6 +168,11 @@ export default function HomePage() {
     const pid = (p.id || "").toLowerCase();
     const pname = (p.name || "").toLowerCase();
     const purl = (p.url || "").toLowerCase();
+    if (PUBLIC_AUTH_PAUSED) {
+      if (pid.includes("workspace") || pname.includes("workspace")) navigate("/workspace");
+      else if (p.url) window.location.assign(p.url);
+      return;
+    }
     const isSikasem =
       pid.includes("aminevaops") ||
       pid.includes("sikas") ||
@@ -201,6 +212,7 @@ export default function HomePage() {
   // Workspace sends signed-out visitors here with ?authRedirect=/workspace…
   // Open the Workspace sign-in card instead of silently showing the homepage.
   useEffect(() => {
+    if (PUBLIC_AUTH_PAUSED) return;
     const target = new URLSearchParams(window.location.search).get("authRedirect") || "";
     if (!target.startsWith("/workspace")) return;
     if (isAuthenticated) { navigate(target, { replace: true }); return; }
