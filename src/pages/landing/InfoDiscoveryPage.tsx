@@ -338,7 +338,8 @@ const categories: Category[] = [
           touristSiteTopic("Maletsunyane Falls", "Lesotho", "Near Semonkong, Maseru District", "Waterfall", "The high waterfall drops into a dramatic gorge in Lesotho's mountain landscape and is known for hiking and adventure activities."),
           touristSiteTopic("Mantenga Cultural Village and Nature Reserve", "Eswatini", "Ezulwini Valley", "Cultural and nature attraction", "The site introduces visitors to aspects of Swazi homestead life, dance and cultural performance, alongside a protected natural area and waterfall.")
         ]
-      },
+      }
+    ],
     sources: [
       { name: "UNESCO Intangible Cultural Heritage", scope: "Documented cultural practices, performance traditions and community heritage", type: "International cultural heritage reference", url: "https://ich.unesco.org/" },
       { name: "Routledge Ethnographic Survey of Africa", scope: "Ethnographic studies covering history, language, cultural features, social organisation and livelihoods", type: "Ethnographic reference collection", url: "https://www.routledge.com/" },
