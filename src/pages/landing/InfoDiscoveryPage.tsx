@@ -2012,7 +2012,7 @@ export default function InfoDiscoveryPage() {
                 const groupAccent = edgeClasses[sectionIndex % edgeClasses.length];
                 return <section key={section.title} className={"rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md " + groupAccent}>
                   <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div>
-                  <div className={selected.slug === "culture-and-tradition" ? "mt-3 grid gap-2 sm:grid-cols-3 xl:grid-cols-4" : "mt-4 grid gap-3 md:grid-cols-2"}>{section.items.map((item, itemIndex) => {}
+                  <div className={selected.slug === "culture-and-tradition" ? "mt-3 grid gap-2 sm:grid-cols-3 xl:grid-cols-4" : "mt-4 grid gap-3 md:grid-cols-2"}>{section.items.map((item, itemIndex) => {
                     const cardEdges = ["border-t-[3px] border-t-primary/80", "border-r-[3px] border-r-accent", "border-b-[3px] border-b-success/70", "border-l-[3px] border-l-primary/65"];
                     const cardAccent = cardEdges[(itemIndex + sectionIndex) % cardEdges.length];
                     return <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className={"group relative flex flex-col rounded-xl border border-border bg-background/70 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 " + (selected.slug === "culture-and-tradition" ? "min-h-24 p-3" : "min-h-36 p-4") + " " + cardAccent}>
