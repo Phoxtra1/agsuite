@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness, Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink, ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass, ArrowUpRight, AlertTriangle, Info, Lightbulb, Bookmark, BookmarkCheck, Printer, Download, FolderPlus, FileCheck2, Wallet, Database, Code, Server, Wrench, Store, Users, BarChart3, CreditCard, Landmark, Package, ShoppingCart, Warehouse } from "lucide-react";
+  ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness, Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink, ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass, ArrowUpRight, AlertTriangle, Info, Lightbulb, Bookmark, BookmarkCheck, Printer, Download, FolderPlus, FileCheck2, Wallet, Code, Server, Wrench, Store, Users, BarChart3, CreditCard, Landmark, Package, ShoppingCart, Warehouse } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -25,7 +25,6 @@ import { VisaChecker } from "@/components/infoDiscovery/VisaChecker";
 import { SavedTopicsDrawer } from "@/components/infoDiscovery/SavedTopicsDrawer";
 import { PopularAndRecent } from "@/components/infoDiscovery/PopularAndRecent";
 import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracker";
-import { DISCOVERY_SOURCES, KNOWLEDGE_SUBJECTS, findRelatedSubjects } from "@/lib/infoDiscovery/sourceRegistry";
 import { searchResearchRepositories, type ResearchRecord } from "@/lib/infoDiscovery/researchSearch";
 
 type Topic = { title: string; description: string; questions: string[] };
@@ -839,9 +838,9 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
       {records.length > 0 && <div className="mt-4 space-y-3">
         {records.map((record, index) => <article key={record.doi || record.url || index} className="rounded-xl border border-border bg-background/60 p-4">
           <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Publication year not supplied"}</Badge><span className="text-[11px] text-muted-foreground">{record.type}</span></div>
-          <h3 className="mt-2 font-semibold leading-6">{record.url ? <a href={record.url} target="_blank" rel="noreferrer" className="hover:text-primary hover:underline">{record.title} <ExternalLink className="inline h-3.5 w-3.5" /></a> : record.title}</h3>
+          <h3 className="mt-2 font-semibold leading-6">{record.title}</h3>
           {(record.authors || record.journal || record.publisher) && <p className="mt-1 text-xs leading-5 text-muted-foreground">{[record.authors, record.journal, record.publisher].filter(Boolean).join(" · ")}</p>}
-          {record.doi && <p className="mt-1 text-[11px] text-muted-foreground">DOI: <a href={"https://doi.org/" + record.doi} target="_blank" rel="noreferrer" className="font-mono text-primary underline underline-offset-2">{record.doi}</a></p>}
+          {record.doi && <p className="mt-1 text-[11px] text-muted-foreground">DOI: <span className="font-mono">{record.doi}</span></p>}
           {record.sources?.length > 0 && <p className="mt-1 text-[10px] text-muted-foreground">Indexed by: {record.sources.join(", ")}{record.openAccess === true ? " · Open-access record" : record.openAccess === false ? " · Open access not confirmed" : ""}</p>}
           {record.subjects?.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{record.subjects.slice(0, 5).map(subject => <Badge key={subject} variant="secondary" className="text-[9px]">{subject}</Badge>)}</div>}
           {record.abstract && <p className="mt-3 text-sm leading-6 text-muted-foreground">{record.abstract}{record.abstract.length >= 900 ? "…" : ""}</p>}
@@ -1336,7 +1335,7 @@ function KnowledgeCompassPage({ onBack }: { onBack: () => void }) {
           {liveRecords.length > 0 && <div className="mt-4 space-y-3">
             {liveRecords.map(record => <article key={record.id} className="rounded-xl border border-border bg-background/60 p-4">
               <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Year not supplied"}</Badge><span className="text-[10px] text-muted-foreground">{record.type}</span><span className="text-[10px] text-muted-foreground">Indexed by {record.sources.join(", ")}</span></div>
-              <h4 className="mt-2 font-semibold leading-6">{record.url ? <a href={record.url} target="_blank" rel="noopener noreferrer" className="hover:text-primary hover:underline">{record.title} <ExternalLink className="inline h-3.5 w-3.5" /></a> : record.title}</h4>
+              <h4 className="mt-2 font-semibold leading-6">{record.title}</h4>
               <p className="mt-1 text-xs text-muted-foreground">{[record.authors, record.journal, record.publisher].filter(Boolean).join(" · ")}</p>
               {record.abstract && <p className="mt-2 text-xs leading-5 text-muted-foreground">{record.abstract}</p>}
               <p className="mt-2 text-[10px] leading-4 text-muted-foreground">Metadata-only match. Check the original publisher/repository, version, licence, corrections and methods before relying on it.</p>
@@ -1565,36 +1564,6 @@ export default function InfoDiscoveryPage() {
       </section>
 
 
-      {!selected && !selectedTopic && (
-        <section aria-labelledby="info-discovery-pillars" className="mx-auto max-w-7xl px-5 pt-8 md:px-8">
-          <div className="overflow-hidden rounded-3xl border border-border bg-card shadow-sm">
-            <div className="border-b border-border bg-gradient-to-r from-primary/[0.08] via-card to-accent/[0.08] p-6 md:p-8">
-              <p className="text-xs font-semibold uppercase tracking-[0.18em] text-accent">The foundation of Info Discovery</p>
-              <h2 id="info-discovery-pillars" className="mt-2 text-2xl font-bold tracking-tight md:text-3xl">Information should be discoverable because it is relevant—not merely because it is visible.</h2>
-              <p className="mt-3 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">Info Discovery is organised around the information a person actually needs. Its purpose is to help uncover relevant knowledge, including material that may be difficult to find through conventional keyword searches or online rankings. Search visibility and SEO are not our measure of what matters.</p>
-            </div>
-            <div className="grid gap-px bg-border sm:grid-cols-2 lg:grid-cols-5">
-              {[
-                { number: "01", title: "Relevance", description: "Prioritise information that genuinely addresses the need—not simply information that ranks highly or attracts traffic." },
-                { number: "02", title: "Context", description: "Understand the circumstances, purpose, location, people and decisions behind the question." },
-                { number: "03", title: "Specificity", description: "Guide people towards precise subjects, resources and details instead of overwhelming them with loosely related results." },
-                { number: "04", title: "Knowledge coverage", description: "Connect knowledge across disciplines, institutions, specialist sources and different areas of life and work." },
-                { number: "05", title: "Discoverability", description: "Help surface useful information that may be overlooked, obscure or difficult to locate through ordinary search." },
-              ].map(pillar => (
-                <article key={pillar.number} className="bg-card p-5 md:p-4 xl:p-5">
-                  <span className="text-xs font-bold tracking-[0.16em] text-accent">{pillar.number}</span>
-                  <h3 className="mt-2 text-base font-semibold">{pillar.title}</h3>
-                  <p className="mt-2 text-xs leading-6 text-muted-foreground">{pillar.description}</p>
-                </article>
-              ))}
-            </div>
-            <div className="border-t border-border px-6 py-4 text-xs leading-6 text-muted-foreground md:px-8">
-              <span className="font-semibold text-foreground">Our distinction:</span> conventional search engines are strongly shaped by what is published, indexed and ranked online. Info Discovery is designed to organise and connect knowledge by relevance and context. Finding material that is not publicly accessible still requires a legitimate source, collection or authorised connection; the system will not pretend to retrieve information it cannot access.
-            </div>
-          </div>
-        </section>
-      )}
-
       {selected?.slug === "career-development-education" && (
         <section aria-label="Career development resources" className="mx-auto max-w-7xl px-5 pt-7 md:px-8">
           <div className="mb-4 flex flex-wrap items-end justify-between gap-3">
@@ -1787,7 +1756,6 @@ export default function InfoDiscoveryPage() {
                   categoryTitle={selected.title}
                   description={selectedTopic.description}
                   questions={selectedTopic.questions}
-                  referenceSources={selected.sources}
                 />
 
                 <div className="rounded-xl border border-border p-4 flex flex-col justify-between">
@@ -1815,7 +1783,7 @@ export default function InfoDiscoveryPage() {
             </article>
 
             <ResearchPanel initialQuery={selectedTopic.title} />
-            <CategorySourcesPanel sources={selected.sources} product={selected.product} showProduct />
+            <CategoryProductPanel product={selected.product} />
             {selected.slug === "travel-destination" && (
               <>
                 <CountryExplorer onCountriesLoaded={setCountryList} />
@@ -1859,7 +1827,6 @@ export default function InfoDiscoveryPage() {
             {selected.slug === "travel-destination" && <CountryExplorer />}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
             <ResearchPanel initialQuery={selected.title} />
-            <CategorySourcesPanel sources={selected.sources} />
 
             {selected.slug === "operational-intelligence" && <div className="rounded-2xl border border-border bg-muted/40 p-5"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-4 w-4 text-accent" /> Authorised evidence only</div><p className="mt-2 text-xs leading-5 text-muted-foreground">Verification and anomaly detection require approved connections to source systems, documented permissions and review controls. This public information area explains the method; it does not claim access to private organisational records.</p></div>}
           </section>}
@@ -1877,7 +1844,7 @@ export default function InfoDiscoveryPage() {
               <div className="grid gap-4 md:grid-cols-2">{categories.map(category => <button key={category.slug} onClick={() => goToCategory(category.slug)} className="group flex h-full flex-col rounded-2xl border border-t-4 border-t-accent/70 border-border bg-card p-5 text-left shadow-sm transition hover:-translate-y-0.5 hover:border-accent/60 hover:shadow-xl"><div className="mb-4 flex items-start justify-between"><span className="rounded-xl border border-primary/10 bg-primary/10 p-3 text-primary"><category.icon className="h-6 w-6" /></span><ArrowRight className="h-5 w-5 text-muted-foreground group-hover:translate-x-1 group-hover:text-primary" /></div><h3 className="text-lg font-semibold">{category.title}</h3><p className="mt-2 flex-1 text-sm leading-6 text-muted-foreground">{category.summary}</p><div className="mt-4 flex flex-wrap gap-1.5">{category.sections.slice(0, 3).map(section => <span key={section.title} className="rounded-full bg-muted px-2.5 py-1 text-[10px] text-muted-foreground">{section.title}</span>)}</div><div className="mt-4 flex items-center border-t border-border pt-3 text-xs font-semibold text-primary">Open subject menu <ChevronRight className="ml-1 h-4 w-4" /></div></button>)}</div>
             </div>
             <ResearchPanel />
-            <InstitutionalSourceDirectory />
+
             <div className="rounded-2xl border border-border bg-card shadow-sm p-5"><div className="flex items-start gap-3"><FileCheck2 className="mt-0.5 h-5 w-5 shrink-0 text-accent" /><div><h2 className="font-semibold">How information is classified</h2><p className="mt-2 text-sm leading-6 text-muted-foreground">Official records, statistical estimates, research publications, reported experiences and analytical interpretations are not interchangeable. Every important claim should be checked against its original publisher, date, jurisdiction, method and verification status.</p></div></div></div>
           </section>}
         </div>
@@ -1895,120 +1862,17 @@ export default function InfoDiscoveryPage() {
   );
 }
 
-function InstitutionalSourceDirectory() {
-  const [sourceQuery, setSourceQuery] = useState("");
-  const [scopeFilter, setScopeFilter] = useState("all");
-  const filteredSources = useMemo(() => {
-    const query = sourceQuery.trim().toLocaleLowerCase();
-    const matchedSubjectIds = KNOWLEDGE_SUBJECTS
-      .filter(subject => [subject.label, ...subject.keywords].some(term => term.toLocaleLowerCase().includes(query) || (query.length > 2 && query.includes(term.toLocaleLowerCase()))))
-      .map(subject => subject.id);
-    const relatedSubjectIds = new Set(findRelatedSubjects(matchedSubjectIds).map(subject => subject.id));
-    return DISCOVERY_SOURCES.filter(source => {
-      const matchesText = !query || [
-        source.name, source.publisher, source.description, ...source.jurisdictions,
-      ].join(" ").toLocaleLowerCase().includes(query);
-      const matchesSubject = !query || source.subjects.some(subject => relatedSubjectIds.has(subject));
-      const matchesScope = scopeFilter === "all" || source.jurisdictions.includes(scopeFilter);
-      return (matchesText || matchesSubject) && matchesScope;
-    });
-  }, [sourceQuery, scopeFilter]);
+function CategoryProductPanel({ product }: { product?: ProductLink }) {
+  if (!product) return null;
 
   return (
     <section className="rounded-2xl border border-border bg-card p-5 shadow-sm md:p-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <div className="flex items-center gap-2 text-sm font-semibold"><Database className="h-4 w-4 text-primary" /> Institutional and specialist source directory</div>
-          <p className="mt-1 max-w-3xl text-xs leading-5 text-muted-foreground">
-            A starting registry of institutional publishers, research indexes and specialist data services. These are source routes—not endorsements of every item they publish.
-          </p>
-        </div>
-        <Badge variant="outline">{filteredSources.length} of {DISCOVERY_SOURCES.length} registered sources</Badge>
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="max-w-2xl text-xs leading-5 text-muted-foreground">{product.introduction}</p>
+        <a href={product.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
+          {product.label} <ArrowUpRight className="h-3.5 w-3.5" />
+        </a>
       </div>
-      <div className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <Input value={sourceQuery} onChange={event => setSourceQuery(event.target.value)} placeholder="Find a publisher, subject, dataset or region" aria-label="Search institutional sources" />
-        <select value={scopeFilter} onChange={event => setScopeFilter(event.target.value)} aria-label="Filter sources by geographic scope" className="h-10 rounded-md border border-input bg-background px-3 text-sm sm:w-56">
-          <option value="all">All geographic scopes</option>
-          {Array.from(new Set(DISCOVERY_SOURCES.flatMap(source => source.jurisdictions))).sort().map(scope => <option key={scope} value={scope}>{scope.replace(/-/g, " ")}</option>)}
-        </select>
-      </div>
-      <div className="mt-3 flex flex-wrap gap-1.5">
-        {KNOWLEDGE_SUBJECTS.map(subject => (
-          <button key={subject.id} type="button" onClick={() => setSourceQuery(subject.label)} className="rounded-full focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <Badge variant={sourceQuery.toLowerCase() === subject.label.toLowerCase() ? "default" : "secondary"} className="font-normal">{subject.label}</Badge>
-          </button>
-        ))}
-      </div>
-      <div className="mt-4 grid gap-3 sm:grid-cols-2">
-        {filteredSources.map(source => (
-          <article key={source.id} className="rounded-xl border border-border bg-background/60 p-3">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <span className="text-xs font-semibold">{source.name}</span>
-              <Badge variant="outline" className="text-[9px]">{source.sourceKind.replace("-", " ")}</Badge>
-            </div>
-            <p className="mt-1 text-[11px] leading-5 text-muted-foreground">{source.description}</p>
-            <div className="mt-2 flex flex-wrap gap-1">
-              {source.subjects.slice(0, 4).map(subject => <span key={subject} className="rounded-full bg-muted px-2 py-0.5 text-[9px] text-muted-foreground">{subject.replace(/-/g, " ")}</span>)}
-            </div>
-            <div className="mt-3 flex items-center justify-between gap-2 border-t border-border pt-2">
-              <span className="text-[9px] text-muted-foreground">Publisher listed · individual records require review</span>
-              <a href={source.canonicalUrl} target="_blank" rel="noopener noreferrer" className="inline-flex shrink-0 items-center gap-1 text-[10px] font-semibold text-primary hover:underline">Visit source <ExternalLink className="h-3 w-3" /></a>
-            </div>
-          </article>
-        ))}
-        {filteredSources.length === 0 && <p className="col-span-full rounded-xl border border-dashed border-border p-5 text-sm text-muted-foreground">No registered source matches those filters. Try a broader subject or geographic scope.</p>}
-      </div>
-      <p className="mt-3 text-[10px] leading-5 text-muted-foreground">
-        Verification rule: a recognised publisher or registered DOI does not automatically verify a document's accuracy, currency, methodology or conclusions. Each specific record must be checked for its original URL, author, date, jurisdiction, document type and evidence before it can receive record-level verified status.
-      </p>
-    </section>
-  );
-}
-
-function CategorySourcesPanel({
-  sources,
-  product,
-  showProduct = false,
-}: {
-  sources: Source[];
-  product?: ProductLink;
-  showProduct?: boolean;
-}) {
-  return (
-    <section className="rounded-2xl border border-border bg-card p-5 shadow-sm md:p-6">
-      <div className="flex items-start gap-3">
-        <Globe2 className="mt-0.5 h-4 w-4 shrink-0 text-primary" />
-        <div>
-          <h2 className="text-sm font-semibold text-foreground">Original sources and useful destinations</h2>
-          <p className="mt-1 text-xs leading-5 text-muted-foreground">
-            Continue with the organisations that publish the underlying information. Check each source's authority, geographic scope, date and methodology before using it.
-          </p>
-        </div>
-      </div>
-      {sources.length > 0 ? (
-        <div className="mt-4 grid gap-2 sm:grid-cols-2">
-          {sources.map((source) => (
-            <a key={source.url} href={source.url} target="_blank" rel="noopener noreferrer" className="group flex items-start justify-between gap-3 rounded-xl border border-border/70 bg-background/60 p-3 transition hover:border-primary/30 hover:bg-muted/30">
-              <span className="min-w-0">
-                <span className="block text-xs font-semibold text-foreground group-hover:text-primary">{source.name}</span>
-                <span className="mt-1 block text-[11px] leading-5 text-muted-foreground">{source.scope}</span>
-                <span className="mt-1 block text-[10px] text-muted-foreground">{source.type}</span>
-              </span>
-              <ExternalLink className="mt-0.5 h-3.5 w-3.5 shrink-0 text-primary" />
-            </a>
-          ))}
-        </div>
-      ) : (
-        <p className="mt-3 text-xs text-muted-foreground">No reference directory has been configured for this area yet. Use the investigation questions to identify the responsible original publisher before relying on a claim.</p>
-      )}
-      {showProduct && product && (
-        <div className="mt-4 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
-          <p className="max-w-2xl text-xs leading-5 text-muted-foreground">{product.introduction}</p>
-          <a href={product.href} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">
-            {product.label} <ArrowUpRight className="h-3.5 w-3.5" />
-          </a>
-        </div>
-      )}
     </section>
   );
 }
