@@ -1902,10 +1902,10 @@ export default function InfoDiscoveryPage() {
             <article ref={topicArticleRef} className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card to-accent/[0.05] p-6 shadow-md md:p-8">
               <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-accent">
-                  <Lightbulb className="h-4 w-4" /> What this topic helps you investigate
+                  <Lightbulb className="h-4 w-4" /> {selectedTopic.culture ? "Culture and tradition" : "What this topic helps you investigate"}
                 </div>
                 <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
-                  Amineva Global Research Topic
+                  {selectedTopic.culture ? "African cultural profile" : "Amineva Global Research Topic"}
                 </Badge>
               </div>
 
@@ -1937,7 +1937,7 @@ export default function InfoDiscoveryPage() {
                 </section>
               )}
 
-              <div className="mt-6">
+              {!selectedTopic.culture && <div className="mt-6">
                 <h3 className="text-sm font-semibold text-foreground">Questions to answer</h3>
                 <div className="mt-3 grid gap-2 md:grid-cols-2">
                   {selectedTopic.questions.map(q => (
@@ -1947,10 +1947,10 @@ export default function InfoDiscoveryPage() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </div>}
 
               {/* Ask about this topic alongside evidence checklist */}
-              <div className="mt-6 grid gap-4 md:grid-cols-2">
+              {!selectedTopic.culture && <div className="mt-6 grid gap-4 md:grid-cols-2">
                 <AskTopicPanel
                   topicTitle={selectedTopic.title}
                   categoryTitle={selected.title}
@@ -1971,18 +1971,18 @@ export default function InfoDiscoveryPage() {
                     Checkpoints: Original Publisher · Jurisdiction & Scope · Observation Year · Methodology Note
                   </div>
                 </div>
-              </div>
+              </div>}
 
               {/* Project main goal & number to track for schools & organisations */}
-              <ProjectGoalTracker
+              {!selectedTopic.culture && <ProjectGoalTracker
                 mainGoal={mainGoal}
                 onChangeMainGoal={setMainGoal}
                 numberToTrack={numberToTrack}
                 onChangeNumberToTrack={setNumberToTrack}
-              />
+              />}
             </article>
 
-            <ResearchPanel initialQuery={selectedTopic.title} />
+            {!selectedTopic.culture && <ResearchPanel initialQuery={selectedTopic.title} />}
             <CategoryProductPanel product={selected.product} />
             {selected.slug === "travel-destination" && (
               <>
@@ -1992,9 +1992,9 @@ export default function InfoDiscoveryPage() {
             )}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
 
-            <p className="text-[11px] text-muted-foreground">
+            {!selectedTopic.culture && <p className="text-[11px] text-muted-foreground">
               This topic guide is an investigation structure. It does not itself certify a current visa rule, price, job vacancy, crop condition or organisational finding.
-            </p>
+            </p>}
           </section>}
 
           {selected && !selectedTopic && <section className="space-y-6">
@@ -2012,13 +2012,13 @@ export default function InfoDiscoveryPage() {
                 const groupAccent = edgeClasses[sectionIndex % edgeClasses.length];
                 return <section key={section.title} className={"rounded-2xl border border-border bg-card p-5 shadow-sm transition-all duration-200 hover:shadow-md " + groupAccent}>
                   <div className="flex items-start justify-between gap-3"><div><h3 className="font-semibold">{section.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{section.description}</p></div><Badge variant="outline">{section.items.length}</Badge></div>
-                  <div className="mt-4 grid gap-3 md:grid-cols-2">{section.items.map((item, itemIndex) => {
+                  <div className={selected.slug === "culture-and-tradition" ? "mt-3 grid gap-2 sm:grid-cols-3 xl:grid-cols-4" : "mt-4 grid gap-3 md:grid-cols-2"}>{section.items.map((item, itemIndex) => {}
                     const cardEdges = ["border-t-[3px] border-t-primary/80", "border-r-[3px] border-r-accent", "border-b-[3px] border-b-success/70", "border-l-[3px] border-l-primary/65"];
                     const cardAccent = cardEdges[(itemIndex + sectionIndex) % cardEdges.length];
-                    return <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className={"group relative flex min-h-36 flex-col rounded-xl border border-border bg-background/70 p-4 text-left shadow-sm transition duration-200 hover:-translate-y-1 hover:bg-card hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 " + cardAccent}>
-                      <span className="flex items-center justify-between gap-2"><span className="text-sm font-semibold">{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span>
+                    return <button key={item.title} onClick={() => goToTopic(selected.slug, slugify(item.title))} className={"group relative flex flex-col rounded-xl border border-border bg-background/70 text-left shadow-sm transition duration-200 hover:-translate-y-0.5 hover:bg-card hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/60 " + (selected.slug === "culture-and-tradition" ? "min-h-24 p-3" : "min-h-36 p-4") + " " + cardAccent}>
+                      <span className="flex items-center justify-between gap-2"><span className={selected.slug === "culture-and-tradition" ? "text-xs font-semibold leading-5" : "text-sm font-semibold"}>{item.title}</span><ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground group-hover:text-primary" /></span>
                       <span className="mt-2 block flex-1 text-xs leading-5 text-muted-foreground">{item.description}</span>
-                      <span className="mt-4 inline-flex items-center gap-1 text-[11px] font-semibold text-primary opacity-80 group-hover:opacity-100">Explore topic <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" /></span>
+                      <span className="mt-3 inline-flex items-center gap-1 text-[10px] font-semibold text-primary opacity-80 group-hover:opacity-100">{selected.slug === "culture-and-tradition" ? "Explore profile" : "Explore topic"} <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" /></span>
                     </button>;
                   })}</div>
                 </section>;
@@ -2026,7 +2026,7 @@ export default function InfoDiscoveryPage() {
             </div>
             {selected.slug === "travel-destination" && <CountryExplorer />}
             {selected.slug === "agriculture-climate-intelligence" && <ClimateExplorer />}
-            <ResearchPanel initialQuery={selected.title} />
+            {selected.slug !== "culture-and-tradition" && <ResearchPanel initialQuery={selected.title} />}
 
             {selected.slug === "operational-intelligence" && <div className="rounded-2xl border border-border bg-muted/40 p-5"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-4 w-4 text-accent" /> Authorised evidence only</div><p className="mt-2 text-xs leading-5 text-muted-foreground">Verification and anomaly detection require approved connections to source systems, documented permissions and review controls. This public information area explains the method; it does not claim access to private organisational records.</p></div>}
           </section>}
