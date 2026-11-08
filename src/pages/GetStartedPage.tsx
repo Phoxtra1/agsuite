@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
+import { PUBLIC_AUTH_PAUSED, publicEntryPath } from "@/lib/auth/availability";
 import { Compass, BriefcaseBusiness } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import AuthCard from "@/components/home/AuthCard";
@@ -24,8 +25,11 @@ export default function GetStartedPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   useEffect(() => {
+    if (PUBLIC_AUTH_PAUSED) return;
     if (!isLoading && isAuthenticated) navigate("/info-discovery", { replace: true });
   }, [isAuthenticated, isLoading, navigate]);
+
+  if (PUBLIC_AUTH_PAUSED) return <Navigate to={publicEntryPath(params.get("returnTo"))} replace />;
 
   return (
     <main className="min-h-[calc(100vh-4rem)] bg-background px-5 py-10 text-foreground md:px-8 md:py-16">
