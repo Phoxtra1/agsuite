@@ -101,7 +101,7 @@ const categories: Category[] = [
   },
   {
     slug: "culture-and-tradition", title: "Culture and Tradition", icon: Globe2,
-    summary: "Explore African communities, their histories, everyday lives, traditions and music, country by country.",
+    summary: "Explore African communities and festivals, their histories, traditions, meanings and celebrations.",
     purpose: "Begin with one cultural community in each of Africa's 54 countries. These profiles are introductions, not claims that one group represents an entire country. Communities are diverse, histories overlap and traditions continue to change.",
     sections: [
       {
@@ -1942,10 +1942,10 @@ export default function InfoDiscoveryPage() {
             <article ref={topicArticleRef} className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card to-accent/[0.05] p-6 shadow-md md:p-8">
               <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-accent">
-                  <Lightbulb className="h-4 w-4" /> {selectedTopic.culture ? "Culture and tradition" : "What this topic helps you investigate"}
+                  <Lightbulb className="h-4 w-4" /> {selectedTopic.culture || selectedTopic.festival ? "Culture and tradition" : "What this topic helps you investigate"}
                 </div>
                 <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
-                  {selectedTopic.culture ? "African cultural profile" : "Amineva Global Research Topic"}
+                  {selectedTopic.festival ? "African festival" : selectedTopic.culture ? "African cultural profile" : "Amineva Global Research Topic"}
                 </Badge>
               </div>
 
@@ -2063,7 +2063,7 @@ export default function InfoDiscoveryPage() {
               <p className="mt-4 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p>
             </div>
             <div><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Subject menu</h2><p className="mt-1 text-sm text-muted-foreground">Search within this area or filter by subject group.</p></div><Badge variant="outline">{filteredSections.reduce((count, section) => count + section.items.length, 0)} matching topics</Badge></div>
-              <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTopicFilter(e.target.value)} placeholder={selected.slug === "culture-and-tradition" ? "Find a country or community" : "Filter topics and questions"} aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
+              <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTopicFilter(e.target.value)} placeholder={selected.slug === "culture-and-tradition" ? "Find a country, community or festival" : "Filter topics and questions"} aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
               {filteredSections.length ? <div className="space-y-4">{filteredSections.map((section, sectionIndex) => {
                 const edgeClasses = ["border-t-4 border-t-primary", "border-r-4 border-r-accent", "border-b-4 border-b-success/75", "border-l-4 border-l-primary/75"];
                 const groupAccent = edgeClasses[sectionIndex % edgeClasses.length];
