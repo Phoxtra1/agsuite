@@ -211,8 +211,6 @@ const categories: Category[] = [
           festivalTopic("Lake of Stars Festival", "Founded in the 2000s, Lake of Stars is a contemporary Malawian arts and music festival created to showcase local creativity and connect Malawian performers with international artists.", "It promotes contemporary African music, creative exchange, tourism and cultural collaboration rather than an ancient ritual tradition.", "The programme features live music, dance, visual arts, food and cultural events, with Malawian and international performers.", "Held at venues around Lake Malawi; the host location can vary by edition."),
           festivalTopic("Cape Town Minstrel Carnival (Kaapse Klopse)", "The carnival has roots in Cape Town's enslaved and working-class communities and developed through New Year street celebrations, performance and local musical traditions.", "It reflects resilience, creativity, community belonging and the cultural history of Cape Town's Coloured communities.", "Organised minstrel troupes parade in colourful uniforms with brass bands, banjos, singing, dancing and competitions.", "Cape Town, Western Cape, South Africa, particularly the city centre and community parade routes.")
         ]
-      }
-    ],
       },
       {
         title: "Major African kingdoms",
