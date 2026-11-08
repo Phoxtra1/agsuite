@@ -1,5 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { cleanup, render, screen } from "@testing-library/react";
+import React, { act } from "react";
+import { createRoot } from "react-dom/client";
 import { PUBLIC_AUTH_PAUSED, publicEntryPath, TEMPORARY_WORKSPACE_SCOPE } from "@/lib/auth/availability";
 import { WorkspaceGate, useWorkspaceSession } from "@/components/workspace/WorkspaceGate";
 import { getWorkspaceUser, setWorkspaceUser } from "@/lib/workspace/scope";
@@ -7,7 +8,7 @@ import { isWorkspaceOfflineMode } from "@/lib/workspace/localAccess";
 
 vi.mock("@/contexts/AuthContext", () => ({ useAuth: () => { throw new Error("Public access must not request authentication"); } }));
 
-afterEach(cleanup);
+afterEach(() => { document.body.innerHTML = ""; });
 
 describe("temporary public access", () => {
   it("opens Workspace without authentication and isolates existing account files", () => {
@@ -17,10 +18,14 @@ describe("temporary public access", () => {
       const session = useWorkspaceSession();
       return <span>{session.userId}</span>;
     }
-    render(<WorkspaceGate><Content /></WorkspaceGate>);
-    expect(screen.getByText(TEMPORARY_WORKSPACE_SCOPE)).toBeTruthy();
+    const container = document.createElement("div");
+    document.body.appendChild(container);
+    const root = createRoot(container);
+    act(() => root.render(<WorkspaceGate><Content /></WorkspaceGate>));
+    expect(container.textContent).toBe(TEMPORARY_WORKSPACE_SCOPE);
     expect(getWorkspaceUser()).toBe(TEMPORARY_WORKSPACE_SCOPE);
     expect(isWorkspaceOfflineMode()).toBe(true);
+    act(() => root.unmount());
   });
 
   it("bypasses sign-in links without permitting external or admin redirects", () => {
