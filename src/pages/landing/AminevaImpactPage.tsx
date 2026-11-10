@@ -225,13 +225,18 @@ export const AminevaImpactPage: FC = () => {
 {/* UNESCO Global Education Coalition approval banner */}
       <section aria-label="UNESCO Global Education Coalition application status" className="max-w-7xl mx-auto px-6 pt-6">
         <div className="flex flex-col gap-3 rounded-2xl bg-primary px-5 py-4 text-primary-foreground shadow-sm sm:flex-row sm:items-center">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10">
-            <Globe className="h-6 w-6" />
+          <div className="flex shrink-0 items-center justify-center rounded-xl bg-white px-3 py-2">
+            <img
+              src="https://upload.wikimedia.org/wikipedia/commons/2/2e/Logo_UNESCO_2021.svg"
+              alt="UNESCO"
+              className="h-9 w-auto"
+              loading="lazy"
+            />
           </div>
           <div className="min-w-0">
-            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-foreground/75">UNESCO Global Education Coalition</p>
-            <p className="mt-0.5 text-base font-bold">Application approved</p>
-            <p className="mt-1 text-sm leading-relaxed text-primary-foreground/85">Amineva Global has received confirmation that its application was approved. Its public profile on the Coalition website is awaiting publication.</p>
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-foreground/75">Member of UNESCO Global Education Coalition</p>
+            <p className="mt-0.5 text-base font-bold">Approval confirmed</p>
+            <p className="mt-1 text-sm leading-relaxed text-primary-foreground/85">Amineva Global has received confirmation of approval to join UNESCO's Global Education Coalition. Our public profile on the Coalition's website is awaiting publication.</p>
           </div>
         </div>
       </section>
