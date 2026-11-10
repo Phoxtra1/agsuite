@@ -280,11 +280,11 @@ export const AminevaImpactPage: FC = () => {
           <div className="space-y-3">
             <Badge className="border-accent/20 bg-accent/10 text-accent">Programme introduction</Badge>
             <h2 className="text-2xl font-bold text-foreground md:text-3xl">Every learner deserves a chance to explore their future.</h2>
-            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">A direct introduction to Amineva Global’s Career Development and Aspiration Programme, its purpose and the importance of early career exploration.</p>
+            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">A direct introduction to Amineva Global’s Career Development and Exploration Program, its purpose and the importance of early career exploration.</p>
             <a href="https://youtu.be/gA_OQ8rpX3Y" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline">Open video on YouTube <ExternalLink className="h-4 w-4" /></a>
           </div>
           <div className="aspect-video w-full max-w-xl justify-self-end overflow-hidden rounded-2xl border border-border bg-black">
-            <iframe className="h-full w-full" src="https://www.youtube.com/embed/gA_OQ8rpX3Y" title="Amineva Global Career Development and Aspiration Programme" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
+            <iframe className="h-full w-full" src="https://www.youtube.com/embed/gA_OQ8rpX3Y" title="Amineva Global Career Development and Exploration Program" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
           </div>
         </div>
       </section>
@@ -313,7 +313,7 @@ export const AminevaImpactPage: FC = () => {
                 viewport={{ once: true }}
                 variants={fadeUp}
                 custom={i}
-                className="group relative overflow-hidden p-6 rounded-2xl border border-border bg-card shadow-sm hover:-translate-y-1 hover:border-accent/50 hover:shadow-lg transition-all duration-300 flex flex-col justify-between focus-within:ring-2 focus-within:ring-accent/40"
+                className="group relative overflow-hidden p-6 rounded-2xl border border-border bg-gradient-to-br from-card via-card to-accent/[0.06] shadow-sm hover:-translate-y-1 hover:border-accent/50 hover:shadow-lg transition-all duration-300 flex flex-col justify-between focus-within:ring-2 focus-within:ring-accent/40 before:absolute before:inset-x-0 before:top-0 before:h-1 before:bg-gradient-to-r before:from-accent/80 before:to-primary/30"
               >
                 <div>
                   <div className="w-12 h-12 rounded-xl border border-accent/20 bg-accent/10 flex items-center justify-center text-accent mb-5 transition-transform duration-300 group-hover:scale-105">
@@ -370,7 +370,7 @@ export const AminevaImpactPage: FC = () => {
                       <p className="text-muted-foreground text-sm leading-relaxed">
                         {activeInit.overview}
                       </p>
-                      <div className="p-4 rounded-xl bg-muted/50 border border-border space-y-1">
+                      <div className="relative overflow-hidden p-5 rounded-2xl bg-gradient-to-br from-accent/10 via-muted/40 to-primary/[0.06] border border-accent/15 space-y-2">
                         <span className="text-xs font-semibold uppercase tracking-wider text-foreground">
                           Core Purpose
                         </span>
@@ -388,7 +388,7 @@ export const AminevaImpactPage: FC = () => {
                         </h4>
                         <div className="grid grid-cols-2 gap-4">
                           {activeInit.verifiedMetrics?.map((m) => (
-                            <div key={m.label} className="p-3 bg-card rounded-xl border border-border">
+                            <div key={m.label} className="relative overflow-hidden p-3.5 bg-gradient-to-br from-card to-accent/[0.07] rounded-xl border border-border shadow-sm"><div className="absolute right-2 top-2 h-8 w-8 rounded-full bg-accent/[0.07]" />
                               <p className="text-xl font-bold text-accent">{m.figure}</p>
                               <p className="text-xs font-medium text-foreground">{m.label}</p>
                               <p className="text-[10px] text-muted-foreground mt-0.5">{m.description}</p>
@@ -397,7 +397,7 @@ export const AminevaImpactPage: FC = () => {
                         </div>
                       </div>
 
-                      <div className="p-6 rounded-2xl border border-border bg-card space-y-3">
+                      <div className="relative overflow-hidden p-6 rounded-2xl border border-border bg-gradient-to-br from-card to-primary/[0.05] space-y-3">
                         <h4 className="text-sm font-semibold uppercase tracking-wider text-foreground flex items-center gap-2">
                           <Users className="w-4 h-4 text-accent" /> Target Beneficiaries
                         </h4>
@@ -422,7 +422,7 @@ export const AminevaImpactPage: FC = () => {
                       {activeInit.objectives.map((obj, idx) => (
                         <div
                           key={idx}
-                          className="p-4 rounded-xl border border-border bg-muted/20 flex items-start gap-3"
+                          className="relative overflow-hidden p-4 rounded-xl border border-border bg-gradient-to-br from-card to-accent/[0.05] flex items-start gap-3 shadow-sm hover:border-accent/35 hover:shadow-md transition-all"
                         >
                           <span className="w-6 h-6 rounded-full bg-accent/10 text-accent font-semibold text-xs flex items-center justify-center flex-shrink-0 mt-0.5">
                             {idx + 1}
@@ -441,19 +441,25 @@ export const AminevaImpactPage: FC = () => {
                       <Briefcase className="w-5 h-5 text-accent" /> Activities & Implementation
                     </h4>
                     <div className="grid md:grid-cols-2 gap-4">
-                      {activeInit.activities.map((act) => (
-                        <div
-                          key={act.title}
-                          className="p-5 rounded-2xl border border-border bg-card hover:border-accent/30 transition"
-                        >
-                          <h5 className="font-semibold text-foreground text-sm mb-1">
-                            {act.title}
-                          </h5>
-                          <p className="text-xs text-muted-foreground leading-relaxed">
-                            {act.description}
-                          </p>
-                        </div>
-                      ))}
+                      {activeInit.activities.map((act, idx) => {
+                        const ActivityIcon = [Compass, Users, MessageSquare, Briefcase][idx % 4];
+                        return (
+                          <div
+                            key={act.title}
+                            className="group relative overflow-hidden p-5 rounded-2xl border border-border bg-gradient-to-br from-card via-card to-primary/[0.045] hover:border-accent/40 hover:shadow-md transition-all"
+                          >
+                            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl border border-accent/15 bg-accent/10 text-accent shadow-sm transition-transform group-hover:scale-105">
+                              <ActivityIcon className="h-5 w-5" />
+                            </div>
+                            <h5 className="font-semibold text-foreground text-sm mb-2">
+                              {act.title}
+                            </h5>
+                            <p className="text-xs text-muted-foreground leading-relaxed">
+                              {act.description}
+                            </p>
+                          </div>
+                        );
+                      })}
                     </div>
                   </div>
                 </div>
@@ -854,19 +860,25 @@ export const AminevaImpactPage: FC = () => {
               </p>
 
               <div className="grid md:grid-cols-2 gap-4 pt-4">
-                {COLLABORATION_CATEGORIES.map((cat) => (
-                  <div
-                    key={cat.title}
-                    className="p-4 rounded-xl border border-border bg-muted/20"
-                  >
-                    <h4 className="font-semibold text-foreground text-xs md:text-sm mb-1">
-                      {cat.title}
-                    </h4>
-                    <p className="text-xs text-muted-foreground">
-                      {cat.description}
-                    </p>
-                  </div>
-                ))}
+                {COLLABORATION_CATEGORIES.map((cat, idx) => {
+                  const CategoryIcon = [BookOpen, Users, Building2, Sparkles][idx % 4];
+                  return (
+                    <div
+                      key={cat.title}
+                      className="group relative overflow-hidden p-5 rounded-2xl border border-border bg-gradient-to-br from-card to-accent/[0.045] shadow-sm hover:-translate-y-0.5 hover:border-accent/40 hover:shadow-md transition-all"
+                    >
+                      <div className="mb-3 flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary transition-transform group-hover:scale-105">
+                        <CategoryIcon className="h-5 w-5" />
+                      </div>
+                      <h4 className="font-semibold text-foreground text-xs md:text-sm mb-1">
+                        {cat.title}
+                      </h4>
+                      <p className="text-xs text-muted-foreground leading-relaxed">
+                        {cat.description}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
 
               <div className="pt-6 flex items-center gap-4 flex-wrap">
@@ -881,7 +893,7 @@ export const AminevaImpactPage: FC = () => {
               </div>
             </div>
 
-            <div className="lg:col-span-5 p-6 rounded-2xl bg-muted/40 border border-border space-y-4">
+            <div className="lg:col-span-5 relative overflow-hidden p-7 rounded-3xl bg-gradient-to-br from-primary/[0.08] via-card to-accent/[0.08] border border-border shadow-inner space-y-4">
               <h3 className="font-bold text-foreground text-base">
                 Why Partner With Us?
               </h3>
