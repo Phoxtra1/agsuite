@@ -50,7 +50,7 @@ const fadeUp = {
 
 const heroSecondaryImage = {
   type: "image" as const,
-  url: "/edu...png",
+  url: "/images/impact/IMG_20261028_084846.jpg",
   title: "Digital Learning & Computer Exposure",
   caption: "Learners gathered with facilitators and computer equipment during a school-based educational engagement.",
   altText: "School learners standing with facilitators and computer equipment during an educational engagement.",
