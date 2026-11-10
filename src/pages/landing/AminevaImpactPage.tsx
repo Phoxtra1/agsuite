@@ -222,6 +222,20 @@ export const AminevaImpactPage: FC = () => {
         </div>
       </section>
 
+{/* UNESCO Global Education Coalition approval banner */}
+      <section aria-label="UNESCO Global Education Coalition application status" className="max-w-7xl mx-auto px-6 pt-6">
+        <div className="flex flex-col gap-3 rounded-2xl bg-primary px-5 py-4 text-primary-foreground shadow-sm sm:flex-row sm:items-center">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-white/10">
+            <Globe className="h-6 w-6" />
+          </div>
+          <div className="min-w-0">
+            <p className="text-[11px] font-semibold uppercase tracking-wider text-primary-foreground/75">UNESCO Global Education Coalition</p>
+            <p className="mt-0.5 text-base font-bold">Application approved</p>
+            <p className="mt-1 text-sm leading-relaxed text-primary-foreground/85">Amineva Global has received confirmation that its application was approved. Its public profile on the Coalition website is awaiting publication.</p>
+          </div>
+        </div>
+      </section>
+
       {/* IMPACT SNAPSHOT */}
       <section className="max-w-7xl mx-auto px-6 -mt-1">
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 md:gap-4 py-6">
@@ -230,7 +244,7 @@ export const AminevaImpactPage: FC = () => {
               <School className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">3</p>
+              <p className="text-2xl font-bold text-foreground">5</p>
               <p className="text-xs text-muted-foreground">School engagements documented</p>
             </div>
           </div>
@@ -266,16 +280,6 @@ export const AminevaImpactPage: FC = () => {
           </div>
           <div className="aspect-video w-full max-w-xl justify-self-end overflow-hidden rounded-2xl border border-border bg-black">
             <iframe className="h-full w-full" src="https://www.youtube.com/embed/gA_OQ8rpX3Y" title="Amineva Global Career Development and Aspiration Programme" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
-          </div>
-        </div>
-      </section>
-      {/* UNESCO Global Education Coalition application status */}
-      <section className="max-w-7xl mx-auto px-6 pb-8">
-        <div className="flex flex-col gap-3 rounded-2xl border border-accent/25 bg-accent/[0.06] px-5 py-4 sm:flex-row sm:items-center">
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent"><Globe className="h-5 w-5" /></div>
-          <div>
-            <p className="text-sm font-semibold text-foreground">UNESCO Global Education Coalition — application accepted</p>
-            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Amineva Global has received email confirmation that its application was approved. The public profile listing is pending. This status notice does not imply endorsement of the programme by UNESCO.</p>
           </div>
         </div>
       </section>
@@ -623,7 +627,7 @@ export const AminevaImpactPage: FC = () => {
               {/* Highlight Banner */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 rounded-2xl bg-accent/10 border border-accent/20 text-center">
                 <div className="p-2">
-                  <div className="text-2xl font-bold text-foreground">3</div>
+                  <div className="text-2xl font-bold text-foreground">5</div>
                   <div className="text-xs text-muted-foreground mt-0.5">Schools Engaged</div>
                 </div>
                 <div className="p-2">
