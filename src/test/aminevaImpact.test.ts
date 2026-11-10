@@ -48,6 +48,7 @@ describe("Amineva Impact Data Layer", () => {
     expect(engagement?.beneficiariesCount).toBe("600+");
     expect(engagement?.topicsCovered.length).toBeGreaterThan(0);
     expect(engagement?.schoolName).toBe("School Engagement");
+    expect(INITIATIVES.find((i) => i.id === "career-development")?.verifiedMetrics?.find((m) => m.label === "Schools Engaged")?.figure).toBe("5");
     expect(SCHOOL_ACTIVITY_IMAGES).toHaveLength(8);
         const photoUrls = SCHOOL_ACTIVITY_IMAGES.map((photo) => photo.url);
         expect(photoUrls).toContain("/edu......png");
