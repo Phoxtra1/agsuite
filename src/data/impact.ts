@@ -130,15 +130,13 @@ export const FOCUS_AREAS: FocusArea[] = [
 
 export const SCHOOL_ACTIVITY_IMAGES: MediaItem[] = [
   { type: "image", url: "/images/impact/IMG_20261028_084846.jpg", title: "Career Guidance in the Classroom", caption: "A facilitator speaking with learners during a school-based career development session.", altText: "A facilitator addressing learners in a classroom." },
-  { type: "image", url: "/images/impact/impact-school-engagement.webp", title: "Classroom Career Discussion", caption: "Learners listening and participating during a career development session.", altText: "Students in a classroom during a career development session." },
   { type: "image", url: "/images/impact/IMG_20261028_084908.jpg", title: "Learner Participation", caption: "Learners taking part in a school engagement documented by Amineva Global.", altText: "Learners participating in a school activity." },
-  { type: "image", url: "/images/impact/impact-school-engagement-hero.webp", title: "A Full Classroom Engagement", caption: "A classroom of learners gathered for a career development and exploration session.", altText: "A large group of learners seated in a classroom." },
   { type: "image", url: "/images/impact/IMG_20261028_090003.jpg", title: "Student Engagement", caption: "A further moment from the programme's school activities.", altText: "Students during a school-based programme activity." },
   { type: "image", url: "/images/impact/IMG_20261028_090243.jpg", title: "Interactive Learning", caption: "Learners and facilitators during an interactive school session.", altText: "Learners and a facilitator during a classroom session." },
   { type: "image", url: "/edu......png", title: "Digital Learning & Computer Exposure", caption: "Learners and facilitators during a school-based digital learning engagement.", altText: "School learners with facilitators and computer equipment during an educational engagement." },
   { type: "image", url: "/edu...png", title: "Digital Learning & Computer Exposure", caption: "Learners and facilitators during a school-based digital learning engagement.", altText: "School learners with facilitators beside computer equipment." },
-  { type: "image", url: "/saleria1.jpg", title: "Saleria 1", caption: "A documented moment from an Amineva Global school engagement.", altText: "Learners participating in a school-based career development programme." },
-  { type: "image", url: "/saleria2.jpg", title: "Saleria 2", caption: "A further documented moment from an Amineva Global school engagement.", altText: "Learners participating in a school-based career development programme." },
+  { type: "image", url: "/saleria1.jpg", title: "Career Exploration in the Classroom", caption: "Learners taking part in an Amineva Global career development and exploration session.", altText: "Learners participating in a school-based career development programme." },
+  { type: "image", url: "/saleria2.jpg", title: "Learner Participation and Discovery", caption: "A further moment showing learners engaged in the career development programme.", altText: "Learners participating in a school-based career development programme." },
 ];
 
 export const INITIATIVES: Initiative[] = [
