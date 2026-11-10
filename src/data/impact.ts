@@ -26,7 +26,7 @@ export interface SchoolEngagement {
   date: string;
   summary: string;
   topicsCovered: string[];
-  beneficiariesCount: number;
+  beneficiariesCount: number | string;
 }
 
 export interface VerifiedMetric {
@@ -74,6 +74,8 @@ export interface CollaborationCategory {
   description: string;
   examples: string[];
 }
+
+export const IMPACT_VIDEO_ID = "gA_OQ8rpX3Y";
 
 export const IMPACT_INTRO = {
   headline: "Educational, Social and Community Initiatives by Amineva Global",
@@ -127,69 +129,14 @@ export const FOCUS_AREAS: FocusArea[] = [
 ];
 
 export const SCHOOL_ACTIVITY_IMAGES: MediaItem[] = [
-  {
-    type: "image",
-    url: "/images/impact/IMG_20261028_084846.jpg",
-    title: "Basic School Interactive Career Session",
-    caption:
-      "Students actively engaged in group discussions on emerging careers and future educational planning.",
-    altText:
-      "Learners participating in a structured career awareness outreach conducted by Amineva Impact.",
-  },
-  {
-    type: "image",
-    url: "/images/impact/IMG_20261028_084908.jpg",
-    title: "Classroom Workshop & Practical Guidance",
-    caption:
-      "Facilitators sharing foundational career pathways, vocational skills, and self-discovery concepts.",
-    altText:
-      "Classroom workshop introducing students to career awareness and foundational goals.",
-  },
-  {
-    type: "image",
-    url: "/images/impact/IMG_20261028_090003.jpg",
-    title: "Student Engagement & Self-Discovery",
-    caption:
-      "Learners reflecting on their personal talents, technical curiosity, and academic strengths.",
-    altText:
-      "Basic school students engaged in self-discovery and career development activities.",
-  },
-  {
-    type: "image",
-    url: "/images/impact/IMG_20261028_090243.jpg",
-    title: "Collaborative Career Mentorship",
-    caption:
-      "Interactive questions and answers guiding students toward meaningful educational choices.",
-    altText:
-      "Students and facilitators during an Amineva Impact career mentorship session.",
-  },
-  {
-    type: "image",
-    url: "/edu......png",
-    title: "Classroom Engagement & Educational Support",
-    caption:
-      "A learner receives educational materials during a school engagement, with classmates gathered for the session.",
-    altText:
-      "An Amineva Global facilitator and learners sharing educational materials in a classroom while other students observe.",
-  },
-  {
-    type: "image",
-    url: "/edu...png",
-    title: "Digital Learning & Computer Exposure",
-    caption:
-      "Learners and facilitators come together around computer equipment during a school-based digital learning engagement.",
-    altText:
-      "School learners standing with facilitators beside laptops and computer equipment during an educational engagement.",
-  },
-  {
-    type: "image",
-    url: "/eduu.png",
-    title: "School Learning & Student Participation",
-    caption:
-      "A further moment from the school outreach, documenting learners taking part in an educational activity.",
-    altText:
-      "Students participating in a school-based educational engagement documented by Amineva Global.",
-  },
+  { type: "image", url: "/images/impact/IMG_20261028_084846.jpg", title: "Career Guidance in the Classroom", caption: "A facilitator speaking with learners during a school-based career development session.", altText: "A facilitator addressing learners in a classroom." },
+  { type: "image", url: "/images/impact/odorkor-session-1.webp", title: "Classroom Career Discussion", caption: "Learners listening and participating during a career development session.", altText: "Students in a classroom during a career development session." },
+  { type: "image", url: "/images/impact/IMG_20261028_084908.jpg", title: "Learner Participation", caption: "Learners taking part in a school engagement documented by Amineva Global.", altText: "Learners participating in a school activity." },
+  { type: "image", url: "/images/impact/odorkor-session-2.webp", title: "A Full Classroom Engagement", caption: "A classroom of learners gathered for a career development and exploration session.", altText: "A large group of students seated in a classroom." },
+  { type: "image", url: "/images/impact/IMG_20261028_090003.jpg", title: "Student Engagement", caption: "A further moment from the programme’s school activities.", altText: "Students during a school-based programme activity." },
+  { type: "image", url: "/images/impact/IMG_20261028_090243.jpg", title: "Interactive Learning", caption: "Learners and facilitators during an interactive school session.", altText: "Learners and a facilitator during a classroom session." },
+  { type: "image", url: "/edu...png", title: "Digital Learning & Computer Exposure", caption: "Learners and facilitators during a school-based digital learning engagement.", altText: "School learners with facilitators beside computer equipment." },
+  { type: "image", url: "/eduu.png", title: "School Learning & Student Participation", caption: "A further moment from an educational engagement documented by Amineva Global.", altText: "Students participating in a school-based educational activity." },
 ];
 
 export const INITIATIVES: Initiative[] = [
@@ -241,18 +188,18 @@ export const INITIATIVES: Initiative[] = [
     ],
     schoolEngagements: [
       {
-        schoolName: "Community Basic School Engagement",
-        location: "Ashanti Region, Ghana",
-        date: "October 2024",
+        schoolName: "School Engagement",
+        location: "Odorkor, Ghana",
+        date: "October 2026",
         summary:
-          "Interactive career awareness outreach engaging junior high school learners on future career choices, practical skills, and independent goal setting.",
+          "More than 600 learners were engaged during one school visit across Form One, Form Two and Form Three.",
         topicsCovered: [
           "Understanding standard vs emerging career fields",
           "Identifying personal strengths and interests",
           "Combining practical skills with classroom learning",
           "How to talk to parents about career goals",
         ],
-        beneficiariesCount: 1000,
+        beneficiariesCount: "600+",
       },
     ],
     media: SCHOOL_ACTIVITY_IMAGES,
@@ -267,7 +214,7 @@ export const INITIATIVES: Initiative[] = [
         date: "High Participation",
         title: "Learners Interest & Practical Discovery",
         summary:
-          "1,000 learners actively participating in discovery exercises, asking proactive questions about modern careers, and showing keen curiosity toward hands-on skills.",
+          "More than 600 learners engaged across Form One, Form Two and Form Three during one school visit. Two additional school engagements were also conducted; their learner totals are recorded separately.",
       },
       {
         date: "Next Quarter",
@@ -283,8 +230,8 @@ export const INITIATIVES: Initiative[] = [
       },
     ],
     achievements: [
-      "Number of schools engaged: 5 basic schools successfully reached through direct on-ground sessions.",
-      "Students participated: 1,000 learners actively involved in career discovery workshops.",
+      "Three school engagements completed, with activities delivered across different school settings.",
+      "More than 600 learners engaged during one school visit. Learner totals from the other two school engagements are not included in this figure.",
       "Realization of career foundation and importance: Students developed early understanding of how academic focus connects directly to life goals.",
       "Discovery of practical abilities: Learners identified personal strengths, hands-on talents, and vocational curiosity beyond conventional textbooks.",
       "Career alignment & capacity building: Established foundational frameworks guiding students toward purposeful career selection and skills building.",
@@ -293,13 +240,13 @@ export const INITIATIVES: Initiative[] = [
     verifiedMetrics: [
       {
         label: "Schools Engaged",
-        figure: "5",
+        figure: "3",
         description: "Basic schools directly engaged with structured outreach",
       },
       {
         label: "Students Participated",
-        figure: "1,000",
-        description: "Learners empowered through career workshops",
+        figure: "600+",
+        description: "Learners reached during one school visit",
       },
       {
         label: "Active Focus",

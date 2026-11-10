@@ -4,6 +4,7 @@ import {
   INITIATIVES,
   COLLABORATION_CATEGORIES,
   IMPACT_INTRO,
+  SCHOOL_ACTIVITY_IMAGES,
 } from "../data/impact";
 
 describe("Amineva Impact Data Layer", () => {
@@ -44,8 +45,10 @@ describe("Amineva Impact Data Layer", () => {
     expect(careerDev?.schoolEngagements).toBeDefined();
     expect(careerDev?.schoolEngagements?.length).toBeGreaterThan(0);
     const engagement = careerDev?.schoolEngagements?.[0];
-    expect(engagement?.beneficiariesCount).toBe(1000);
+    expect(engagement?.beneficiariesCount).toBe("600+");
     expect(engagement?.topicsCovered.length).toBeGreaterThan(0);
+    expect(engagement?.schoolName).toBe("School Engagement");
+    expect(SCHOOL_ACTIVITY_IMAGES).toHaveLength(8);
   });
 
   it("contains institutional collaboration categories and contact links", () => {

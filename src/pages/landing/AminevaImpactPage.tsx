@@ -50,7 +50,7 @@ const fadeUp = {
 
 const heroSecondaryImage = {
   type: "image" as const,
-  url: "/edu...png",
+  url: "/images/impact/IMG_20261028_084846.jpg",
   title: "Digital Learning & Computer Exposure",
   caption: "Learners gathered with facilitators and computer equipment during a school-based educational engagement.",
   altText: "School learners standing with facilitators and computer equipment during an educational engagement.",
@@ -168,7 +168,7 @@ export const AminevaImpactPage: FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedImage({
-                  url: "/edu......png",
+                  url: "/images/impact/odorkor-session-1.webp",
                   title: "Classroom Engagement & Learner Participation",
                   altText: "A facilitator and learners share a moment during a classroom engagement, with classmates gathered in the room.",
                   caption: "A classroom moment from a school engagement documented by Amineva Global.",
@@ -177,7 +177,7 @@ export const AminevaImpactPage: FC = () => {
                 aria-label="View classroom engagement photograph"
               >
                 <img
-                  src="/edu......png"
+                  src="/images/impact/odorkor-session-1.webp"
                   alt="A facilitator and learners share a moment during a classroom engagement, with classmates gathered in the room."
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   loading="eager"
@@ -230,8 +230,8 @@ export const AminevaImpactPage: FC = () => {
               <School className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">5</p>
-              <p className="text-xs text-muted-foreground">Schools engaged</p>
+              <p className="text-2xl font-bold text-foreground">3</p>
+              <p className="text-xs text-muted-foreground">School engagements documented</p>
             </div>
           </div>
           <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 md:p-5 shadow-sm">
@@ -239,8 +239,8 @@ export const AminevaImpactPage: FC = () => {
               <Users className="h-5 w-5" />
             </div>
             <div>
-              <p className="text-2xl font-bold text-foreground">1,000</p>
-              <p className="text-xs text-muted-foreground">Learners reached</p>
+              <p className="text-2xl font-bold text-foreground">600+</p>
+              <p className="text-xs text-muted-foreground">Learners at one school engagement</p>
             </div>
           </div>
           <div className="flex items-center gap-4 rounded-2xl border border-border bg-card p-4 md:p-5 shadow-sm">
@@ -255,6 +255,30 @@ export const AminevaImpactPage: FC = () => {
         </div>
       </section>
 
+      {/* Compact programme video */}
+      <section id="programme-video" className="max-w-7xl mx-auto px-6 py-8 md:py-12">
+        <div className="grid items-center gap-6 rounded-3xl border border-border bg-card p-5 shadow-sm md:grid-cols-[minmax(0,1fr)_minmax(280px,0.82fr)] md:p-7">
+          <div className="space-y-3">
+            <Badge className="border-accent/20 bg-accent/10 text-accent">Programme introduction</Badge>
+            <h2 className="text-2xl font-bold text-foreground md:text-3xl">Every learner deserves a chance to explore their future.</h2>
+            <p className="max-w-xl text-sm leading-relaxed text-muted-foreground">A direct introduction to Amineva Global’s Career Development and Aspiration Programme, its purpose and the importance of early career exploration.</p>
+            <a href="https://youtu.be/gA_OQ8rpX3Y" target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline">Open video on YouTube <ExternalLink className="h-4 w-4" /></a>
+          </div>
+          <div className="aspect-video w-full max-w-xl justify-self-end overflow-hidden rounded-2xl border border-border bg-black">
+            <iframe className="h-full w-full" src="https://www.youtube.com/embed/gA_OQ8rpX3Y" title="Amineva Global Career Development and Aspiration Programme" loading="lazy" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerPolicy="strict-origin-when-cross-origin" allowFullScreen />
+          </div>
+        </div>
+      </section>
+      {/* UNESCO Global Education Coalition application status */}
+      <section className="max-w-7xl mx-auto px-6 pb-8">
+        <div className="flex flex-col gap-3 rounded-2xl border border-accent/25 bg-accent/[0.06] px-5 py-4 sm:flex-row sm:items-center">
+          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-accent/10 text-accent"><Globe className="h-5 w-5" /></div>
+          <div>
+            <p className="text-sm font-semibold text-foreground">UNESCO Global Education Coalition — application accepted</p>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Amineva Global has received email confirmation that its application was approved. The public profile listing is pending. This status notice does not imply endorsement of the programme by UNESCO.</p>
+          </div>
+        </div>
+      </section>
       {/* SECTION B: OUR FOCUS AREAS */}
       <section className="max-w-7xl mx-auto py-20 px-6">
         <div className="text-center mb-14">
@@ -599,12 +623,12 @@ export const AminevaImpactPage: FC = () => {
               {/* Highlight Banner */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 p-5 rounded-2xl bg-accent/10 border border-accent/20 text-center">
                 <div className="p-2">
-                  <div className="text-2xl font-bold text-foreground">5</div>
+                  <div className="text-2xl font-bold text-foreground">3</div>
                   <div className="text-xs text-muted-foreground mt-0.5">Schools Engaged</div>
                 </div>
                 <div className="p-2">
-                  <div className="text-2xl font-bold text-foreground">1,000</div>
-                  <div className="text-xs text-muted-foreground mt-0.5">Students Participated</div>
+                  <div className="text-2xl font-bold text-foreground">600+</div>
+                  <div className="text-xs text-muted-foreground mt-0.5">Learners at one school engagement</div>
                 </div>
                 <div className="p-2">
                   <div className="text-2xl font-bold text-foreground">Foundations</div>
