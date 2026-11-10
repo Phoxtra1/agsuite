@@ -189,7 +189,7 @@ export const INITIATIVES: Initiative[] = [
     schoolEngagements: [
       {
         schoolName: "School Engagement",
-        location: "Ghana",
+        location: "Odorkor, Ghana",
         date: "October 2026",
         summary:
           "More than 600 learners were engaged during one school visit across Form One, Form Two and Form Three.",
