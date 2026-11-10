@@ -214,7 +214,7 @@ export const INITIATIVES: Initiative[] = [
         date: "High Participation",
         title: "Learners Interest & Practical Discovery",
         summary:
-          "More than 600 learners engaged across Form One, Form Two and Form Three during one school visit. Two additional school engagements were also conducted; their learner totals are recorded separately.",
+          "More than 600 learners engaged across Form One, Form Two and Form Three during one school visit. Four additional schools were also engaged; their learner totals are recorded separately.",
       },
       {
         date: "Next Quarter",
@@ -230,7 +230,7 @@ export const INITIATIVES: Initiative[] = [
       },
     ],
     achievements: [
-      "Three school engagements completed, with activities delivered across different school settings.",
+      "Five schools engaged through the Career Development and Exploration Program.",
       "More than 600 learners engaged during one school visit. Learner totals from the other two school engagements are not included in this figure.",
       "Realization of career foundation and importance: Students developed early understanding of how academic focus connects directly to life goals.",
       "Discovery of practical abilities: Learners identified personal strengths, hands-on talents, and vocational curiosity beyond conventional textbooks.",
@@ -240,7 +240,7 @@ export const INITIATIVES: Initiative[] = [
     verifiedMetrics: [
       {
         label: "Schools Engaged",
-        figure: "3",
+        figure: "5",
         description: "Basic schools directly engaged with structured outreach",
       },
       {
