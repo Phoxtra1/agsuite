@@ -48,13 +48,15 @@ describe("Amineva Impact Data Layer", () => {
     expect(engagement?.beneficiariesCount).toBe("600+");
     expect(engagement?.topicsCovered.length).toBeGreaterThan(0);
     expect(engagement?.schoolName).toBe("School Engagement");
-    expect(SCHOOL_ACTIVITY_IMAGES).toHaveLength(10);
+    expect(SCHOOL_ACTIVITY_IMAGES).toHaveLength(8);
         const photoUrls = SCHOOL_ACTIVITY_IMAGES.map((photo) => photo.url);
         expect(photoUrls).toContain("/edu......png");
         expect(photoUrls).toContain("/edu...png");
         expect(photoUrls).toContain("/saleria1.jpg");
         expect(photoUrls).toContain("/saleria2.jpg");
-        expect(photoUrls).not.toContain("/eduu.png");
+            expect(photoUrls).not.toContain("/eduu.png");
+        expect(photoUrls).not.toContain("/images/impact/impact-school-engagement.webp");
+        expect(photoUrls).not.toContain("/images/impact/impact-school-engagement-hero.webp");
   });
 
   it("contains institutional collaboration categories and contact links", () => {
