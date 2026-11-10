@@ -168,17 +168,17 @@ export const AminevaImpactPage: FC = () => {
               <button
                 type="button"
                 onClick={() => setSelectedImage({
-                  url: "/images/impact/odorkor-session-1.webp",
+                  url: "/saleria1.jpg",
                   title: "Classroom Engagement & Learner Participation",
-                  altText: "A facilitator and learners share a moment during a classroom engagement, with classmates gathered in the room.",
-                  caption: "A classroom moment from a school engagement documented by Amineva Global.",
+                  altText: "Learners gathered for a school-based career development and exploration session.",
+                  caption: "A real school-engagement photograph from Amineva Global.",
                 })}
                 className="group relative col-span-8 row-span-2 overflow-hidden rounded-3xl border border-border bg-muted text-left shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent"
                 aria-label="View classroom engagement photograph"
               >
                 <img
-                  src="/images/impact/odorkor-session-1.webp"
-                  alt="A facilitator and learners share a moment during a classroom engagement, with classmates gathered in the room."
+                  src="/saleria1.jpg"
+                  alt="Learners gathered for a school-based career development and exploration session."
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
                   loading="eager"
                 />
