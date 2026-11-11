@@ -26,6 +26,8 @@ export type DiscoveryReviewEvidence = {
   originalSourceChecked: boolean;
   versionAndCorrectionsChecked: boolean;
   rightsAndAccessChecked: boolean;
+  jurisdictionAndPublicationDateChecked: boolean;
+  findingsAndLegalStatusChecked: boolean;
   reviewNote: string;
   rightsBasis: string;
 };
@@ -63,6 +65,8 @@ export function validateDiscoveryReview(evidence: DiscoveryReviewEvidence): stri
   if (!evidence.originalSourceChecked) errors.push("Check the original publisher or institutional repository record.");
   if (!evidence.versionAndCorrectionsChecked) errors.push("Check the document version, date and any corrections or withdrawals.");
   if (!evidence.rightsAndAccessChecked) errors.push("Confirm the access conditions and rights to link to or distribute the document.");
+  if (!evidence.jurisdictionAndPublicationDateChecked) errors.push("Confirm the jurisdiction, issuing institution and publication date against the original record.");
+  if (!evidence.findingsAndLegalStatusChecked) errors.push("Check that allegations, investigative findings, recommendations, charges and court outcomes are accurately distinguished.");
   if (!evidence.rightsBasis.trim()) errors.push("Record the licence, permission or other rights basis.");
   if (!evidence.reviewNote.trim()) errors.push("A reviewer note is required.");
   return errors;
