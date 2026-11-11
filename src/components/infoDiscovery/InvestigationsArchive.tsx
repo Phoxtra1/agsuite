@@ -12,15 +12,16 @@ const INITIAL_INVESTIGATIONS = [{
   publisher: "Office of the Special Prosecutor, Ghana",
   year: 2022,
   jurisdiction: "Ghana",
-  type: "Completed official investigation",
-  status: "Investigation report published · 3 August 2022",
+  type: "Published official investigation report",
+  status: "Labianca complaint report published · 3 August 2022; wider Customs inquiry subsequently opened",
   summary: "The OSP investigated a complaint concerning customs advance rulings and reduced benchmark values for imported frozen foods. Its report found that a 5–10% reduction had been granted without meeting the statutory requirements it identified, and calculated a revenue shortfall of GH¢1,074,627.15 across 531 import declarations. The report records that Labianca complied with the OSP's directive to repay that amount on 31 March 2022.",
   method: "The published report describes review of company and customs documents, including payment records, contracts, invoices, bills of lading, sales books, customs ruling applications and tax returns, as well as interviews with relevant individuals. The OSP states that interviewees were given an opportunity to respond and were represented by counsel.",
-  outcome: "The OSP report records repayment of GH¢1,074,627.15 and directs an integrity plan for the Customs Division. A later OSP press release states that the discretionary discount on FOB values of general goods and HDV of vehicles was reversed with effect from 1 January 2023. This is an official investigation and administrative outcome, not a court judgment or a statement that every person named was convicted.",
+  outcome: "The OSP report records repayment of GH¢1,074,627.15 and directs an integrity plan for the Customs Division. It also directed a wider investigation into customs advance rulings and benchmark-value markdowns from July 2017 to December 2021; the OSP’s public case profile continues to list that wider Customs Division investigation as ongoing. A later OSP press release states that the discretionary discount on FOB values of general goods and HDV of vehicles was reversed with effect from 1 January 2023. These are findings and administrative developments reported by the OSP, not a court judgment or a statement that every person named was convicted.",
   sources: [
     { label: "Read the OSP investigation report (PDF)", url: "https://osp.gov.gh/media/Resources/osp_investigation_report_labianca.pdf" },
     { label: "OSP press release on reversal of customs discounts", url: "https://osp.gov.gh/media_center/press_details/ghana-revenue-authority-reversal-of-discount-on-fob-value-of-general-goods-and-hdv-of-vehicles" },
-    { label: "OSP investigation and impact record", url: "https://osp.gov.gh/media_center/impact" }
+    { label: "OSP investigation and impact record", url: "https://osp.gov.gh/media_center/impact" },
+    { label: "OSP case profile: wider Customs Division investigation", url: "https://osp.gov.gh/case_files/case_profile/9/cases/" }
   ],
   keywords: "Labianca customs Ghana customs advance ruling frozen foods benchmark values OSP investigation 531 declarations repayment integrity plan"
 }];
@@ -70,7 +71,7 @@ export function InvestigationsArchive() {
         <Badge variant="outline">Publicly documented records</Badge>
       </div>
       <form onSubmit={searchArchive} className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <Input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search investigations, organisations, methods or findings" aria-label="Search investigations archive" />
+        <Input value={query} onChange={event => { setQuery(event.target.value); setLibraryRecords([]); setError(""); setSearched(false); }} placeholder="Search investigations, organisations, methods or findings" aria-label="Search investigations archive" />
         <Button type="submit" disabled={loading || query.trim().length < 2} className="sm:min-w-32">{loading ? "Searching…" : <><Search className="mr-2 h-4 w-4" />Search archive</>}</Button>
         {(query || searched) && <Button type="button" variant="outline" onClick={clearSearch}>Clear</Button>}
       </form>
