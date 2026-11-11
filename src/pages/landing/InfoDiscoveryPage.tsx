@@ -2901,7 +2901,6 @@ export default function InfoDiscoveryPage() {
                   ))}
                 </section>
               )}
-              )}
               {selectedTopic.festival && (
                 <section className="mt-6 space-y-3" aria-label="Festival profile">
                   <div className="grid gap-3 sm:grid-cols-2">
