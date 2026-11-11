@@ -1543,7 +1543,6 @@ const categories: Category[] = [
         topic("Comparing business administration across jurisdictions", "Compare equivalent procedures across selected countries without implying that one country's rules apply in another.", ["Are the entity types and procedures legally equivalent?", "Which authority, forms, fees, documents and deadlines differ?", "What source date and verification method supports each jurisdiction entry?", "Which differences require local professional confirmation?"]),
       ]},
     ],
-    ],
     sources: [
       { name: "UNCITRAL", scope: "International trade law conventions, model laws, legislative guides and case-law materials", type: "United Nations legal source", url: "https://uncitral.un.org/" },
       { name: "UNIDROIT", scope: "International commercial contract principles and instruments; applicability depends on adoption or contractual use", type: "International legal research", url: "https://www.unidroit.org/" },
