@@ -32,7 +32,7 @@ const EMPTY_DRAFT: DiscoveryRecordDraft = {
   sourceId: "",
   sourceName: "",
   abstract: "",
-  materialType: "publication",
+  materialType: "investigation-report",
   subjects: [],
   jurisdiction: "global",
   accessStatus: "unknown",
@@ -46,6 +46,8 @@ const EMPTY_EVIDENCE: DiscoveryReviewEvidence = {
   originalSourceChecked: false,
   versionAndCorrectionsChecked: false,
   rightsAndAccessChecked: false,
+  jurisdictionAndPublicationDateChecked: false,
+  findingsAndLegalStatusChecked: false,
   reviewNote: "",
   rightsBasis: "",
 };
@@ -214,7 +216,7 @@ export function DiscoveryLibraryPanel() {
       </div>
 
       <Card>
-        <CardHeader><CardTitle>Add a publication or document</CardTitle></CardHeader>
+        <CardHeader><CardTitle>Submit an investigation report or publication</CardTitle></CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid gap-3 md:grid-cols-2">
@@ -246,7 +248,7 @@ export function DiscoveryLibraryPanel() {
               </Field>
               <Field label="Material type">
                 <select value={draft.materialType} onChange={e => setDraftField("materialType", e.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-                  {["publication","book","book-chapter","journal-article","thesis","dissertation","research-report","policy-paper","dataset","technical-document","other"].map(value => <option key={value} value={value}>{value.replace(/-/g," ")}</option>)}
+                  {["investigation-report","commission-report","public-inquiry-report","court-judgment","tribunal-decision","government-audit","official-inspection-report","investigative-journalism","research-report","policy-paper","publication","book","book-chapter","journal-article","thesis","dissertation","dataset","technical-document","other"].map(value => <option key={value} value={value}>{value.replace(/-/g," ")}</option>)}
                 </select>
               </Field>
               <Field label="Original record URL">
@@ -286,7 +288,7 @@ export function DiscoveryLibraryPanel() {
               </div>
             </div>
             <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border pt-3">
-              <p className="max-w-2xl text-xs text-muted-foreground">New entries enter a private review queue. They do not appear in public discovery until an authorised reviewer checks the source, publication details, version and rights.</p>
+              <p className="max-w-2xl text-xs text-muted-foreground">New investigations, commission reports, court decisions and publications enter a private editorial queue. They remain hidden from public discovery until an authorised reviewer confirms the original institution, jurisdiction, publication date, document version, legal status, findings and access rights.</p>
               <Button type="submit" disabled={saving}>{saving ? "Submitting…" : "Add to review queue"}</Button>
             </div>
           </form>
@@ -295,7 +297,7 @@ export function DiscoveryLibraryPanel() {
 
       <Card>
         <CardHeader className="flex flex-row items-center justify-between gap-3 space-y-0">
-          <CardTitle>Publication review queue</CardTitle>
+          <CardTitle>Investigation and publication editorial review queue</CardTitle>
           <div className="flex items-center gap-2">
             <select value={statusFilter} onChange={e => setStatusFilter(e.target.value as typeof statusFilter)} className="h-9 rounded-md border border-input bg-background px-2 text-xs">
               <option value="pending_review">Pending</option><option value="verified">Verified</option><option value="rejected">Rejected</option><option value="withdrawn">Withdrawn</option><option value="all">All records</option>
@@ -354,6 +356,8 @@ export function DiscoveryLibraryPanel() {
                     ["originalSourceChecked","Original publisher or repository checked"],
                     ["versionAndCorrectionsChecked","Version, date and corrections checked"],
                     ["rightsAndAccessChecked","Access and reuse rights checked"],
+                    ["jurisdictionAndPublicationDateChecked","Jurisdiction, issuing body and publication date checked"],
+                    ["findingsAndLegalStatusChecked","Allegations, findings, recommendations and legal outcomes distinguished"],
                   ] as const).map(([key,label]) => (
                     <label key={key} className="flex items-center gap-2 text-xs">
                       <input type="checkbox" checked={evidence[key]} onChange={e => setEvidence(current => ({...current,[key]:e.target.checked}))} />
