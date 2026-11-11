@@ -26,6 +26,7 @@ import { SavedTopicsDrawer } from "@/components/infoDiscovery/SavedTopicsDrawer"
 import { PopularAndRecent } from "@/components/infoDiscovery/PopularAndRecent";
 import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracker";
 import { searchResearchRepositories, type ResearchRecord } from "@/lib/infoDiscovery/researchSearch";
+import { searchDateIncidents, type DateIncidentRecord } from "@/lib/infoDiscovery/askTopic";
 import { searchVerifiedDiscoveryRecords, getVerifiedDiscoveryDocumentUrl } from "@/lib/infoDiscovery/discoveryLibrary";
 import { InvestigationsArchive } from "@/components/infoDiscovery/InvestigationsArchive";
 import { BusinessCaseReference } from "@/components/infoDiscovery/BusinessCaseReference";
@@ -2055,43 +2056,73 @@ function ResearchPanel({ initialQuery = "", autoSearch = false }: { initialQuery
 
 function DateAndIncidents() {
   const [date, setDate] = useState("");
-  const [region, setRegion] = useState("Africa first");
+  const [region, setRegion] = useState<"Africa first" | "Africa" | "International" | "all">("Africa first");
   const [category, setCategory] = useState("all");
-  const [submittedQuery, setSubmittedQuery] = useState("");
+  const [events, setEvents] = useState<DateIncidentRecord[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [searchedDate, setSearchedDate] = useState("");
 
-  const submitDateSearch = (event: React.FormEvent) => {
+  const runDateSearch = async (event: React.FormEvent) => {
     event.preventDefault();
     if (!date) return;
-    const selectedDate = new Date(date + "T00:00:00");
-    const dateLabel = selectedDate.toLocaleDateString(undefined, { month: "long", day: "numeric" });
-    const regionText = region === "Africa first" ? "African history and international historical events" : region === "Africa" ? "African history" : region === "International" ? "international history outside Africa" : "world history";
-    const categoryText = category === "all" ? "events, incidents and historical milestones" : category;
-    setSubmittedQuery(`Historical ${categoryText} that occurred on ${dateLabel} in any year. Prioritise ${regionText}. Find event records, archival sources, original documents and credible historical research. Distinguish the event date from publication dates.`);
+    setLoading(true);
+    setError("");
+    setEvents([]);
+    setSearchedDate(date);
+    try {
+      const records = await searchDateIncidents({ date, region, category });
+      setEvents(records);
+    } catch (err: any) {
+      setError(err?.message || "The historical search could not be completed.");
+    } finally {
+      setLoading(false);
+    }
   };
+
+  const dateLabel = date
+    ? new Date(date + "T00:00:00").toLocaleDateString(undefined, { day: "numeric", month: "long", year: "numeric" })
+    : "";
 
   return (
     <section className="space-y-5">
       <div className="rounded-2xl border border-border bg-card p-5 shadow-sm md:p-7">
         <h2 className="text-2xl font-bold tracking-tight">Date &amp; Incidents</h2>
         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">Discover the events, incidents and historical milestones that shaped our world.</p>
-        <form onSubmit={submitDateSearch} className="mt-5 grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]">
-          <label className="space-y-1.5 text-xs font-medium">Choose a date
+        <form onSubmit={runDateSearch} className="mt-5 grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]">
+          <label className="space-y-1.5 text-xs font-medium">Choose the exact date
             <Input type="date" value={date} onChange={event => setDate(event.target.value)} required />
           </label>
           <label className="space-y-1.5 text-xs font-medium">Geographical coverage
-            <select value={region} onChange={event => setRegion(event.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-              <option value="Africa first">Africa first · then worldwide</option><option value="Africa">Africa only</option><option value="International">International events</option><option value="all">All regions</option>
+            <select value={region} onChange={event => setRegion(event.target.value as typeof region)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <option value="Africa first">Africa first · then worldwide</option><option value="Africa">Africa only</option><option value="International">International only</option><option value="all">All regions</option>
             </select>
           </label>
-          <label className="space-y-1.5 text-xs font-medium">Event category
+          <label className="space-y-1.5 text-xs font-medium">Incident category
             <select value={category} onChange={event => setCategory(event.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
-              <option value="all">All events</option><option value="wars and conflicts">Wars, conflicts &amp; independence</option><option value="political events">Politics &amp; government</option><option value="disasters and accidents">Disasters &amp; accidents</option><option value="science and discoveries">Science &amp; discoveries</option><option value="culture and society">Culture &amp; society</option>
+              <option value="all">All prominent events</option><option value="politics and independence">Politics &amp; independence</option><option value="wars and conflicts">Wars &amp; conflicts</option><option value="assassinations and coups">Assassinations &amp; coups</option><option value="disasters and accidents">Disasters &amp; accidents</option><option value="court decisions and law">Court decisions &amp; law</option><option value="science and discoveries">Science &amp; discoveries</option><option value="culture and sports">Culture &amp; sports</option>
             </select>
           </label>
-          <div className="flex items-end"><Button type="submit" disabled={!date}>Search</Button></div>
+          <div className="flex items-end"><Button type="submit" disabled={!date || loading}>{loading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Searching</> : <><Search className="mr-2 h-4 w-4" />Discover</>}</Button></div>
         </form>
       </div>
-      {submittedQuery && <ResearchPanel key={submittedQuery} initialQuery={submittedQuery} autoSearch />}
+
+      {error && <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">{error}</div>}
+      {searchedDate && !loading && !error && <div className="space-y-4">
+        <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold">Prominent events on {dateLabel}</h3><p className="text-xs text-muted-foreground">{events.length} documented events for this exact date</p></div></div>
+        {events.length ? <div className="grid gap-3 md:grid-cols-2">{events.map((item,index) => <article key={item.occurrenceDate + item.title + index} className="rounded-xl border border-border bg-card p-4">
+          <div className="flex flex-wrap items-center gap-2"><Badge variant={item.region === "Africa" ? "default" : "secondary"}>{item.region}</Badge><Badge variant="outline">{item.category}</Badge><Badge variant={item.prominence === "major" ? "default" : "outline"}>{item.prominence === "major" ? "Major event" : "Notable event"}</Badge></div>
+          <h4 className="mt-3 font-semibold leading-5">{item.title}</h4>
+          <p className="mt-1 text-xs text-muted-foreground">{item.occurrenceDate} · {item.location}</p>
+          <p className="mt-3 text-sm leading-6">{item.summary}</p>
+          {item.significance && <p className="mt-2 text-sm leading-6 text-muted-foreground">{item.significance}</p>}
+          {item.people.length > 0 && <p className="mt-2 text-xs text-muted-foreground">Key people: {item.people.join(", ")}</p>}
+          {item.dateBasis && <p className="mt-2 text-xs leading-5 text-muted-foreground">Date evidence: {item.dateBasis}</p>}
+          {item.caveat && <p className="mt-2 rounded-md bg-muted/60 p-2 text-xs leading-5 text-muted-foreground">Historical note: {item.caveat}</p>}
+          <div className="mt-3 flex items-center gap-2 text-xs text-muted-foreground"><ShieldCheck className="h-3.5 w-3.5" />{item.confidence === "corroborated" ? "Multiple-source support" : item.confidence === "contested" ? "Contested historical account" : "Single-source support"}</div>
+          <div className="mt-4 border-t border-border pt-3"><p className="mb-2 text-xs font-semibold">Historical sources</p><ul className="space-y-2">{item.sources.map((source,sourceIndex) => <li key={source.url + sourceIndex}><a href={source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">{source.name} <ExternalLink className="h-3 w-3" /></a>{source.publisher && <p className="text-[11px] text-muted-foreground">{source.publisher}{source.sourceType ? " · " + source.sourceType : ""}</p>}{source.supports && <p className="text-[11px] text-muted-foreground">{source.supports}</p>}</li>)}</ul></div>
+        </article>)}</div> : <p className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No well-sourced prominent events were found for this exact date.</p>}
+      </div>}
     </section>
   );
 }
