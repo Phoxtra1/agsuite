@@ -7,9 +7,171 @@ export interface TopicSummaryResult {
   provider: "dipa-ai" | "dipa-knowledge-base";
 }
 
+export type DateIncidentSource = {
+  name: string;
+  url: string;
+  publisher?: string;
+  sourceType?: string;
+  supports?: string;
+};
+
+export type DateIncidentRecord = {
+  occurrenceDate: string;
+  title: string;
+  location: string;
+  region: "Africa" | "International";
+  category: string;
+  summary: string;
+  significance: string;
+  people: string[];
+  prominence: "major" | "notable";
+  dateBasis: string;
+  confidence: "corroborated" | "single-source" | "contested";
+  caveat: string;
+  sources: DateIncidentSource[];
+};
+
+async function invokeDipa(action: string, body: Record<string, unknown>) {
+  return supabase.functions.invoke("docs-intelligence", {
+    body: { action, ...body },
+  });
+}
+
+function extractJsonPayload(data: any): any {
+  let payload = data?.events || data?.incidents || data?.result || data?.data || data;
+  if (typeof payload === "string") {
+    const trimmed = payload.replace(/^\s*```(?:json)?\s*/i, "").replace(/\s*```\s*$/, "");
+    try {
+      payload = JSON.parse(trimmed);
+    } catch {
+      const start = trimmed.indexOf("{");
+      const end = trimmed.lastIndexOf("}");
+      if (start < 0 || end <= start) throw new Error("The historical search returned an unreadable result.");
+      try { payload = JSON.parse(trimmed.slice(start, end + 1)); }
+      catch { throw new Error("The historical search returned an unreadable result."); }
+    }
+  }
+  return Array.isArray(payload) ? { events: payload } : payload;
+}
+
+export function normaliseDateIncidentResults(data: any, requestedDate: string): DateIncidentRecord[] {
+  const payload = extractJsonPayload(data);
+  const items = Array.isArray(payload?.events) ? payload.events : Array.isArray(payload?.incidents) ? payload.incidents : [];
+  const records = items.map((item: any): DateIncidentRecord | null => {
+    const occurrenceDate = String(item?.occurrenceDate || item?.eventDate || item?.date || "").slice(0, 10);
+    if (occurrenceDate !== requestedDate) return null;
+
+    const sources = (Array.isArray(item.sources) ? item.sources : []).map((source: any) => {
+      const url = String(source?.url || source?.uri || "").trim();
+      if (!/^https?:\/\//i.test(url)) return null;
+      return {
+        name: String(source.name || source.title || source.publisher || "Historical source").slice(0, 180),
+        url,
+        publisher: String(source.publisher || "").slice(0, 160),
+        sourceType: String(source.sourceType || source.type || "Historical reference").slice(0, 80),
+        supports: String(source.supports || source.relevance || "").slice(0, 350),
+      };
+    }).filter(Boolean).slice(0, 6) as DateIncidentSource[];
+
+    const title = String(item.title || item.event || "").trim();
+    const summary = String(item.summary || item.description || "").trim();
+    if (!title || !summary || !sources.length) return null;
+
+    const region: "Africa" | "International" = /^(africa|african)$/i.test(String(item.region || "")) ? "Africa" : "International";
+    const confidence = item.confidence === "contested" ? "contested" : sources.length >= 2 && item.confidence === "corroborated" ? "corroborated" : "single-source";
+    return {
+      occurrenceDate,
+      title: title.slice(0, 240),
+      location: String(item.location || item.place || "Location not established").slice(0, 180),
+      region,
+      category: String(item.category || "Historical event").slice(0, 80),
+      summary: summary.slice(0, 1800),
+      significance: String(item.significance || "").slice(0, 900),
+      people: Array.isArray(item.people) ? item.people.slice(0, 12).map((person: unknown) => String(person).slice(0, 100)) : [],
+      prominence: item.prominence === "major" ? "major" : "notable",
+      dateBasis: String(item.dateBasis || item.dateEvidence || "").slice(0, 500),
+      confidence,
+      caveat: String(item.caveat || item.uncertainty || "").slice(0, 600),
+      sources,
+    };
+  }).filter(Boolean) as DateIncidentRecord[];
+
+  const seen = new Set<string>();
+  return records.filter(record => {
+    const key = record.title.toLocaleLowerCase() + "|" + record.occurrenceDate;
+    if (seen.has(key)) return false;
+    seen.add(key);
+    return true;
+  }).sort((a, b) => {
+    if (a.region !== b.region) return a.region === "Africa" ? -1 : 1;
+    if (a.prominence !== b.prominence) return a.prominence === "major" ? -1 : 1;
+    return a.title.localeCompare(b.title);
+  });
+}
+
+/**
+ * Uses the same Dipa docs-intelligence service as the platform's other
+ * AI-assisted discovery features, with a date-specific historical search
+ * instruction and a strict occurrence-date result contract.
+ */
+export async function searchDateIncidents(params: {
+  date: string;
+  region?: "Africa first" | "Africa" | "International" | "all";
+  category?: string;
+}): Promise<DateIncidentRecord[]> {
+  const { date, region = "Africa first", category = "all" } = params;
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date + "T00:00:00Z"))) {
+    throw new Error("Choose a valid date, including the year.");
+  }
+
+  const selectedDate = new Date(date + "T00:00:00Z");
+  if (selectedDate.toISOString().slice(0, 10) !== date) throw new Error("Choose a valid calendar date.");
+
+  const dateLabel = selectedDate.toLocaleDateString("en", {
+    weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC",
+  });
+  const regionInstruction = region === "Africa first"
+    ? "Prioritise Africa and under-documented African history first, then include major international events."
+    : region === "Africa"
+      ? "Return African events only."
+      : region === "International"
+        ? "Return major international events outside Africa."
+        : "Cover Africa and all other world regions.";
+  const prompt = [
+    "Find the most prominent historical events, incidents and milestones that OCCURRED on the exact calendar date " + dateLabel + " (" + date + ").",
+    "The year is mandatory. Do not return other years on the same month and day. Do not return events merely announced, reported, published, remembered or commemorated on this date unless that is itself the event being described.",
+    regionInstruction,
+    "Category filter: " + category + ".",
+    "Select the most consequential, widely documented occurrences rather than trying to list every minor event. Aim for 3–10 strong results when the evidence supports them. Prioritise major political events, independence and liberation milestones, wars and battles, coups, assassinations, disasters, court decisions, scientific breakthroughs and important cultural or sporting milestones.",
+    "Research across primary and institutional sources: national archives and libraries, official gazettes, court records, inquiry reports, museums, universities, UNESCO, African regional institutions, established historical institutes and reputable news archives. For Africa, actively look beyond the most frequently repeated global timelines and surface credible local and regional records.",
+    "For every event, provide the actual occurrence date, concise factual summary, place, historical importance, main people involved, the evidence that confirms the exact date, caveats where accounts differ, and direct source links. Prefer two independent credible sources; a primary archival document can be included even when only one source is available.",
+    "Do not invent events, dates, quotes or source URLs. If the source only supports a year, month or approximate period, do not present it as an exact-date incident. Exclude weakly supported items.",
+    "Return JSON only with this shape: { \"events\": [{ \"occurrenceDate\": \"YYYY-MM-DD\", \"title\": \"\", \"location\": \"\", \"region\": \"Africa|International\", \"category\": \"\", \"summary\": \"\", \"significance\": \"\", \"people\": [], \"prominence\": \"major|notable\", \"dateBasis\": \"\", \"confidence\": \"corroborated|single-source|contested\", \"caveat\": \"\", \"sources\": [{ \"name\": \"\", \"publisher\": \"\", \"url\": \"https://...\", \"sourceType\": \"primary|institutional|scholarly|news\", \"supports\": \"\" }] }] }",
+  ].join("\n\n");
+
+  const { data, error } = await invokeDipa("docs-intelligence", {
+    action: "historical_events_search",
+    task: "date_and_incidents",
+    date,
+    region,
+    category,
+    text: prompt,
+    query: prompt,
+    responseFormat: "json",
+  });
+  if (error) throw new Error(error.message || "The historical search service could not complete the search.");
+  if (!data || data.error) throw new Error(data?.error || "The historical search service did not return results.");
+
+  const records = normaliseDateIncidentResults(data, date);
+  if (!records.length) {
+    throw new Error("No well-sourced events were returned for this exact date. Try a different date or geographical filter.");
+  }
+  return records;
+}
+
 /**
  * Generates an objective, source-backed summary for a given topic with Dipa support behind the scenes.
- * Tries the docs-intelligence Edge Function first, and falls back to synthesized knowledge representation.
+ * Uses the same docs-intelligence service as the other Dipa-backed workflows.
  */
 export async function askAboutTopic(params: {
   topicTitle: string;
@@ -19,29 +181,19 @@ export async function askAboutTopic(params: {
   referenceSources?: { name: string; url: string; scope: string }[];
 }): Promise<TopicSummaryResult> {
   const { topicTitle, categoryTitle, description, questions = [], referenceSources = [] } = params;
-
-  // Attempt Dipa AI Edge function
   try {
     const prompt = `Topic: ${topicTitle} (${categoryTitle})\nDescription: ${description}\nQuestions: ${questions.join("; ")}`;
-    const { data, error } = await supabase.functions.invoke("docs-intelligence", {
-      body: {
-        action: "summarize_topic",
-        text: prompt,
-        category: categoryTitle,
-        topic: topicTitle,
-      },
+    const { data, error } = await invokeDipa("docs-intelligence", {
+      action: "summarize_topic",
+      text: prompt,
+      category: categoryTitle,
+      topic: topicTitle,
     });
-
     if (!error && data && (data.summary || data.result)) {
-      const summaryText = data.summary || data.result;
-      const takeaways: string[] = Array.isArray(data.keyTakeaways)
-        ? data.keyTakeaways
-        : questions.slice(0, 3);
-
       return {
-        summary: summaryText,
+        summary: data.summary || data.result,
         sources: referenceSources,
-        keyTakeaways: takeaways,
+        keyTakeaways: Array.isArray(data.keyTakeaways) ? data.keyTakeaways : questions.slice(0, 3),
         provider: "dipa-ai",
       };
     }
@@ -49,20 +201,14 @@ export async function askAboutTopic(params: {
     console.warn("[Dipa AI] Live function unavailable, using local synthesis engine:", e);
   }
 
-  // Robust, evidence-backed fallback synthesized by Dipa
-  const synthesizedSummary =
-    `Investigation into "${topicTitle}" within ${categoryTitle} centers on establishing verifiable facts, operational metrics, and institutional standards. Evidence should be verified directly against designated official bodies and regulatory frameworks rather than informal assumptions.`;
-
-  const keyTakeaways = [
-    `Validate baseline requirements directly against the primary authorities for ${categoryTitle}.`,
-    `Focus on operational indicators and measurable criteria: ${questions[0] || "Review primary criteria."}`,
-    `Retain source publication dates and regional jurisdictions before formulating conclusions.`,
-  ];
-
   return {
-    summary: synthesizedSummary,
+    summary: `Investigation into "${topicTitle}" within ${categoryTitle} centers on establishing verifiable facts, operational metrics, and institutional standards. Evidence should be verified directly against designated official bodies and regulatory frameworks rather than informal assumptions.`,
     sources: referenceSources,
-    keyTakeaways,
+    keyTakeaways: [
+      `Validate baseline requirements directly against the primary authorities for ${categoryTitle}.`,
+      `Focus on operational indicators and measurable criteria: ${questions[0] || "Review primary criteria."}`,
+      "Retain source publication dates and regional jurisdictions before formulating conclusions.",
+    ],
     provider: "dipa-knowledge-base",
   };
 }
