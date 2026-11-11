@@ -23,6 +23,8 @@ export type ResearchRecord = {
   accessStatus?: "metadata_only" | "open_access" | "restricted" | "unknown";
   license?: string;
   fullTextUrl?: string;
+  libraryRecordId?: string;
+  hasStoredDocument?: boolean;
 };
 
 export type ResearchSearchResult = {
