@@ -21,6 +21,17 @@ export type DiscoveryLibraryRecord = DiscoveryRecordDraft & {
   storageSize: number | null;
 };
 
+export type DiscoveryReviewEvent = {
+  id: string;
+  recordId: string;
+  actorId: string | null;
+  action: string;
+  previousStatus: string | null;
+  nextStatus: string;
+  note: string;
+  createdAt: string;
+};
+
 export type DiscoveryLibraryAccess = {
   allowed: boolean;
   reason?: string;
@@ -246,4 +257,26 @@ export async function getVerifiedDiscoveryDocumentUrl(recordId: string): Promise
     .createSignedUrl(record.storage_path, 900);
   if (signedError || !data?.signedUrl) return null;
   return data.signedUrl;
+}
+
+
+export async function listDiscoveryRecordReviewEvents(recordId: string): Promise<DiscoveryReviewEvent[]> {
+  const access = await checkDiscoveryLibraryAccess();
+  if (!access.allowed) throw new Error(access.reason || "Not authorised.");
+  const { data, error } = await (supabase as any)
+    .from("discovery_record_review_events")
+    .select("id,record_id,actor_id,action,previous_status,next_status,note,created_at")
+    .eq("record_id", recordId)
+    .order("created_at", { ascending: false });
+  if (error) throw new Error(error.message || "Unable to load publication review history.");
+  return (data || []).map((row: any) => ({
+    id: row.id,
+    recordId: row.record_id,
+    actorId: row.actor_id || null,
+    action: row.action,
+    previousStatus: row.previous_status || null,
+    nextStatus: row.next_status,
+    note: row.note || "",
+    createdAt: row.created_at,
+  }));
 }
