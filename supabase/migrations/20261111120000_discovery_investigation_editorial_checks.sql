@@ -19,4 +19,4 @@ alter table public.discovery_records
       nullif(trim(review_note),'') is not null and
       reviewed_by is not null and reviewed_at is not null
     )
-  );
+  ) not valid;
