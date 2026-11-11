@@ -85,12 +85,8 @@ export const AminevaImpactPage: FC = () => {
     const matchingInitiative = INITIATIVES.some(item => item.id === initiativeId);
     if (!matchingInitiative) return;
     setExpandedInitiativeId(initiativeId);
-    const scrollToInitiative = () => {
-      const elem = document.getElementById(`initiative-${initiativeId}`);
-      elem?.scrollIntoView({ behavior: "smooth", block: "start" });
-    };
-    const frame = window.requestAnimationFrame(scrollToInitiative);
-    return () => window.cancelAnimationFrame(frame);
+    const elem = document.getElementById(`initiative-${initiativeId}`);
+    elem?.scrollIntoView?.({ behavior: "smooth", block: "start" });
   }, [initiativeId]);
 
   const filteredInitiatives = INITIATIVES.filter((item) => {
