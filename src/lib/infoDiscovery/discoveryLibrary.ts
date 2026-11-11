@@ -186,13 +186,15 @@ export async function searchVerifiedDiscoveryRecords(query: string, signal?: Abo
     abstract: (row.abstract || "").slice(0, 900),
     type: row.material_type || "Publication",
     sources: [row.source_name || "Amineva verified library"],
-    openAccess: row.access_status === "open_access" && Boolean(row.full_text_url),
+    openAccess: row.access_status === "open_access" && Boolean(row.full_text_url || row.storage_path),
     subjects: row.subjects || [],
     verificationStatus: "editorially-verified",
     verificationNote: row.review_note || "Editorial record review completed.",
     accessStatus: row.access_status,
     license: row.license || undefined,
     fullTextUrl: row.access_status === "open_access" ? (row.full_text_url || undefined) : undefined,
+    libraryRecordId: row.storage_path && row.access_status === "open_access" ? row.id : undefined,
+    hasStoredDocument: Boolean(row.storage_path && row.access_status === "open_access"),
   } as ResearchRecord));
 }
 
