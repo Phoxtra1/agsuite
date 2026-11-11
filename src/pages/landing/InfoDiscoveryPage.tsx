@@ -863,6 +863,15 @@ const touristSiteTopic = (title: string, country: string, location: string, site
 
 const categories: Category[] = [
   {
+    slug: "date-and-incident", title: "Date & Incident", icon: Globe2,
+    summary: "Discover African and international events, incidents and historical milestones by date.",
+    purpose: "Explore the events, incidents and historical milestones recorded on a particular day. African history receives priority in discovery while events from every world region remain in scope.",
+    sections: [],
+    sources: [
+      { name: "Wikipedia On This Day", scope: "Date-based historical event leads; individual claims should be checked against cited primary and reputable sources", type: "Open historical index", url: "https://en.wikipedia.org/wiki/Wikipedia:On_this_day" },
+    ],
+  },
+  {
     slug: "career-development-education", title: "Career Development and Education", icon: GraduationCap,
     summary: "Explore career direction, abilities, practical learning, education pathways and the skills needed to move from learning into work.",
     purpose: "Career decisions should be based on a realistic understanding of the work, the abilities it requires, the learning path, and the life it may lead to—not salary assumptions, social pressure or a job title alone. This area connects career exploration with practical ability, education choices and learning that can be applied.",
