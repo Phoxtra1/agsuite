@@ -1,11 +1,13 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { searchResearchRepositories } from "@/lib/infoDiscovery/researchSearch";
 import { DISCOVERY_SOURCES, KNOWLEDGE_SUBJECTS, findRelatedSubjects } from "@/lib/infoDiscovery/sourceRegistry";
+import { validateDiscoveryRecordDraft, validateDiscoveryReview } from "@/lib/infoDiscovery/sourceReview";
 
 const jsonResponse = (body: unknown) => ({
   ok: true,
   status: 200,
   json: async () => body,
+  text: async () => "<?xml version=\"1.0\"?><feed xmlns=\"http://www.w3.org/2005/Atom\"></feed>",
 }) as Response;
 
 describe("Info Discovery source foundation", () => {
@@ -18,6 +20,10 @@ describe("Info Discovery source foundation", () => {
     expect(DISCOVERY_SOURCES.some(source => source.id === "ghana-statistical-service")).toBe(true);
     expect(DISCOVERY_SOURCES.some(source => source.id === "pubmed")).toBe(true);
     expect(DISCOVERY_SOURCES.some(source => source.id === "zenodo")).toBe(true);
+    expect(DISCOVERY_SOURCES.some(source => source.id === "ugspace")).toBe(true);
+    expect(DISCOVERY_SOURCES.some(source => source.id === "knustspace")).toBe(true);
+    expect(DISCOVERY_SOURCES.some(source => source.id === "ucc-ir")).toBe(true);
+    expect(DISCOVERY_SOURCES.some(source => source.id === "openaire-graph")).toBe(true);
     expect(DISCOVERY_SOURCES.every(source => source.recordLevelVerificationRequired)).toBe(true);
     expect(DISCOVERY_SOURCES.every(source => source.reviewStatus === "listed-pending-record-review")).toBe(true);
   });
@@ -47,11 +53,16 @@ describe("Info Discovery source foundation", () => {
       }] }))
       .mockResolvedValueOnce(jsonResponse({ hits: { hits: [] } }))
       .mockResolvedValueOnce(jsonResponse({ esearchresult: { idlist: [] } }))
-      .mockResolvedValueOnce(jsonResponse({ resultList: { result: [] } }));
+      .mockResolvedValueOnce(jsonResponse({ resultList: { result: [] } }))
+      .mockResolvedValueOnce(jsonResponse({ results: [] }))
+      .mockResolvedValueOnce(jsonResponse({ results: [] }))
+      .mockResolvedValueOnce(jsonResponse({ _embedded: { searchResult: { _embedded: { objects: [] } } } }))
+      .mockResolvedValueOnce(jsonResponse({ _embedded: { searchResult: { _embedded: { objects: [] } } } }))
+      .mockResolvedValueOnce(jsonResponse({ _embedded: { searchResult: { _embedded: { objects: [] } } } }));
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await searchResearchRepositories("education policy", new AbortController().signal);
-    expect(fetchMock).toHaveBeenCalledTimes(5);
+    expect(fetchMock).toHaveBeenCalledTimes(10);
     expect(result.sourceErrors).toHaveLength(0);
     expect(result.records).toHaveLength(1);
     expect(result.records[0].sources).toEqual(expect.arrayContaining(["Crossref", "OpenAlex"]));
@@ -88,7 +99,12 @@ describe("Info Discovery source foundation", () => {
         }, links: { html: "https://zenodo.org/records/12" },
       }] } }))
       .mockResolvedValueOnce(jsonResponse({ esearchresult: { idlist: [] } }))
-      .mockResolvedValueOnce(jsonResponse({ resultList: { result: [] } }));
+      .mockResolvedValueOnce(jsonResponse({ resultList: { result: [] } }))
+      .mockResolvedValueOnce(jsonResponse({ results: [] }))
+      .mockResolvedValueOnce(jsonResponse({ results: [] }))
+      .mockResolvedValueOnce(jsonResponse({ _embedded: { searchResult: { _embedded: { objects: [] } } } }))
+      .mockResolvedValueOnce(jsonResponse({ _embedded: { searchResult: { _embedded: { objects: [] } } } }))
+      .mockResolvedValueOnce(jsonResponse({ _embedded: { searchResult: { _embedded: { objects: [] } } } }));
     vi.stubGlobal("fetch", fetchMock);
 
     const result = await searchResearchRepositories("climate data", new AbortController().signal);
@@ -97,4 +113,49 @@ describe("Info Discovery source foundation", () => {
     expect(result.records[0].openAccess).toBe(true);
     expect(result.sourceErrors).toEqual([{ source: "OpenAlex", message: "network unavailable" }]);
   });
+  
+  it("requires a source, stable original URL and valid bibliographic identifiers at intake", () => {
+    const base = {
+      title: "Research publication",
+      authors: ["A. Researcher"],
+      publicationYear: 2024,
+      publisher: "University Press",
+      containerTitle: "",
+      doi: "10.1234/example",
+      canonicalUrl: "https://repository.example/items/123",
+      sourceId: "example-repository",
+      sourceName: "Example Repository",
+      abstract: "",
+      materialType: "thesis",
+      subjects: ["education"],
+      jurisdiction: "Ghana",
+      accessStatus: "unknown" as const,
+      license: "",
+      rightsBasis: "",
+      fullTextUrl: "",
+    };
+    expect(validateDiscoveryRecordDraft(base)).toEqual([]);
+    expect(validateDiscoveryRecordDraft({ ...base, canonicalUrl: "javascript:alert(1)" })).toContain("The original record URL must be a valid HTTP or HTTPS address.");
+    expect(validateDiscoveryRecordDraft({ ...base, doi: "not-a-doi" })).toContain("The DOI does not appear to be valid.");
+  });
+
+  it("requires all evidence and a rights basis before editorial verification", () => {
+    const incomplete = {
+      bibliographicDetailsChecked: true,
+      originalSourceChecked: false,
+      versionAndCorrectionsChecked: true,
+      rightsAndAccessChecked: false,
+      reviewNote: "",
+      rightsBasis: "",
+    };
+    expect(validateDiscoveryReview(incomplete)).toHaveLength(4);
+    expect(validateDiscoveryReview({
+      ...incomplete,
+      originalSourceChecked: true,
+      rightsAndAccessChecked: true,
+      reviewNote: "Checked the issuing institution record and licence.",
+      rightsBasis: "Institutional repository licence permits public access.",
+    })).toEqual([]);
+  });
+
 });

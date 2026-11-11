@@ -18,8 +18,13 @@ export type ResearchRecord = {
   sources: string[];
   openAccess?: boolean;
   subjects: string[];
-  verificationStatus: "metadata-only";
+  verificationStatus: "metadata-only" | "editorially-verified";
   verificationNote: string;
+  accessStatus?: "metadata_only" | "open_access" | "restricted" | "unknown";
+  license?: string;
+  fullTextUrl?: string;
+  libraryRecordId?: string;
+  hasStoredDocument?: boolean;
 };
 
 export type ResearchSearchResult = {
@@ -241,6 +246,175 @@ async function searchZenodo(query: string, signal: AbortSignal): Promise<Researc
   });
 }
 
+
+type OpenAireItem = Record<string, any>;
+
+function valueText(value: any): string {
+  if (!value) return "";
+  if (typeof value === "string" || typeof value === "number") return cleanText(String(value));
+  if (Array.isArray(value)) return value.map(valueText).filter(Boolean).join(", ");
+  return cleanText(value.value || value.name || value.fullName || value.fullname || value.label || value.text || "");
+}
+
+function findDoi(item: any): string | undefined {
+  const candidates = [
+    item?.doi, item?.DOI, item?.pid, item?.pids, item?.identifiers,
+    ...(Array.isArray(item?.instances) ? item.instances.flatMap((instance: any) => instance?.pids || instance?.identifiers || []) : []),
+  ];
+  const flattened = candidates.flat(Infinity);
+  for (const candidate of flattened) {
+    const scheme = String(candidate?.scheme || candidate?.type || candidate?.idType || "").toLowerCase();
+    const raw = typeof candidate === "string" ? candidate : candidate?.value || candidate?.id || "";
+    if ((scheme === "doi" || /^10\.\d{4,9}\//i.test(String(raw))) && raw) return normaliseDoi(String(raw));
+  }
+  return undefined;
+}
+
+async function searchOpenAire(query: string, signal: AbortSignal): Promise<ResearchRecord[]> {
+  const params = new URLSearchParams({ search: query, type: "publication", page: "1", pageSize: "8" });
+  const response = await fetch("https://api.openaire.eu/graph/v3/research-products?" + params.toString(), {
+    signal, headers: { Accept: "application/json" },
+  });
+  if (!response.ok) throw new Error("HTTP " + response.status);
+  const payload = await response.json();
+  const items: OpenAireItem[] = payload?.results || [];
+  return items.map(item => {
+    const title = valueText(item.title || item.metadata?.title || item.titles?.[0]);
+    const creators = item.authors || item.author || item.creators || item.metadata?.creators || [];
+    const authors = (Array.isArray(creators) ? creators : [creators]).map(valueText).filter(Boolean).slice(0, 8).join(", ");
+    const publicationDate = valueText(item.publicationDate || item.date || item.metadata?.publicationDate);
+    const year = Number(publicationDate.match(/\b(19|20)\d{2}\b/)?.[0]) || undefined;
+    const bestRight = valueText(item.bestAccessRight?.label || item.bestAccessRight || item.accessRight?.label || item.accessRight);
+    const instances = Array.isArray(item.instances) ? item.instances : [];
+    const openInstance = instances.find((instance: any) => /open/i.test(valueText(instance.accessright?.label || instance.accessRight?.label || instance.accessright)));
+    const instance = openInstance || instances[0];
+    const license = valueText(instance?.license || instance?.licence);
+    const doi = findDoi(item);
+    const landingUrl = valueText(item.url || item.landingPageUrl || instance?.url?.[0] || instance?.url || item.id);
+    const open = /open/i.test(bestRight) || Boolean(openInstance);
+    return {
+      id: "openaire:" + (valueText(item.id) || doi || title),
+      title,
+      doi,
+      url: landingUrl || (doi ? "https://doi.org/" + doi : undefined),
+      year,
+      authors,
+      publisher: valueText(item.publisher || item.metadata?.publisher || item.datasource?.name) || "OpenAIRE indexed source",
+      journal: valueText(item.container?.name || item.journal?.name || item.source?.name),
+      abstract: valueText(item.description || item.descriptions?.[0] || item.metadata?.description).slice(0, 900),
+      type: valueText(item.type || item.resultType) || "Research publication",
+      sources: ["OpenAIRE Graph"],
+      openAccess: open,
+      subjects: (Array.isArray(item.subjects) ? item.subjects : []).map(valueText).filter(Boolean).slice(0, 8),
+      verificationStatus: "metadata-only",
+      verificationNote: "OpenAIRE aggregates research metadata from many repositories and publishers. Confirm the source record, version, peer-review status and document licence before relying on or reusing the work.",
+      accessStatus: open ? "open_access" : "unknown",
+      license: license || undefined,
+    };
+  }).filter(record => record.title);
+}
+
+function xmlText(block: string, tag: string): string {
+  const match = block.match(new RegExp("<" + tag + "(?:\\s[^>]*)?>([\\s\\S]*?)</" + tag + ">"));
+  return cleanText((match?.[1] || "").replace(/<[^>]+>/g, " ").replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&apos;/g, "'"));
+}
+
+function xmlAttribute(block: string, tag: string, attribute: string): string {
+  const tagMatch = block.match(new RegExp("<" + tag + "\\b[^>]*>"));
+  const attrMatch = tagMatch?.[0].match(new RegExp(attribute + "=\"([^\"]+)\""));
+  return (attrMatch?.[1] || "").replace(/&amp;/g, "&");
+}
+
+async function searchArxiv(query: string, signal: AbortSignal): Promise<ResearchRecord[]> {
+  const params = new URLSearchParams({ search_query: "all:" + query, start: "0", max_results: "8", sortBy: "relevance" });
+  const response = await fetch("https://export.arxiv.org/api/query?" + params.toString(), {
+    signal, headers: { Accept: "application/atom+xml, application/xml, text/xml" },
+  });
+  if (!response.ok) throw new Error("HTTP " + response.status);
+  const xml = await response.text();
+  const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map(match => match[1]);
+  return entries.map(entry => {
+    const title = xmlText(entry, "title");
+    const id = xmlText(entry, "id");
+    const authors = [...entry.matchAll(/<author>([\s\S]*?)<\/author>/g)].map(match => xmlText(match[1], "name")).filter(Boolean).join(", ");
+    const pdfLink = [...entry.matchAll(/<link\b[^>]*\/>/g)].map(match => match[0]).find(link => /title="pdf"/i.test(link));
+    const published = xmlText(entry, "published");
+    const categories = [...entry.matchAll(/<category\b[^>]*term="([^"]+)"/g)].map(match => match[1]);
+    return {
+      id: "arxiv:" + id,
+      title,
+      url: id,
+      year: Number(published.slice(0, 4)) || undefined,
+      authors,
+      publisher: "arXiv",
+      journal: "",
+      abstract: xmlText(entry, "summary").slice(0, 900),
+      type: "Preprint",
+      sources: ["arXiv"],
+      openAccess: true,
+      subjects: categories.slice(0, 8),
+      verificationStatus: "metadata-only",
+      verificationNote: "arXiv records are preprints and may differ from later peer-reviewed publications. Check version history, journal publication and the licence before reuse.",
+      accessStatus: "open_access",
+      fullTextUrl: pdfLink ? xmlAttribute(pdfLink, "link", "href") : undefined,
+    };
+  }).filter(record => record.title);
+}
+
+type DSpaceRepository = { id: string; name: string; baseUrl: string };
+const DSPACE_REPOSITORIES: DSpaceRepository[] = [
+  { id: "ugspace", name: "UGSpace Institutional Repository", baseUrl: "https://ugspace.ug.edu.gh" },
+  { id: "knustspace", name: "KNUSTSpace", baseUrl: "https://dspace.knust.edu.gh" },
+  { id: "ucc-ir", name: "University of Cape Coast Institutional Repository", baseUrl: "https://ir.ucc.edu.gh" },
+];
+
+function metadataValues(metadata: any, keys: string[]): string[] {
+  for (const key of keys) {
+    const raw = metadata?.[key];
+    if (raw === undefined || raw === null) continue;
+    const values = (Array.isArray(raw) ? raw : [raw]).map((item: any) => valueText(item?.value || item));
+    if (values.length) return values.filter(Boolean);
+  }
+  return [];
+}
+
+async function searchDspaceRepository(repository: DSpaceRepository, query: string, signal: AbortSignal): Promise<ResearchRecord[]> {
+  const params = new URLSearchParams({ query, dsoType: "item", page: "0", size: "8" });
+  const response = await fetch(repository.baseUrl + "/server/api/discover/search/objects?" + params.toString(), {
+    signal, headers: { Accept: "application/json" },
+  });
+  if (!response.ok) throw new Error("HTTP " + response.status);
+  const payload = await response.json();
+  const objects = payload?._embedded?.searchResult?._embedded?.objects || payload?._embedded?.objects || [];
+  return objects.map((wrapper: any) => {
+    const item = wrapper?._embedded?.indexableObject || wrapper?.indexableObject || wrapper;
+    const metadata = item?.metadata || {};
+    const title = metadataValues(metadata, ["dc.title", "dcterms.title"])[0] || valueText(item?.name);
+    const authors = metadataValues(metadata, ["dc.contributor.author", "dc.creator", "dc.contributor"]);
+    const abstract = metadataValues(metadata, ["dc.description.abstract", "dc.description"])[0] || "";
+    const date = metadataValues(metadata, ["dc.date.issued", "dc.date.accessioned"])[0] || "";
+    const year = Number(date.match(/\b(19|20)\d{2}\b/)?.[0]) || undefined;
+    const handle = metadataValues(metadata, ["dc.identifier.uri", "dc.identifier"])[0];
+    const itemId = valueText(item?.uuid || item?.id);
+    const url = handle || (itemId ? repository.baseUrl + "/items/" + itemId : "");
+    return {
+      id: repository.id + ":" + (itemId || handle || title),
+      title,
+      url: url || repository.baseUrl,
+      year,
+      authors: authors.slice(0, 8).join(", "),
+      publisher: repository.name,
+      journal: metadataValues(metadata, ["dc.relation.ispartof", "dc.publisher"])[0] || "",
+      abstract: abstract.slice(0, 900),
+      type: metadataValues(metadata, ["dc.type"])[0] || "Institutional repository item",
+      sources: [repository.name],
+      subjects: metadataValues(metadata, ["dc.subject"]).slice(0, 8),
+      verificationStatus: "metadata-only",
+      verificationNote: "Repository metadata was retrieved from an institutional DSpace service. Confirm the item landing page, author, version and file access or reuse terms before citing or redistributing it.",
+    };
+  }).filter((record: ResearchRecord) => record.title);
+}
+
 export async function searchResearchRepositories(
   query: string,
   signal: AbortSignal,
@@ -251,6 +425,9 @@ export async function searchResearchRepositories(
     { name: "Zenodo", search: searchZenodo },
     { name: "PubMed", search: searchPubMed },
     { name: "Europe PMC", search: searchEuropePmc },
+    { name: "OpenAIRE Graph", search: searchOpenAire },
+    { name: "arXiv", search: searchArxiv },
+    ...DSPACE_REPOSITORIES.map(repository => ({ name: repository.name, search: (query: string, signal: AbortSignal) => searchDspaceRepository(repository, query, signal) })),
   ];
   const settled = await Promise.allSettled(providers.map(provider => provider.search(query, signal)));
   if (signal.aborted) throw new DOMException("Search cancelled", "AbortError");

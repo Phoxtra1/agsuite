@@ -5,6 +5,7 @@ import { CategoryManager } from './CategoryManager';
 import { AuthDiagnosticsPanel } from './AuthDiagnosticsPanel';
 import { EmailDeliveryPanel } from './EmailDeliveryPanel';
 import UserAppAccessManager from './UserAppAccessManager';
+import { DiscoveryLibraryPanel } from './DiscoveryLibraryPanel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -20,6 +21,7 @@ import {
   Boxes,
   CircleDot,
   Clock,
+  LibraryBig,
 } from 'lucide-react';
 
 type SectionId =
@@ -28,7 +30,8 @@ type SectionId =
   | 'categories'
   | 'auth-diagnostics'
   | 'email-delivery'
-  | 'app-access';
+  | 'app-access'
+  | 'discovery-library';
 
 const SECTIONS: { id: SectionId; label: string; icon: React.ElementType; hint: string }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, hint: 'Live snapshot' },
@@ -37,6 +40,7 @@ const SECTIONS: { id: SectionId; label: string; icon: React.ElementType; hint: s
   { id: 'auth-diagnostics', label: 'Live Auth Diagnostics', icon: ShieldCheck, hint: 'Real-time telemetry' },
   { id: 'email-delivery', label: 'Email Delivery', icon: Mail, hint: 'Delivery statuses' },
   { id: 'app-access', label: 'User Access', icon: KeyRound, hint: 'Per-app grants' },
+  { id: 'discovery-library', label: 'Discovery Library', icon: LibraryBig, hint: 'Publication review' },
 ];
 
 function StatCard({
@@ -172,6 +176,7 @@ export function AminevaConsole() {
           {section === 'auth-diagnostics' && <AuthDiagnosticsPanel />}
           {section === 'email-delivery' && <EmailDeliveryPanel />}
           {section === 'app-access' && <UserAppAccessManager />}
+          {section === 'discovery-library' && <DiscoveryLibraryPanel />}
         </div>
       </div>
     </div>
