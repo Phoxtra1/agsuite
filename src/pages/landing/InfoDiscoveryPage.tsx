@@ -33,6 +33,86 @@ type KingdomProfile = { country: string; period: string; overview: string; legac
 type TouristSiteProfile = { country: string; location: string; siteType: string; overview: string; history: string; significance: string; locationDetail: string; visitorExperience: string };
 type Topic = { title: string; description: string; questions: string[]; culture?: CultureProfile; festival?: FestivalProfile; kingdom?: KingdomProfile; touristSite?: TouristSiteProfile };
 type Section = { title: string; description: string; items: Topic[] };
+
+const WikimediaProfileImage = ({ title, country, kind }: { title: string; country: string; kind: "kingdom" | "tourist site" }) => {
+  const [image, setImage] = useState<{ url: string; filePage: string; credit: string; license: string } | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setImage(null);
+    setFailed(false);
+    const search = `${title} ${country} ${kind}`;
+    const params = new URLSearchParams({
+      action: "query",
+      generator: "search",
+      gsrsearch: search,
+      gsrnamespace: "6",
+      gsrlimit: "8",
+      prop: "imageinfo",
+      iiprop: "url|extmetadata",
+      iiurlwidth: "1400",
+      format: "json",
+      origin: "*",
+    });
+
+    fetch(`https://commons.wikimedia.org/w/api.php?${params.toString()}`, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Image search failed");
+        return response.json();
+      })
+      .then((data) => {
+        const pages = Object.values(data?.query?.pages || {}) as Array<{ title?: string; imageinfo?: Array<{ thumburl?: string; url?: string; descriptionurl?: string; extmetadata?: Record<string, { value?: string }> }> }>;
+        const candidates = pages
+          .map((page) => {
+            const info = page.imageinfo?.[0];
+            return info?.thumburl && info.descriptionurl
+              ? {
+                  url: info.thumburl,
+                  filePage: info.descriptionurl,
+                  credit: (info.extmetadata?.Artist?.value || info.extmetadata?.Credit?.value || "").replace(/<[^>]*>/g, "").trim(),
+                  license: (info.extmetadata?.LicenseShortName?.value || "").replace(/<[^>]*>/g, "").trim(),
+                  fileTitle: page.title || "",
+                }
+              : null;
+          })
+          .filter((item): item is NonNullable<typeof item> => Boolean(item));
+        if (!candidates.length) throw new Error("No image found");
+        const keywords = title.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 3);
+        candidates.sort((a, b) => {
+          const score = (value: typeof a) => keywords.reduce((total, word) => total + (value.fileTitle.toLowerCase().includes(word) ? 1 : 0), 0);
+          return score(b) - score(a);
+        });
+        setImage(candidates[0]);
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") setFailed(true);
+      });
+
+    return () => controller.abort();
+  }, [title, country, kind]);
+
+  if (!image) {
+    return (
+      <div className="mt-6 flex min-h-40 items-center justify-center rounded-xl border border-border bg-muted/30 text-sm text-muted-foreground" aria-live="polite">
+        {failed ? "A representative image is not available right now." : "Loading image…"}
+      </div>
+    );
+  }
+
+  return (
+    <figure className="mt-6 overflow-hidden rounded-xl border border-border bg-background">
+      <a href={image.filePage} target="_blank" rel="noreferrer" className="block">
+        <img src={image.url} alt={`${title}, ${country}`} loading="lazy" className="max-h-[360px] w-full object-cover" />
+      </a>
+      <figcaption className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2 text-xs text-muted-foreground">
+        <span>Image: Wikimedia Commons{image.credit ? ` · ${image.credit}` : ""}{image.license ? ` · ${image.license}` : ""}</span>
+        <a href={image.filePage} target="_blank" rel="noreferrer" className="underline underline-offset-2">Image details and licence</a>
+      </figcaption>
+    </figure>
+  );
+};
+
 type Source = { name: string; scope: string; type: string; url: string };
 type ProductLink = { label: string; href: string; introduction: string };
 type Category = {
@@ -2867,6 +2947,13 @@ export default function InfoDiscoveryPage() {
               <p className="mt-1 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">
                 {selectedTopic.description}
               </p>
+              {(selectedTopic.kingdom || selectedTopic.touristSite) && (
+                <WikimediaProfileImage
+                  title={selectedTopic.title}
+                  country={selectedTopic.kingdom?.country || selectedTopic.touristSite?.country || ""}
+                  kind={selectedTopic.kingdom ? "kingdom" : "tourist site"}
+                />
+              )}
               {selectedTopic.kingdom && (
                 <section className="mt-6 grid gap-3 sm:grid-cols-2" aria-label="African kingdom profile">
                   {[
