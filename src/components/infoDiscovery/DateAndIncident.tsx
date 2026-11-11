@@ -1,23 +1,37 @@
 import React, { useMemo, useState } from "react";
-import { CalendarDays, Search, Loader2, Globe2, MapPin, ExternalLink, Clock3 } from "lucide-react";
+import { CalendarDays, Search, Loader2, ExternalLink, Clock3, ShieldCheck, AlertCircle, MapPin } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 
-type OnThisDayEvent = {
-  year: number;
-  text: string;
-  pages?: { title?: string; normalizedtitle?: string; content_urls?: { desktop?: { page?: string } } }[];
+type ResearchSource = { title: string; publisher: string; url: string; sourceType: string; supports: string };
+type HistoricalEvent = {
+  year: number; title: string; summary: string; location: string; region: "Africa" | "International";
+  category: string; eventDateBasis: string; significance: string; people: string[];
+  sources: ResearchSource[]; confidence: "corroborated" | "single-source" | "contested"; caveat: string;
 };
-type EventItem = OnThisDayEvent & { region: "Africa" | "International"; url: string };
 
-const AFRICAN_TERMS = [
-  "africa","ghana","nigeria","kenya","ethiopia","egypt","sudan","south africa","senegal","mali","mugabe","mandela","lumumba","nkrumah","congo","zimbabwe","rwanda","somalia","libya","algeria","morocco","tunisia","angola","mozambique","tanzania","uganda","cameroon","ivory coast","côte d’ivoire","burkina","benin","togo","niger","chad","eritrea","namibia","botswana","lesotho","eswatini","malawi","zambia","gambia","guinea","sierra leone","liberia","mauritania","madagascar","mauritius","seychelles","comoros","djibouti","gabon","equatorial guinea","central african republic","democratic republic of the congo","kingdom of kush","aksum","asante","dahomey","kongo","songhai","mali empire","swahili"
-];
+const FUNCTIONS_ENDPOINT = (import.meta as any).env?.VITE_APPWRITE_ENDPOINT || "https://cloud.phoxtra.com/v1";
+const PROJECT_ID = (import.meta as any).env?.VITE_APPWRITE_PROJECT_ID || "amineva";
+const FUNCTION_ID = (import.meta as any).env?.VITE_DATE_INCIDENT_FUNCTION_ID || "agsuite";
 
-function classifyRegion(event: OnThisDayEvent): "Africa" | "International" {
-  const haystack = [event.text, ...(event.pages || []).map(page => page.title || "")].join(" ").toLowerCase();
-  return AFRICAN_TERMS.some(term => haystack.includes(term)) ? "Africa" : "International";
+async function runResearch(month: number, day: number, region: string, category: string): Promise<HistoricalEvent[]> {
+  const { account, functions } = await import("@/lib/appwrite");
+  const session = await account.getSession("current").catch(() => null);
+  const execution = await functions.createExecution(
+    FUNCTION_ID,
+    JSON.stringify({ action: "dateIncidentResearch", month, day, region, category }),
+    false,
+    "/",
+    "POST",
+    { "Content-Type": "application/json", ...(session?.$id ? {} : {}) }
+  );
+  let result: any = {};
+  try { result = JSON.parse(execution.responseBody || "{}"); } catch { throw new Error("The historical research service returned an unreadable response."); }
+  if (!execution.responseStatusCode || execution.responseStatusCode < 200 || execution.responseStatusCode >= 300 || !result.success) {
+    throw new Error(result.error || "Historical research is temporarily unavailable.");
+  }
+  return Array.isArray(result.events) ? result.events : [];
 }
 
 export function DateAndIncident() {
@@ -25,7 +39,7 @@ export function DateAndIncident() {
   const [date, setDate] = useState(`${today.getMonth() + 1}-${today.getDate()}`);
   const [region, setRegion] = useState("Africa first");
   const [category, setCategory] = useState("all");
-  const [events, setEvents] = useState<EventItem[]>([]);
+  const [events, setEvents] = useState<HistoricalEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [searched, setSearched] = useState(false);
@@ -33,39 +47,27 @@ export function DateAndIncident() {
   const filteredEvents = useMemo(() => events.filter(event => {
     if (region === "Africa" && event.region !== "Africa") return false;
     if (region === "International" && event.region !== "International") return false;
-    if (category === "conflict" && !/war|battle|conflict|invasion|coup|revolution|independence|assassinat|genocide|rebellion|military/i.test(event.text)) return false;
-    if (category === "politics" && !/president|election|government|king|queen|parliament|treaty|minister|political|constitution|republic/i.test(event.text)) return false;
-    if (category === "disaster" && !/earthquake|flood|fire|storm|cyclone|crash|accident|eruption|disaster|tsunami|drought/i.test(event.text)) return false;
-    if (category === "science" && !/discover|science|invention|launch|space|research|medical|technology/i.test(event.text)) return false;
-    if (category === "culture" && !/music|art|film|book|culture|festival|sport|champion|olympic|award/i.test(event.text)) return false;
+    if (category !== "all" && !event.category.toLowerCase().includes(category)) return false;
     return true;
   }), [events, region, category]);
 
   async function searchDate() {
     const [month, day] = date.split("-").map(Number);
-    if (!month || !day) return;
+    const validDate = new Date(Date.UTC(2000, month - 1, day));
+    if (!month || !day || validDate.getUTCMonth() + 1 !== month || validDate.getUTCDate() !== day) {
+      setError("Choose a valid calendar date."); return;
+    }
     setLoading(true); setError(""); setSearched(true); setEvents([]);
     try {
-      const response = await fetch(`https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/${String(month).padStart(2, "0")}/${String(day).padStart(2, "0")}`, {
-        headers: { Accept: "application/json" }
-      });
-      if (!response.ok) throw new Error("The historical events collection is temporarily unavailable. Please try again.");
-      const payload = await response.json();
-      const items: OnThisDayEvent[] = payload?.events || [];
-      const mapped = items.map(event => ({
-        ...event,
-        region: classifyRegion(event),
-        url: event.pages?.[0]?.content_urls?.desktop?.page || (event.pages?.[0]?.title ? `https://en.wikipedia.org/wiki/${encodeURIComponent(event.pages[0].title.replace(/ /g, "_"))}` : "https://en.wikipedia.org/wiki/Main_Page")
-      }));
-      mapped.sort((a, b) => a.region === b.region ? b.year - a.year : a.region === "Africa" ? -1 : 1);
-      setEvents(mapped);
+      const results = await runResearch(month, day, region, category);
+      setEvents(results);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Unable to retrieve events for this date.");
+      setError(err instanceof Error ? err.message : "Unable to research this date.");
     } finally { setLoading(false); }
   }
 
   const [month, day] = date.split("-").map(Number);
-  const displayDate = new Date(2000, (month || 1) - 1, day || 1).toLocaleDateString(undefined, { month: "long", day: "numeric" });
+  const displayDate = new Date(Date.UTC(2000, (month || 1) - 1, day || 1)).toLocaleDateString(undefined, { month: "long", day: "numeric", timeZone: "UTC" });
 
   return (
     <section className="space-y-6" aria-labelledby="date-incident-heading">
@@ -89,19 +91,26 @@ export function DateAndIncident() {
           </label>
           <div className="flex items-end"><Button onClick={searchDate} disabled={loading} className="w-full md:w-auto"><Search className="mr-2 h-4 w-4" />Discover events</Button></div>
         </div>
-        <p className="mt-3 text-xs text-muted-foreground">Searching {displayDate} across historical records, with African events prioritised and international events included.</p>
+        <p className="mt-3 text-xs text-muted-foreground">Searching {displayDate}, prioritising African records while including significant events worldwide.</p>
       </div>
 
-      {loading && <div className="flex items-center justify-center gap-2 rounded-xl border border-border p-8 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Finding historical events…</div>}
-      {error && <div role="alert" className="rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive">{error}</div>}
+      {loading && <div className="flex items-center justify-center gap-2 rounded-xl border border-border p-8 text-sm text-muted-foreground"><Loader2 className="h-4 w-4 animate-spin" /> Researching historical records…</div>}
+      {error && <div role="alert" className="flex items-start gap-2 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm text-destructive"><AlertCircle className="mt-0.5 h-4 w-4 shrink-0" />{error}</div>}
       {searched && !loading && !error && <div className="space-y-4">
-        <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold">Events on {displayDate}</h3><p className="text-xs text-muted-foreground">{filteredEvents.length} matching records</p></div><Badge variant="outline">Africa-first collection</Badge></div>
-        {filteredEvents.length ? <div className="grid gap-3 md:grid-cols-2">{filteredEvents.map((event, index) => <article key={`${event.year}-${index}-${event.text.slice(0,30)}`} className="rounded-xl border border-border bg-card p-4">
-          <div className="flex flex-wrap items-center gap-2"><Badge variant={event.region === "Africa" ? "default" : "secondary"}>{event.region}</Badge><span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Clock3 className="h-3 w-3" />{event.year}</span></div>
-          <p className="mt-3 text-sm leading-6">{event.text}</p>
-          <a href={event.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">Read historical record <ExternalLink className="h-3 w-3" /></a>
-        </article>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No records matched these filters for this date. Try all regions or another event category.</div>}
-        <p className="text-[11px] leading-5 text-muted-foreground">Historical records are retrieved from Wikipedia’s On This Day collection. Regional classification is an initial keyword-based guide, not an editorial verification. Follow the linked record and its references before relying on a historical claim.</p>
+        <div className="flex flex-wrap items-center justify-between gap-2"><div><h3 className="text-lg font-semibold">Events on {displayDate}</h3><p className="text-xs text-muted-foreground">{filteredEvents.length} researched records</p></div><Badge variant="outline">African history prioritised</Badge></div>
+        {filteredEvents.length ? <div className="grid gap-3 md:grid-cols-2">{filteredEvents.map((event, index) => <article key={`${event.year}-${index}-${event.title}`} className="rounded-xl border border-border bg-card p-4">
+          <div className="flex flex-wrap items-center gap-2"><Badge variant={event.region === "Africa" ? "default" : "secondary"}>{event.region}</Badge><Badge variant="outline">{event.category}</Badge><span className="inline-flex items-center gap-1 text-xs text-muted-foreground"><Clock3 className="h-3 w-3" />{event.year}</span></div>
+          <h4 className="mt-3 font-semibold leading-5">{event.title}</h4>
+          <p className="mt-2 flex items-center gap-1 text-xs text-muted-foreground"><MapPin className="h-3 w-3" />{event.location}</p>
+          <p className="mt-3 text-sm leading-6">{event.summary}</p>
+          {event.significance && <p className="mt-2 text-sm leading-6 text-muted-foreground">{event.significance}</p>}
+          {event.people?.length > 0 && <p className="mt-2 text-xs text-muted-foreground">People: {event.people.join(", ")}</p>}
+          <div className="mt-3 flex flex-wrap items-center gap-2 text-xs"><span className="inline-flex items-center gap-1"><ShieldCheck className="h-3.5 w-3.5" />{event.confidence === "corroborated" ? "Multiple sources" : event.confidence === "contested" ? "Contested account" : "Single-source support"}</span></div>
+          {event.eventDateBasis && <p className="mt-2 text-xs leading-5 text-muted-foreground">Date record: {event.eventDateBasis}</p>}
+          {event.caveat && <p className="mt-2 rounded-md bg-muted/60 p-2 text-xs leading-5 text-muted-foreground">Historical note: {event.caveat}</p>}
+          <div className="mt-4 border-t border-border pt-3"><p className="mb-2 text-xs font-semibold">Sources and records</p><ul className="space-y-2">{event.sources.map((source, sourceIndex) => <li key={source.url + sourceIndex}><a href={source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline">{source.title || source.publisher} <ExternalLink className="h-3 w-3" /></a><p className="text-[11px] text-muted-foreground">{source.publisher} · {source.sourceType}{source.supports ? ` · ${source.supports}` : ""}</p></li>)}</ul></div>
+        </article>)}</div> : <div className="rounded-xl border border-dashed border-border p-8 text-center text-sm text-muted-foreground">No sufficiently supported records matched these filters for this date. Try all regions or another category.</div>}
+        <p className="text-[11px] leading-5 text-muted-foreground">Confidence labels reflect the number and type of available sources. Review the linked original records, especially where historical accounts or dates are disputed.</p>
       </div>}
     </section>
   );
