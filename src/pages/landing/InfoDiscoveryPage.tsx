@@ -29,7 +29,6 @@ import { searchResearchRepositories, type ResearchRecord } from "@/lib/infoDisco
 import { searchVerifiedDiscoveryRecords, getVerifiedDiscoveryDocumentUrl } from "@/lib/infoDiscovery/discoveryLibrary";
 import { InvestigationsArchive } from "@/components/infoDiscovery/InvestigationsArchive";
 import { BusinessCaseReference } from "@/components/infoDiscovery/BusinessCaseReference";
-import { DateAndIncident } from "@/components/infoDiscovery/DateAndIncident";
 
 type CultureProfile = { community: string; history: string; wayOfLife: string; traditions: string; music: string };
 type FestivalProfile = { origin: string; meaning: string; celebration: string; location: string };
@@ -863,7 +862,7 @@ const touristSiteTopic = (title: string, country: string, location: string, site
 
 const categories: Category[] = [
   {
-    slug: "date-and-incident", title: "Date & Incident", icon: Globe2,
+    slug: "date-and-incidents", title: "Date & Incidents", icon: Globe2,
     summary: "Discover African and international events, incidents and historical milestones by date.",
     purpose: "Explore the events, incidents and historical milestones recorded on a particular day. African history receives priority in discovery while events from every world region remain in scope.",
     sections: [],
@@ -1923,7 +1922,7 @@ function formatNumber(value?: number | null, digits = 0) {
   return value.toLocaleString(undefined, { maximumFractionDigits: digits });
 }
 
-function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
+function ResearchPanel({ initialQuery = "", autoSearch = false }: { initialQuery?: string; autoSearch?: boolean }) {
   const [query, setQuery] = useState(initialQuery);
   const [records, setRecords] = useState<ResearchRecord[]>([]);
   const [loading, setLoading] = useState(false);
@@ -2002,6 +2001,10 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
     }
   };
 
+  useEffect(() => {
+    if (autoSearch && initialQuery.trim().length >= 3) void runSearch();
+  }, [initialQuery, autoSearch]);
+
   const openStoredDocument = async (record: ResearchRecord) => {
     if (!record.libraryRecordId) return;
     setOpeningDocument(record.id);
@@ -2046,6 +2049,49 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
         </article>)}
       </div>}
       <p className="mt-4 text-[11px] text-muted-foreground">Search results are discovery leads, not endorsements. Editorial approval confirms that the record passed the library's publication and rights checks; it does not guarantee that every research conclusion is correct.</p>
+    </section>
+  );
+}
+
+function DateAndIncidents() {
+  const [date, setDate] = useState("");
+  const [region, setRegion] = useState("Africa first");
+  const [category, setCategory] = useState("all");
+  const [submittedQuery, setSubmittedQuery] = useState("");
+
+  const submitDateSearch = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!date) return;
+    const selectedDate = new Date(date + "T00:00:00");
+    const dateLabel = selectedDate.toLocaleDateString(undefined, { month: "long", day: "numeric" });
+    const regionText = region === "Africa first" ? "African history and international historical events" : region === "Africa" ? "African history" : region === "International" ? "international history outside Africa" : "world history";
+    const categoryText = category === "all" ? "events, incidents and historical milestones" : category;
+    setSubmittedQuery(`Historical ${categoryText} that occurred on ${dateLabel} in any year. Prioritise ${regionText}. Find event records, archival sources, original documents and credible historical research. Distinguish the event date from publication dates.`);
+  };
+
+  return (
+    <section className="space-y-5">
+      <div className="rounded-2xl border border-border bg-card p-5 shadow-sm md:p-7">
+        <h2 className="text-2xl font-bold tracking-tight">Date &amp; Incidents</h2>
+        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">Discover the events, incidents and historical milestones that shaped our world.</p>
+        <form onSubmit={submitDateSearch} className="mt-5 grid gap-3 md:grid-cols-[1fr_1fr_1fr_auto]">
+          <label className="space-y-1.5 text-xs font-medium">Choose a date
+            <Input type="date" value={date} onChange={event => setDate(event.target.value)} required />
+          </label>
+          <label className="space-y-1.5 text-xs font-medium">Geographical coverage
+            <select value={region} onChange={event => setRegion(event.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <option value="Africa first">Africa first · then worldwide</option><option value="Africa">Africa only</option><option value="International">International events</option><option value="all">All regions</option>
+            </select>
+          </label>
+          <label className="space-y-1.5 text-xs font-medium">Event category
+            <select value={category} onChange={event => setCategory(event.target.value)} className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm">
+              <option value="all">All events</option><option value="wars and conflicts">Wars, conflicts &amp; independence</option><option value="political events">Politics &amp; government</option><option value="disasters and accidents">Disasters &amp; accidents</option><option value="science and discoveries">Science &amp; discoveries</option><option value="culture and society">Culture &amp; society</option>
+            </select>
+          </label>
+          <div className="flex items-end"><Button type="submit" disabled={!date}>Search</Button></div>
+        </form>
+      </div>
+      {submittedQuery && <ResearchPanel key={submittedQuery} initialQuery={submittedQuery} autoSearch />}
     </section>
   );
 }
@@ -3178,7 +3224,7 @@ export default function InfoDiscoveryPage() {
             </div>
             {selected.slug === "investigations-archive" && <InvestigationsArchive />}
             {selected.slug === "commercial-law" && <BusinessCaseReference />}
-            {selected.slug === "date-and-incident" ? <DateAndIncident /> : <>
+            {selected.slug === "date-and-incidents" ? <DateAndIncidents /> : <>
             <div><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Subject menu</h2><p className="mt-1 text-sm text-muted-foreground">Search within this area or filter by subject group.</p></div><Badge variant="outline">{filteredSections.reduce((count, section) => count + section.items.length, 0)} matching topics</Badge></div>
               <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTopicFilter(e.target.value)} placeholder={selected.slug === "culture-and-tradition" ? "Find a country, community or festival" : "Filter topics and questions"} aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
               {filteredSections.length ? <div className="space-y-4">{filteredSections.map((section, sectionIndex) => {
