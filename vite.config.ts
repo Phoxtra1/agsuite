@@ -1,54 +1,54 @@
 import { defineConfig } from "vite";
 import react from "@vitejs/plugin-react-swc";
+import { VitePWA } from "vite-plugin-pwa";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
 
-let VitePWA: any = null;
-try {
-  VitePWA = require("vite-plugin-pwa").VitePWA;
-} catch {}
-
-// https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
-    hmr: {
-      overlay: false,
-    },
+    hmr: { overlay: false },
   },
   plugins: [
     react(),
     mode === "development" && componentTagger(),
-    VitePWA && VitePWA({
+    VitePWA({
       registerType: "autoUpdate",
       injectRegister: null,
       devOptions: { enabled: false },
       filename: "sw.js",
       manifest: false,
       workbox: {
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,woff2}"],
-        maximumFileSizeToCacheInBytes: 6 * 1024 * 1024,
+        cleanupOutdatedCaches: true,
+        clientsClaim: true,
+        skipWaiting: true,
+        globPatterns: [
+          "**/*.{html,js,css,ico,png,svg,jpg,jpeg,webp,avif,gif,woff,woff2,ttf,json,webmanifest}",
+        ],
+        maximumFileSizeToCacheInBytes: 10 * 1024 * 1024,
         navigateFallback: "/index.html",
         navigateFallbackDenylist: [/^\/~oauth/, /^\/api\//],
         runtimeCaching: [
           {
-            urlPattern: ({ request, url }: any) =>
-              request.mode === "navigate" && !url.pathname.startsWith("/~oauth"),
-            handler: "NetworkFirst",
+            // Cache same-origin public images after first successful load.
+            // API, authentication and user-specific responses are never cached here.
+            urlPattern: ({ url, sameOrigin }: any) =>
+              sameOrigin && /\.(?:png|svg|jpe?g|webp|avif|gif|ico)$/.test(url.pathname),
+            handler: "CacheFirst",
             options: {
-              cacheName: "amineva-html",
-              networkTimeoutSeconds: 4,
-              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 7 },
+              cacheName: "amineva-public-images",
+              expiration: { maxEntries: 400, maxAgeSeconds: 60 * 60 * 24 * 60 },
             },
           },
           {
-            urlPattern: ({ url, sameOrigin }: any) =>
-              sameOrigin && /\.(?:js|css|woff2|png|svg|jpg|jpeg|webp)$/.test(url.pathname),
-            handler: "CacheFirst",
+            // Public font files can be reused without a network connection.
+            urlPattern: ({ request, url }: any) =>
+              request.destination === "font" && (url.origin === self.location?.origin || /fonts\.(?:googleapis|gstatic)\.com$/.test(url.hostname)),
+            handler: "StaleWhileRevalidate",
             options: {
-              cacheName: "amineva-assets",
-              expiration: { maxEntries: 300, maxAgeSeconds: 60 * 60 * 24 * 30 },
+              cacheName: "amineva-fonts",
+              expiration: { maxEntries: 40, maxAgeSeconds: 60 * 60 * 24 * 180 },
             },
           },
         ],
@@ -56,8 +56,6 @@ export default defineConfig(({ mode }) => ({
     }),
   ].filter(Boolean),
   resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
+    alias: { "@": path.resolve(__dirname, "./src") },
   },
 }));
