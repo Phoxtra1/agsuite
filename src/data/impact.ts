@@ -94,48 +94,12 @@ export const IMPACT_INTRO = {
 };
 
 export const FOCUS_AREAS: FocusArea[] = [
-  {
-    id: "education",
-    title: "Education & Educational Development",
-    description:
-      "Strengthening learning environments, basic school support, educational access, and foundational literacy and learning resources.",
-    icon: GraduationCap,
-  },
-  {
-    id: "career-awareness",
-    title: "Career Awareness & Exploration",
-    description:
-      "Introducing early-stage career insights to help students discover diverse professional paths, practical skills, and self-directed research.",
-    icon: Compass,
-  },
-  {
-    id: "youth-empowerment",
-    title: "Youth Empowerment & Skills Development",
-    description:
-      "Equipping young learners with problem-solving, digital literacy, and essential soft skills alongside traditional academic curricula.",
-    icon: Users,
-  },
-  {
-    id: "mentorship",
-    title: "Mentorship & Professional Exposure",
-    description:
-      "Connecting learners with experienced professionals and sector experts to provide practical guidance and real-world exposure.",
-    icon: Award,
-  },
-  {
-    id: "community-development",
-    title: "Community Development",
-    description:
-      "Supporting localized community projects, institutional capacity support, and social welfare programs.",
-    icon: HeartHandshake,
-  },
-  {
-    id: "social-initiatives",
-    title: "Social & Developmental Initiatives",
-    description:
-      "Collaborating with local and continental partners to address broader social challenges and support developmental growth.",
-    icon: Globe,
-  },
+  { id: "career-development", title: "Career Development and Exploration", description: "Helping learners discover their interests, understand a wider range of career pathways and make informed choices about education and future work.", icon: Compass },
+  { id: "youth-empowerment", title: "Youth Empowerment and Skills Development", description: "Supporting young people to build confidence, useful capabilities, initiative and the skills needed to participate meaningfully in society.", icon: Users },
+  { id: "mentorship", title: "Mentorship and Professional Exposure", description: "Creating opportunities to learn from experienced professionals, explore real working environments and gain guidance from positive role models.", icon: Award },
+  { id: "community-development", title: "Community Development", description: "Working with communities and local partners on practical responses to shared needs, participation and stronger community wellbeing.", icon: HeartHandshake },
+  { id: "social-initiatives", title: "Social Development Initiatives", description: "Developing and supporting initiatives that respond to identified social needs and improve access to opportunities and support.", icon: Globe },
+  { id: "education", title: "Education and Educational Development", description: "Contributing to educational access, supportive learning environments and resources that help individuals continue to learn and grow.", icon: GraduationCap },
 ];
 
 export const SCHOOL_ACTIVITY_IMAGES: MediaItem[] = [
@@ -152,13 +116,13 @@ export const SCHOOL_ACTIVITY_IMAGES: MediaItem[] = [
 export const INITIATIVES: Initiative[] = [
   {
     id: "career-development",
-    title: "Career Development & Exploration Initiative",
+    title: "Career Development and Exploration Program",
     tagline:
-      "Broadening horizons and inspiring career clarity for basic-school learners.",
+      "Broadening horizons and supporting informed career exploration for basic-school learners.",
     status: "active",
-    category: "Career Awareness & Youth Empowerment",
+    category: "Career Development and Exploration",
     overview:
-      "The Career Development & Exploration Initiative is the inaugural active programme under Amineva Impact. Designed specifically for basic-school learners, it brings structured career awareness into classrooms, helping students discover interests, explore non-traditional professions, and recognize the value of practical skills early in their educational journey.",
+      "The Career Development and Exploration Program is the first active programme under Amineva Impact. Designed specifically for basic-school learners, it brings structured career awareness into classrooms, helping students discover interests, explore non-traditional professions, and recognize the value of practical skills early in their educational journey.",
     purpose:
       "To bridge the gap between early academic education and long-term career awareness, giving young learners the confidence and tools to research, understand, and pursue diverse professional pathways.",
     objectives: [
@@ -236,7 +200,7 @@ export const INITIATIVES: Initiative[] = [
         date: "In Pipeline",
         title: "Pending Invitations & Partner Requests",
         summary:
-          "Reviewing invitations from additional schools and community educational coordinators seeking to host the Amineva Impact career exploration program.",
+          "Reviewing invitations from additional schools and community educational coordinators seeking to host the Career Development and Exploration Program.",
       },
     ],
     achievements: [
