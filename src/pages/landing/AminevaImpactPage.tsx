@@ -1,15 +1,42 @@
-import React, { FC, useEffect } from "react";
+import React, { FC, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { motion } from "framer-motion";
-import { ArrowRight, CheckCircle2, ExternalLink, Heart, HeartHandshake, Target } from "lucide-react";
+import { ArrowRight, CheckCircle2, ChevronLeft, ChevronRight, ExternalLink, Heart, HeartHandshake, Target } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { IMPACT_INTRO, IMPACT_VIDEO_ID, FOCUS_AREAS } from "@/data/impact";
+import { IMPACT_INTRO, IMPACT_VIDEO_ID, FOCUS_AREAS, SCHOOL_ACTIVITY_IMAGES } from "@/data/impact";
 
 const fadeUp = { hidden: { opacity: 0, y: 18 }, visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.07, duration: 0.45 } }) };
 
+const IMPACT_HERO_PHOTOS = SCHOOL_ACTIVITY_IMAGES.filter((photo) =>
+  photo.url.startsWith("/images/impact/IMG_")
+);
+
 export const AminevaImpactPage: FC = () => {
-  useEffect(() => { document.title = "Amineva Impact | A Social Initiative of Amineva Global"; }, []);
+  const [activePhotoIndex, setActivePhotoIndex] = useState(0);
+  const activePhoto = IMPACT_HERO_PHOTOS[activePhotoIndex] ?? IMPACT_HERO_PHOTOS[0];
+
+  useEffect(() => {
+    document.title = "Amineva Impact | A Social Initiative of Amineva Global";
+  }, []);
+
+  useEffect(() => {
+    if (IMPACT_HERO_PHOTOS.length < 2) return;
+    const intervalId = window.setInterval(() => {
+      setActivePhotoIndex((currentIndex) => (currentIndex + 1) % IMPACT_HERO_PHOTOS.length);
+    }, 5000);
+    return () => window.clearInterval(intervalId);
+  }, []);
+
+  const showPreviousPhoto = () => {
+    setActivePhotoIndex((currentIndex) =>
+      (currentIndex - 1 + IMPACT_HERO_PHOTOS.length) % IMPACT_HERO_PHOTOS.length
+    );
+  };
+
+  const showNextPhoto = () => {
+    setActivePhotoIndex((currentIndex) => (currentIndex + 1) % IMPACT_HERO_PHOTOS.length);
+  };
   return (
     <main className="min-h-screen w-full bg-background text-foreground">
       <section className="relative isolate overflow-hidden border-b border-border bg-gradient-to-br from-primary/[0.10] via-background to-accent/[0.08] py-14 md:py-20">
@@ -21,30 +48,65 @@ export const AminevaImpactPage: FC = () => {
             <div className="flex flex-wrap gap-3"><a href="#our-focus-areas"><Button size="lg" className="gap-2">Explore our focus areas <ArrowRight className="h-4 w-4" /></Button></a><Link to="/support"><Button size="lg" variant="outline" className="gap-2">Partner with us <HeartHandshake className="h-4 w-4" /></Button></Link></div>
           </div>
           <div className="relative lg:col-span-5">
-            <div className="relative isolate flex min-h-[340px] flex-col justify-between overflow-hidden rounded-3xl border border-accent/25 shadow-2xl sm:min-h-[420px]">
-              <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
-                <img src="/images/impact/IMG_20261028_084846.jpg" alt="" aria-hidden="true" className="h-full w-full object-cover" />
-                <img src="/images/impact/IMG_20261028_084908.jpg" alt="" aria-hidden="true" className="h-full w-full object-cover" />
-                <img src="/images/impact/IMG_20261028_090003.jpg" alt="" aria-hidden="true" className="h-full w-full object-cover" />
-                <img src="/images/impact/IMG_20261028_090243.jpg" alt="" aria-hidden="true" className="h-full w-full object-cover" />
+            <div
+              className="relative isolate aspect-[5/6] min-h-[340px] overflow-hidden rounded-3xl border border-accent/25 bg-slate-950 shadow-2xl sm:min-h-[420px]"
+              role="region"
+              aria-label="Amineva Impact school engagement photographs"
+              aria-roledescription="carousel"
+            >
+              <motion.img
+                key={activePhoto.url}
+                src={activePhoto.url}
+                alt={activePhoto.altText}
+                initial={{ opacity: 0.7 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.35 }}
+                className="absolute inset-0 h-full w-full object-cover"
+                loading="eager"
+                fetchPriority="high"
+              />
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/75 via-slate-950/10 to-transparent" />
+
+              <div className="absolute right-4 top-4 z-20 flex gap-2">
+                <button
+                  type="button"
+                  onClick={showPreviousPhoto}
+                  aria-label="Previous photograph"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-slate-950/65 text-white transition-colors hover:bg-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button
+                  type="button"
+                  onClick={showNextPhoto}
+                  aria-label="Next photograph"
+                  className="flex h-10 w-10 items-center justify-center rounded-full border border-white/70 bg-slate-950/65 text-white transition-colors hover:bg-slate-950 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+                >
+                  <ChevronRight className="h-5 w-5" />
+                </button>
               </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-950/60 to-primary/70" />
-              <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]" />
-              <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white shadow-lg backdrop-blur-md">
-                <HeartHandshake className="h-8 w-8" />
-              </div>
-              <div className="relative z-10 space-y-4 p-7 sm:p-9">
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Our areas of contribution</p>
-                  <p className="mt-2 max-w-sm text-2xl font-bold leading-tight text-white sm:text-3xl">Creating opportunities through people, education and community.</p>
+
+              <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-4 p-6 sm:p-8">
+                <div className="max-w-lg">
+                  <p className="text-xs font-semibold uppercase tracking-[0.18em] text-white/85">
+                    {activePhoto.title}
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-white sm:text-base">
+                    {activePhoto.caption}
+                  </p>
                 </div>
-                <div className="grid grid-cols-2 gap-3">
-                  <div className="rounded-xl border border-white/20 bg-black/25 p-3 text-white shadow-sm backdrop-blur-md"><p className="text-sm font-semibold">People</p><p className="mt-1 text-xs text-white/75">Development and opportunity</p></div>
-                  <div className="rounded-xl border border-white/20 bg-black/25 p-3 text-white shadow-sm backdrop-blur-md"><p className="text-sm font-semibold">Education</p><p className="mt-1 text-xs text-white/75">Learning and exploration</p></div>
-                  <div className="rounded-xl border border-white/20 bg-black/25 p-3 text-white shadow-sm backdrop-blur-md"><p className="text-sm font-semibold">Communities</p><p className="mt-1 text-xs text-white/75">Participation and wellbeing</p></div>
-                  <div className="rounded-xl border border-white/20 bg-black/25 p-3 text-white shadow-sm backdrop-blur-md"><p className="text-sm font-semibold">Partnerships</p><p className="mt-1 text-xs text-white/75">Shared action and support</p></div>
+                <div className="flex shrink-0 items-center gap-2" aria-label="Choose a photograph">
+                  {IMPACT_HERO_PHOTOS.map((photo, index) => (
+                    <button
+                      key={photo.url}
+                      type="button"
+                      onClick={() => setActivePhotoIndex(index)}
+                      aria-label={"Show photograph " + (index + 1)}
+                      aria-pressed={index === activePhotoIndex}
+                      className={"h-2.5 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white " + (index === activePhotoIndex ? "w-7 bg-white" : "w-2.5 bg-white/60 hover:bg-white")}
+                    />
+                  ))}
                 </div>
-                <p className="text-[11px] font-medium tracking-wide text-white/65">Featuring our current Career Development and Exploration engagements</p>
               </div>
             </div>
           </div>
