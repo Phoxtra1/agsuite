@@ -188,7 +188,7 @@ export default async ({ req, res, log, error }) => {
 
   if (action === "dateIncidentResearch") {
     try {
-      const month = Number(body.month);
+      const invokingUserId = req.headers["x-appwrite-user-id"];\n      if (!invokingUserId) return res.json({ success: false, error: "Sign in to use Date & Incident research." }, 401);\n      const month = Number(body.month);
       const day = Number(body.day);
       const region = String(body.region || "Africa first").slice(0, 40);
       const category = String(body.category || "all").slice(0, 60);
