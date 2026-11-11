@@ -26,6 +26,7 @@ import { SavedTopicsDrawer } from "@/components/infoDiscovery/SavedTopicsDrawer"
 import { PopularAndRecent } from "@/components/infoDiscovery/PopularAndRecent";
 import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracker";
 import { searchResearchRepositories, type ResearchRecord } from "@/lib/infoDiscovery/researchSearch";
+import { searchVerifiedDiscoveryRecords, getVerifiedDiscoveryDocumentUrl } from "@/lib/infoDiscovery/discoveryLibrary";
 
 type CultureProfile = { community: string; history: string; wayOfLife: string; traditions: string; music: string };
 type FestivalProfile = { origin: string; meaning: string; celebration: string; location: string };
@@ -1892,6 +1893,7 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [retrievedAt, setRetrievedAt] = useState("");
+  const [openingDocument, setOpeningDocument] = useState<string | null>(null);
   const activeRequest = useRef<AbortController | null>(null);
 
   useEffect(() => {
@@ -1917,20 +1919,44 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
     setRecords([]);
     setRetrievedAt("");
     try {
-      const result = await searchResearchRepositories(clean, controller.signal);
+      const [external, approved] = await Promise.all([
+        searchResearchRepositories(clean, controller.signal),
+        searchVerifiedDiscoveryRecords(clean, controller.signal),
+      ]);
       if (activeRequest.current !== controller) return;
-      setRecords(result.records);
+
+      const merged = new Map<string, ResearchRecord>();
+      for (const record of [...external.records, ...approved]) {
+        const key = record.doi
+          ? "doi:" + record.doi.toLowerCase().replace(/^https?:\/\/(dx\.)?doi\.org\//, "")
+          : "title:" + record.title.toLocaleLowerCase().trim();
+        const current = merged.get(key);
+        if (!current || record.verificationStatus === "editorially-verified") {
+          merged.set(key, current ? {
+            ...record,
+            sources: Array.from(new Set([...record.sources, ...current.sources])),
+          } : record);
+        } else {
+          current.sources = Array.from(new Set([...current.sources, ...record.sources]));
+        }
+      }
+      const combined = Array.from(merged.values()).sort((a, b) =>
+        Number(b.verificationStatus === "editorially-verified") - Number(a.verificationStatus === "editorially-verified")
+        || (b.year || 0) - (a.year || 0)
+      );
+      setRecords(combined);
       setRetrievedAt(new Date().toISOString());
-      if (!result.records.length) {
-        setError(result.sourceErrors.length
-          ? "The connected research repositories could not return records. " + result.sourceErrors.map(item => item.source + ": " + item.message).join(" · ")
-          : "No matching publication metadata was returned. Try different search terms.");
-      } else if (result.sourceErrors.length) {
-        setError("Some repositories were unavailable: " + result.sourceErrors.map(item => item.source).join(", ") + ". Results from the other available repositories are shown.");
+      if (!combined.length) {
+        const failures = external.sourceErrors;
+        setError(failures.length
+          ? "The connected repositories could not return records. " + failures.map(item => item.source + ": " + item.message).join(" · ")
+          : "No matching publication records were returned. Try different search terms.");
+      } else if (external.sourceErrors.length) {
+        setError("Some external repositories were unavailable: " + external.sourceErrors.map(item => item.source).join(", ") + ". Results from available sources and the approved library are shown.");
       }
     } catch (err: any) {
       if (err?.name !== "AbortError" && activeRequest.current === controller) {
-        setError(err?.message || "The research index could not be reached. Check the connection and try again.");
+        setError(err?.message || "The research repositories could not be reached. Check the connection and try again.");
       }
     } finally {
       if (activeRequest.current === controller) {
@@ -1940,31 +1966,50 @@ function ResearchPanel({ initialQuery = "" }: { initialQuery?: string }) {
     }
   };
 
+  const openStoredDocument = async (record: ResearchRecord) => {
+    if (!record.libraryRecordId) return;
+    setOpeningDocument(record.id);
+    try {
+      const url = await getVerifiedDiscoveryDocumentUrl(record.libraryRecordId);
+      if (!url) throw new Error("This document is not approved for public access.");
+      window.open(url, "_blank", "noopener,noreferrer");
+    } catch (error: any) {
+      toast.error(error?.message || "The document could not be opened.");
+    } finally {
+      setOpeningDocument(null);
+    }
+  };
+
   return (
     <section className="rounded-2xl border border-border bg-card shadow-sm p-5 md:p-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><BookOpen className="h-4 w-4 text-primary" /> Research publication search</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Search Crossref, OpenAlex, Zenodo, PubMed and Europe PMC research metadata. A DOI or Crossref record confirms that metadata was registered, not that the research findings are correct, independently replicated, peer-reviewed or freely accessible.</p></div>
-        <Badge variant="outline">Crossref · OpenAlex · Zenodo · PubMed · Europe PMC</Badge>
+        <div><div className="flex items-center gap-2 text-sm font-semibold"><BookOpen className="h-4 w-4 text-primary" /> Research publication search</div><p className="mt-1 max-w-2xl text-xs leading-5 text-muted-foreground">Search scholarly indexes, institutional repositories and publications reviewed for the Amineva library. Repository metadata remains a discovery lead until its original source and rights are checked.</p></div>
+        <Badge variant="outline">Research indexes · University repositories · Reviewed library</Badge>
       </div>
       <form onSubmit={runSearch} className="mt-4 flex flex-col gap-2 sm:flex-row">
         <Input value={query} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setQuery(e.target.value)} placeholder="Search a subject, question or research topic" aria-label="Search research publications" />
         <Button type="submit" disabled={loading || query.trim().length < 3} className="sm:min-w-32">{loading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Search className="mr-2 h-4 w-4" />}Search</Button>
       </form>
       {error && <p role="status" className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-sm text-muted-foreground">{error}</p>}
-      {retrievedAt && <p className="mt-3 text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()} · Repositories: Crossref, OpenAlex, Zenodo, PubMed and Europe PMC · Retrieval time is not publication time.</p>}
+      {retrievedAt && <p className="mt-3 text-[11px] text-muted-foreground">Retrieved {new Date(retrievedAt).toLocaleString()} · Retrieval time is not publication time.</p>}
       {records.length > 0 && <div className="mt-4 space-y-3">
-        {records.map((record, index) => <article key={record.doi || record.url || index} className="rounded-xl border border-border bg-background/60 p-4">
-          <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Publication year not supplied"}</Badge><span className="text-[11px] text-muted-foreground">{record.type}</span></div>
+        {records.map((record, index) => <article key={record.id || record.doi || record.url || index} className="rounded-xl border border-border bg-background/60 p-4">
+          <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Publication year not supplied"}</Badge><span className="text-[11px] text-muted-foreground">{record.type}</span><Badge variant={record.verificationStatus === "editorially-verified" ? "default" : "outline"}>{record.verificationStatus === "editorially-verified" ? "Editorially verified" : "Metadata only"}</Badge></div>
           <h3 className="mt-2 font-semibold leading-6">{record.title}</h3>
           {(record.authors || record.journal || record.publisher) && <p className="mt-1 text-xs leading-5 text-muted-foreground">{[record.authors, record.journal, record.publisher].filter(Boolean).join(" · ")}</p>}
           {record.doi && <p className="mt-1 text-[11px] text-muted-foreground">DOI: <span className="font-mono">{record.doi}</span></p>}
-          {record.sources?.length > 0 && <p className="mt-1 text-[10px] text-muted-foreground">Indexed by: {record.sources.join(", ")}{record.openAccess === true ? " · Open-access record" : record.openAccess === false ? " · Open access not confirmed" : ""}</p>}
+          {record.sources?.length > 0 && <p className="mt-1 text-[10px] text-muted-foreground">Indexed by: {record.sources.join(", ")}{record.openAccess === true ? " · Open-access copy identified" : record.openAccess === false ? " · Open access not confirmed" : ""}</p>}
           {record.subjects?.length > 0 && <div className="mt-2 flex flex-wrap gap-1">{record.subjects.slice(0, 5).map(subject => <Badge key={subject} variant="secondary" className="text-[9px]">{subject}</Badge>)}</div>}
           {record.abstract && <p className="mt-3 text-sm leading-6 text-muted-foreground">{record.abstract}{record.abstract.length >= 900 ? "…" : ""}</p>}
-          <p className="mt-3 border-t border-border pt-3 text-[11px] leading-5 text-muted-foreground">Verification status: metadata only. {record.verificationNote} Verify the original publisher or repository record, corrections, retractions, version, licence and full text before relying on conclusions.</p>
+          <div className="mt-3 flex flex-wrap items-center gap-3 border-t border-border pt-3">
+            {record.url && <a href={record.url} target="_blank" rel="noreferrer" className="text-xs font-medium text-primary underline underline-offset-2">Open original record</a>}
+            {record.fullTextUrl && record.openAccess && <a href={record.fullTextUrl} target="_blank" rel="noreferrer" className="text-xs font-medium text-primary underline underline-offset-2">Open full text</a>}
+            {record.hasStoredDocument && record.libraryRecordId && <button type="button" onClick={() => void openStoredDocument(record)} disabled={openingDocument === record.id} className="text-xs font-medium text-primary underline underline-offset-2 disabled:opacity-50">{openingDocument === record.id ? "Preparing document…" : "Open approved document"}</button>}
+          </div>
+          <p className="mt-2 text-[11px] leading-5 text-muted-foreground">{record.verificationStatus === "editorially-verified" ? "Verification status: editorially reviewed. " : "Verification status: metadata only. "}{record.verificationNote} Check the original source, version, corrections, licence and access conditions before relying on or reusing a work.</p>
         </article>)}
       </div>}
-      <p className="mt-4 text-[11px] text-muted-foreground">Search results are discovery leads, not endorsements. Verify original publisher records, dates, versions, licences and methods before relying on a result.</p>
+      <p className="mt-4 text-[11px] text-muted-foreground">Search results are discovery leads, not endorsements. Editorial approval confirms that the record passed the library's publication and rights checks; it does not guarantee that every research conclusion is correct.</p>
     </section>
   );
 }
