@@ -20,7 +20,34 @@ export const AminevaImpactPage: FC = () => {
             <div className="space-y-3"><h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">Amineva <span className="text-accent">Impact</span></h1><p className="max-w-2xl text-lg font-semibold text-foreground/80">Creating access to knowledge, opportunities and support for people and communities.</p><p className="max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">{IMPACT_INTRO.positioning}</p></div>
             <div className="flex flex-wrap gap-3"><a href="#our-focus-areas"><Button size="lg" className="gap-2">Explore our focus areas <ArrowRight className="h-4 w-4" /></Button></a><Link to="/support"><Button size="lg" variant="outline" className="gap-2">Partner with us <HeartHandshake className="h-4 w-4" /></Button></Link></div>
           </div>
-          <div className="relative lg:col-span-5"><div className="relative flex min-h-[280px] flex-col justify-between overflow-hidden rounded-3xl border border-accent/20 bg-gradient-to-br from-primary/[0.08] via-card to-accent/[0.12] p-7 shadow-xl sm:min-h-[360px] sm:p-9"><div className="pointer-events-none absolute -right-12 -top-12 h-56 w-56 rounded-full border-[28px] border-accent/[0.07]" /><div className="pointer-events-none absolute -bottom-16 -left-12 h-64 w-64 rounded-full border-[34px] border-primary/[0.06]" /><div className="relative flex h-16 w-16 items-center justify-center rounded-2xl border border-accent/20 bg-accent/10 text-accent shadow-sm"><HeartHandshake className="h-8 w-8" /></div><div className="relative space-y-3"><p className="text-xs font-semibold uppercase tracking-widest text-accent">Our areas of contribution</p><div className="grid grid-cols-2 gap-3"><div className="rounded-xl border border-border bg-card/80 p-3"><p className="text-sm font-semibold">People</p><p className="mt-1 text-xs text-muted-foreground">Development and opportunity</p></div><div className="rounded-xl border border-border bg-card/80 p-3"><p className="text-sm font-semibold">Education</p><p className="mt-1 text-xs text-muted-foreground">Learning and exploration</p></div><div className="rounded-xl border border-border bg-card/80 p-3"><p className="text-sm font-semibold">Communities</p><p className="mt-1 text-xs text-muted-foreground">Participation and wellbeing</p></div><div className="rounded-xl border border-border bg-card/80 p-3"><p className="text-sm font-semibold">Partnerships</p><p className="mt-1 text-xs text-muted-foreground">Shared action and support</p></div></div></div></div></div>
+          <div className="relative lg:col-span-5">
+            <div className="relative isolate flex min-h-[340px] flex-col justify-between overflow-hidden rounded-3xl border border-accent/25 shadow-2xl sm:min-h-[420px]">
+              <div className="absolute inset-0 grid grid-cols-2 grid-rows-2">
+                <img src="/images/impact/IMG_20261028_084846.jpg" alt="" aria-hidden="true" className="h-full w-full object-cover" />
+                <img src="/images/impact/IMG_20261028_084908.jpg" alt="" aria-hidden="true" className="h-full w-full object-cover" />
+                <img src="/images/impact/IMG_20261028_090003.jpg" alt="" aria-hidden="true" className="h-full w-full object-cover" />
+                <img src="/images/impact/IMG_20261028_090243.jpg" alt="" aria-hidden="true" className="h-full w-full object-cover" />
+              </div>
+              <div className="absolute inset-0 bg-gradient-to-br from-slate-950/80 via-slate-950/60 to-primary/70" />
+              <div className="absolute inset-0 bg-black/10 backdrop-blur-[1px]" />
+              <div className="relative z-10 flex h-16 w-16 items-center justify-center rounded-2xl border border-white/25 bg-white/15 text-white shadow-lg backdrop-blur-md">
+                <HeartHandshake className="h-8 w-8" />
+              </div>
+              <div className="relative z-10 space-y-4 p-7 sm:p-9">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-[0.2em] text-white/75">Our areas of contribution</p>
+                  <p className="mt-2 max-w-sm text-2xl font-bold leading-tight text-white sm:text-3xl">Creating opportunities through people, education and community.</p>
+                </div>
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-xl border border-white/20 bg-black/25 p-3 text-white shadow-sm backdrop-blur-md"><p className="text-sm font-semibold">People</p><p className="mt-1 text-xs text-white/75">Development and opportunity</p></div>
+                  <div className="rounded-xl border border-white/20 bg-black/25 p-3 text-white shadow-sm backdrop-blur-md"><p className="text-sm font-semibold">Education</p><p className="mt-1 text-xs text-white/75">Learning and exploration</p></div>
+                  <div className="rounded-xl border border-white/20 bg-black/25 p-3 text-white shadow-sm backdrop-blur-md"><p className="text-sm font-semibold">Communities</p><p className="mt-1 text-xs text-white/75">Participation and wellbeing</p></div>
+                  <div className="rounded-xl border border-white/20 bg-black/25 p-3 text-white shadow-sm backdrop-blur-md"><p className="text-sm font-semibold">Partnerships</p><p className="mt-1 text-xs text-white/75">Shared action and support</p></div>
+                </div>
+                <p className="text-[11px] font-medium tracking-wide text-white/65">Featuring our current Career Development and Exploration engagements</p>
+              </div>
+            </div>
+          </div>
         </div>
       </section>
       <section aria-label="UNESCO Global Education Coalition membership status" className="mx-auto max-w-7xl px-6 pt-7"><div className="flex flex-col gap-3 rounded-2xl bg-[#003B7A] px-5 py-4 text-white shadow-sm sm:flex-row sm:items-center"><div className="flex shrink-0 items-center justify-center rounded-xl bg-white px-3 py-2"><img src="https://upload.wikimedia.org/wikipedia/commons/2/2e/Logo_UNESCO_2021.svg" alt="UNESCO" className="h-9 w-auto" loading="lazy" /></div><div className="min-w-0"><p className="text-[11px] font-semibold uppercase tracking-wider text-white/80">Member of UNESCO Global Education Coalition</p><p className="mt-0.5 text-base font-bold">Approval confirmed</p><p className="mt-1 text-sm leading-relaxed text-white/90">Amineva Global has received confirmation of approval to join UNESCO's Global Education Coalition. Its public profile on the Coalition's website is awaiting publication.</p></div></div></section>
