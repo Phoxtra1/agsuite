@@ -358,8 +358,6 @@ export function DiscoveryLibraryPanel() {
                     ["rightsAndAccessChecked","Access and reuse rights checked"],
                     ["jurisdictionAndPublicationDateChecked","Jurisdiction, issuing institution and publication date checked"],
                     ["findingsAndLegalStatusChecked","Allegations, findings, recommendations, charges and judgments distinguished"],
-                    ["jurisdictionAndPublicationDateChecked","Jurisdiction, issuing body and publication date checked"],
-                    ["findingsAndLegalStatusChecked","Allegations, findings, recommendations and legal outcomes distinguished"],
                   ] as const).map(([key,label]) => (
                     <label key={key} className="flex items-center gap-2 text-xs">
                       <input type="checkbox" checked={evidence[key]} onChange={e => setEvidence(current => ({...current,[key]:e.target.checked}))} />
