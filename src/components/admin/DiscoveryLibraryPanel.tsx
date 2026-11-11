@@ -356,6 +356,8 @@ export function DiscoveryLibraryPanel() {
                     ["originalSourceChecked","Original publisher or repository checked"],
                     ["versionAndCorrectionsChecked","Version, date and corrections checked"],
                     ["rightsAndAccessChecked","Access and reuse rights checked"],
+                    ["jurisdictionAndPublicationDateChecked","Jurisdiction, issuing institution and publication date checked"],
+                    ["findingsAndLegalStatusChecked","Allegations, findings, recommendations, charges and judgments distinguished"],
                     ["jurisdictionAndPublicationDateChecked","Jurisdiction, issuing body and publication date checked"],
                     ["findingsAndLegalStatusChecked","Allegations, findings, recommendations and legal outcomes distinguished"],
                   ] as const).map(([key,label]) => (
