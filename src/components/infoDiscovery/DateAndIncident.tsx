@@ -13,7 +13,7 @@ type HistoricalEvent = {
 
 const FUNCTIONS_ENDPOINT = (import.meta as any).env?.VITE_APPWRITE_ENDPOINT || "https://cloud.phoxtra.com/v1";
 const PROJECT_ID = (import.meta as any).env?.VITE_APPWRITE_PROJECT_ID || "amineva";
-const FUNCTION_ID = (import.meta as any).env?.VITE_DATE_INCIDENT_FUNCTION_ID || "agsuite";
+const FUNCTION_ID = (import.meta as any).env?.VITE_DATE_INCIDENT_FUNCTION_ID || "69689f59003426b9e5e3";
 
 async function runResearch(month: number, day: number, region: string, category: string): Promise<HistoricalEvent[]> {
   const { account, functions } = await import("@/lib/appwrite");
@@ -24,7 +24,7 @@ async function runResearch(month: number, day: number, region: string, category:
     false,
     "/",
     "POST",
-    { "Content-Type": "application/json", ...(session?.$id ? {} : {}) }
+    { "Content-Type": "application/json" }
   );
   let result: any = {};
   try { result = JSON.parse(execution.responseBody || "{}"); } catch { throw new Error("The historical research service returned an unreadable response."); }
