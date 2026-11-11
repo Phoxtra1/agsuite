@@ -77,7 +77,7 @@ export const AminevaImpactPage: FC = () => {
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string; altText: string; caption: string } | null>(null);
 
   useEffect(() => {
-    document.title = "Amineva Impact | Community & Educational Initiatives | Amineva Global";
+    document.title = "Amineva Impact | A Social Initiative of Amineva Global";
   }, []);
 
   useEffect(() => {
@@ -144,7 +144,7 @@ export const AminevaImpactPage: FC = () => {
                 Amineva <span className="text-accent">Impact</span>
               </h1>
               <p className="text-base md:text-lg font-semibold text-foreground/80">
-                Education, opportunity and practical development.
+                Creating access to knowledge, opportunities and support for people and communities.
               </p>
               <p className="text-sm md:text-base text-muted-foreground leading-relaxed max-w-2xl">
                 {IMPACT_INTRO.positioning}
@@ -284,6 +284,32 @@ export const AminevaImpactPage: FC = () => {
               <p className="text-lg font-bold text-foreground">Career Development</p>
               <p className="text-xs text-muted-foreground">First active initiative</p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* MISSION AND OBJECTIVES */}
+      <section className="max-w-7xl mx-auto px-6 py-12 md:py-16">
+        <div className="grid gap-6 lg:grid-cols-5">
+          <div className="lg:col-span-2 rounded-3xl border border-accent/20 bg-gradient-to-br from-accent/10 via-card to-primary/[0.06] p-6 md:p-8">
+            <div className="mb-4 flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent">
+              <Target className="h-5 w-5" />
+            </div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-accent">Our Mission</p>
+            <h2 className="mt-2 text-2xl font-bold text-foreground md:text-3xl">Why we are here</h2>
+            <p className="mt-4 text-sm leading-7 text-muted-foreground">{IMPACT_INTRO.mission}</p>
+          </div>
+          <div className="lg:col-span-3 rounded-3xl border border-border bg-card p-6 md:p-8">
+            <p className="text-xs font-semibold uppercase tracking-widest text-accent">Our Objectives</p>
+            <h2 className="mt-2 text-2xl font-bold text-foreground md:text-3xl">What we work to achieve</h2>
+            <ul className="mt-5 space-y-3">
+              {IMPACT_INTRO.objectives.map((objective, index) => (
+                <li key={index} className="flex items-start gap-3 text-sm leading-6 text-muted-foreground">
+                  <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-accent" />
+                  <span>{objective}</span>
+                </li>
+              ))}
+            </ul>
           </div>
         </div>
       </section>
