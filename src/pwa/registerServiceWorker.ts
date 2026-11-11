@@ -1,4 +1,4 @@
-// Single guarded registration wrapper for the app service worker.
+// Register the production service worker after the initial page load.
 const SW_URL = "/sw.js";
 
 function isBlockedContext(): boolean {
@@ -19,11 +19,13 @@ function isBlockedContext(): boolean {
 
 async function unregisterAppWorkers() {
   if (!("serviceWorker" in navigator)) return;
-  const regs = await navigator.serviceWorker.getRegistrations();
+  const registrations = await navigator.serviceWorker.getRegistrations();
   await Promise.allSettled(
-    regs
-      .filter((r) => (r.active?.scriptURL || r.installing?.scriptURL || "").endsWith(SW_URL))
-      .map((r) => r.unregister()),
+    registrations
+      .filter((registration) =>
+        (registration.active?.scriptURL || registration.installing?.scriptURL || "").endsWith(SW_URL)
+      )
+      .map((registration) => registration.unregister()),
   );
 }
 
@@ -33,9 +35,10 @@ export function registerServiceWorker() {
     void unregisterAppWorkers();
     return;
   }
+
   window.addEventListener("load", () => {
-    navigator.serviceWorker.register(SW_URL, { scope: "/" }).catch(() => {
-      /* offline support is optional */
+    navigator.serviceWorker.register(SW_URL, { scope: "/" }).catch((error) => {
+      console.warn("[Amineva PWA] Service worker registration failed; online use remains available.", error);
     });
-  });
+  }, { once: true });
 }
