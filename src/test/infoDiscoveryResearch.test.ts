@@ -145,14 +145,18 @@ describe("Info Discovery source foundation", () => {
       originalSourceChecked: false,
       versionAndCorrectionsChecked: true,
       rightsAndAccessChecked: false,
+      jurisdictionAndPublicationDateChecked: false,
+      findingsAndLegalStatusChecked: false,
       reviewNote: "",
       rightsBasis: "",
     };
-    expect(validateDiscoveryReview(incomplete)).toHaveLength(4);
+    expect(validateDiscoveryReview(incomplete)).toHaveLength(6);
     expect(validateDiscoveryReview({
       ...incomplete,
       originalSourceChecked: true,
       rightsAndAccessChecked: true,
+      jurisdictionAndPublicationDateChecked: true,
+      findingsAndLegalStatusChecked: true,
       reviewNote: "Checked the issuing institution record and licence.",
       rightsBasis: "Institutional repository licence permits public access.",
     })).toEqual([]);
