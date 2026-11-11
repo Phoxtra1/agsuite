@@ -30,9 +30,89 @@ import { searchResearchRepositories, type ResearchRecord } from "@/lib/infoDisco
 type CultureProfile = { community: string; history: string; wayOfLife: string; traditions: string; music: string };
 type FestivalProfile = { origin: string; meaning: string; celebration: string; location: string };
 type KingdomProfile = { country: string; period: string; overview: string; legacy: string; context?: string };
-type TouristSiteProfile = { country: string; location: string; siteType: string; overview: string };
+type TouristSiteProfile = { country: string; location: string; siteType: string; overview: string; history: string; significance: string; locationDetail: string; visitorExperience: string };
 type Topic = { title: string; description: string; questions: string[]; culture?: CultureProfile; festival?: FestivalProfile; kingdom?: KingdomProfile; touristSite?: TouristSiteProfile };
 type Section = { title: string; description: string; items: Topic[] };
+
+const WikimediaProfileImage = ({ title, country, kind }: { title: string; country: string; kind: "kingdom" | "tourist site" }) => {
+  const [image, setImage] = useState<{ url: string; filePage: string; credit: string; license: string } | null>(null);
+  const [failed, setFailed] = useState(false);
+
+  useEffect(() => {
+    const controller = new AbortController();
+    setImage(null);
+    setFailed(false);
+    const search = `${title} ${country} ${kind}`;
+    const params = new URLSearchParams({
+      action: "query",
+      generator: "search",
+      gsrsearch: search,
+      gsrnamespace: "6",
+      gsrlimit: "8",
+      prop: "imageinfo",
+      iiprop: "url|extmetadata",
+      iiurlwidth: "1400",
+      format: "json",
+      origin: "*",
+    });
+
+    fetch(`https://commons.wikimedia.org/w/api.php?${params.toString()}`, { signal: controller.signal })
+      .then((response) => {
+        if (!response.ok) throw new Error("Image search failed");
+        return response.json();
+      })
+      .then((data) => {
+        const pages = Object.values(data?.query?.pages || {}) as Array<{ title?: string; imageinfo?: Array<{ thumburl?: string; url?: string; descriptionurl?: string; extmetadata?: Record<string, { value?: string }> }> }>;
+        const candidates = pages
+          .map((page) => {
+            const info = page.imageinfo?.[0];
+            return info?.thumburl && info.descriptionurl
+              ? {
+                  url: info.thumburl,
+                  filePage: info.descriptionurl,
+                  credit: (info.extmetadata?.Artist?.value || info.extmetadata?.Credit?.value || "").replace(/<[^>]*>/g, "").trim(),
+                  license: (info.extmetadata?.LicenseShortName?.value || "").replace(/<[^>]*>/g, "").trim(),
+                  fileTitle: page.title || "",
+                }
+              : null;
+          })
+          .filter((item): item is NonNullable<typeof item> => Boolean(item));
+        if (!candidates.length) throw new Error("No image found");
+        const keywords = title.toLowerCase().split(/[^a-z0-9]+/).filter((word) => word.length > 3);
+        candidates.sort((a, b) => {
+          const score = (value: typeof a) => keywords.reduce((total, word) => total + (value.fileTitle.toLowerCase().includes(word) ? 1 : 0), 0);
+          return score(b) - score(a);
+        });
+        setImage(candidates[0]);
+      })
+      .catch((error) => {
+        if (error.name !== "AbortError") setFailed(true);
+      });
+
+    return () => controller.abort();
+  }, [title, country, kind]);
+
+  if (!image) {
+    return (
+      <div className="mt-6 flex min-h-40 items-center justify-center rounded-xl border border-border bg-muted/30 text-sm text-muted-foreground" aria-live="polite">
+        {failed ? "A representative image is not available right now." : "Loading image…"}
+      </div>
+    );
+  }
+
+  return (
+    <figure className="mt-6 overflow-hidden rounded-xl border border-border bg-background">
+      <a href={image.filePage} target="_blank" rel="noreferrer" className="block">
+        <img src={image.url} alt={`${title}, ${country}`} loading="lazy" className="max-h-[360px] w-full object-cover" />
+      </a>
+      <figcaption className="flex flex-wrap items-center justify-between gap-x-3 gap-y-1 px-3 py-2 text-xs text-muted-foreground">
+        <span>Image: Wikimedia Commons{image.credit ? ` · ${image.credit}` : ""}{image.license ? ` · ${image.license}` : ""}</span>
+        <a href={image.filePage} target="_blank" rel="noreferrer" className="underline underline-offset-2">Image details and licence</a>
+      </figcaption>
+    </figure>
+  );
+};
+
 type Source = { name: string; scope: string; type: string; url: string };
 type ProductLink = { label: string; href: string; introduction: string };
 type Category = {
@@ -286,6 +366,447 @@ const FESTIVAL_PROFILE_CONTEXT: Record<string, [string, string, string, string]>
   ]
 };
 
+const TOURIST_SITE_PROFILE_DETAILS: Record<string, { history: string; significance: string; locationDetail: string; visitorExperience: string }> = {
+  "Great Pyramid of Giza and the Giza Plateau": {
+    "history": "Built during Egypt's Fourth Dynasty in the Old Kingdom, the Giza complex includes the pyramids of Khufu, Khafre and Menkaure, their associated temples and tomb fields. The Great Pyramid was constructed for Khufu around the 26th century BCE; the Sphinx and other monuments belong to this wider royal funerary landscape.",
+    "significance": "The plateau demonstrates ancient Egypt's engineering, administration, quarrying, transport and skilled craft traditions. It is a major source for understanding Old Kingdom kingship, religious beliefs about death and the afterlife, and the organisation of labour and resources.",
+    "locationDetail": "The plateau lies on the western edge of the Nile Valley at Giza, southwest of central Cairo. The main visitor zone includes the three pyramids, the Great Sphinx, causeways, valley temples and surrounding tomb fields.",
+    "visitorExperience": "Visitors can walk between the monuments, view the pyramids from several viewpoints and see the Sphinx and associated temples. Some interior chambers require separate tickets and may have restrictions. The terrain is open and exposed, so allow time for walking and follow site rules."
+  },
+  "Karnak Temple Complex": {
+    "history": "Karnak developed over more than a thousand years, with major building phases from the Middle Kingdom through the Ptolemaic period. Pharaohs added pylons, courts, obelisks, sanctuaries and the Great Hypostyle Hall, creating a monumental centre dedicated chiefly to Amun and the Theban divine triad.",
+    "significance": "Karnak was a principal religious and ceremonial centre of ancient Thebes. Its inscriptions and changing architectural forms document Egyptian religion, royal patronage, military campaigns and artistic development across many dynasties.",
+    "locationDetail": "The complex stands on the east bank of the Nile at Luxor in Upper Egypt, north of Luxor Temple. It forms part of the wider ancient Theban religious landscape.",
+    "visitorExperience": "Visitors follow monumental processional routes through pylons, courtyards and columns. The Hypostyle Hall, obelisks, sacred lake and carved reliefs are highlights. The site is extensive and mostly outdoors, so a guide or map and time to walk slowly are useful."
+  },
+  "Valley of the Kings": {
+    "history": "The Valley became the principal royal burial ground for New Kingdom pharaohs from around the sixteenth century BCE. Rulers commissioned hidden rock-cut tombs decorated with religious texts and scenes intended to guide them through the afterlife; the discovery of Tutankhamun's tomb in 1922 brought worldwide attention.",
+    "significance": "The tombs preserve an exceptional record of royal burial practices, religious belief and painting in ancient Egypt. They reveal how pharaohs understood death, divine protection and the journey into the next world.",
+    "locationDetail": "It lies on the west bank of the Nile opposite Luxor, within the Theban Necropolis. The surrounding landscape includes royal and private tombs, mortuary temples and the Valley of the Queens.",
+    "visitorExperience": "Visitors enter a selection of tombs, which may rotate or close for conservation. Painted corridors, ceilings and chambers can be seen at close range; photography and extra entry rules vary. The interiors can be warm, enclosed and uneven underfoot."
+  },
+  "Abu Simbel Temples": {
+    "history": "Ramesses II commissioned the two rock-cut temples in the thirteenth century BCE. The Great Temple honours the king and major Egyptian deities, while the smaller temple is associated with Queen Nefertari and Hathor. In the 1960s the temples were dismantled and moved to higher ground to save them from the rising waters of Lake Nasser.",
+    "significance": "The statues, reliefs and solar alignment demonstrate ancient Egyptian monumental design and royal ideology. The modern rescue operation became a landmark in international heritage conservation and helped inspire the World Heritage movement.",
+    "locationDetail": "The temples stand on the western shore of Lake Nasser in Egypt's far south, near the Sudanese border and south of Aswan. They form part of the Nubian Monuments heritage area.",
+    "visitorExperience": "Visitors approach the colossal statues and enter halls decorated with royal scenes and religious reliefs. The interior sanctuary and smaller temple offer close views of rock-cut architecture. The site is remote, so travel is usually planned from Aswan and should be arranged in advance."
+  },
+  "Medina of Marrakesh and Jemaa el-Fnaa": {
+    "history": "Marrakesh was founded in the eleventh century by the Almoravids and grew under successive dynasties into a political, religious and commercial centre. The medina contains Almoravid, Almohad, Saadian and later layers, while Jemaa el-Fnaa developed as a public space for markets, storytelling, performance and everyday city life.",
+    "significance": "The medina reflects Morocco's urban history and cultural exchange linking the Maghreb, Sahara and Mediterranean. Jemaa el-Fnaa is especially significant as a living space for oral traditions, food culture and public performance.",
+    "locationDetail": "The medina is the historic centre of Marrakesh in central-southern Morocco, west of the High Atlas. Jemaa el-Fnaa is its best-known square, close to the Koutoubia Mosque and traditional souks.",
+    "visitorExperience": "Visitors explore lanes, souks, palaces, gardens and historic buildings; the square changes character through the day and evening. Food stalls and performers are part of its atmosphere. The dense street network is best explored on foot, with respect for residents and performers."
+  },
+  "Medina of Fez": {
+    "history": "Fez was founded in the late eighth century and became one of Morocco's leading centres of scholarship, craftsmanship and trade. Fes el-Bali contains medieval streets, mosques, madrasas, fountains, fondouks and craft quarters shaped by Idrisid, Marinid and later dynasties.",
+    "significance": "The medina is an outstanding example of a living medieval Islamic city. Its urban layout, religious institutions, artisan production and educational traditions show the historic importance of Fez in the Maghreb.",
+    "locationDetail": "Fes el-Bali lies in the historic core of Fez in northern-central Morocco. The wider city also includes Fes el-Jdid and the modern Ville Nouvelle.",
+    "visitorExperience": "Visitors walk through narrow lanes lined with workshops, markets, courtyards and historic buildings. Guided walks can explain crafts and the old tanneries. Some religious buildings are not open to non-Muslim visitors, and the maze-like streets make local guidance helpful."
+  },
+  "Ksar of Aït-Ben-Haddou": {
+    "history": "Aït-Ben-Haddou is a fortified earthen settlement that developed along routes connecting the Sahara with Marrakesh and other Moroccan trading centres. Its walls, towers, granaries and clustered houses reflect the needs of communities living in a strategic river valley.",
+    "significance": "The ksar is an important example of southern Moroccan earthen architecture and collective settlement planning. Its construction techniques using earth and timber show how local communities adapted buildings to climate, trade and defence.",
+    "locationDetail": "It stands beside the Ounila River in Ouarzazate Province, south of the High Atlas. It lies on historic routes linking the desert and Marrakesh.",
+    "visitorExperience": "Visitors cross the river or bridge and climb through the settlement's lanes toward the upper granary and hilltop viewpoints. The experience combines architecture and valley scenery. Some buildings are private or closed, so visitors should respect residents and avoid entering restricted structures."
+  },
+  "Chefchaouen Old Town": {
+    "history": "Chefchaouen was founded in the fifteenth century as a fortified settlement in the Rif Mountains during a period of Iberian expansion. Andalusian and Moroccan influences shaped its built environment and religious life as it grew into a regional centre.",
+    "significance": "The medina is valued for its mountain setting, traditional houses and layered Andalusian-Moroccan heritage. Its blue-painted lanes are now internationally recognisable, although the colour tradition has changed over time and has several explanations.",
+    "locationDetail": "Chefchaouen lies in the Rif Mountains of northern Morocco, inland from the Mediterranean coast. The historic medina occupies a slope below the surrounding mountains.",
+    "visitorExperience": "Visitors explore pedestrian streets, small squares, craft shops and viewpoints, with opportunities to see traditional architecture and mountain scenery. The town is hilly, with steps and uneven paving; treat residential lanes as private community spaces."
+  },
+  "Carthage Archaeological Site": {
+    "history": "Carthage was founded by Phoenician settlers in the first millennium BCE and became the centre of a powerful maritime state. Rome destroyed the city in 146 BCE after the Punic Wars, then established a major Roman city on the same site; later periods added further layers.",
+    "significance": "Carthage is central to ancient Mediterranean history, illustrating Phoenician seafaring, North African political power, trade and Roman urbanism. Its archaeological remains reveal successive cultural and political transformations.",
+    "locationDetail": "The remains are spread across the modern suburb of Carthage on the coast northeast of Tunis. Key areas include Byrsa Hill, the Antonine Baths, Punic ports and residential and funerary zones.",
+    "visitorExperience": "Visitors move between several separate archaeological areas rather than one enclosed site. The baths, ports, museum collections where open and Mediterranean views are highlights. A guide or transport helps connect the dispersed monuments."
+  },
+  "El Jem Amphitheatre": {
+    "history": "The amphitheatre was built in the Roman period, probably in the third century CE, when Thysdrus prospered through olive-oil production and trade. Its scale reflects the wealth of the region and the importance of public spectacles in Roman urban life.",
+    "significance": "El Jem is one of the largest and best-preserved Roman amphitheatres in North Africa. Its seating, arena and underground spaces reveal Roman engineering and the civic life of a prosperous provincial city.",
+    "locationDetail": "The monument stands in the modern town of El Jem in Tunisia's Mahdia Governorate, in the central Sahel between Sousse and Sfax.",
+    "visitorExperience": "Visitors can walk through the arena, corridors and seating levels and look into underground passages. Upper levels convey the scale of the structure and the surrounding town. Stairways and surfaces are uneven and the open monument is exposed to sun."
+  },
+  "Leptis Magna": {
+    "history": "Leptis Magna developed from a Phoenician settlement into a major Roman city, reaching particular splendour under Emperor Septimius Severus, who was born there. Its harbour, forum, basilica, market, baths and theatre reflect its role in Mediterranean commerce and imperial administration.",
+    "significance": "It is among the most impressive surviving Roman urban landscapes in the Mediterranean. The ruins show how a North African city became a major provincial centre and how Roman architecture adapted to local geography and political ambition.",
+    "locationDetail": "Leptis Magna lies on Libya's Mediterranean coast near Al Khums, east of Tripoli. The archaeological zone extends from the ancient harbour to inland civic monuments.",
+    "visitorExperience": "Where access is permitted and conditions are safe, visitors can see the theatre, Severan Forum, basilica, baths, colonnaded streets and harbour remains. The site is extensive and open-air. Libya's security, travel permissions and heritage access must be checked with official authorities before travel."
+  },
+  "Tassili n'Ajjer": {
+    "history": "Tassili n'Ajjer contains thousands of rock-art images created over millennia, including scenes of cattle herding, wildlife, hunting and human activity. The paintings and engravings record a time when parts of the Sahara were greener and supported communities very different from those of today's desert.",
+    "significance": "The plateau is a major archive of prehistoric art and environmental change. It helps researchers understand the changing climate of the Sahara and the lives, beliefs and artistic expression of early Saharan communities.",
+    "locationDetail": "The plateau occupies a vast area in southeastern Algeria, centred around Djanet and extending toward the Libyan and Nigerien borders. Rock-art locations are scattered across remote valleys and escarpments.",
+    "visitorExperience": "Visits generally require local guides, 4x4 transport and sometimes multi-day walking or camping routes. Visitors can see rock shelters, arches, dunes and selected painted or engraved panels. The environment is remote and fragile; never touch the rock art."
+  },
+  "Cape Coast Castle": {
+    "history": "The fortress developed from earlier European trading activity on the Gold Coast and was expanded under Swedish, Dutch and British control. It became deeply involved in the Atlantic slave trade, holding enslaved Africans before forced embarkation; it later served other colonial and administrative purposes.",
+    "significance": "Cape Coast Castle is a major place of remembrance for the transatlantic slave trade and the African diaspora. It also represents centuries of African-European commerce, diplomacy and colonial power along the coast.",
+    "locationDetail": "The castle stands on the shoreline of Cape Coast in Ghana's Central Region, within the historic town and the UNESCO-listed group of Ghana's forts and castles.",
+    "visitorExperience": "Guided visits pass through courtyards, defensive spaces, governors' quarters, dungeons and memorial spaces associated with forced embarkation. The experience can be emotionally difficult and benefits from careful historical interpretation. Museum exhibits complement the tour."
+  },
+  "Elmina Castle": {
+    "history": "The Portuguese built São Jorge da Mina in 1482 as a fortified trading post, initially focused on gold and coastal commerce. The Dutch captured it in 1637; it later became a major site in the Atlantic slave-trading system, before British control in the nineteenth century.",
+    "significance": "Elmina Castle is among the oldest surviving European-built structures in sub-Saharan Africa and a key witness to the transformation from coastal trade to the trafficking of enslaved Africans. Its history also reflects African-European relations and diaspora memory.",
+    "locationDetail": "The castle occupies a promontory beside Elmina's fishing harbour in Ghana's Central Region, west of Cape Coast. The surrounding town retains a historic fishing and trading landscape.",
+    "visitorExperience": "A guided visit typically covers the courtyard, governors' rooms, dungeons, cannons and the seaward exit associated with forced embarkation. The tour can be distressing but important for understanding the history. Visitors can also explore Elmina town respectfully."
+  },
+  "Kakum National Park": {
+    "history": "Kakum protects a remnant of the Upper Guinean rainforest in Ghana's Central Region. The forest has ecological and community importance, and the protected area was established to conserve habitats and wildlife while supporting nature education and managed tourism.",
+    "significance": "The park protects biodiversity in a region where tropical forest has been reduced by settlement and resource use. It is known for forest birds, butterflies, plants and mammals and demonstrates the value of rainforest conservation in Ghana.",
+    "locationDetail": "Kakum lies in the Assin Attandanso area of the Central Region, inland from Cape Coast and Elmina. The visitor entrance and canopy walkway are within the protected forest landscape.",
+    "visitorExperience": "Visitors can take guided forest walks and, when operating, cross the elevated canopy walkway for views into the forest. Guides help identify plants, birds and wildlife signs; larger mammal sightings are not guaranteed. Follow staff instructions, especially on suspended bridges."
+  },
+  "Osun-Osogbo Sacred Grove": {
+    "history": "The grove developed as a sacred landscape associated with Osun, the Yoruba deity linked to the river. Its shrines, sculptures and ritual spaces have been maintained by priests, devotees, artists and community custodians over generations.",
+    "significance": "The grove is a rare surviving example of a Yoruba sacred forest and a living religious place, not simply an archaeological park. Its artworks and shrines record the continuing importance of traditional spiritual practice in contemporary Nigeria.",
+    "locationDetail": "It lies on the outskirts of Osogbo, capital of Osun State in southwestern Nigeria, within a forest along the Osun River.",
+    "visitorExperience": "Visitors may follow designated paths to see shrines, sculptures, river settings and ritual spaces, usually with guidance. It remains sacred to worshippers, so photography, movement and behaviour should respect local rules and ceremonies. Festival periods may bring crowds and special restrictions."
+  },
+  "Olumo Rock": {
+    "history": "Olumo Rock served as a refuge for Egba communities during nineteenth-century conflicts. Abeokuta, whose name is commonly interpreted as 'under the rock', grew in relation to this defensive landscape and the histories of Egba migration and political organisation.",
+    "significance": "The rock is closely tied to the founding history and identity of Abeokuta and the resilience of the Egba people. Caves and shelters on the outcrop show how geography shaped settlement, security and community memory.",
+    "locationDetail": "Olumo Rock rises in central Abeokuta, capital of Ogun State in southwestern Nigeria. The site overlooks the city and is accessible from the urban centre.",
+    "visitorExperience": "Visitors can climb stairs and guided routes to caves, historic resting places and viewpoints over Abeokuta. The ascent combines natural geology and cultural interpretation. Some sections are steep or narrow, so follow guides and use installed paths."
+  },
+  "Royal Palaces of Abomey": {
+    "history": "The palace complex developed as the political centre of the Kingdom of Dahomey from the seventeenth century onward. Successive kings built compounds, ceremonial courtyards and decorated walls to express dynastic authority; the site was damaged during the French conquest.",
+    "significance": "The palaces preserve evidence of Dahomey's monarchy, artistic traditions, military organisation and court ceremonies. Their bas-reliefs and royal objects help interpret both the kingdom's achievements and its involvement in warfare and the Atlantic slave trade.",
+    "locationDetail": "The complex is in Abomey, in Benin's Zou Department, on the Abomey plateau south of Bohicon.",
+    "visitorExperience": "Visitors can explore palace courtyards, preserved or reconstructed buildings and museum displays about Dahomey's rulers. A local guide can explain royal symbols and reliefs. Some objects and buildings may be unavailable during conservation or ceremonial use."
+  },
+  "Kunta Kinteh Island and Related Sites": {
+    "history": "The island, formerly James Island, was a fortified European trading post on the Gambia River. Its changing control by European powers and its role in Atlantic commerce connect it to the capture, sale and forced transportation of enslaved Africans; nearby Juffureh and Albreda preserve related histories.",
+    "significance": "The island and associated sites form a heritage landscape of the Atlantic slave trade and resistance. The Kunta Kinteh name is connected to oral history and the story popularised by Alex Haley, while the wider landscape records the experiences of many communities.",
+    "locationDetail": "Kunta Kinteh Island lies in the Gambia River near Juffureh and Albreda, upriver from Banjul. Related heritage points are spread along the riverbank.",
+    "visitorExperience": "A visit commonly involves a river journey to the island, viewing surviving ruins and interpreting the trading post's history, followed by visits to associated communities or museums where available. Access depends on river and weather conditions; local guides add important context."
+  },
+  "Island of Gorée": {
+    "history": "Gorée was occupied and used by several European powers from the fifteenth century as they competed for Atlantic trade. Its houses, fortifications and harbour reflect centuries of commerce, colonial rule and slavery; the House of Slaves is its best-known memorial site, though the island's history is broader than one building.",
+    "significance": "Gorée is an internationally recognised place of remembrance for slavery and the diaspora. Its architecture and museums also reveal the history of Senegal's coast, African-European contact and Dakar's development as a colonial port.",
+    "locationDetail": "The island lies off Dakar in Senegal, a short boat crossing from the capital's harbour. Historic buildings and memorial sites are concentrated in a small pedestrian settlement.",
+    "visitorExperience": "Visitors usually arrive by ferry and walk through narrow streets, museums, fortifications and memorial spaces. The House of Slaves and other museums provide historical interpretation, while the waterfront offers views of Dakar. A guide can help distinguish documented history from popular simplifications."
+  },
+  "Djoudj National Bird Sanctuary": {
+    "history": "The Senegal River delta has long been important for fishing, agriculture and seasonal bird movement. Djoudj was protected to conserve the floodplain, lakes, marshes and reed beds that support resident and migratory birds.",
+    "significance": "The sanctuary is a major stopover and breeding habitat along the East Atlantic Flyway. Pelicans, flamingos, herons and many other waterbirds demonstrate the importance of wetland conservation in the Sahel.",
+    "locationDetail": "Djoudj lies in northern Senegal in the Senegal River delta, northeast of Saint-Louis and near the Mauritanian border.",
+    "visitorExperience": "During suitable seasons, visitors can explore by boat or designated routes with local guides and observe birds at lakes and nesting areas. Bird numbers vary with water levels and migration seasons. Maintain distance, avoid noise and follow rules for sensitive breeding sites."
+  },
+  "Old Towns of Djenné": {
+    "history": "Djenné developed as a trading and religious centre in the Inland Niger Delta, with settlement history extending back many centuries. Its architecture reflects a long tradition of building in banco, an earthen material maintained through collective repair; the Great Mosque is its most prominent monument.",
+    "significance": "Djenné illustrates the relationship between Sahelian urbanism, trans-Saharan trade, Islam, scholarship and local architectural knowledge. The mosque's maintenance traditions express community cooperation and the continuing life of the town's building culture.",
+    "locationDetail": "Djenné lies in central Mali within the Inland Niger Delta, on a seasonal island between branches of the Bani River. The historic town is surrounded by floodplain landscapes and nearby archaeological settlements.",
+    "visitorExperience": "Visitors can walk through earthen streets, view decorated facades and explore the market area. Non-Muslim access to the mosque interior is generally restricted, and visitors should respect worship and local rules. Current security and travel conditions in central Mali must be checked before planning a trip."
+  },
+  "Timbuktu": {
+    "history": "Timbuktu grew from a Saharan-edge settlement into a major commercial and intellectual city, reaching prominence during the Mali and Songhai periods. Merchants connected Saharan salt with gold and goods from the south, while scholars and manuscript collectors built a renowned tradition of Islamic learning.",
+    "significance": "The city was a major centre of Islamic scholarship and manuscript culture in the fifteenth and sixteenth centuries. Djingareyber, Sankore and Sidi Yahia mosques, mausoleums and libraries testify to its spiritual, educational and trading history.",
+    "locationDetail": "Timbuktu stands near the southern edge of the Sahara in northern Mali, west of the Niger River's main bend. Historic quarters and monuments are distributed across the old city.",
+    "visitorExperience": "When safe and accessible, visitors can learn about earthen mosques, historic neighbourhoods, manuscript traditions and trans-Saharan trade with local guides. Monuments need careful conservation and the desert environment affects the buildings. Security conditions in northern Mali can change rapidly; check official advice and local authorisation."
+  },
+  "Historic Town of Grand-Bassam": {
+    "history": "Grand-Bassam became an important French colonial administrative and trading centre in the late nineteenth and early twentieth centuries. Its European quarter, African settlement and waterfront developed through the colonial port economy, with buildings reflecting commercial and administrative uses.",
+    "significance": "The town provides evidence of colonial urban planning and interactions between African communities and European administration on the Gulf of Guinea. Its historic district preserves memories of coastal commerce and the transition of the colonial capital.",
+    "locationDetail": "Grand-Bassam lies on Côte d'Ivoire's southeastern coast, east of Abidjan, between the Atlantic shore and lagoon environment. The historic quarter is close to the beach and old harbour.",
+    "visitorExperience": "Visitors can walk through the historic quarter to see colonial-era houses, public buildings, museums and the coastal setting. Local guides help explain the town's layers of history. Buildings differ in condition and some are privately occupied, so interior access is selective."
+  },
+  "Koutammakou, Land of the Batammariba": {
+    "history": "Koutammakou is the homeland of the Batammariba, whose distinctive tower-houses, known as takienta, developed through local building knowledge and social traditions. The landscape has been shaped by generations of settlement, farming, ritual practice and relationships between households and the environment.",
+    "significance": "The site is a living cultural landscape where architecture, belief, family organisation and land use are closely connected. The takienta are not merely unusual buildings; their form reflects Batammariba ideas about household, protection and community.",
+    "locationDetail": "Koutammakou extends across the Kara Region of northern Togo and into neighbouring Benin. Villages are dispersed through a rural landscape of fields and hills.",
+    "visitorExperience": "Visitors may see traditional tower-houses and learn from local guides about construction and cultural practice. Because the landscape is inhabited and some spaces are sacred, visits should be arranged with community consent. Do not enter homes or ritual areas without permission."
+  },
+  "Ruins of Loropéni": {
+    "history": "The stone enclosure at Loropéni is associated with the history of gold production and regional trade in the Lobi area. Its builders, exact dates and original functions remain subjects of archaeological study, so it should not be attributed to one kingdom without evidence.",
+    "significance": "Loropéni is an important archaeological site in a region shaped by gold extraction, exchange and movement between forest and Sahel. Its substantial stone walls are unusual in the area and provide evidence of complex settlement and construction.",
+    "locationDetail": "The ruins are in southwestern Burkina Faso near the town of Loropéni, close to the borders with Côte d'Ivoire and Ghana.",
+    "visitorExperience": "Visitors can view sections of the stone enclosure and surrounding landscape, often with local interpretation about what is known and what remains uncertain. Facilities may be limited. Check current security, road and access conditions before travelling."
+  },
+  "Mount Cameroon": {
+    "history": "Mount Cameroon is an active stratovolcano whose eruptions and lava flows shaped the Southwest Region. The mountain has long been part of local communities' cultural and agricultural histories, while scientific expeditions and climbing traditions developed over generations.",
+    "significance": "At more than 4,000 metres, it is the highest mountain in West and Central Africa and an important centre of volcanic research and biodiversity. Its forests and montane habitats show how elevation and volcanic soils shape the region.",
+    "locationDetail": "The mountain rises near the Gulf of Guinea in southwestern Cameroon, overlooking Buea and Limbe. The national park includes forested slopes and high volcanic terrain.",
+    "visitorExperience": "Visitors can take guided hikes through forest and high-altitude landscapes, with routes varying in length and difficulty. The annual Mount Cameroon Race of Hope is a major sporting event. Weather changes quickly; trekking requires preparation, a guide and appropriate gear."
+  },
+  "Foumban Royal Palace": {
+    "history": "The palace is associated with the Bamum kingdom and its dynastic rulers. Sultan Njoya, who ruled in the late nineteenth and early twentieth centuries, supported the development of a Bamum writing system and promoted court arts, historical recording and architectural projects.",
+    "significance": "The palace and museum preserve the history of Bamum kingship, craftsmanship and political creativity. The Bamum script, royal objects, masks, textiles and carved works show how a Central African court developed intellectual and artistic institutions.",
+    "locationDetail": "The palace stands in Foumban, capital of the Noun Department in Cameroon's West Region, in the historic centre of the Bamum kingdom.",
+    "visitorExperience": "Visitors can explore museum displays of royal objects, regalia, historical documents and Bamum artworks. A local guide can explain palace symbolism and Sultan Njoya's history. Access to particular rooms and collections can vary."
+  },
+  "Mbanza Kongo": {
+    "history": "Mbanza Kongo was the capital of the Kingdom of Kongo and became a major political centre before and after Portuguese contact in the late fifteenth century. Its rulers developed diplomatic and religious ties with Portugal, including the adoption of Christianity by some members of the royal court.",
+    "significance": "The site represents one of Central Africa's most influential states and its early engagement with global trade, Christianity and Atlantic politics. Archaeological remains and churches reveal the transformation of the royal capital and the later effects of warfare and colonial rule.",
+    "locationDetail": "Mbanza Kongo is in Zaire Province in northwestern Angola, inland from the Atlantic coast and near the border with the Democratic Republic of the Congo.",
+    "visitorExperience": "Visitors can explore the historic centre, museum and remains associated with the former royal capital, including religious and archaeological landmarks. Guided visits help connect surviving structures with the wider Kingdom of Kongo."
+  },
+  "Kalandula Falls": {
+    "history": "Kalandula Falls is formed by the Lucala River as it drops over a broad escarpment. The waterfall has long been part of local landscape knowledge and community life in the Malanje region.",
+    "significance": "The falls are among Africa's major waterfalls by width and are a prominent natural attraction in Angola. The site is valued for its scale, spray, forested surroundings and contribution to regional nature tourism.",
+    "locationDetail": "The falls are on the Lucala River in Malanje Province in north-central Angola, several hours by road from Malanje city depending on route and conditions.",
+    "visitorExperience": "Visitors can view the falls from designated viewpoints and, where permitted, explore paths toward lower or side viewpoints. Water volume changes with the seasons. Paths can be slippery and mist reduces visibility, so local guidance and care near the gorge are important."
+  },
+  "Virunga National Park": {
+    "history": "Established in 1925 as Albert National Park under Belgian colonial administration, Virunga is Africa's oldest national park. Its management changed after Congolese independence, and the park has faced armed conflict, displacement, poaching and conservation pressures.",
+    "significance": "Virunga protects habitats from lowland forests to volcanic mountains and is known for mountain gorillas, other wildlife and active volcanic landscapes. Its conservation is internationally important but closely linked to security and the lives of neighbouring communities.",
+    "locationDetail": "The park is in eastern Democratic Republic of the Congo, stretching along the borders with Uganda and Rwanda across North Kivu and nearby areas.",
+    "visitorExperience": "When authorities permit tourism, activities have included guided gorilla trekking, volcano hikes and visits to selected landscapes. Activities are not continuously available. Armed conflict can make access unsafe or suspended; consult current park notices and official travel advice before considering a visit."
+  },
+  "Kahuzi-Biega National Park": {
+    "history": "Kahuzi-Biega was established to protect montane and lowland forests in the Albertine Rift. Conservation has focused particularly on the eastern lowland gorilla, while the park has also been affected by conflict, illegal resource extraction and pressure on surrounding communities.",
+    "significance": "The park protects one of the most important habitats for eastern lowland gorillas and supports rich forest biodiversity, including endemic species and a transition between montane and lowland forest.",
+    "locationDetail": "It lies in South Kivu Province in eastern Democratic Republic of the Congo, west and northwest of Bukavu. It includes the extinct volcanic mountains Kahuzi and Biega as well as lowland forest areas.",
+    "visitorExperience": "Where tourism is authorised and safe, guided forest treks may allow visitors to observe habituated eastern lowland gorillas and learn about forest ecology. Access may be restricted or suspended due to security and conservation conditions. Check official park updates before travel."
+  },
+  "Loango National Park": {
+    "history": "Loango became a protected area as Gabon developed its national park system in 2002. Its coastal landscape preserves habitats used by forest and marine wildlife and reflects long-standing relationships between communities, lagoons, fishing grounds and the Atlantic shore.",
+    "significance": "The park is notable for the meeting of rainforest, savanna, lagoons and ocean beaches. It is known for wildlife using coastal habitats, including forest elephants, hippos, marine turtles and diverse birdlife.",
+    "locationDetail": "Loango lies on Gabon's western Atlantic coast, mainly in Ogooué-Maritime Province, south of Port-Gentil and around lagoons and coastal waterways.",
+    "visitorExperience": "Visitors commonly explore by boat, guided walks, beach drives or wildlife observation. Sightings are never guaranteed; the park's appeal is its combination of coast, forest and water. Access often requires advance arrangements because distances and logistics are challenging."
+  },
+  "Lopé National Park": {
+    "history": "Lopé contains evidence of long human occupation, including archaeological traces of ancient communities and later Iron Age settlement. Its landscape combines remnant rainforest with savanna shaped by climate history and human activity over thousands of years.",
+    "significance": "The park is important for biodiversity and for understanding the interaction between Central African rainforest and savanna ecosystems. Archaeological and rock-art evidence gives it both natural and cultural significance.",
+    "locationDetail": "Lopé National Park is in central Gabon, around the Ogooué River and Lopé railway station, within the central interior.",
+    "visitorExperience": "Visitors can take guided wildlife drives, walks and river excursions, with opportunities to see forest elephants, mandrills and other species depending on season. Archaeological and landscape interpretation can be arranged locally. Activities should be planned ahead."
+  },
+  "Rock-Hewn Churches of Lalibela": {
+    "history": "The eleven medieval churches were excavated and carved from living rock, mainly during the twelfth and thirteenth centuries. Ethiopian tradition associates the building programme with King Lalibela, who sought to create a sacred landscape representing a 'New Jerusalem'. The churches remain places of worship and pilgrimage.",
+    "significance": "Lalibela is one of the most important centres of Ethiopian Orthodox Christianity and a remarkable achievement of medieval engineering, architecture and devotion. Its churches, trenches, tunnels and ceremonial spaces form an integrated sacred landscape.",
+    "locationDetail": "The churches are in Lalibela in Ethiopia's Amhara highlands, at roughly 2,500 metres above sea level and northwest of Addis Ababa.",
+    "visitorExperience": "Visitors move between groups of rock-hewn churches through pathways, trenches and tunnels, often with a local guide. Worship continues, so visitors may encounter services and pilgrims. Dress modestly, remove shoes where requested and follow rules around photography and ceremonies."
+  },
+  "Aksum Archaeological Site": {
+    "history": "Aksum was the centre of a major ancient kingdom that flourished from the first centuries CE, with roots earlier in the first millennium BCE. It controlled inland and Red Sea routes, issued coins, built monumental stelae and maintained links with Arabia and the Mediterranean.",
+    "significance": "The site records the achievements of one of Africa's major ancient states. Its obelisks, royal tombs, inscriptions and palace remains illuminate early urbanism, long-distance trade and the development of Christianity in the Horn of Africa.",
+    "locationDetail": "Aksum lies in northern Ethiopia's Tigray region, near the Eritrean border. Archaeological features are distributed around the modern town and include the Stelae Park, tombs and palace remains.",
+    "visitorExperience": "Visitors can view the great stelae, royal tombs, archaeological remains and local museums or churches where access permits. A guide helps explain inscriptions and historical periods. Confirm local security and site arrangements before travel."
+  },
+  "Harar Jugol": {
+    "history": "Harar developed as a walled Islamic city and regional trading centre, with origins extending back many centuries. Its walls, gates, mosques, shrines and merchant houses reflect interactions among Harari, Oromo, Somali, Afar and other communities and links to Red Sea and inland trade routes.",
+    "significance": "Harar is one of the Horn of Africa's important historic Islamic cities and a centre of Harari language, scholarship, architecture and craft traditions. Its dense urban form and living religious institutions distinguish it from an abandoned archaeological site.",
+    "locationDetail": "Harar Jugol is in eastern Ethiopia, east of Dire Dawa in the Hararghe region. The historic walled city is surrounded by modern Harar.",
+    "visitorExperience": "Visitors can walk through old gates and narrow lanes, see traditional houses, markets, mosques and shrines, and learn about local coffee and craft traditions. The hyena-feeding practice is a specific local attraction and should be approached only through responsible operators."
+  },
+  "Archaeological Sites of the Island of Meroe": {
+    "history": "Meroë was a major political and royal centre of the Kingdom of Kush, especially during the later Napatan and Meroitic periods. The area contains royal cemeteries, temples and city remains associated with rulers who governed the Nile corridor and maintained trade links across northeast Africa.",
+    "significance": "The pyramids and temples demonstrate distinctive Kushite achievements, including royal burial traditions, monumental architecture and the Meroitic writing system. The site is vital for understanding Nubian history beyond the monuments of Egypt.",
+    "locationDetail": "The archaeological landscape lies east of the Nile between Shendi and Atbara in Sudan. It includes royal cemeteries at Meroë and nearby sites such as Naqa and Musawwarat es-Sufra.",
+    "visitorExperience": "Where safe and accessible, visits can include pyramid fields, temple reliefs and desert landscapes. The sites are exposed and spread over a large area, so transport, water and a local guide are important. Sudan's security and access situation must be checked before travel."
+  },
+  "Asmara: Modernist African City": {
+    "history": "Asmara grew from highland settlements into a colonial administrative centre in the late nineteenth century. Under Italian rule, especially after 1935, planners built a notable collection of rationalist, futurist and modernist public and commercial buildings alongside older neighbourhoods.",
+    "significance": "Asmara is an unusually intact example of twentieth-century modernist urban planning in Africa. Its buildings show how international architectural movements were adapted within an African city and how colonial history shaped urban life.",
+    "locationDetail": "Asmara is Eritrea's capital, on a high plateau more than 2,000 metres above sea level. The heritage area includes planned central districts and older local neighbourhoods.",
+    "visitorExperience": "Visitors can explore on foot to see cinemas, churches, mosques, synagogues, civic buildings, markets and residential streets from different periods. The experience is architectural and urban rather than focused on a single monument. Follow local photography and travel rules."
+  },
+  "Lake Assal": {
+    "history": "Lake Assal occupies a tectonic depression in the Afar region, where the African and Arabian plates are moving apart. Evaporation in the hot, arid basin leaves extensive salt deposits that local communities have collected and traded for generations.",
+    "significance": "It is among the world's lowest-lying land surfaces and one of its most saline lakes. Its geology provides a striking example of active rifting, salt formation and the extreme environments of the Afar Triangle.",
+    "locationDetail": "Lake Assal lies in central-western Djibouti within the Danakil Depression, west of the Gulf of Tadjoura and southwest of Djibouti City.",
+    "visitorExperience": "Visitors see salt flats, blue-green water, volcanic landscapes and surrounding escarpments. The setting is extremely hot and remote, so guided transport, sun protection and ample water are essential. Follow local advice around salt crusts and water."
+  },
+  "Laas Geel Rock Art": {
+    "history": "Laas Geel contains painted rock shelters created by pastoral communities thousands of years ago. Images include cattle, people and other figures, often preserved in vivid colours because the shelters are protected from much weathering.",
+    "significance": "The paintings are among the Horn of Africa's most important prehistoric art discoveries. They provide evidence of early pastoral life, cattle culture, symbolic expression and long-term human settlement.",
+    "locationDetail": "The site is near Hargeisa in the territory administered as Somaliland, at a rocky outcrop where seasonal watercourses meet. Visits are usually organised from Hargeisa.",
+    "visitorExperience": "Visitors walk among rock shelters with a local guide and may need advance permission or an escort under local rules. Keep a safe distance from the painted surfaces; never touch, wet or mark the art. Confirm current access requirements before travel."
+  },
+  "Maasai Mara National Reserve": {
+    "history": "The Mara landscape has long been used by Maasai pastoral communities and supports wildlife movement across the wider Serengeti-Mara ecosystem. The reserve was established in the twentieth century; its boundaries and management have changed as conservation, tourism and community land arrangements evolved.",
+    "significance": "The Mara is known for its large mammal populations and the seasonal movement of wildebeest, zebra and other herbivores. Its conservation depends on connected habitats beyond the reserve and on the relationship between wildlife, tourism and Maasai communities.",
+    "locationDetail": "The reserve lies in Narok County in southwestern Kenya, adjoining Tanzania's Serengeti National Park across the international border. The Mara River and open savanna plains are key features.",
+    "visitorExperience": "Game drives offer opportunities to observe lions, elephants, giraffes, cheetahs, buffalo and many other species. Migration crossings are seasonal and never guaranteed. Visitors usually stay in licensed camps or lodges and should choose operators who respect wildlife distances and community conservation."
+  },
+  "Lamu Old Town": {
+    "history": "Lamu developed as a Swahili settlement connected to Indian Ocean commerce, with evidence of long-standing trade and cultural exchange along the East African coast. Its urban fabric reflects African, Arab, Persian, Indian and later European influences, while Islamic scholarship and maritime life shaped local institutions.",
+    "significance": "Lamu is one of the best-preserved Swahili towns and a living record of coastal urban culture. Its carved doors, coral-stone houses, mosques, courtyards and street pattern show how architecture adapted to climate, trade and social life.",
+    "locationDetail": "The old town occupies Lamu Island off Kenya's northern coast, within the Lamu Archipelago. It is reached by boat from the mainland.",
+    "visitorExperience": "Visitors explore narrow pedestrian streets, waterfront spaces, museums, historic houses and craft shops. Donkeys and boats remain important forms of transport, and dhow excursions are common. Modest dress and respect for local Muslim customs are important."
+  },
+  "Serengeti National Park": {
+    "history": "The Serengeti ecosystem has supported pastoral and wildlife movement for millennia. The national park was established in 1951 after conservation boundaries changed during the colonial period; the removal of Maasai communities from parts of the park is also part of its modern history.",
+    "significance": "The park protects one of the world's most extensive savanna ecosystems. The annual movement of wildebeest, zebra and gazelles, together with large predator populations, makes it important for ecology, migration research and conservation.",
+    "locationDetail": "Serengeti National Park is in northern Tanzania, extending west and north from the Ngorongoro area toward the Kenyan border. It forms one connected ecosystem with Kenya's Maasai Mara.",
+    "visitorExperience": "Visitors explore by guided 4x4 game drives across plains, river corridors and woodland. Wildlife viewing changes by season and location; migration herds move in response to rainfall, so sightings cannot be guaranteed. Follow park rules and use licensed guides."
+  },
+  "Ngorongoro Conservation Area": {
+    "history": "The Ngorongoro highlands and crater have a long history of human occupation, pastoralism and wildlife. The conservation area was established in 1959 as a multiple-use landscape intended to conserve wildlife while accommodating pastoral communities; the relationship between conservation policy and residents has changed and been contested.",
+    "significance": "The crater is a major volcanic caldera with exceptional wildlife concentrations, while the wider area includes Olduvai Gorge and important pastoral landscapes. It brings together natural history, human evolution research and contemporary conservation questions.",
+    "locationDetail": "The area lies in Tanzania's Arusha Region west of Arusha and northwest of Lake Manyara. The crater, highlands and Olduvai Gorge are within the wider landscape.",
+    "visitorExperience": "Visitors can descend into the crater on authorised safari routes and combine the trip with archaeological or cultural visits where permitted. Vehicle access is regulated and time-limited. Conditions can be cold on the rim and warm below; respect conservation rules and resident communities."
+  },
+  "Stone Town of Zanzibar": {
+    "history": "Stone Town grew from earlier Swahili settlements into a major Indian Ocean port, especially during the nineteenth century under the Omani sultanate. Its buildings reflect trade and cultural links among African, Arab, Indian and European communities, including the history of slavery and the spice economy.",
+    "significance": "The town is a key example of Swahili coastal urban culture and the layered history of the western Indian Ocean. Its houses, mosques, churches, markets and waterfront show how commerce, religion and migration shaped a distinctive urban society.",
+    "locationDetail": "Stone Town forms the historic core of Zanzibar City on Unguja Island, part of Tanzania's Zanzibar archipelago. It faces the harbour along the island's western coast.",
+    "visitorExperience": "Visitors walk through narrow lanes, markets and waterfront streets, visit selected historic houses and museums and see the Old Fort and former sultanate buildings. Guided walks help explain architecture and the history of slavery and trade. Respect residents and dress appropriately near religious spaces."
+  },
+  "Mount Kilimanjaro": {
+    "history": "Kilimanjaro is a volcanic massif with three main cones: Kibo, Mawenzi and Shira. Scientists and climbers have visited the mountain for generations; the first recorded successful summit ascent was made in 1889 by Hans Meyer and Ludwig Purtscheller with local guides and porters.",
+    "significance": "At 5,895 metres, Uhuru Peak on Kibo is the highest point in Africa. The mountain is important for its ecological zones, endemic species, water catchments and cultural meaning to Chagga communities living on its slopes.",
+    "locationDetail": "Kilimanjaro National Park is in northeastern Tanzania near the Kenyan border, with principal climbing routes beginning in the Moshi region.",
+    "visitorExperience": "Most visitors undertake a multi-day guided climb through rainforest, moorland, alpine desert and summit zones. Climbing is demanding and altitude illness is a serious risk; proper acclimatisation, a licensed operator and guide advice are essential. Not all climbers reach the summit."
+  },
+  "Bwindi Impenetrable National Park": {
+    "history": "Bwindi's forest is a long-surviving refuge of Afromontane biodiversity. It became a protected forest reserve before being designated a national park in 1991, with conservation efforts focused on mountain gorillas and the wider ecosystem.",
+    "significance": "The park protects one of the most important habitats for endangered mountain gorillas and many other species, including birds, butterflies, plants and forest mammals. It is a major conservation landscape within the Albertine Rift.",
+    "locationDetail": "Bwindi lies in southwestern Uganda along the edge of the Albertine Rift, close to the borders with the Democratic Republic of the Congo and Rwanda. Several trailhead sectors serve different habituated gorilla groups.",
+    "visitorExperience": "Gorilla trekking involves walking through dense, steep forest with trained rangers and trackers. Permits are limited, trekking duration varies and sightings are not guaranteed. Visitors must follow health, distance and group-size rules to protect gorillas and people."
+  },
+  "Murchison Falls National Park": {
+    "history": "The park protects a section of the Victoria Nile and surrounding savanna and woodland. The falls became known to nineteenth-century explorers and later visitors, while local communities have long depended on the Nile and adjacent landscapes.",
+    "significance": "At Murchison Falls, the Nile is forced through a narrow rock cleft before plunging into a powerful waterfall. The park combines one of Uganda's best-known natural landmarks with important wildlife habitats and river ecosystems.",
+    "locationDetail": "The park spans northwestern Uganda around the Victoria Nile, northwest of Kampala and east of Lake Albert.",
+    "visitorExperience": "Visitors can take game drives across savanna, boat trips on the Nile toward the base of the falls and hikes to viewpoints above the gorge when permitted. Wildlife sightings vary by season. Arrange activities through authorised park operators and follow ranger guidance."
+  },
+  "Volcanoes National Park": {
+    "history": "The Virunga volcano region has long been important to local communities and to research on mountain ecosystems. The park was established in 1925 as part of the early conservation system in the Belgian Congo and later became central to Rwanda's mountain gorilla conservation programme.",
+    "significance": "The park protects volcanic slopes, afro-montane forest and endangered mountain gorillas. It is also associated with research and conservation work that advanced understanding of gorilla ecology and protection.",
+    "locationDetail": "Volcanoes National Park is in northwestern Rwanda, within the Virunga Mountains along the borders with Uganda and the Democratic Republic of the Congo.",
+    "visitorExperience": "Guided activities can include mountain gorilla trekking, golden monkey tracking and volcano hikes, subject to permits and park rules. Treks take place at altitude through forest and muddy terrain. Visitors need advance permits, suitable clothing and compliance with wildlife health and distance rules."
+  },
+  "Kigali Genocide Memorial": {
+    "history": "The memorial was established at Gisozi to commemorate the 1994 genocide against the Tutsi in Rwanda. It serves as a burial place for victims and a centre for documentation, remembrance and education about the genocide and its history.",
+    "significance": "The memorial honours victims, supports survivors' remembrance and preserves evidence for future generations. Its work contributes to education, reflection and efforts to counter genocide denial.",
+    "locationDetail": "The memorial is in Gisozi, Kigali, on a hillside overlooking parts of Rwanda's capital.",
+    "visitorExperience": "Visitors move through curated exhibitions, personal testimonies, photographs and memorial spaces for quiet reflection. The subject matter is emotionally demanding and may be distressing. Allow time, behave respectfully and follow the memorial's photography and conduct rules."
+  },
+  "Lake Malawi National Park": {
+    "history": "The southern end of Lake Malawi has long supported fishing communities and lakeshore settlements. The national park was established in 1980 to protect part of the lake and its islands, including habitats with exceptionally diverse freshwater fish.",
+    "significance": "Lake Malawi contains one of the world's richest freshwater fish assemblages, especially its cichlids, many found nowhere else. The park is important for freshwater biodiversity and lake conservation.",
+    "locationDetail": "The park is at the southern end of Lake Malawi, around Cape Maclear and nearby islands in Mangochi District. The lake forms part of the Great Rift Valley system.",
+    "visitorExperience": "Visitors may enjoy boat trips, snorkelling, diving, kayaking and shoreline walks where activities are permitted. Clear water and rocky islands are highlights, while fish diversity can be seen underwater. Follow conservation rules and avoid collecting or feeding wildlife."
+  },
+  "Avenue of the Baobabs": {
+    "history": "The avenue is a group of mature Grandidier's baobabs left along a former route through a landscape transformed by agriculture and settlement. The trees are natural rather than planted as a formal avenue, and some are estimated to be hundreds of years old.",
+    "significance": "The baobabs are an emblematic feature of western Madagascar and a symbol of the island's distinctive biodiversity. The landscape has become an important focus for local conservation and community tourism.",
+    "locationDetail": "The avenue is near Morondava in the Menabe region of western Madagascar, along the dirt road toward Belo-sur-Tsiribihina.",
+    "visitorExperience": "Visitors walk or drive slowly among the trees, especially around sunrise or sunset when light highlights their silhouettes. Facilities may be basic because it is an open landscape rather than a built attraction. Avoid damaging roots or bark and respect local land use."
+  },
+  "Tsingy de Bemaraha": {
+    "history": "The tsingy landscape formed as limestone dissolved and fractured over geological time, creating sharp pinnacles, caves, fissures and underground drainage. Surrounding forest and dry woodland support wildlife adapted to this rugged terrain.",
+    "significance": "The reserve protects an unusual karst ecosystem and many endemic species, including lemurs, birds and reptiles. Its geological formations are among Madagascar's most distinctive natural landscapes.",
+    "locationDetail": "Tsingy de Bemaraha is in western Madagascar's Melaky Region, inland from the coast and generally approached via Bekopaka.",
+    "visitorExperience": "Guided hikes can include limestone formations, suspension bridges, ladders and narrow passages, depending on the circuit. Some routes require fitness, careful footing and comfort with heights. Access is seasonal and transport challenging, so arrange guides and check route conditions."
+  },
+  "Vallée de Mai Nature Reserve": {
+    "history": "The palm forest on Praslin is a remnant of a distinctive Seychelles ecosystem. It became protected to conserve the native coco de mer palm and the wider network of endemic plants and animals that depend on the forest.",
+    "significance": "The reserve is globally recognised for the coco de mer, whose large seed is unique to the Seychelles, and for its relatively intact palm forest. It is a key site for island biodiversity and ecological research.",
+    "locationDetail": "Vallée de Mai is on Praslin Island in the Seychelles, in the central interior of the island.",
+    "visitorExperience": "Visitors follow marked trails beneath towering palms, with interpretive information about the coco de mer and endemic species. Guided walks can help identify birds, geckos and plants. Stay on paths and do not remove seeds, plants or wildlife."
+  },
+  "Anse Source d'Argent": {
+    "history": "Anse Source d'Argent is a natural coastal landscape shaped by granite geology, waves and tropical vegetation. It became widely known through photography and tourism, but remains part of the lived landscape of La Digue.",
+    "significance": "Its granite boulders, shallow lagoon and coastal vegetation make it one of the Seychelles' most recognisable beaches. It illustrates the scenic value of the granitic islands and the need to manage tourism in fragile coastal environments.",
+    "locationDetail": "The beach is on the southwestern coast of La Digue Island in the Seychelles. Access commonly passes through the L'Union Estate area, subject to local entry arrangements.",
+    "visitorExperience": "Visitors enjoy sheltered shallows, swimming where conditions permit, photography and walks between granite formations. Tides, currents and weather affect water conditions; rocks can be slippery. Use designated paths and avoid damage to coral or vegetation."
+  },
+  "Le Morne Cultural Landscape": {
+    "history": "Le Morne Brabant became a place of refuge for enslaved people who escaped plantations during the colonial period. Oral traditions associate the mountain with maroons who lived in caves and difficult-to-reach slopes; details of individual events vary in historical accounts.",
+    "significance": "The mountain is a powerful symbol of resistance to slavery, freedom and the memory of maroon communities in Mauritius and the wider Indian Ocean. Its cultural meaning is inseparable from the natural landscape and the history of forced labour.",
+    "locationDetail": "Le Morne Brabant rises on the southwestern tip of Mauritius, overlooking the Indian Ocean and the peninsula around Le Morne village.",
+    "visitorExperience": "Visitors can appreciate the landscape from coastal viewpoints and, where authorised, join guided hikes on designated routes. The upper climb is steep and exposed, and some sections require a guide or permission. Approach the site respectfully as a place of remembrance."
+  },
+  "Okavango Delta": {
+    "history": "The Okavango Delta is an inland river delta formed where the Okavango River spreads into the Kalahari sands rather than reaching the sea. Seasonal flooding has shaped settlement, fishing, pastoral activity and wildlife movement for centuries.",
+    "significance": "The delta is one of the world's largest inland wetland systems and a major refuge for African wildlife. Its channels, floodplains, islands and dry woodland support exceptional biodiversity and are internationally important for wetland conservation.",
+    "locationDetail": "It lies in northwestern Botswana, with wetlands spreading around Maun toward the Moremi region.",
+    "visitorExperience": "Visitors explore by mokoro canoe where water levels allow, motorboat, guided walking activity and safari vehicle in suitable areas. Wildlife may include elephants, hippos, crocodiles and antelope, though sightings depend on season. Choose low-impact operators who respect local community protocols."
+  },
+  "Chobe National Park": {
+    "history": "Chobe became Botswana's first national park in 1967, protecting a broad riverine and woodland landscape. The area has long supported wildlife and human communities, while conservation and tourism developed around the Chobe River.",
+    "significance": "The park is famous for large elephant populations and its role in conserving wildlife across northern Botswana. River, floodplain and woodland habitats support diverse mammals and birds.",
+    "locationDetail": "Chobe is in northern Botswana near Kasane, close to the borders with Namibia, Zambia and Zimbabwe. The Chobe Riverfront is its best-known visitor area.",
+    "visitorExperience": "Boat cruises offer views of elephants, hippos, crocodiles and waterbirds, while game drives explore woodland and floodplain habitats. Wildlife activity varies by season and time of day. Use licensed guides and keep safe distances from animals."
+  },
+  "Sossusvlei and Deadvlei": {
+    "history": "The dunes formed through long-term wind transport and deposition of sand, while Deadvlei developed as a clay pan after water once reached the area and camelthorn trees later died when the river changed course. The dry climate preserved their dark remains.",
+    "significance": "The landscape is a striking example of an ancient desert environment. Its dunes and fossilised trees reveal the interaction of wind, water and extreme aridity and define part of Namibia's natural heritage.",
+    "locationDetail": "Sossusvlei and Deadvlei are within Namib-Naukluft National Park in southwestern Namibia, accessed through the Sesriem gate.",
+    "visitorExperience": "Visitors travel through the dune corridor, climb selected dunes and walk across the clay pan to view the dead trees. Sand, distance and heat make early starts, water and suitable footwear important. Final access may require a shuttle or 4x4."
+  },
+  "Etosha National Park": {
+    "history": "Etosha was established as a protected area in 1907 during German colonial rule and later underwent major changes in size and management. Its central salt pan and surrounding savanna, woodland and waterholes have long shaped wildlife movement across northern Namibia.",
+    "significance": "Etosha protects important dryland ecosystems and wildlife populations, including elephants, lions, rhinos and antelope. Its waterholes provide opportunities to observe how animals adapt to arid conditions.",
+    "locationDetail": "The park lies in northern Namibia, centred on Etosha Pan and extending across several regions. Main visitor gates include Andersson, Von Lindequist and King Nehale.",
+    "visitorExperience": "Visitors follow marked roads between waterholes and rest camps on self-drive or guided game drives. Wildlife often gathers at water sources, particularly during dry periods, but sightings are not guaranteed. Remain in vehicles except at designated sites and obey park rules."
+  },
+  "Table Mountain": {
+    "history": "Table Mountain is an ancient sandstone massif whose geological layers record very old landscapes. It has long been part of the Cape's cultural geography, known to local Khoekhoe communities and later European sailors, and became a defining landmark in Cape Town's development.",
+    "significance": "The mountain is central to a globally important fynbos biodiversity region, with many plant species found nowhere else. It has major cultural, recreational and scenic significance and forms part of Table Mountain National Park.",
+    "locationDetail": "It overlooks Cape Town in South Africa's Western Cape, extending from Signal Hill through the central massif to the Cape Peninsula.",
+    "visitorExperience": "Visitors can take the cableway when operating or hike designated trails to the summit and viewpoints. The plateau offers views of the city, Atlantic Ocean and surrounding mountains. Weather changes rapidly, and cableway operations can be affected by wind."
+  },
+  "Robben Island": {
+    "history": "Robben Island was used at different times as a leper colony, military outpost and prison. During apartheid it became a place of political imprisonment, including the long incarceration of Nelson Mandela and other anti-apartheid activists; it later became a museum and memorial.",
+    "significance": "The island is a powerful symbol of resistance to apartheid and the pursuit of democracy in South Africa. Its prison spaces, quarries and buildings preserve the lived history of political prisoners.",
+    "locationDetail": "It lies in Table Bay, northwest of central Cape Town. Ferries depart from the V&A Waterfront when weather and operations permit.",
+    "visitorExperience": "The visit usually combines a ferry crossing, a guided bus tour and a tour of the former prison, sometimes led by a former political prisoner. The experience includes personal testimony and places of confinement. Ferry operations depend on sea and weather conditions."
+  },
+  "Kruger National Park": {
+    "history": "The reserve began as the Sabie Game Reserve in 1898 and became Kruger National Park in 1926. Its creation was part of a changing conservation history involving state protection, local communities, land policy and wildlife management.",
+    "significance": "Kruger is one of Africa's largest and best-known protected savanna landscapes. It supports abundant mammals, birds and plant life and is important for ecological research, conservation and tourism in South Africa.",
+    "locationDetail": "The park stretches across Limpopo and Mpumalanga provinces in northeastern South Africa, alongside the borders with Mozambique and Zimbabwe.",
+    "visitorExperience": "Visitors can self-drive or join guided game drives from rest camps and private concessions. Roads, hides and waterholes offer opportunities to observe wildlife, but sightings vary. Stay within speed limits, remain in vehicles except at authorised places and follow park safety rules."
+  },
+  "Cradle of Humankind": {
+    "history": "The region's limestone caves have preserved hominin fossils and archaeological evidence spanning millions of years. Discoveries at Sterkfontein, Swartkrans and Kromdraai have contributed important specimens and debates to research on human evolution.",
+    "significance": "The landscape is one of the world's most important palaeoanthropological regions, providing evidence about early hominins, changing environments and human ancestry. Its importance comes from a network of fossil sites rather than a single cave.",
+    "locationDetail": "The Cradle of Humankind lies northwest of Johannesburg and west of Pretoria in Gauteng Province, centred around the Sterkfontein and Maropeng area.",
+    "visitorExperience": "Visitors can explore the Maropeng visitor centre and, when open, selected cave tours and interpretation sites. Exhibitions explain fossil discoveries, geology and human evolution. Cave access and conservation work can change, so check current operating information."
+  },
+  "Victoria Falls (Mosi-oa-Tunya)": {
+    "history": "The falls formed as the Zambezi River cut through basalt along geological fractures, creating a deep gorge and successive cataracts. Local communities have long known them as Mosi-oa-Tunya, 'The Smoke That Thunders'; David Livingstone publicised them internationally in the nineteenth century.",
+    "significance": "Victoria Falls is one of the world's most spectacular waterfalls and a major natural landmark shared by Zambia and Zimbabwe. The spray, gorge, rainforest and river ecosystem create a distinctive natural environment and tourism destination.",
+    "locationDetail": "The falls are on the Zambezi River between Zambia's Southern Province and Zimbabwe's Matabeleland North, near Livingstone and Victoria Falls towns.",
+    "visitorExperience": "Visitors explore viewpoints on either side, walk through the spray forest when water levels permit, take river cruises or book helicopter flights and rafting when operating. Water volume varies seasonally, paths can be slippery and border-crossing requirements apply when visiting both sides."
+  },
+  "Great Zimbabwe National Monument": {
+    "history": "Great Zimbabwe was a major Shona-speaking urban and political centre built between roughly the eleventh and fifteenth centuries. Its stone enclosures, hilltop complex and valley settlements were created by African communities using dry-stone masonry and connected to gold and other trade through the Swahili coast.",
+    "significance": "The monument is a major archaeological site and evidence of precolonial state formation, architecture and long-distance commerce. It also has national symbolic importance and corrects colonial-era claims that its monumental structures were built by outsiders.",
+    "locationDetail": "It is in Masvingo Province in southeastern Zimbabwe, around 30 kilometres southeast of Masvingo city.",
+    "visitorExperience": "Visitors can walk through the Hill Complex, Great Enclosure and Valley Ruins, viewing stone walls, passages and elevated spaces. Interpretation explains the site's urban layout, craftsmanship and trade. Terrain includes uneven stone surfaces and steps, so sturdy footwear is useful."
+  },
+  "Hwange National Park": {
+    "history": "Hwange began as a protected game reserve in the 1920s and became a national park in 1961. Its landscape has long supported wildlife and human communities, while conservation management has developed around woodland, grassland and seasonal water sources.",
+    "significance": "Hwange is Zimbabwe's largest national park and protects broad savanna and woodland habitats. It is especially known for elephants and for waterholes that sustain wildlife during the dry season.",
+    "locationDetail": "The park lies in western Zimbabwe near the Botswana border and south of Victoria Falls. Main visitor areas include Hwange and Main Camp.",
+    "visitorExperience": "Visitors explore by guided or self-drive game viewing on designated routes, often visiting waterholes where elephants and other animals gather. The dry season can concentrate wildlife, but sightings depend on conditions. Use authorised camps and guides and remain in vehicles outside designated areas."
+  },
+  "South Luangwa National Park": {
+    "history": "South Luangwa protects the Luangwa Valley, where riverine forests, floodplains and woodland have supported wildlife and local communities for generations. Its development in the twentieth century helped establish Zambia as a destination for guided walking safaris.",
+    "significance": "The park is celebrated for wildlife and its river ecosystem. It is particularly associated with leopard sightings and walking-safari traditions that emphasise tracking, ecology and close observation.",
+    "locationDetail": "South Luangwa is in eastern Zambia along the Luangwa River near Mfuwe and the Muchinga escarpment.",
+    "visitorExperience": "Visitors take guided 4x4 game drives, walking safaris and, in some areas and seasons, night drives. Walking safaris have strict safety protocols and are not suitable for everyone. Seasonal roads and camp operations should be checked before travel."
+  },
+  "Island of Mozambique": {
+    "history": "The island developed as a Swahili and Indian Ocean trading settlement before Portuguese occupation in the early sixteenth century. It became a strategic colonial port linking East Africa with routes to India; its buildings record centuries of cultural exchange and colonial administration.",
+    "significance": "The island preserves African, Arab, Swahili, Indian and Portuguese influences. Fortifications, religious buildings, coral architecture and the waterfront show the importance of maritime trade and Mozambique's coastal history.",
+    "locationDetail": "It lies off Nampula Province in northern Mozambique and is connected to the mainland by a long bridge. Stone Town and Makuti Town form distinct parts of the settlement.",
+    "visitorExperience": "Visitors can explore the old fort, palace and museum complex, churches, mosques, waterfront and traditional neighbourhoods, often on foot or by local transport. Guided tours explain the island's layered history and living communities. Plan for tropical heat and limited services."
+  },
+  "Bazaruto Archipelago": {
+    "history": "The Bazaruto islands form a coastal marine environment shaped by coral reefs, seagrass beds, sandbanks and ocean currents. Fishing communities have long used the surrounding waters, while conservation programmes developed to protect marine habitats and threatened species.",
+    "significance": "The archipelago is important for dugongs, sea turtles, dolphins, coral reefs and other marine biodiversity. It is one of Mozambique's best-known marine conservation and island-tourism landscapes.",
+    "locationDetail": "The islands lie off the coast of Inhambane Province in southeastern Mozambique, east of Vilankulo and the mainland coast.",
+    "visitorExperience": "Visitors may take boat trips, snorkel, dive, kayak, sail or enjoy beaches, depending on weather and marine conditions. Wildlife encounters are never guaranteed; responsible operators maintain distance from animals and reefs. Follow local skipper and park guidance."
+  },
+  "Maletsunyane Falls": {
+    "history": "The Maletsunyane River drops from the Lesotho highlands into a deep basalt gorge, creating the falls. The landscape has long been part of the mountain environment around Semonkong, where settlement and travel are shaped by steep valleys and high-altitude weather.",
+    "significance": "The waterfall is among southern Africa's highest single-drop falls and a distinctive feature of Lesotho's mountainous interior. It is valued for its dramatic geology, scenic setting and role in adventure tourism.",
+    "locationDetail": "Maletsunyane Falls is near Semonkong in Maseru District, central Lesotho, within the highland region south of Maseru.",
+    "visitorExperience": "Visitors can view the falls from viewpoints or arrange guided hikes and adventure activities in the gorge area. Conditions depend on weather and steep terrain; some routes require a guide and good fitness. Use authorised operators and avoid unstable cliff edges."
+  },
+  "Mantenga Cultural Village and Nature Reserve": {
+    "history": "Mantenga was developed as a heritage and nature attraction to present aspects of Swazi homestead life, cultural performance and the environment of the Ezulwini Valley. Its programme interprets traditions that remain part of contemporary Eswatini rather than claiming to represent every community.",
+    "significance": "The site offers an introduction to Swazi architecture, household practices, dance and cultural expression alongside a natural setting. It connects cultural interpretation with landscape conservation and local tourism.",
+    "locationDetail": "Mantenga is in the Ezulwini Valley in central Eswatini, near Lobamba and the Mdzimba hills.",
+    "visitorExperience": "Visitors may join guided village presentations, see traditional dance performances and walk to the waterfall and nature areas, subject to operating arrangements. Demonstrations are interpretive encounters; listen to guides and respect performers and local customs."
+  }
+};
+
 const topic = (title: string, description: string, questions: string[]): Topic => ({ title, description, questions });
 const cultureTopic = (country: string, community: string, history: string, wayOfLife: string, traditions: string, music: string): Topic => ({
   title: `${country}: ${community}`,
@@ -320,12 +841,22 @@ const kingdomTopic = (title: string, country: string, period: string, overview: 
   kingdom: { country, period, overview, legacy, context: KINGDOM_PROFILE_CONTEXT[title] || "" }
 });
 
-const touristSiteTopic = (title: string, country: string, location: string, siteType: string, overview: string): Topic => ({
-  title,
-  description: `${country} · ${location}`,
-  questions: [],
-  touristSite: { country, location, siteType, overview }
-});
+const touristSiteTopic = (title: string, country: string, location: string, siteType: string, overview: string): Topic => {
+  const detail = TOURIST_SITE_PROFILE_DETAILS[title] || { history: "", significance: "", locationDetail: "", visitorExperience: "" };
+  return {
+    title,
+    description: country + " · " + location,
+    questions: [],
+    touristSite: {
+      country, location, siteType, overview,
+      history: detail.history,
+      significance: detail.significance,
+      locationDetail: detail.locationDetail,
+      visitorExperience: detail.visitorExperience
+    }
+  };
+};
+
 const categories: Category[] = [
   {
     slug: "career-development-education", title: "Career Development and Education", icon: GraduationCap,
@@ -2068,13 +2599,13 @@ export default function InfoDiscoveryPage() {
     }
   }, [selected, selectedTopic]);
 
-  const filteredSections = useMemo(() => selected?.sections.map(section => ({ ...section, items: section.items.filter(item => (sectionFilter === "all" || section.title === sectionFilter) && normalise([item.title, item.description, ...item.questions, item.culture?.community || "", item.culture?.history || "", item.culture?.wayOfLife || "", item.culture?.traditions || "", item.culture?.music || "", item.festival?.origin || "", item.festival?.meaning || "", item.festival?.celebration || "", item.festival?.location || "", item.kingdom?.country || "", item.kingdom?.period || "", item.kingdom?.overview || "", item.kingdom?.legacy || "", item.kingdom?.context || "", item.touristSite?.country || "", item.touristSite?.location || "", item.touristSite?.siteType || "", item.touristSite?.overview || ""].join(" ")).includes(normalise(topicFilter.trim()))) })).filter(section => section.items.length > 0) || [], [selected, sectionFilter, topicFilter]);
+  const filteredSections = useMemo(() => selected?.sections.map(section => ({ ...section, items: section.items.filter(item => (sectionFilter === "all" || section.title === sectionFilter) && normalise([item.title, item.description, ...item.questions, item.culture?.community || "", item.culture?.history || "", item.culture?.wayOfLife || "", item.culture?.traditions || "", item.culture?.music || "", item.festival?.origin || "", item.festival?.meaning || "", item.festival?.celebration || "", item.festival?.location || "", item.kingdom?.country || "", item.kingdom?.period || "", item.kingdom?.overview || "", item.kingdom?.legacy || "", item.kingdom?.context || "", item.touristSite?.country || "", item.touristSite?.location || "", item.touristSite?.siteType || "", item.touristSite?.overview || "", item.touristSite?.history || "", item.touristSite?.significance || "", item.touristSite?.locationDetail || "", item.touristSite?.visitorExperience || ""].join(" ")).includes(normalise(topicFilter.trim()))) })).filter(section => section.items.length > 0) || [], [selected, sectionFilter, topicFilter]);
   const searchIndex = useMemo(() => categories.flatMap(category => [
     { kind: "area" as const, label: category.title, detail: category.summary, category, slug: category.slug },
     ...allTopics(category).map(item => ({
       kind: "topic" as const,
       label: item.title,
-      detail: [item.section, item.description, item.questions.join(" "), item.culture?.community || "", item.culture?.history || "", item.culture?.wayOfLife || "", item.culture?.traditions || "", item.culture?.music || "", item.festival?.origin || "", item.festival?.meaning || "", item.festival?.celebration || "", item.festival?.location || "", item.kingdom?.country || "", item.kingdom?.period || "", item.kingdom?.overview || "", item.kingdom?.legacy || "", item.kingdom?.context || "", item.touristSite?.country || "", item.touristSite?.location || "", item.touristSite?.siteType || "", item.touristSite?.overview || "", category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : "", category.slug === "agriculture-climate-intelligence" ? AGRICULTURE_SEARCH_TERMS[item.slug] || "" : "", category.slug === "travel-destination" ? TRAVEL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "operational-intelligence" ? OPERATIONAL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "financial-operations" ? FINANCIAL_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
+      detail: [item.section, item.description, item.questions.join(" "), item.culture?.community || "", item.culture?.history || "", item.culture?.wayOfLife || "", item.culture?.traditions || "", item.culture?.music || "", item.festival?.origin || "", item.festival?.meaning || "", item.festival?.celebration || "", item.festival?.location || "", item.kingdom?.country || "", item.kingdom?.period || "", item.kingdom?.overview || "", item.kingdom?.legacy || "", item.kingdom?.context || "", item.touristSite?.country || "", item.touristSite?.location || "", item.touristSite?.siteType || "", item.touristSite?.overview || "", item.touristSite?.history || "", item.touristSite?.significance || "", item.touristSite?.locationDetail || "", item.touristSite?.visitorExperience || "", category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : "", category.slug === "agriculture-climate-intelligence" ? AGRICULTURE_SEARCH_TERMS[item.slug] || "" : "", category.slug === "travel-destination" ? TRAVEL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "operational-intelligence" ? OPERATIONAL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "financial-operations" ? FINANCIAL_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
       category,
       slug: item.slug,
     })),
@@ -2416,6 +2947,13 @@ export default function InfoDiscoveryPage() {
               <p className="mt-1 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">
                 {selectedTopic.description}
               </p>
+              {(selectedTopic.kingdom || selectedTopic.touristSite) && (
+                <WikimediaProfileImage
+                  title={selectedTopic.title}
+                  country={selectedTopic.kingdom?.country || selectedTopic.touristSite?.country || ""}
+                  kind={selectedTopic.kingdom ? "kingdom" : "tourist site"}
+                />
+              )}
               {selectedTopic.kingdom && (
                 <section className="mt-6 grid gap-3 sm:grid-cols-2" aria-label="African kingdom profile">
                   {[
@@ -2436,9 +2974,12 @@ export default function InfoDiscoveryPage() {
                 <section className="mt-6 grid gap-3 sm:grid-cols-2" aria-label="African tourist site profile">
                   {[
                     { title: "Country", text: selectedTopic.touristSite.country },
-                    { title: "Location", text: selectedTopic.touristSite.location },
+                    { title: "Location", text: selectedTopic.touristSite.location + ". " + selectedTopic.touristSite.locationDetail },
                     { title: "Site type", text: selectedTopic.touristSite.siteType },
                     { title: "About the site", text: selectedTopic.touristSite.overview },
+                    { title: "History", text: selectedTopic.touristSite.history },
+                    { title: "Significance", text: selectedTopic.touristSite.significance },
+                    { title: "Visitor experience", text: selectedTopic.touristSite.visitorExperience },
                   ].map((item) => (
                     <div key={item.title} className="rounded-xl border border-border bg-background/70 p-4">
                       <h3 className="text-sm font-semibold">{item.title}</h3>
