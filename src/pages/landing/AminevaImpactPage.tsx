@@ -48,6 +48,16 @@ const fadeUp = {
   }),
 };
 
+function handleImpactImageError(event: React.SyntheticEvent<HTMLImageElement>) {
+  const image = event.currentTarget;
+  if (image.dataset.fallbackApplied === "true") {
+    image.style.display = "none";
+    return;
+  }
+  image.dataset.fallbackApplied = "true";
+  image.src = "/images/impact/impact-school-engagement.webp";
+}
+
 const heroSecondaryImage = {
   type: "image" as const,
   url: "/edu......png",
@@ -71,13 +81,16 @@ export const AminevaImpactPage: FC = () => {
   }, []);
 
   useEffect(() => {
-    if (initiativeId) {
-      setExpandedInitiativeId(initiativeId);
+    if (!initiativeId) return;
+    const matchingInitiative = INITIATIVES.some(item => item.id === initiativeId);
+    if (!matchingInitiative) return;
+    setExpandedInitiativeId(initiativeId);
+    const scrollToInitiative = () => {
       const elem = document.getElementById(`initiative-${initiativeId}`);
-      if (elem) {
-        elem.scrollIntoView({ behavior: "smooth" });
-      }
-    }
+      elem?.scrollIntoView({ behavior: "smooth", block: "start" });
+    };
+    const frame = window.requestAnimationFrame(scrollToInitiative);
+    return () => window.cancelAnimationFrame(frame);
   }, [initiativeId]);
 
   const filteredInitiatives = INITIATIVES.filter((item) => {
@@ -177,6 +190,7 @@ export const AminevaImpactPage: FC = () => {
                 aria-label="View classroom engagement photograph"
               >
                 <img
+                  onError={handleImpactImageError}
                   src="/saleria1.jpg"
                   alt="Learners gathered for a school-based career development and exploration session."
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
