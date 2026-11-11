@@ -762,7 +762,7 @@ const kingdomTopic = (title: string, country: string, period: string, overview: 
 });
 
 const touristSiteTopic = (title: string, country: string, location: string, siteType: string, overview: string): Topic => {
-  const detail = TOURIST_SITE_PROFILE_DETAILS[title];
+  const detail = TOURIST_SITE_PROFILE_DETAILS[title] || { history: "", significance: "", locationDetail: "", visitorExperience: "" };
   return {
     title,
     description: country + " · " + location,
