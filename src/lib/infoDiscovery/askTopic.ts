@@ -54,6 +54,39 @@ function extractJsonPayload(data: any): any {
   return Array.isArray(payload) ? { events: payload } : payload;
 }
 
+const MULTI_PART_PUBLIC_SUFFIXES = new Set([
+  "gov.gh", "gov.za", "go.ke", "gov.ke", "gov.ng", "gov.rw", "gov.ug",
+  "go.ug", "gov.uk", "ac.uk", "co.uk", "org.uk", "com.au", "net.au",
+  "org.au", "gov.au", "co.nz", "org.nz", "gov.nz", "co.za", "org.za",
+  "com.ng", "com.gh", "co.ug", "com.br", "gov.br", "co.in", "gov.in",
+]);
+
+/**
+ * Collapse subdomains to the same publisher identity before describing two
+ * links as independent corroboration (for example, au.int and archives.au.int).
+ */
+function sourcePublisherIdentity(source: DateIncidentSource): string {
+  let hostname = "";
+  try {
+    hostname = new URL(source.url).hostname.toLowerCase().replace(/^www\\./, "");
+  } catch {
+    return String(source.publisher || source.name || "").toLowerCase().trim();
+  }
+
+  const suffix = Array.from(MULTI_PART_PUBLIC_SUFFIXES)
+    .find(candidate => hostname === candidate || hostname.endsWith("." + candidate));
+  if (suffix) {
+    const labels = hostname.split(".");
+    const suffixLabels = suffix.split(".");
+    return labels.length > suffixLabels.length
+      ? labels.slice(-(suffixLabels.length + 1)).join(".")
+      : hostname;
+  }
+
+  const labels = hostname.split(".");
+  return labels.length > 1 ? labels.slice(-2).join(".") : hostname;
+}
+
 export function normaliseDateIncidentResults(data: any, requestedDate: string): DateIncidentRecord[] {
   const payload = extractJsonPayload(data);
   const items = Array.isArray(payload?.events) ? payload.events : Array.isArray(payload?.incidents) ? payload.incidents : [];
@@ -78,7 +111,12 @@ export function normaliseDateIncidentResults(data: any, requestedDate: string): 
     if (!title || !summary || !sources.length) return null;
 
     const region: "Africa" | "International" = /^(africa|african)$/i.test(String(item.region || "")) ? "Africa" : "International";
-    const confidence = item.confidence === "contested" ? "contested" : sources.length >= 2 && item.confidence === "corroborated" ? "corroborated" : "single-source";
+    const independentPublishers = new Set(sources.map(sourcePublisherIdentity).filter(Boolean));
+    const confidence = item.confidence === "contested"
+      ? "contested"
+      : independentPublishers.size >= 2 && item.confidence === "corroborated"
+        ? "corroborated"
+        : "single-source";
     return {
       occurrenceDate,
       title: title.slice(0, 240),
