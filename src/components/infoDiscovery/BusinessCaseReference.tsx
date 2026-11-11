@@ -21,9 +21,11 @@ const INITIAL_CASES = [{
 }];
 
 const AUTHORITATIVE_CASE_SOURCES = [
-  { name: "Ghana Judiciary e-Judgment Portal", description: "Judgments and case-law research across Ghanaian court jurisdictions; the portal describes its headnotes and keyword-linked search features.", url: "https://ejudgment.judicial.gov.gh/" },
-  { name: "Ghana Legal Information Institute (GhaLII)", description: "Searchable Ghana legislation and judicial decisions. Confirm current law and procedural status against authoritative publications.", url: "https://ghalii.org/" },
-  { name: "Ghana Revenue Authority – Legal Cases", description: "Published tax and revenue-related cases involving the Ghana Revenue Authority.", url: "https://gra.gov.gh/legal-cases/" }
+  { name: "UNCITRAL — CLOUT Case Law", description: "United Nations collection of court decisions and arbitral awards interpreting UNCITRAL commercial-law texts across participating jurisdictions.", url: "https://uncitral.un.org/en/case_law" },
+  { name: "WIPO Lex", description: "Free global database of intellectual-property laws, treaties and judgments, with jurisdiction browsing across more than 200 jurisdictions.", url: "https://www.wipo.int/en/web/wipolex/" },
+  { name: "World Legal Information Institute", description: "Gateway to legislation, court decisions, treaties and legal materials from jurisdictions across six continents.", url: "https://www.worldlii.org/" },
+  { name: "UNCITRAL — Texts and Status", description: "International commercial-law conventions, model laws, rules and their status, including trade, arbitration, insolvency and electronic commerce.", url: "https://uncitral.un.org/en/texts" },
+  { name: "Cornell Global Law", description: "A global guide to national legal materials by region and international-law resources.", url: "https://www.law.cornell.edu/world" }
 ];
 
 export function BusinessCaseReference() {
@@ -55,7 +57,7 @@ export function BusinessCaseReference() {
   return (
     <section className="rounded-2xl border border-border bg-card p-5 shadow-sm md:p-6" aria-labelledby="business-case-reference-title">
       <div className="flex flex-wrap items-start justify-between gap-3">
-        <div><div className="flex items-center gap-2 text-sm font-semibold"><Scale className="h-4 w-4 text-primary" /><h2 id="business-case-reference-title">Business case decisions and outcomes</h2></div><p className="mt-1 max-w-3xl text-xs leading-5 text-muted-foreground">Search case records that have passed publication review, and consult the primary Ghanaian case-law repositories. Each published case summary must identify the court, jurisdiction, decision date, orders and appeal status.</p></div>
+        <div><div className="flex items-center gap-2 text-sm font-semibold"><Scale className="h-4 w-4 text-primary" /><h2 id="business-case-reference-title">Commercial Law: Cases and Decisions Worldwide</h2></div><p className="mt-1 max-w-3xl text-xs leading-5 text-muted-foreground">Search reviewed commercial case records across jurisdictions, and consult international and multi-jurisdictional legal repositories. Each published case summary must identify its court or tribunal, jurisdiction, decision date, orders and appeal status. Each published case summary must identify the court, jurisdiction, decision date, orders and appeal status.</p></div>
         <Badge variant="outline">Judgments · Settlements · Decisions</Badge>
       </div>
       <form onSubmit={searchCases} className="mt-4 flex flex-col gap-2 sm:flex-row">
@@ -65,7 +67,7 @@ export function BusinessCaseReference() {
       </form>
       {error && <p role="status" className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">{error}</p>}
       {matchingInitialCases.map(item => <article key={item.id} className="mt-3 rounded-xl border border-border bg-background/60 p-4">
-        <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{item.date}</Badge><Badge variant="outline">Ghana · Commercial Division</Badge><Badge>Published judgment</Badge></div>
+        <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{item.date}</Badge><Badge variant="outline">{item.court.includes("Accra") ? "Ghana · National example" : "Jurisdiction identified in source"}</Badge><Badge>Published judgment</Badge></div>
         <h3 className="mt-2 text-sm font-semibold">{item.title}</h3>
         <p className="mt-1 text-xs text-muted-foreground">{item.citation} · {item.court}</p>
         <div className="mt-3 grid gap-3 md:grid-cols-2">
@@ -81,8 +83,8 @@ export function BusinessCaseReference() {
         {record.abstract && <p className="mt-2 text-xs leading-5 text-muted-foreground">{record.abstract}</p>}
         {record.url && <a href={record.url} target="_blank" rel="noreferrer" className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary underline underline-offset-2">Open source judgment or decision <ExternalLink className="h-3 w-3" /></a>}
       </article>)}
-      {searched && !records.length && !matchingInitialCases.length && !error && <p className="mt-3 rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">No reviewed case summaries matched this search. Use the primary repositories below; additional summaries appear here only after the judgment or official decision has been checked.</p>}
-      <div className="mt-4 grid gap-2 md:grid-cols-3">
+      {searched && !records.length && !matchingInitialCases.length && !error && <p className="mt-3 rounded-lg border border-dashed border-border p-4 text-xs text-muted-foreground">No reviewed case summaries matched this search. Search the international and jurisdictional repositories below; additional summaries appear here only after the judgment or official decision has been checked.</p>}
+      <div className="mt-4 grid gap-2 md:grid-cols-2 lg:grid-cols-3">
         {AUTHORITATIVE_CASE_SOURCES.map(source => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="rounded-xl border border-border bg-background/60 p-3 transition hover:border-primary/40">
           <span className="flex items-center justify-between gap-2 text-xs font-semibold">{source.name}<ExternalLink className="h-3.5 w-3.5 shrink-0 text-primary" /></span>
           <span className="mt-2 block text-[11px] leading-5 text-muted-foreground">{source.description}</span>
