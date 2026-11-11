@@ -25,6 +25,7 @@ const BillingPage = lazyWithRetry(() => import("./pages/landing/BillingPage"));
 const PortalLayout = lazyWithRetry(() => import("./components/portal/PortalLayout"));
 const PortalAuthGate = lazyWithRetry(() => import("./components/auth/PortalAuthGate"));
 const AminevaImpactPage = lazyWithRetry(() => import("./pages/landing/AminevaImpactPage"));
+const CareerDevelopmentPage = lazyWithRetry(() => import("./pages/landing/CareerDevelopmentPage"));
 const DipaAIPage = lazyWithRetry(() => import("./pages/landing/DipaAIPage"));
 const InventraPage = lazyWithRetry(() => import("./pages/landing/InventraPage"));
 const DataLensPage = lazyWithRetry(() => import("./pages/landing/DataLensPage"));
@@ -253,6 +254,7 @@ function AppRoutes() {
           />
           <Route path="about-us" element={<AboutUs />} />
           <Route path="impact" element={<AminevaImpactPage />} />
+          <Route path="impact/career-development" element={<CareerDevelopmentPage />} />
           <Route path="impact/:initiativeId" element={<AminevaImpactPage />} />
           <Route path="apps/dipa-ai" element={<DipaAIPage />} />
           <Route path="/apps/inventra" element={<InventraPage />} />
