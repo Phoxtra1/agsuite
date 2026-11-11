@@ -274,7 +274,8 @@ export default async ({ req, res, log, error }) => {
         const sources = indexes.map(index => { const web = groundedChunks[index]?.web; return web?.uri ? { title: String(web.title || "Historical source"), publisher: String(web.title || "Web source"), url: web.uri, sourceType: "Google Search result", supports: "Retrieved as a supporting web source for this event" } : null; }).filter(Boolean).slice(0, 5);
         const year = Number(event.year);
         if (!Number.isInteger(year) || year < -3000 || year > new Date().getUTCFullYear() || !String(event.title || "").trim() || !String(event.summary || "").trim() || !sources.length) return null;
-        const confidence = sources.length >= 2 && event.confidence === "corroborated" ? "corroborated" : event.confidence === "contested" ? "contested" : "single-source";
+        const independentPublishers = new Set(sources.map(source => String(source.publisher || "").toLowerCase().replace(/^https?:\\/\\//, "").replace(/^www\\./, "").split("/")[0].trim()).filter(Boolean));
+        const confidence = event.confidence === "contested" ? "contested" : independentPublishers.size >= 2 ? "corroborated" : "single-source";
         return {
           year, title: String(event.title).slice(0, 220), summary: String(event.summary).slice(0, 1800),
           location: String(event.location || "Not established").slice(0, 180),
