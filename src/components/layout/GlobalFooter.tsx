@@ -43,13 +43,12 @@ const companyLinks = [
 ];
 
 const platformLinks = [
-  { label: "Amineva Suite", to: "/explainer/workspace" },
   { label: "Inventra", to: "/apps/inventra" },
   { label: "DataLens", to: "/explainer/datalens" },
   { label: "AgroClimate", to: "/apps/agroclimate" },
   { label: "Adesua", to: "/apps/adesua" },
   { label: "Sikasɛm", to: "/explainer/sikasem" },
-  { label: "ABI", to: "/explainer/abi" },
+  { label: "Dipa AI", to: "" },
 ];
 
 const helpLinks = [
@@ -131,7 +130,7 @@ export default function GlobalFooter() {
           <ul className="space-y-2">
             {companyLinks.map((link) => (
               <li key={link.to}>
-                <Link className={linkClass} to={link.to}>{link.label}</Link>
+                {link.to ? <Link className={linkClass} to={link.to}>{link.label}</Link> : <span className={linkClass}>{link.label}</span>}
               </li>
             ))}
           </ul>
