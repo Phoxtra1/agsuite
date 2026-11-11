@@ -16,6 +16,9 @@ export type DiscoveryLibraryRecord = DiscoveryRecordDraft & {
   reviewNote: string;
   createdAt: string;
   reviewedAt: string | null;
+  storagePath: string | null;
+  storageMimeType: string | null;
+  storageSize: number | null;
 };
 
 export type DiscoveryLibraryAccess = {
@@ -82,6 +85,9 @@ function mapRow(row: any): DiscoveryLibraryRecord {
     reviewNote: row.review_note || "",
     createdAt: row.created_at,
     reviewedAt: row.reviewed_at || null,
+    storagePath: row.storage_path || null,
+    storageMimeType: row.storage_mime_type || null,
+    storageSize: row.storage_size ?? null,
   };
 }
 
@@ -186,6 +192,56 @@ export async function searchVerifiedDiscoveryRecords(query: string, signal?: Abo
     verificationNote: row.review_note || "Editorial record review completed.",
     accessStatus: row.access_status,
     license: row.license || undefined,
-    fullTextUrl: row.full_text_url || undefined,
+    fullTextUrl: row.access_status === "open_access" ? (row.full_text_url || undefined) : undefined,
   } as ResearchRecord));
+}
+
+
+
+export async function uploadDiscoveryDocument(recordId: string, file: File, rightsBasis: string): Promise<void> {
+  const access = await checkDiscoveryLibraryAccess();
+  if (!access.allowed) throw new Error(access.reason || "Not authorised.");
+  if (!rightsBasis.trim()) throw new Error("Document upload requires a recorded licence or permission basis.");
+  const allowed = new Set(["application/pdf", "application/epub+zip", "text/plain"]);
+  if (!allowed.has(file.type)) throw new Error("Only PDF, EPUB and plain-text documents can be uploaded.");
+  if (file.size > 50 * 1024 * 1024) throw new Error("The document exceeds the 50 MB upload limit.");
+
+  const { data: current, error: lookupError } = await db().select("id,review_status,access_status").eq("id", recordId).single();
+  if (lookupError || !current || current.review_status !== "pending_review") {
+    throw new Error("Only a pending publication record can receive an uploaded document.");
+  }
+
+  const safeName = file.name.replace(/[^a-zA-Z0-9._-]+/g, "-").slice(-120) || "document";
+  const objectPath = recordId + "/" + crypto.randomUUID() + "-" + safeName;
+  const { error: uploadError } = await supabase.storage.from("discovery-library").upload(objectPath, file, {
+    contentType: file.type,
+    upsert: false,
+  });
+  if (uploadError) throw new Error(uploadError.message || "Document upload failed.");
+
+  const { error: updateError } = await db().update({
+    storage_path: objectPath,
+    storage_mime_type: file.type,
+    storage_size: file.size,
+    rights_basis: rightsBasis.trim(),
+  }).eq("id", recordId);
+  if (updateError) {
+    await supabase.storage.from("discovery-library").remove([objectPath]).catch(() => null);
+    throw new Error(updateError.message || "The document uploaded but the catalogue record could not be updated.");
+  }
+}
+
+export async function getVerifiedDiscoveryDocumentUrl(recordId: string): Promise<string | null> {
+  if (!isSupabaseConfigured) return null;
+  const { data: record, error } = await db()
+    .select("storage_path,review_status,access_status")
+    .eq("id", recordId)
+    .maybeSingle();
+  if (error || !record?.storage_path || record.review_status !== "verified" || record.access_status !== "open_access") return null;
+
+  const { data, error: signedError } = await supabase.storage
+    .from("discovery-library")
+    .createSignedUrl(record.storage_path, 900);
+  if (signedError || !data?.signedUrl) return null;
+  return data.signedUrl;
 }
