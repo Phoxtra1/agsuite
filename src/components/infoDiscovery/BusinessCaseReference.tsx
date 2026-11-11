@@ -59,8 +59,9 @@ export function BusinessCaseReference() {
         <Badge variant="outline">Judgments · Settlements · Decisions</Badge>
       </div>
       <form onSubmit={searchCases} className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <Input value={query} onChange={event => setQuery(event.target.value)} placeholder="Search a case name, court, legal issue or citation" aria-label="Search reviewed business case decisions" />
+        <Input value={query} onChange={event => { setQuery(event.target.value); setRecords([]); setError(""); setSearched(false); }} placeholder="Search a case name, court, legal issue or citation" aria-label="Search reviewed business case decisions" />
         <Button type="submit" disabled={loading || query.trim().length < 2} className="sm:min-w-32">{loading ? "Searching…" : <><Search className="mr-2 h-4 w-4" />Search cases</>}</Button>
+        {(query || searched) && <Button type="button" variant="outline" onClick={() => { setQuery(""); setRecords([]); setError(""); setSearched(false); }}>Clear</Button>}
       </form>
       {error && <p role="status" className="mt-3 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">{error}</p>}
       {matchingInitialCases.map(item => <article key={item.id} className="mt-3 rounded-xl border border-border bg-background/60 p-4">
