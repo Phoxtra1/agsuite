@@ -1,8 +1,22 @@
 import React from "react";
-import { describe, it, expect } from "vitest";
+import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
 import { render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import AminevaImpactPage from "../pages/landing/AminevaImpactPage";
+
+class TestIntersectionObserver {
+  root: Element | null = null;
+  rootMargin = "0px";
+  thresholds: number[] = [];
+  constructor(_callback: IntersectionObserverCallback) {}
+  observe() {}
+  unobserve() {}
+  disconnect() {}
+  takeRecords(): IntersectionObserverEntry[] { return []; }
+}
+
+beforeEach(() => vi.stubGlobal("IntersectionObserver", TestIntersectionObserver));
+afterEach(() => vi.unstubAllGlobals());
 
 describe("Amineva Impact public route", () => {
   it("renders the page and its primary sections without a route error", () => {
