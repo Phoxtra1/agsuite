@@ -302,21 +302,25 @@ const festivalTopic = (title: string, origin: string, meaning: string, celebrati
   const detail = FESTIVAL_PROFILE_CONTEXT[title];
   return {
     title,
-    description: `Discover the origins, cultural meaning and celebration of `${title}`, including where the event takes place.`,
+    description: "Discover the origins, cultural meaning and celebration of " + title + ", including where the event takes place.",
     questions: [],
     festival: {
-      origin: [origin, detail?.[0]].filter(Boolean).join("\\n\\n"),
-      meaning: [meaning, detail?.[1]].filter(Boolean).join("\\n\\n"),
-      celebration: [celebration, detail?.[2]].filter(Boolean).join("\\n\\n"),
-      location: [location, detail?.[3]].filter(Boolean).join("\\n\\n")
+      origin: [origin, detail?.[0]].filter(Boolean).join("\n\n"),
+      meaning: [meaning, detail?.[1]].filter(Boolean).join("\n\n"),
+      celebration: [celebration, detail?.[2]].filter(Boolean).join("\n\n"),
+      location: [location, detail?.[3]].filter(Boolean).join("\n\n")
     }
   };
-};const kingdomTopic = (title: string, country: string, period: string, overview: string, legacy: string): Topic => ({
+};
+
+const kingdomTopic = (title: string, country: string, period: string, overview: string, legacy: string): Topic => ({
   title,
-  description: `${country} · `${period}`,
+  description: country + " · " + period,
   questions: [],
   kingdom: { country, period, overview, legacy, context: KINGDOM_PROFILE_CONTEXT[title] || "" }
-});const touristSiteTopic = (title: string, country: string, location: string, siteType: string, overview: string): Topic => ({
+});
+
+const touristSiteTopic = (title: string, country: string, location: string, siteType: string, overview: string): Topic => ({
   title,
   description: `${country} · ${location}`,
   questions: [],
@@ -2070,7 +2074,7 @@ export default function InfoDiscoveryPage() {
     ...allTopics(category).map(item => ({
       kind: "topic" as const,
       label: item.title,
-      detail: [item.section, item.description, item.questions.join(" "), item.culture?.community || "", item.culture?.history || "", item.culture?.wayOfLife || "", item.culture?.traditions || "", item.culture?.music || "", item.festival?.origin || "", item.festival?.meaning || "", item.festival?.celebration || "", item.festival?.location || "", item.kingdom?.country || "", item.kingdom?.period || "", item.kingdom?.overview || "", item.kingdom?.legacy || "", item.touristSite?.country || "", item.touristSite?.location || "", item.touristSite?.siteType || "", item.touristSite?.overview || "", category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : "", category.slug === "agriculture-climate-intelligence" ? AGRICULTURE_SEARCH_TERMS[item.slug] || "" : "", category.slug === "travel-destination" ? TRAVEL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "operational-intelligence" ? OPERATIONAL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "financial-operations" ? FINANCIAL_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
+      detail: [item.section, item.description, item.questions.join(" "), item.culture?.community || "", item.culture?.history || "", item.culture?.wayOfLife || "", item.culture?.traditions || "", item.culture?.music || "", item.festival?.origin || "", item.festival?.meaning || "", item.festival?.celebration || "", item.festival?.location || "", item.kingdom?.country || "", item.kingdom?.period || "", item.kingdom?.overview || "", item.kingdom?.legacy || "", item.kingdom?.context || "", item.touristSite?.country || "", item.touristSite?.location || "", item.touristSite?.siteType || "", item.touristSite?.overview || "", category.slug === "business-management" ? BUSINESS_SEARCH_TERMS[item.slug] || "" : "", category.slug === "agriculture-climate-intelligence" ? AGRICULTURE_SEARCH_TERMS[item.slug] || "" : "", category.slug === "travel-destination" ? TRAVEL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "operational-intelligence" ? OPERATIONAL_SEARCH_TERMS[item.slug] || "" : "", category.slug === "financial-operations" ? FINANCIAL_SEARCH_TERMS[item.slug] || "" : ""].join(" · "),
       category,
       slug: item.slug,
     })),
@@ -2419,6 +2423,7 @@ export default function InfoDiscoveryPage() {
                     { title: "Historical period", text: selectedTopic.kingdom.period },
                     { title: "Kingdom and its history", text: selectedTopic.kingdom.overview },
                     { title: "Historical legacy", text: selectedTopic.kingdom.legacy },
+                    { title: "Historical context", text: selectedTopic.kingdom.context || "" },
                   ].map((item) => (
                     <div key={item.title} className="rounded-xl border border-border bg-background/70 p-4">
                       <h3 className="text-sm font-semibold">{item.title}</h3>
@@ -2437,7 +2442,7 @@ export default function InfoDiscoveryPage() {
                   ].map((item) => (
                     <div key={item.title} className="rounded-xl border border-border bg-background/70 p-4">
                       <h3 className="text-sm font-semibold">{item.title}</h3>
-                      <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.text}</p>
+                      <p className="mt-2 text-sm leading-7 text-muted-foreground whitespace-pre-line">{item.text}</p>
                     </div>
                   ))}
                 </section>
