@@ -280,3 +280,20 @@ export async function listDiscoveryRecordReviewEvents(recordId: string): Promise
     createdAt: row.created_at,
   }));
 }
+
+
+export async function getDiscoveryDocumentReviewUrl(recordId: string): Promise<string | null> {
+  const access = await checkDiscoveryLibraryAccess();
+  if (!access.allowed) throw new Error(access.reason || "Not authorised.");
+  const { data: record, error } = await db()
+    .select("storage_path")
+    .eq("id", recordId)
+    .maybeSingle();
+  if (error || !record?.storage_path) return null;
+
+  const { data, error: signedError } = await supabase.storage
+    .from("discovery-library")
+    .createSignedUrl(record.storage_path, 900);
+  if (signedError || !data?.signedUrl) throw new Error(signedError?.message || "The stored document could not be opened.");
+  return data.signedUrl;
+}
