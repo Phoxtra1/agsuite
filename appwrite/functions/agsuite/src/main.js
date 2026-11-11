@@ -185,6 +185,120 @@ export default async ({ req, res, log, error }) => {
     }
   }
 
+
+  if (action === "dateIncidentResearch") {
+    try {
+      const month = Number(body.month);
+      const day = Number(body.day);
+      const region = String(body.region || "Africa first").slice(0, 40);
+      const category = String(body.category || "all").slice(0, 60);
+      if (!Number.isInteger(month) || month < 1 || month > 12 || !Number.isInteger(day) || day < 1 || day > 31) {
+        return res.json({ success: false, error: "Choose a valid month and day." }, 400);
+      }
+      const apiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_GEMINI_API_KEY || "";
+      if (!apiKey) {
+        return res.json({ success: false, error: "Historical research is not configured yet. Add GEMINI_API_KEY to the Appwrite function environment." }, 503);
+      }
+
+      const mm = String(month).padStart(2, "0");
+      const dd = String(day).padStart(2, "0");
+      const sourceCatalog = [
+        { name: "UNESCO General History of Africa", url: "https://www.unesco.org/en/general-history-africa", region: "Africa" },
+        { name: "African Online Digital Library", url: "https://www.aodl.org/", region: "Africa" },
+        { name: "British Library Endangered Archives Programme — Africa", url: "https://eap.bl.uk/search/site/africa", region: "Africa" },
+        { name: "Digital Namibian Archive", url: "http://dna.nust.na:8080/greenstone3/library", region: "Africa" },
+        { name: "Library of Congress Digital Collections", url: "https://www.loc.gov/", region: "International" },
+        { name: "Europeana Collections", url: "https://www.europeana.eu/", region: "International" },
+        { name: "Wikidata", url: "https://www.wikidata.org/", region: "International" }
+      ];
+
+      const timeout = (ms) => new Promise((_, reject) => setTimeout(() => reject(new Error("Source request timed out")), ms));
+      const getJson = async (url) => {
+        const response = await Promise.race([fetch(url, { headers: { "Accept": "application/json", "User-Agent": "AminevaDateIncident/1.0 (historical research)" } }), timeout(12000)]);
+        if (!response.ok) throw new Error("Source returned HTTP " + response.status);
+        return response.json();
+      };
+
+      const baseResults = await Promise.allSettled([
+        getJson("https://en.wikipedia.org/api/rest_v1/feed/onthisday/events/" + mm + "/" + dd),
+        getJson("https://www.loc.gov/search/?q=" + encodeURIComponent(mm + "/" + dd + " historical event") + "&fo=json&c=10")
+      ]);
+      const onThisDay = baseResults[0].status === "fulfilled" ? (baseResults[0].value.events || []).slice(0, 35).map(e => ({
+        year: e.year, text: e.text, title: e.pages?.[0]?.title || "", url: e.pages?.[0]?.content_urls?.desktop?.page || ""
+      })) : [];
+      const loc = baseResults[1].status === "fulfilled" ? (baseResults[1].value.results || []).slice(0, 10).map(x => ({
+        title: x.title || x.id, date: x.date || "", description: (x.description || []).join(" ").slice(0, 500), url: x.id || x.url || ""
+      })) : [];
+
+      const dateLabel = new Date(Date.UTC(2000, month - 1, day)).toLocaleDateString("en", { month: "long", day: "numeric", timeZone: "UTC" });
+      const prompt = [
+        "You are the historical research engine for Amineva Global's Date & Incident service.",
+        "Research historical events that OCCURRED on " + dateLabel + " in any year. African events, including under-documented African histories, must be actively prioritised; also include significant international events.",
+        "Region filter: " + region + ". Category filter: " + category + ".",
+        "Use Google Search grounding to find authoritative records. Prioritise primary and institutional sources: national archives, national libraries, official gazettes, court/inquiry reports, museums, universities, UNESCO, African regional institutions, African Online Digital Library, British Library Endangered Archives Programme, Digital Namibian Archive, Library of Congress, Europeana and reputable scholarly publishers. Wikipedia/Wikidata are discovery leads only, not sufficient verification.",
+        "The supplied discovery leads are unverified and must not be treated as proof: " + JSON.stringify(onThisDay.slice(0, 25)),
+        "Library of Congress discovery leads (also not proof of event date): " + JSON.stringify(loc.slice(0, 8)),
+        "Return JSON only with shape {events:[{year:number,title:string,summary:string,location:string,region:'Africa'|'International',category:string,eventDateBasis:string,significance:string,people:string[],sources:[{title:string,publisher:string,url:string,sourceType:'primary'|'institutional'|'scholarly'|'news',supports:string}],confidence:'corroborated'|'single-source'|'contested',caveat:string}]}",
+        "Return up to 18 strongest distinct events, at least 8 African where credible records exist. Do not invent or pad. Include only sources you actually found through search or supplied source leads. Use exact canonical URLs. At least two independent credible sources for 'corroborated'; otherwise mark single-source. Mark contested when accounts or dates differ. Clearly distinguish event occurrence date from publication/report date. Do not infer exact dates from an anniversary or article publication date. If no trustworthy source supports an event's occurrence on this day, omit it.",
+        "Summaries must be factual and concise. Do not include AI explanations, process notes, or unsourced claims."
+      ].join("\n\n");
+
+      const aiResponse = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json", "x-goog-api-key": apiKey },
+        body: JSON.stringify({
+          contents: [{ role: "user", parts: [{ text: prompt }] }],
+          tools: [{ google_search: {} }],
+          generationConfig: { temperature: 0.15, responseMimeType: "application/json", maxOutputTokens: 8192 }
+        })
+      });
+      if (!aiResponse.ok) {
+        const detail = await aiResponse.text();
+        throw new Error("Historical research provider error (" + aiResponse.status + "): " + detail.slice(0, 300));
+      }
+      const aiData = await aiResponse.json();
+      const candidate = aiData.candidates?.[0];
+      const rawText = (candidate?.content?.parts || []).map(p => p.text || "").join("");
+      let parsed;
+      try { parsed = JSON.parse(rawText.replace(/^\s*```json\s*/i, "").replace(/\s*```\s*$/, "")); }
+      catch { throw new Error("The research response could not be validated. Please try again."); }
+
+      const allowedHosts = ["unesco.org","aodl.org","bl.uk","nust.na","loc.gov","europeana.eu","wikidata.org","wikipedia.org","britannica.com","nationalarchives.gov","archives.gov","gov","edu","ac.uk","ox.ac.uk","cambridge.org","jstor.org","doi.org","icj-cij.org","un.org","au.int","ecowas.int","sadc.int","achpr.au.int"];
+      const safeEvents = (Array.isArray(parsed.events) ? parsed.events : []).slice(0, 18).map((event) => {
+        const sources = (Array.isArray(event.sources) ? event.sources : []).filter(source => {
+          try { const host = new URL(source.url).hostname.toLowerCase().replace(/^www\./, ""); return host && (allowedHosts.some(domain => host === domain || host.endsWith("." + domain)) || host.endsWith(".gov") || host.endsWith(".edu")); } catch { return false; }
+        }).slice(0, 5);
+        const year = Number(event.year);
+        if (!Number.isInteger(year) || year < -3000 || year > new Date().getUTCFullYear() || !String(event.title || "").trim() || !String(event.summary || "").trim() || !sources.length) return null;
+        const confidence = sources.length >= 2 && event.confidence === "corroborated" ? "corroborated" : event.confidence === "contested" ? "contested" : "single-source";
+        return {
+          year, title: String(event.title).slice(0, 220), summary: String(event.summary).slice(0, 1800),
+          location: String(event.location || "Not established").slice(0, 180),
+          region: event.region === "Africa" ? "Africa" : "International",
+          category: String(event.category || "Historical event").slice(0, 80),
+          eventDateBasis: String(event.eventDateBasis || "Date basis not fully established").slice(0, 350),
+          significance: String(event.significance || "").slice(0, 900),
+          people: Array.isArray(event.people) ? event.people.slice(0, 12).map(x => String(x).slice(0, 100)) : [],
+          sources,
+          confidence,
+          caveat: String(event.caveat || "").slice(0, 600)
+        };
+      }).filter(Boolean);
+
+      safeEvents.sort((a, b) => a.region === b.region ? b.year - a.year : a.region === "Africa" ? -1 : 1);
+      return res.json({
+        success: true, date: { month, day, label: dateLabel }, events: safeEvents,
+        sourceCollections: sourceCatalog,
+        coverage: { discoveryLeads: onThisDay.length + loc.length, returned: safeEvents.length, africa: safeEvents.filter(x => x.region === "Africa").length, international: safeEvents.filter(x => x.region === "International").length },
+        generatedAt: new Date().toISOString(),
+        note: "Source-backed historical research. Confidence labels describe source corroboration, not a guarantee of truth."
+      });
+    } catch (err) {
+      error("dateIncidentResearch error: " + (err?.message || err));
+      return res.json({ success: false, error: err?.message || "Historical research failed." }, 502);
+    }
+  }
+
   if (body.scope !== "admin-seal-auth") {
     // Other gateway actions are not used by the Suite UI any more.
     return res.json({ success: true, actionExecuted: action });
