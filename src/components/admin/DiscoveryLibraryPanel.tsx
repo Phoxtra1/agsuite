@@ -10,11 +10,14 @@ import { DISCOVERY_SOURCES } from "@/lib/infoDiscovery/sourceRegistry";
 import {
   checkDiscoveryLibraryAccess,
   listDiscoveryLibraryRecords,
+  listDiscoveryRecordReviewEvents,
+  getDiscoveryDocumentReviewUrl,
   reviewDiscoveryRecord,
   submitDiscoveryRecord,
   uploadDiscoveryDocument,
   type DiscoveryLibraryAccess,
   type DiscoveryLibraryRecord,
+  type DiscoveryReviewEvent,
 } from "@/lib/infoDiscovery/discoveryLibrary";
 import type { DiscoveryRecordDraft, DiscoveryReviewDecision, DiscoveryReviewEvidence } from "@/lib/infoDiscovery/sourceReview";
 
@@ -61,6 +64,8 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 export function DiscoveryLibraryPanel() {
   const [access, setAccess] = useState<DiscoveryLibraryAccess | null>(null);
   const [records, setRecords] = useState<DiscoveryLibraryRecord[]>([]);
+  const [reviewHistory, setReviewHistory] = useState<DiscoveryReviewEvent[]>([]);
+  const [openingDocument, setOpeningDocument] = useState(false);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [draft, setDraft] = useState<DiscoveryRecordDraft>(EMPTY_DRAFT);
@@ -93,6 +98,35 @@ export function DiscoveryLibraryPanel() {
   }, []);
 
   useEffect(() => { void refresh(); }, [refresh]);
+
+  useEffect(() => {
+    if (!selectedRecord?.id) {
+      setReviewHistory([]);
+      return;
+    }
+    let active = true;
+    listDiscoveryRecordReviewEvents(selectedRecord.id)
+      .then(events => { if (active) setReviewHistory(events); })
+      .catch(error => { if (active) toast.error(error?.message || "Unable to load review history."); });
+    return () => { active = false; };
+  }, [selectedRecord?.id]);
+
+  const previewStoredDocument = async (recordId: string) => {
+    setOpeningDocument(true);
+    const popup = window.open("about:blank", "_blank");
+    try {
+      const url = await getDiscoveryDocumentReviewUrl(recordId);
+      if (!url) throw new Error("No document file is attached to this record.");
+      if (popup) popup.location.href = url;
+      else throw new Error("The browser blocked the document window. Allow pop-ups and try again.");
+    } catch (error: any) {
+      popup?.close();
+      toast.error(error?.message || "The document could not be opened.");
+    } finally {
+      setOpeningDocument(false);
+    }
+  };
+
 
   const setDraftField = <K extends keyof DiscoveryRecordDraft>(key: K, value: DiscoveryRecordDraft[K]) => {
     setDraft(current => ({ ...current, [key]: value }));
@@ -291,6 +325,26 @@ export function DiscoveryLibraryPanel() {
               </div>
 
               {selectedRecord.reviewNote && <p className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">Previous review note: {selectedRecord.reviewNote}</p>}
+
+              {selectedRecord.storagePath && (
+                <Button type="button" size="sm" variant="outline" onClick={() => void previewStoredDocument(selectedRecord.id)} disabled={openingDocument}>
+                  {openingDocument ? "Preparing document…" : "Open attached document"}
+                </Button>
+              )}
+              {reviewHistory.length > 0 && (
+                <div className="border-t border-border pt-3 space-y-2">
+                  <p className="text-sm font-semibold">Review history</p>
+                  {reviewHistory.map(event => (
+                    <div key={event.id} className="rounded-md bg-muted/40 p-2">
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="text-xs font-medium">{event.action.replace(/-/g, " ")}</span>
+                        <span className="text-[10px] text-muted-foreground">{new Date(event.createdAt).toLocaleString()}</span>
+                      </div>
+                      {event.note && <p className="mt-1 text-xs text-muted-foreground">{event.note}</p>}
+                    </div>
+                  ))}
+                </div>
+              )}
 
               {selectedRecord.reviewStatus !== "verified" && (
                 <div className="space-y-3 border-t border-border pt-3">
