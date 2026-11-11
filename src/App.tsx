@@ -321,6 +321,11 @@ function AppRoutes() {
   );
 }
 
+function RouteErrorBoundaryForLocation() {
+  const location = useLocation();
+  return <RouteErrorBoundary key={location.pathname}><AppRoutes /></RouteErrorBoundary>;
+}
+
 function AppIdleGuard() {
   useIdleSignout();
   return null;
@@ -348,7 +353,7 @@ export default function App() {
             <HashNormalizer />
             <AppTelemetry />
             <AppIdleGuard />
-            <RouteErrorBoundary><AppRoutes /></RouteErrorBoundary>
+            <RouteErrorBoundaryForLocation />
           </TooltipProvider>
         </AuthProvider>
       </ThemeProvider>
