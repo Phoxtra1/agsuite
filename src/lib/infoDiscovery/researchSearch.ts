@@ -332,14 +332,14 @@ async function searchArxiv(query: string, signal: AbortSignal): Promise<Research
   });
   if (!response.ok) throw new Error("HTTP " + response.status);
   const xml = await response.text();
-  const entries = [...xml.matchAll(/<entry>([\\s\\S]*?)<\\/entry>/g)].map(match => match[1]);
+  const entries = [...xml.matchAll(/<entry>([\s\S]*?)<\/entry>/g)].map(match => match[1]);
   return entries.map(entry => {
     const title = xmlText(entry, "title");
     const id = xmlText(entry, "id");
-    const authors = [...entry.matchAll(/<author>([\\s\\S]*?)<\\/author>/g)].map(match => xmlText(match[1], "name")).filter(Boolean).join(", ");
-    const pdfLink = [...entry.matchAll(/<link\\b[^>]*\/>/g)].map(match => match[0]).find(link => /title="pdf"/i.test(link));
+    const authors = [...entry.matchAll(/<author>([\s\S]*?)<\/author>/g)].map(match => xmlText(match[1], "name")).filter(Boolean).join(", ");
+    const pdfLink = [...entry.matchAll(/<link\b[^>]*\/>/g)].map(match => match[0]).find(link => /title="pdf"/i.test(link));
     const published = xmlText(entry, "published");
-    const categories = [...entry.matchAll(/<category\\b[^>]*term="([^"]+)"/g)].map(match => match[1]);
+    const categories = [...entry.matchAll(/<category\b[^>]*term="([^"]+)"/g)].map(match => match[1]);
     return {
       id: "arxiv:" + id,
       title,
