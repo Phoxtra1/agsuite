@@ -738,7 +738,7 @@ const functionsAdapter = {
     try {
       const functionId = (import.meta as any).env?.VITE_SUITE_FUNCTION_ID;
       if (!functionId) {
-        return { data: null, error: null };
+        return { data: null, error: { message: "The Appwrite function ID is not configured (VITE_SUITE_FUNCTION_ID)." } };
       }
       // Route by function name so the self-hosted `agSuite` function knows
       // which action to run.
@@ -753,8 +753,8 @@ const functionsAdapter = {
       }
       return { data, error: execution.status === "failed" ? { message: "Execution failed" } : null };
     } catch (err: any) {
-      console.warn(`[Appwrite Functions] Function '${functionName}' invocation skipped:`, err?.message || err);
-      return { data: null, error: null };
+      console.error(`[Appwrite Functions] Function '${functionName}' invocation failed:`, err?.message || err);
+      return { data: null, error: { message: err?.message || "The Appwrite function could not be reached." } };
     }
   },
 };
