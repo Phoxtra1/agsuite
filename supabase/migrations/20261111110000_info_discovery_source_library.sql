@@ -234,6 +234,14 @@ create policy "Managers upload discovery documents"
     )
   );
 
+drop policy if exists "Managers can inspect pending discovery documents" on storage.objects;
+create policy "Managers can inspect pending discovery documents"
+  on storage.objects for select to authenticated
+  using (
+    bucket_id = 'discovery-library'
+    and public.can_manage_discovery_library()
+  );
+
 drop policy if exists "Approved open access discovery documents can be read" on storage.objects;
 create policy "Approved open access discovery documents can be read"
   on storage.objects for select to anon, authenticated
