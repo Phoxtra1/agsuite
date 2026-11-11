@@ -50,14 +50,13 @@ describe("Amineva Impact Data Layer", () => {
     expect(engagement?.schoolName).toBe("School Engagement");
     expect(INITIATIVES.find((i) => i.id === "career-development")?.verifiedMetrics?.find((m) => m.label === "Schools Engaged")?.figure).toBe("5");
     expect(SCHOOL_ACTIVITY_IMAGES).toHaveLength(8);
-        const photoUrls = SCHOOL_ACTIVITY_IMAGES.map((photo) => photo.url);
-        expect(photoUrls).toContain("/edu......png");
-        expect(photoUrls).toContain("/edu...png");
-        expect(photoUrls).toContain("/saleria1.jpg");
-        expect(photoUrls).toContain("/saleria2.jpg");
-            expect(photoUrls).not.toContain("/eduu.png");
-        expect(photoUrls).not.toContain("/images/impact/impact-school-engagement.webp");
-        expect(photoUrls).not.toContain("/images/impact/impact-school-engagement-hero.webp");
+    const photoUrls = SCHOOL_ACTIVITY_IMAGES.map((photo) => photo.url);
+    expect(photoUrls).toContain("/images/impact/IMG_20261028_084846.jpg");
+    expect(photoUrls).toContain("/images/impact/IMG_20261028_084908.jpg");
+    expect(photoUrls).toContain("/images/impact/IMG_20261028_090003.jpg");
+    expect(photoUrls).toContain("/images/impact/IMG_20261028_090243.jpg");
+    expect(photoUrls).not.toContain("/eduu.png");
+    expect(photoUrls).not.toContain("/images/impact/impact-school-engagement.webp");
   });
 
   it("contains institutional collaboration categories and contact links", () => {
