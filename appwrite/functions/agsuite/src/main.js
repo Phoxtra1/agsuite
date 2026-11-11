@@ -238,7 +238,7 @@ export default async ({ req, res, log, error }) => {
         "Use Google Search grounding to find authoritative records. Prioritise primary and institutional sources: national archives, national libraries, official gazettes, court/inquiry reports, museums, universities, UNESCO, African regional institutions, African Online Digital Library, British Library Endangered Archives Programme, Digital Namibian Archive, Library of Congress, Europeana and reputable scholarly publishers. Wikipedia/Wikidata are discovery leads only, not sufficient verification.",
         "The supplied discovery leads are unverified and must not be treated as proof: " + JSON.stringify(onThisDay.slice(0, 25)),
         "Library of Congress discovery leads (also not proof of event date): " + JSON.stringify(loc.slice(0, 8)),
-        "Return JSON only with shape {events:[{year:number,title:string,summary:string,location:string,region:'Africa'|'International',category:string,eventDateBasis:string,significance:string,people:string[],sources:[{title:string,publisher:string,url:string,sourceType:'primary'|'institutional'|'scholarly'|'news',supports:string}],confidence:'corroborated'|'single-source'|'contested',caveat:string}]}",
+        "Return JSON only with shape {events:[{year:number,title:string,summary:string,location:string,region:'Africa'|'International',category:string,eventDateBasis:string,significance:string,people:string[],sourceIndexes:number[],confidence:'corroborated'|'single-source'|'contested',caveat:string}]}. sourceIndexes must contain only zero-based indexes of actual Google Search groundingChunks you used to support this specific event.",
         "Return up to 18 strongest distinct events, at least 8 African where credible records exist. Do not invent or pad. Include only sources you actually found through search or supplied source leads. Use exact canonical URLs. At least two independent credible sources for 'corroborated'; otherwise mark single-source. Mark contested when accounts or dates differ. Clearly distinguish event occurrence date from publication/report date. Do not infer exact dates from an anniversary or article publication date. If no trustworthy source supports an event's occurrence on this day, omit it.",
         "Summaries must be factual and concise. Do not include AI explanations, process notes, or unsourced claims."
       ].join("\n\n");
@@ -249,7 +249,7 @@ export default async ({ req, res, log, error }) => {
         body: JSON.stringify({
           contents: [{ role: "user", parts: [{ text: prompt }] }],
           tools: [{ google_search: {} }],
-          generationConfig: { temperature: 0.15, responseMimeType: "application/json", maxOutputTokens: 8192 }
+          generationConfig: { temperature: 0.15, maxOutputTokens: 8192 }
         })
       });
       if (!aiResponse.ok) {
@@ -263,11 +263,10 @@ export default async ({ req, res, log, error }) => {
       try { parsed = JSON.parse(rawText.replace(/^\s*```json\s*/i, "").replace(/\s*```\s*$/, "")); }
       catch { throw new Error("The research response could not be validated. Please try again."); }
 
-      const allowedHosts = ["unesco.org","aodl.org","bl.uk","nust.na","loc.gov","europeana.eu","wikidata.org","wikipedia.org","britannica.com","nationalarchives.gov","archives.gov","gov","edu","ac.uk","ox.ac.uk","cambridge.org","jstor.org","doi.org","icj-cij.org","un.org","au.int","ecowas.int","sadc.int","achpr.au.int"];
+      const groundedChunks = Array.isArray(candidate?.groundingMetadata?.groundingChunks) ? candidate.groundingMetadata.groundingChunks : [];
       const safeEvents = (Array.isArray(parsed.events) ? parsed.events : []).slice(0, 18).map((event) => {
-        const sources = (Array.isArray(event.sources) ? event.sources : []).filter(source => {
-          try { const host = new URL(source.url).hostname.toLowerCase().replace(/^www\./, ""); return host && (allowedHosts.some(domain => host === domain || host.endsWith("." + domain)) || host.endsWith(".gov") || host.endsWith(".edu")); } catch { return false; }
-        }).slice(0, 5);
+        const indexes = Array.isArray(event.sourceIndexes) ? [...new Set(event.sourceIndexes.map(Number).filter(i => Number.isInteger(i) && i >= 0 && i < groundedChunks.length))] : [];
+        const sources = indexes.map(index => { const web = groundedChunks[index]?.web; return web?.uri ? { title: String(web.title || "Historical source"), publisher: String(web.title || "Web source"), url: web.uri, sourceType: "Google Search result", supports: "Retrieved as a supporting web source for this event" } : null; }).filter(Boolean).slice(0, 5);
         const year = Number(event.year);
         if (!Number.isInteger(year) || year < -3000 || year > new Date().getUTCFullYear() || !String(event.title || "").trim() || !String(event.summary || "").trim() || !sources.length) return null;
         const confidence = sources.length >= 2 && event.confidence === "corroborated" ? "corroborated" : event.confidence === "contested" ? "contested" : "single-source";
