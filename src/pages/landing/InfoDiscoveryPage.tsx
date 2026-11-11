@@ -27,6 +27,8 @@ import { PopularAndRecent } from "@/components/infoDiscovery/PopularAndRecent";
 import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracker";
 import { searchResearchRepositories, type ResearchRecord } from "@/lib/infoDiscovery/researchSearch";
 import { searchVerifiedDiscoveryRecords, getVerifiedDiscoveryDocumentUrl } from "@/lib/infoDiscovery/discoveryLibrary";
+import { InvestigationsArchive } from "@/components/infoDiscovery/InvestigationsArchive";
+import { BusinessCaseReference } from "@/components/infoDiscovery/BusinessCaseReference";
 
 type CultureProfile = { community: string; history: string; wayOfLife: string; traditions: string; music: string };
 type FestivalProfile = { origin: string; meaning: string; celebration: string; location: string };
@@ -3169,6 +3171,8 @@ export default function InfoDiscoveryPage() {
               </div>
               <p className="mt-4 max-w-4xl text-sm leading-7 text-muted-foreground md:text-base">{selected.purpose}</p>
             </div>
+            {selected.slug === "investigations-archive" && <InvestigationsArchive />}
+            {selected.slug === "commercial-law" && <BusinessCaseReference />}
             <div><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Subject menu</h2><p className="mt-1 text-sm text-muted-foreground">Search within this area or filter by subject group.</p></div><Badge variant="outline">{filteredSections.reduce((count, section) => count + section.items.length, 0)} matching topics</Badge></div>
               <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTopicFilter(e.target.value)} placeholder={selected.slug === "culture-and-tradition" ? "Find a country, community or festival" : "Filter topics and questions"} aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
               {filteredSections.length ? <div className="space-y-4">{filteredSections.map((section, sectionIndex) => {
