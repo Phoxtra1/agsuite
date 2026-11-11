@@ -315,7 +315,6 @@ export function DiscoveryLibraryPanel() {
                   <div className="flex flex-wrap gap-2">
                     <Button size="sm" onClick={() => void handleReview("verified")} disabled={saving}>Verify and publish</Button>
                     <Button size="sm" variant="outline" onClick={() => void handleReview("rejected")} disabled={saving}>Reject</Button>
-                    {selectedRecord.reviewStatus === "verified" && <Button size="sm" variant="destructive" onClick={() => void handleReview("withdrawn")} disabled={saving}>Withdraw</Button>}
                   </div>
                 </div>
               )}
