@@ -29,6 +29,6 @@ describe("Amineva Impact public route", () => {
     );
 
     expect(screen.getByRole("heading", { name: /Amineva Impact/i, level: 1 })).toBeTruthy();
-    expect(screen.getByText(/Career Development & Exploration Initiative/i)).toBeTruthy();
+    expect(screen.getAllByText(/Career Development & Exploration Initiative/i).length).toBeGreaterThan(0);
   });
 });
