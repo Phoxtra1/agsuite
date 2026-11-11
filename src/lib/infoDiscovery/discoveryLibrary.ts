@@ -165,6 +165,8 @@ export async function reviewDiscoveryRecord(
     original_source_checked: decision === "verified" && evidence.originalSourceChecked,
     version_and_corrections_checked: decision === "verified" && evidence.versionAndCorrectionsChecked,
     rights_and_access_checked: decision === "verified" && evidence.rightsAndAccessChecked,
+    jurisdiction_and_publication_date_checked: decision === "verified" && evidence.jurisdictionAndPublicationDateChecked,
+    findings_and_legal_status_checked: decision === "verified" && evidence.findingsAndLegalStatusChecked,
   };
   if (decision === "verified") updates.rights_basis = evidence.rightsBasis.trim();
 
