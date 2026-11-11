@@ -212,6 +212,8 @@ export const AminevaImpactPage: FC = () => {
                 aria-label="View computer learning photograph"
               >
                 <img
+
+                  onError={handleImpactImageError}
                   src={heroSecondaryImage.url}
                   alt={heroSecondaryImage.altText}
                   className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
@@ -241,6 +243,8 @@ export const AminevaImpactPage: FC = () => {
         <div className="flex flex-col gap-3 rounded-2xl bg-[#003B7A] px-5 py-4 text-white shadow-sm sm:flex-row sm:items-center">
           <div className="flex shrink-0 items-center justify-center rounded-xl bg-white px-3 py-2">
             <img
+
+              onError={handleImpactImageError}
               src="https://upload.wikimedia.org/wikipedia/commons/2/2e/Logo_UNESCO_2021.svg"
               alt="UNESCO"
               className="h-9 w-auto"
@@ -547,6 +551,8 @@ export const AminevaImpactPage: FC = () => {
                       className="group/image relative block w-full aspect-[2/1] overflow-hidden bg-muted text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-accent"
                     >
                       <img
+
+                        onError={handleImpactImageError}
                         src={img.url}
                         alt={img.altText}
                         className="h-full w-full object-cover object-center transition-transform duration-500 group-hover/image:scale-105"
@@ -701,6 +707,8 @@ export const AminevaImpactPage: FC = () => {
                   <DialogDescription>{selectedImage.caption}</DialogDescription>
                 </DialogHeader>
                 <img
+
+                  onError={handleImpactImageError}
                   src={selectedImage.url}
                   alt={selectedImage.altText}
                   className="max-h-[72vh] w-full rounded-xl bg-muted object-contain"
