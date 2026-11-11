@@ -23,6 +23,9 @@ create table if not exists public.discovery_records (
   license text,
   rights_basis text,
   full_text_url text,
+  storage_path text,
+  storage_mime_type text,
+  storage_size bigint,
   review_status text not null default 'pending_review'
     check (review_status in ('pending_review','verified','rejected','withdrawn')),
   review_note text,
@@ -199,3 +202,58 @@ create trigger audit_discovery_record_review
 grant select, insert, update on public.discovery_records to authenticated;
 grant select on public.discovery_records to anon;
 grant select on public.discovery_record_review_events to authenticated;
+
+
+-- Uploaded documents remain in a private bucket. Public read is granted only
+-- when a matching catalogue record is editorially verified and explicitly
+-- marked open access. Public users receive short-lived signed URLs, not bucket
+-- listing access.
+insert into storage.buckets (id, name, public, file_size_limit, allowed_mime_types)
+values (
+  'discovery-library',
+  'discovery-library',
+  false,
+  52428800,
+  array['application/pdf','application/epub+zip','text/plain']
+)
+on conflict (id) do update set
+  public = false,
+  file_size_limit = excluded.file_size_limit,
+  allowed_mime_types = excluded.allowed_mime_types;
+
+drop policy if exists "Managers upload discovery documents" on storage.objects;
+create policy "Managers upload discovery documents"
+  on storage.objects for insert to authenticated
+  with check (
+    bucket_id = 'discovery-library'
+    and public.can_manage_discovery_library()
+    and exists (
+      select 1 from public.discovery_records r
+      where r.id::text = (storage.foldername(name))[1]
+        and r.review_status = 'pending_review'
+    )
+  );
+
+drop policy if exists "Approved open access discovery documents can be read" on storage.objects;
+create policy "Approved open access discovery documents can be read"
+  on storage.objects for select to anon, authenticated
+  using (
+    bucket_id = 'discovery-library'
+    and exists (
+      select 1 from public.discovery_records r
+      where r.storage_path = storage.objects.name
+        and r.review_status = 'verified'
+        and r.access_status = 'open_access'
+    )
+  );
+
+drop policy if exists "Managers update discovery documents" on storage.objects;
+create policy "Managers update discovery documents"
+  on storage.objects for update to authenticated
+  using (bucket_id = 'discovery-library' and public.can_manage_discovery_library())
+  with check (bucket_id = 'discovery-library' and public.can_manage_discovery_library());
+
+drop policy if exists "Managers delete discovery documents" on storage.objects;
+create policy "Managers delete discovery documents"
+  on storage.objects for delete to authenticated
+  using (bucket_id = 'discovery-library' and public.can_manage_discovery_library());
