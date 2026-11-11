@@ -29,6 +29,7 @@ import { searchResearchRepositories, type ResearchRecord } from "@/lib/infoDisco
 import { searchVerifiedDiscoveryRecords, getVerifiedDiscoveryDocumentUrl } from "@/lib/infoDiscovery/discoveryLibrary";
 import { InvestigationsArchive } from "@/components/infoDiscovery/InvestigationsArchive";
 import { BusinessCaseReference } from "@/components/infoDiscovery/BusinessCaseReference";
+import { DateAndIncident } from "@/components/infoDiscovery/DateAndIncident";
 
 type CultureProfile = { community: string; history: string; wayOfLife: string; traditions: string; music: string };
 type FestivalProfile = { origin: string; meaning: string; celebration: string; location: string };
@@ -3168,6 +3169,7 @@ export default function InfoDiscoveryPage() {
             </div>
             {selected.slug === "investigations-archive" && <InvestigationsArchive />}
             {selected.slug === "commercial-law" && <BusinessCaseReference />}
+            {selected.slug === "date-and-incident" ? <DateAndIncident /> : <>
             <div><div className="mb-4 flex flex-wrap items-end justify-between gap-3"><div><h2 className="text-xl font-semibold">Subject menu</h2><p className="mt-1 text-sm text-muted-foreground">Search within this area or filter by subject group.</p></div><Badge variant="outline">{filteredSections.reduce((count, section) => count + section.items.length, 0)} matching topics</Badge></div>
               <div className="mb-4 grid gap-2 sm:grid-cols-[minmax(0,1fr)_minmax(190px,240px)]"><Input value={topicFilter} onChange={(e: React.ChangeEvent<HTMLInputElement>) => setTopicFilter(e.target.value)} placeholder={selected.slug === "culture-and-tradition" ? "Find a country, community or festival" : "Filter topics and questions"} aria-label="Filter topics in this discovery area" /><select value={sectionFilter} onChange={(e: React.ChangeEvent<HTMLSelectElement>) => setSectionFilter(e.target.value)} aria-label="Filter by subject group" className="h-10 rounded-md border border-input bg-background px-3 text-sm"><option value="all">All subject groups</option>{selected.sections.map(section => <option key={section.title} value={section.title}>{section.title}</option>)}</select></div>
               {filteredSections.length ? <div className="space-y-4">{filteredSections.map((section, sectionIndex) => {
@@ -3192,6 +3194,7 @@ export default function InfoDiscoveryPage() {
             {selected.slug !== "culture-and-tradition" && <ResearchPanel initialQuery={selected.title} />}
 
             {selected.slug === "operational-intelligence" && <div className="rounded-2xl border border-border bg-muted/40 p-5"><div className="flex items-center gap-2 text-sm font-semibold"><AlertTriangle className="h-4 w-4 text-accent" /> Authorised evidence only</div><p className="mt-2 text-xs leading-5 text-muted-foreground">Verification and anomaly detection require approved connections to source systems, documented permissions and review controls. This public information area explains the method; it does not claim access to private organisational records.</p></div>}
+            </>}
           </section>}
 
           {!selected && <section className="space-y-7">
