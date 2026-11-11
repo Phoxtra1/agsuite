@@ -78,9 +78,19 @@ export interface CollaborationCategory {
 export const IMPACT_VIDEO_ID = "gA_OQ8rpX3Y";
 
 export const IMPACT_INTRO = {
-  headline: "Educational, Social and Community Initiatives by Amineva Global",
+  headline: "A social initiative of Amineva Global",
   positioning:
-    "Amineva Impact represents Amineva Global's commitment to supporting meaningful educational, social and community development initiatives. Through targeted programmes and collaborative activities, it seeks to create opportunities, encourage personal development and contribute positively to communities.",
+    "Amineva Impact is a social initiative of Amineva Global. It brings together programmes and partnerships that respond to social needs, widen access to opportunities and contribute to human development, educational advancement and stronger communities. Its work is open to people and communities across different ages and circumstances, and will grow in response to identified needs and available capacity.",
+  mission:
+    "To help individuals and communities access the knowledge, opportunities and support they need to develop their abilities, improve their circumstances and participate meaningfully in society.",
+  objectives: [
+    "Identify social, educational and community needs where purposeful programmes can make a practical contribution.",
+    "Develop and support initiatives that widen access to knowledge, learning, skills and meaningful opportunities.",
+    "Encourage informed choices, personal development, participation and confidence across different stages of life.",
+    "Work with schools, institutions, professionals, businesses and community partners to extend the reach and effectiveness of programmes.",
+    "Implement activities responsibly, learn from the people they serve and assess progress through clear evidence and feedback.",
+    "Build sustainable programmes that can respond to changing needs without being limited to one age group or area of intervention.",
+  ],
 };
 
 export const FOCUS_AREAS: FocusArea[] = [
