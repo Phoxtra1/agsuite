@@ -75,6 +75,12 @@ export function InvestigationsArchive() {
     });
   }, [query, selectedRegion, selectedCategory]);
 
+  const visibleLibraryRecords = useMemo(() => libraryRecords.filter(record => {
+    const matchesRegion = selectedRegion === "All regions" || normaliseRegion(record.jurisdiction || record.subjects.join(" ")) === selectedRegion;
+    const matchesCategory = selectedCategory === "All record types" || classifyArchiveRecord(record.type) === selectedCategory;
+    return matchesRegion && matchesCategory;
+  }), [libraryRecords, selectedRegion, selectedCategory]);
+
   const searchArchive = async (event: React.FormEvent) => {
     event.preventDefault();
     const clean = query.trim();
@@ -139,7 +145,7 @@ export function InvestigationsArchive() {
             <div className="mt-3 flex flex-wrap gap-3 border-t border-border pt-3">{item.sources.map(source => <a key={source.url} href={source.url} target="_blank" rel="noreferrer" className="inline-flex items-center gap-1 text-xs font-medium text-primary underline underline-offset-2">{source.label} <ExternalLink className="h-3 w-3" /></a>)}</div>
           </article>
         ))}
-        {libraryRecords.map(record => (
+        {visibleLibraryRecords.map(record => (
           <article key={record.id} className="rounded-xl border border-border bg-background/60 p-4">
             <div className="flex flex-wrap items-center gap-2"><Badge variant="secondary">{record.year || "Year not supplied"}</Badge><Badge variant="outline">{normaliseRegion(record.jurisdiction || "")}</Badge><Badge>{classifyArchiveRecord(record.type)}</Badge><Badge>Editorially verified</Badge></div>
             <h3 className="mt-2 text-sm font-semibold">{record.title}</h3>
@@ -149,10 +155,10 @@ export function InvestigationsArchive() {
           </article>
         ))}
       </div>
-      {searched && !libraryRecords.length && !error && <p className="mt-3 text-xs text-muted-foreground">No additional reviewed investigation records matched this search. The curated entries above remain available; new entries appear here only after source and publication review.</p>}
-      {!localMatches.length && !libraryRecords.length && !loading && <p className="mt-3 rounded-lg border border-dashed border-border p-5 text-center text-xs text-muted-foreground">No archive entries match that wording. Try another name, institution or subject.</p>}
+      {searched && !visibleLibraryRecords.length && !error && <p className="mt-3 text-xs text-muted-foreground">No additional reviewed investigation records matched this search. The curated entries above remain available; new entries appear here only after source and publication review.</p>}
+      {!localMatches.length && !visibleLibraryRecords.length && !loading && <p className="mt-3 rounded-lg border border-dashed border-border p-5 text-center text-xs text-muted-foreground">No archive entries match that wording. Try another name, institution or subject.</p>}
       <div className="mt-4 flex items-start gap-2 rounded-lg bg-muted/40 p-3 text-[11px] leading-5 text-muted-foreground"><Clock3 className="mt-0.5 h-4 w-4 shrink-0" /><p>The curated collection includes investigative journalism and official reports from national and international bodies. Official commissions, court judgments, prosecutorial allegations and journalistic investigations are different record types. A commission finding is not a criminal conviction; recommendations are not proof of implementation. Confidential or unpublished files are not presented as public records.</p></div>
-      <div className="mt-3 flex items-start gap-2 text-[11px] text-muted-foreground"><FileText className="mt-0.5 h-4 w-4 shrink-0" /><p>Search includes curated international entries and records approved in the Amineva publication library. The links below provide additional global research starting points; external reporting is not automatically treated as independently established fact.</p></div>
+      <div className="mt-3 flex items-start gap-2 text-[11px] text-muted-foreground"><FileText className="mt-0.5 h-4 w-4 shrink-0" /><p>Regional and record-type filters apply to curated entries and approved library records. Search includes only records that have passed the editorial review workflow; unreviewed submissions are never public. The links below provide additional global research starting points; external reporting is not automatically treated as independently established fact.</p></div>
     </section>
   );
 }
