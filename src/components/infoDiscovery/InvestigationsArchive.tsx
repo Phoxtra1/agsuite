@@ -26,6 +26,31 @@ const INITIAL_INVESTIGATIONS = [{
   keywords: "Labianca customs Ghana customs advance ruling frozen foods benchmark values OSP investigation 531 declarations repayment integrity plan"
 }];
 
+const GLOBAL_INVESTIGATIONS = [{
+  id: "icij-panama-papers-2016",
+  title: "The Panama Papers: Exposing the Offshore Finance Industry",
+  publisher: "International Consortium of Investigative Journalists (ICIJ), with a global network of media partners",
+  year: 2016,
+  jurisdiction: "Cross-border · multiple jurisdictions",
+  type: "International investigative journalism",
+  status: "Published investigation · follow-up reporting and impact coverage continue",
+  summary: "ICIJ and its media partners analysed more than 11.5 million leaked financial and legal records from the Panamanian law firm Mossack Fonseca. The reporting examined offshore companies and structures used by individuals and entities across multiple countries. The existence of an offshore company is not, by itself, proof of illegality; the archive distinguishes documented records, reported allegations, official actions and later legal outcomes.",
+  method: "The investigation was conducted through collaborative analysis of a large document leak by journalists working across borders. Individual stories should be read with their own source documents, responses from subjects and subsequent corrections or legal developments.",
+  outcome: "ICIJ's later impact reporting describes investigations, legal reforms, indictments and tax recoveries following the publication. Those outcomes occurred in different jurisdictions and must be checked individually; publication of the investigation is not itself a court finding against every person or entity named.",
+  sources: [
+    { label: "ICIJ Panama Papers investigation archive", url: "https://www.icij.org/investigations/panama-papers/" },
+    { label: "OCCRP Panama Papers project", url: "https://www.occrp.org/en/project/the-panama-papers" },
+    { label: "ICIJ investigations archive", url: "https://www.icij.org/investigations/" }
+  ],
+  keywords: "Panama Papers offshore finance Mossack Fonseca international cross-border financial records tax evasion corruption investigation ICIJ OCCRP"
+}];
+
+const GLOBAL_INVESTIGATION_SOURCES = [
+  { name: "ICIJ — Investigations", description: "Cross-border investigative projects and collaborative reporting from a global network of journalists.", url: "https://www.icij.org/investigations/" },
+  { name: "OCCRP — Investigations", description: "Investigative reporting on organised crime, corruption and illicit finance across countries and regions.", url: "https://www.occrp.org/en" },
+  { name: "OCCRP Aleph", description: "A research platform connecting public records, datasets and documents from many countries; access to some material requires approval.", url: "https://aleph.occrp.org/" }
+];
+
 export function InvestigationsArchive() {
   const [query, setQuery] = useState("");
   const [libraryRecords, setLibraryRecords] = useState<ResearchRecord[]>([]);
@@ -35,7 +60,7 @@ export function InvestigationsArchive() {
 
   const localMatches = useMemo(() => {
     const clean = query.trim().toLocaleLowerCase();
-    return INITIAL_INVESTIGATIONS.filter(item => !clean || [item.title, item.publisher, item.jurisdiction, item.type, item.status, item.summary, item.method, item.outcome, item.keywords].join(" ").toLocaleLowerCase().includes(clean));
+    return [...GLOBAL_INVESTIGATIONS, ...INITIAL_INVESTIGATIONS].filter(item => !clean || [item.title, item.publisher, item.jurisdiction, item.type, item.status, item.summary, item.method, item.outcome, item.keywords].join(" ").toLocaleLowerCase().includes(clean));
   }, [query]);
 
   const searchArchive = async (event: React.FormEvent) => {
@@ -66,12 +91,12 @@ export function InvestigationsArchive() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <div className="flex items-center gap-2 text-sm font-semibold"><ShieldCheck className="h-4 w-4 text-primary" /> <h2 id="investigations-archive-title">Investigations Archive</h2></div>
-          <p className="mt-1 max-w-3xl text-xs leading-5 text-muted-foreground">A curated starting archive of published investigative journalism and completed official investigations. Entries identify who made each finding and link to the original report.</p>
+          <p className="mt-1 max-w-3xl text-xs leading-5 text-muted-foreground">A global archive of published investigative journalism and official investigation records from different countries and international bodies. Entries distinguish journalistic findings, official investigative findings and court outcomes, and link to original material.</p>
         </div>
         <Badge variant="outline">Publicly documented records</Badge>
       </div>
       <form onSubmit={searchArchive} className="mt-4 flex flex-col gap-2 sm:flex-row">
-        <Input value={query} onChange={event => { setQuery(event.target.value); setLibraryRecords([]); setError(""); setSearched(false); }} placeholder="Search investigations, organisations, methods or findings" aria-label="Search investigations archive" />
+        <Input value={query} onChange={event => { setQuery(event.target.value); setLibraryRecords([]); setError(""); setSearched(false); }} placeholder="Search worldwide investigations, countries, organisations, subjects or findings" aria-label="Search investigations archive" />
         <Button type="submit" disabled={loading || query.trim().length < 2} className="sm:min-w-32">{loading ? "Searching…" : <><Search className="mr-2 h-4 w-4" />Search archive</>}</Button>
         {(query || searched) && <Button type="button" variant="outline" onClick={clearSearch}>Clear</Button>}
       </form>
@@ -101,8 +126,8 @@ export function InvestigationsArchive() {
       </div>
       {searched && !libraryRecords.length && !error && <p className="mt-3 text-xs text-muted-foreground">No additional reviewed investigation records matched this search. The curated entries above remain available; new entries appear here only after source and publication review.</p>}
       {!localMatches.length && !libraryRecords.length && !loading && <p className="mt-3 rounded-lg border border-dashed border-border p-5 text-center text-xs text-muted-foreground">No archive entries match that wording. Try another name, institution or subject.</p>}
-      <div className="mt-4 flex items-start gap-2 rounded-lg bg-muted/40 p-3 text-[11px] leading-5 text-muted-foreground"><Clock3 className="mt-0.5 h-4 w-4 shrink-0" /><p>Scope of this first release: published journalism and completed official investigations with public reports. Active confidential investigations, unpublished case files and unverified allegations are excluded. An investigation report is not a court judgment; prosecution, conviction and acquittal must be recorded separately.</p></div>
-      <div className="mt-3 flex items-start gap-2 text-[11px] text-muted-foreground"><FileText className="mt-0.5 h-4 w-4 shrink-0" /><p>Search includes this curated archive and records already approved in the Amineva publication library. External reporting is not automatically treated as independently established fact.</p></div>
+      <div className="mt-4 flex items-start gap-2 rounded-lg bg-muted/40 p-3 text-[11px] leading-5 text-muted-foreground"><Clock3 className="mt-0.5 h-4 w-4 shrink-0" /><p>Global coverage includes cross-border investigations, published investigative journalism and official reports from national and international institutions. Confidential or unpublished case files are not represented as public records. Each entry must state its country or geographic scope, publication status and source; allegations, investigative findings, charges, judgments and final outcomes must never be conflated.</p></div>
+      <div className="mt-3 flex items-start gap-2 text-[11px] text-muted-foreground"><FileText className="mt-0.5 h-4 w-4 shrink-0" /><p>Search includes curated international entries and records approved in the Amineva publication library. The links below provide additional global research starting points; external reporting is not automatically treated as independently established fact.</p></div>
     </section>
   );
 }
