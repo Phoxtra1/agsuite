@@ -2403,7 +2403,7 @@ export default function InfoDiscoveryPage() {
             <article ref={topicArticleRef} className="relative overflow-hidden rounded-3xl border border-border bg-gradient-to-br from-card via-card to-accent/[0.05] p-6 shadow-md md:p-8">
               <div className="flex items-center justify-between border-b border-border pb-3 mb-4">
                 <div className="flex items-center gap-2 text-sm font-semibold text-accent">
-                  <Lightbulb className="h-4 w-4" /> {selectedTopic.culture || selectedTopic.festival || selectedTopic.kingdom || selectedTopic.touristSite ? "Culture and tradition" : "What this topic helps you investigate"}
+                  <Lightbulb className="h-4 w-4" /> {selectedTopic.kingdom ? "African Kingdoms" : selectedTopic.touristSite ? "African Tourist Sites" : selectedTopic.culture || selectedTopic.festival ? "Culture and Tradition" : "What this topic helps you investigate"}
                 </div>
                 <Badge variant="outline" className="text-[10px] uppercase tracking-wider">
                   {selectedTopic.touristSite ? "African tourist site" : selectedTopic.kingdom ? "African kingdom" : selectedTopic.festival ? "African festival" : selectedTopic.culture ? "African cultural profile" : "Amineva Global Research Topic"}
@@ -2458,7 +2458,7 @@ export default function InfoDiscoveryPage() {
                     ].map((item) => (
                       <div key={item.title} className="rounded-xl border border-border bg-background/70 p-4">
                         <h3 className="text-sm font-semibold">{item.title}</h3>
-                        <p className="mt-1 text-xs leading-5 text-muted-foreground">{item.text}</p>
+                        <p className="mt-2 text-sm leading-7 text-muted-foreground whitespace-pre-line">{item.text}</p>
                       </div>
                     ))}
                   </div>
