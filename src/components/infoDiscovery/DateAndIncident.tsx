@@ -11,9 +11,7 @@ type HistoricalEvent = {
   sources: ResearchSource[]; confidence: "corroborated" | "single-source" | "contested"; caveat: string;
 };
 
-const FUNCTIONS_ENDPOINT = (import.meta as any).env?.VITE_APPWRITE_ENDPOINT || "https://cloud.phoxtra.com/v1";
-const PROJECT_ID = (import.meta as any).env?.VITE_APPWRITE_PROJECT_ID || "amineva";
-const FUNCTION_ID = (import.meta as any).env?.VITE_DATE_INCIDENT_FUNCTION_ID || "69689f59003426b9e5e3";
+const FUNCTION_ID = (import.meta as any).env?.VITE_DATE_INCIDENT_FUNCTION_ID || (import.meta as any).env?.VITE_SUITE_FUNCTION_ID || "69689f59003426b9e5e3";
 
 async function runResearch(month: number, day: number, region: string, category: string): Promise<HistoricalEvent[]> {
   const { account, functions } = await import("@/lib/appwrite");
