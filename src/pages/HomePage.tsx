@@ -302,10 +302,11 @@ export default function HomePage() {
         <div className="w-full max-w-xl">
           {/* Primary navigation and appearance settings. Workspace is accessed from its dedicated panel below. */}
           <div className="w-full flex justify-end gap-6 text-base font-semibold text-muted-foreground flex-wrap items-center">
+            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/")}>Info System</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer text-accent font-bold" onClick={() => navigate("/info-discovery")}>Info Discovery</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>
+            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
 
             {/* Settings with theme toggle */}
             <div className="relative" ref={settingsRef}>
