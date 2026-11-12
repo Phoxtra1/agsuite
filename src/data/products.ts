@@ -59,8 +59,8 @@ export const DEFAULT_ADMIN_PRODUCTS: ProductData[] = [
   },
   {
     id: "datalens",
-    name: "DataLens Intel",
-    shortName: "DataLens",
+    name: "Info Services Intel",
+    shortName: "Info Services",
     description: "Information research, verification, analysis and professional reporting",
     status: "live",
     adminUrl: "https://datalens.amineva.com",
@@ -72,7 +72,7 @@ export const DEFAULT_ADMIN_PRODUCTS: ProductData[] = [
 export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
   {
     id: "datalens",
-    name: "DataLens",
+    name: "Info Services",
     shortName: "DataLens",
     description: "Information research, verification, analysis and reporting",
     status: "live",
