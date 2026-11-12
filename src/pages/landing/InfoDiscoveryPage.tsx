@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, ArrowRight, Search, GraduationCap, Plane, Laptop, BriefcaseBusiness, Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink, ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass, ArrowUpRight, AlertTriangle, Info, Lightbulb, Bookmark, BookmarkCheck, Printer, Download, FolderPlus, FileCheck2, Wallet, Code, Server, Wrench, Store, Users, BarChart3, CreditCard, Landmark, Package, ShoppingCart, Warehouse } from "lucide-react";
+  ArrowLeft, ArrowRight, Search, GraduationCap, Plane, BriefcaseBusiness, Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink, ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass, ArrowUpRight, AlertTriangle, Info, Lightbulb, Bookmark, BookmarkCheck, Printer, Download, FolderPlus, FileCheck2, Wallet, Store, Users, BarChart3, CreditCard, Landmark, Package, ShoppingCart, Warehouse } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -1224,42 +1224,40 @@ const categories: Category[] = [
     ],
   },
   {
-    slug: "it-innovation", title: "IT Services and Support", icon: Laptop,
-    summary: "Understand the IT services organisations rely on: websites and software, technical support, networks, cloud infrastructure, cybersecurity, databases and system maintenance.",
-    purpose: "Technology is part of everyday operations. Websites, applications, computers, networks, business email, databases and cloud services all need to be planned, configured, maintained and protected. This area helps individuals and organisations understand common IT service needs, what can go wrong when systems are neglected, how to assess providers and how to plan dependable technical support. The aim is practical technology awareness—not assumptions that every organisation needs the same system or service.",
+    slug: "it-innovation", title: "Info Services", icon: Globe2,
+    summary: "Understand why accurate, complete and well-supported information matters in everyday decisions, work and enterprise.",
+    purpose: "Information influences choices about money, education, work, travel, relationships and business. Yet what people hear, read or receive may be incomplete, outdated, misleading or difficult to interpret. Good information habits involve tracing statements to reliable sources, checking dates and context, comparing evidence and recognising uncertainty. These habits help people protect their time and resources, avoid preventable surprises and understand what still needs to be clarified before acting.",
     sections: [
-      { title: "IT planning and technical support", description: "Identify technology needs, manage devices and accounts, and obtain the right technical assistance.", items: [
-        topic("IT assessment and technology planning", "Review an organisation's current devices, systems, connectivity, workflows, risks and priorities before choosing new technology or services.", ["Which business activity needs technical support or improvement?", "What systems, devices and subscriptions are already in use?", "Which risks or service interruptions need attention first?", "How will the proposed work be scoped, costed and reviewed?"]),
-        topic("IT support and technical troubleshooting", "Understand helpdesk support, fault diagnosis, escalation, remote assistance and the documentation needed to resolve recurring technology problems.", ["What happened, when did it start and who is affected?", "Is the issue related to a device, application, account, network or service provider?", "What response time and escalation route are appropriate?", "Has the fix been tested and documented?"]),
-        topic("Computer, device and endpoint management", "Manage computers, phones, printers and other connected devices through setup, configuration, updates, inventory, security and retirement.", ["Who owns each device and who is authorised to use it?", "Are operating systems and applications supported and updated?", "Are lost or retired devices securely removed from organisational access?", "Are device records, warranties and licences maintained?"]),
-        topic("Business email, domains and online presence", "Understand domain registration, DNS, business email, website hosting, SSL certificates and the settings needed to keep online services reachable and trustworthy.", ["Who controls the domain and its renewal?", "Are DNS, email authentication and website certificates correctly configured?", "Can staff recover access if an administrator leaves?", "Are website and email services monitored for interruption?"]),
+      { title: "Why information matters", description: "Explore how the quality and timing of information can affect everyday choices and longer-term outcomes.", items: [
+        topic("Information, facts and assumptions", "Separate what is directly supported by evidence from what is believed, estimated, repeated or assumed. A confident statement is not necessarily an established fact.", ["Which parts of this statement can be checked against evidence?", "What is directly known and what is being assumed?", "Who supplied the information and what might they not know?", "What would change if the assumption proved incorrect?"]),
+        topic("The cost of incomplete information", "Important decisions can become harder or more expensive when relevant conditions, obligations, dates or risks are overlooked. Understanding what is missing can be as important as understanding what is already known.", ["What important detail has not yet been established?", "Could an overlooked condition create a cost, delay or lost opportunity?", "What should be confirmed before committing time or money?", "Which uncertainties can be reduced before a decision is made?"]),
+        topic("Information changes over time", "Rules, prices, opportunities, requirements, people and operating conditions change. Check when a piece of information was published, when it was last updated and whether it still applies.", ["When was the information published or last updated?", "Does it apply to the relevant date and location?", "Has a newer notice, version or requirement replaced it?", "How often should this information be checked again?"]),
+        topic("Context and relevance", "A fact may be accurate but still misleading when removed from its context. Consider who it applies to, where it applies, what period it covers and what conditions qualify it.", ["Who or what does the information actually apply to?", "Which location, period or circumstances are covered?", "Are there exceptions, exclusions or conditions?", "Is the information relevant to the question being considered?"]),
       ]},
-      { title: "Websites, software and digital systems", description: "Understand how digital services are designed, developed, integrated, tested and maintained.", items: [
-        topic("Website and web application development", "Explore how requirements, user experience, frontend and backend development, testing, deployment and ongoing maintenance come together in a working website or application.", ["What should users be able to do with the system?", "Which information and workflows must it handle?", "How will accessibility, security and performance be tested?", "Who will maintain the system after launch?"]),
-        topic("Custom software and mobile application development", "Understand when an organisation may need tailored software or a mobile application, and how to evaluate scope, usability, ownership and long-term support.", ["Is an existing product sufficient or is custom development justified?", "Which users, devices and operating systems must be supported?", "Who owns the source code, data and deployment accounts?", "What training, documentation and maintenance are included?"]),
-        topic("Software maintenance and application reliability", "Review upgrades, compatibility, defect correction, performance, monitoring and release management so that software remains usable after deployment.", ["How are issues reported, prioritised and resolved?", "Are changes tested before they reach users?", "Are dependencies and unsupported components reviewed?", "Can the previous stable version be restored if an update fails?"]),
-        topic("System integration and APIs", "Connect separate applications and services through documented interfaces, controlled permissions and reliable data exchange.", ["Which system is the authoritative source for each record?", "How are credentials, permissions and data transfers protected?", "What happens when a connection fails or sends the same event twice?", "Can integration activity be monitored and reconciled?"]),
+      { title: "Understanding sources and evidence", description: "Learn how to trace information to its origin and assess the strength of the evidence behind it.", items: [
+        topic("Original sources and supporting records", "Whenever possible, follow a claim back to the original document, institution, record, dataset or person responsible for publishing it. Repeated copies may repeat the same initial error.", ["Can the original notice, record or publication be located?", "Does the source identify who issued it and when?", "Is the available copy complete and readable?", "Can the information be traced to its original context?"]),
+        topic("Credibility, authority and independence", "Assess whether a source has the authority, knowledge, access and independence needed for the question. A source can be useful for one purpose but unsuitable for another.", ["Is this source responsible for the subject or merely commenting on it?", "Does the source explain its method and evidence?", "Could the source have a commercial or personal interest?", "Is another independent source available for comparison?"]),
+        topic("Cross-checking information", "Compare important statements with other relevant sources. Agreement between independent sources can strengthen confidence, while differences may reveal missing context, timing issues or conflicting accounts.", ["Do independent sources confirm the same key details?", "Are differences caused by dates, definitions or scope?", "Are sources repeating one another rather than independently confirming the claim?", "Which points remain unresolved after comparison?"]),
+        topic("Dates, versions and traceability", "Keep track of publication dates, document versions, source links and the context in which information was collected. Traceability makes it possible to revisit and reassess findings later.", ["Is the exact version or edition identifiable?", "Are publication and access dates recorded?", "Can another person find the same source?", "Is there a record of what changed and why?"]),
       ]},
-      { title: "Networks, cloud and infrastructure", description: "Keep the underlying technology environment connected, available, recoverable and appropriately maintained.", items: [
-        topic("Computer networks, Wi-Fi and connectivity", "Understand wired and wireless networks, routers, switches, internet connectivity, network coverage and secure access for staff and guests.", ["Where are network weak spots or recurring connection failures?", "Are business and guest devices separated appropriately?", "Who manages network equipment, passwords and firmware updates?", "Is the internet connection suitable for the organisation's critical workflows?"]),
-        topic("Servers, hosting and infrastructure management", "Explore server provisioning, operating systems, storage, monitoring, updates, capacity and the responsibilities involved in maintaining hosted systems.", ["Where does each application or service run?", "Who is responsible for patching, monitoring and incident response?", "Are storage, compute and bandwidth sized for actual demand?", "What is the recovery plan if a server or hosting provider becomes unavailable?"]),
-        topic("Cloud services and deployment", "Compare managed cloud services with self-hosted environments, including identity, storage, networking, deployment, usage limits and ongoing costs.", ["What does the selected service include and exclude?", "Where are operational data and backups stored?", "Are access controls, usage limits and recurring costs understood?", "How can services be moved or restored if the provider relationship changes?"]),
-        topic("Backups, recovery and service continuity", "Plan how important files, databases and applications are backed up, tested and restored after accidental deletion, system failure, cyber incident or outage.", ["Which systems and records are essential to restore first?", "How often are backups created and how long are they retained?", "Are backups protected from unauthorised changes or deletion?", "When was a full restoration test last completed?"]),
+      { title: "Making sense of information", description: "Understand how raw details become organised findings and how analysis should be interpreted.", items: [
+        topic("From raw data to useful information", "Raw numbers, statements and documents become useful when they are organised, checked, given context and connected to a clear question. Processing should not hide where the original data came from.", ["What question is the data intended to answer?", "Are units, labels, dates and definitions consistent?", "Are missing or duplicated entries identified?", "Can the processed result be traced back to the original material?"]),
+        topic("Comparisons and meaningful measures", "Comparisons are only useful when the items being compared use compatible definitions, periods, units and conditions. Similar-looking figures may describe different things.", ["Are the compared figures using the same definition and unit?", "Do they cover the same period and population?", "Are costs, exclusions or conditions treated consistently?", "What does the comparison show—and what does it not show?"]),
+        topic("Patterns, gaps and contradictions", "Look for repeated patterns, unusual results, missing values and statements that do not agree. These may point to an important issue, but they should be investigated rather than treated as proof by themselves.", ["Which findings appear consistently across the evidence?", "Are there outliers, missing records or contradictions?", "What alternative explanation could account for the pattern?", "What additional evidence would help resolve the gap?"]),
+        topic("Limitations and uncertainty", "Good analysis explains the limits of the available evidence. A responsible conclusion states what is supported, what is probable, what remains unknown and what could not be checked.", ["Which parts of the question could not be verified?", "Is the evidence complete and current enough for the conclusion?", "Are estimates clearly distinguished from confirmed figures?", "What further information would materially improve confidence?"]),
       ]},
-      { title: "Cybersecurity and data management", description: "Protect accounts, devices, systems and information while maintaining dependable records.", items: [
-        topic("Cybersecurity and access management", "Understand identity controls, strong authentication, role-based permissions, secure configuration, patching and incident response across organisational technology.", ["Who has access to each system and why?", "Are administrator accounts limited and protected with stronger authentication?", "How quickly can access be suspended when a device or account is compromised?", "Are security events reviewed and acted upon?"]),
-        topic("Data protection and database management", "Explore how organisations structure, validate, store, back up and control access to operational records in databases and other information systems.", ["What information is collected and why is it needed?", "Who may view, change, export or delete the records?", "Are data quality, retention and backup requirements documented?", "Can important records be retrieved and verified when needed?"]),
-        topic("Database design, migration and performance", "Understand data models, migrations, query performance, indexing and the checks needed when moving information between systems.", ["Has the current data structure been documented?", "Are duplicates, missing values and inconsistent formats identified before migration?", "How will the migrated data be reconciled against the source?", "Can the database handle expected use without exposing unnecessary information?"]),
-        topic("IT service providers, contracts and service levels", "Evaluate technical providers through scope, responsibilities, response times, service levels, access arrangements, deliverables and exit plans.", ["What is included in the service and what is billed separately?", "Who owns accounts, credentials, code, domains and data?", "How are incidents, changes and unresolved issues escalated?", "What documentation and handover are required when an engagement ends?"]),
+      { title: "Using information responsibly", description: "Consider how findings should be documented, communicated and used without overstating what the evidence supports.", items: [
+        topic("Clear reporting and communication", "A useful report makes its question, scope, sources, findings and reasoning understandable. Readers should be able to distinguish evidence from interpretation and see where further checking is needed.", ["Is the question and scope stated clearly?", "Can a reader trace the main findings to sources?", "Are facts separated from interpretation and opinion?", "Are limitations and unresolved points visible?"]),
+        topic("Privacy and responsible information use", "Information may include personal, confidential or commercially sensitive details. Use only what is relevant, respect applicable permissions and protect material from unnecessary disclosure.", ["Is the information necessary for the stated purpose?", "Does it contain personal or confidential details?", "Is there a lawful basis or permission to use it?", "Who should be allowed to access or receive it?"]),
+        topic("Questions to resolve before acting", "Before relying on an important piece of information, identify the remaining questions that could change the decision. Some questions may require confirmation from the responsible institution or a qualified professional.", ["Which unanswered question could change the next step?", "Who is the authoritative person or institution to confirm it?", "Is professional interpretation required?", "What evidence should be retained for future reference?"]),
       ]},
     ],
     sources: [
-      { name: "NIST Cybersecurity Framework 2.0", scope: "Cybersecurity risk governance and management outcomes", type: "Official standards guidance", url: "https://www.nist.gov/cyberframework" },
-      { name: "OWASP Top 10", scope: "Common critical web application security risk categories", type: "Open security reference", url: "https://owasp.org/projects/top-ten" },
-      { name: "CISA", scope: "Cybersecurity, secure-by-design and infrastructure protection guidance", type: "Official U.S. cyber defence agency", url: "https://www.cisa.gov/" },
-      { name: "Cloud Security Alliance", scope: "Cloud security practices and guidance", type: "Industry security reference", url: "https://cloudsecurityalliance.org/" },
+      { name: "UNESCO — Media and Information Literacy", scope: "Learning resources on accessing, evaluating and using information responsibly", type: "International education and information-literacy guidance", url: "https://www.unesco.org/en/media-information-literacy" },
+      { name: "UK Office for Statistics Regulation", scope: "Guidance on trustworthy, high-quality and publicly useful statistics", type: "Official statistics oversight body", url: "https://osr.statisticsauthority.gov.uk/" },
+      { name: "OECD Data", scope: "Country and cross-country statistical datasets with published indicators and metadata", type: "International statistical reference", url: "https://data.oecd.org/" },
     ],
-    product: { label: "Visit DataLens", href: "https://app.amineva.com", introduction: "When your organisation is ready to take the next step with its technology needs, you can continue to DataLens." },
+    product: { label: "Explore DataLens", href: "/explainer/datalens", introduction: "When a decision depends on details you cannot afford to guess, it helps to understand what reliable research and careful analysis can clarify. Explore DataLens to see how information can be examined more deeply." },
   },
   {
     slug: "business-management", title: "Business Management", icon: BriefcaseBusiness,
@@ -3330,27 +3328,37 @@ function CategoryProductPanel({ product }: { product?: ProductLink }) {
 }
 
 function DataLensSpotlight({ product }: { product: ProductLink }) {
-  const capabilities = [
-    { icon: Laptop, title: "Website and application services", description: "Plan, build, maintain and improve websites and digital applications.", edge: "border-t-4 border-t-primary" },
-    { icon: Code, title: "Software development", description: "Develop tailored software, mobile applications and system integrations.", edge: "border-r-4 border-r-accent" },
-    { icon: Server, title: "Cloud and infrastructure", description: "Configure hosting, servers, deployment, backups and service continuity.", edge: "border-b-4 border-b-success/75" },
-    { icon: Wrench, title: "IT support and troubleshooting", description: "Resolve technical issues and support devices, accounts, networks and business email.", edge: "border-l-4 border-l-primary/70" },
-    { icon: Database, title: "Database and data management", description: "Design, maintain, migrate, secure and optimise organisational data systems.", edge: "border-t-4 border-t-accent" },
-    { icon: ShieldCheck, title: "Cybersecurity and protection", description: "Improve access controls, technical safeguards, updates and recovery readiness.", edge: "border-r-4 border-r-success/75" },
-  ];
-  return <section aria-label="Explore DataLens IT services" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
-    <div className="overflow-hidden rounded-3xl border border-accent/30 bg-card shadow-md">
-      <div className="grid gap-6 border-t-4 border-t-accent p-5 md:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] md:gap-8 md:p-8">
-        <div className="flex flex-col items-start justify-center">
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent"><Wrench className="h-3.5 w-3.5" /> IT services and support</span>
-            <h2 className="mt-4 text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">Reliable technology matters in everyday work.</h2>
-            <p className="mt-4 text-sm leading-7 text-muted-foreground">When computers, networks, websites or business systems fail, work can slow down, information can become difficult to access and customers may lose confidence. Understanding common technology needs helps people make better decisions, protect information and keep essential activities running.</p>
-            <a href={product.href} target="_blank" rel="noopener noreferrer" className="mt-6 inline-flex items-center gap-2 rounded-xl bg-accent px-5 py-3 text-sm font-bold text-accent-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">Visit DataLens <ArrowUpRight className="h-4 w-4" /></a>
+  return (
+    <section aria-label="Why information matters" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
+      <div className="overflow-hidden rounded-3xl border border-accent/30 bg-card shadow-md">
+        <div className="relative grid gap-6 border-t-4 border-t-accent p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-10 md:p-9">
+          <div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full bg-accent/10 blur-3xl" />
+          <div className="relative">
+            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
+              <Globe2 className="h-3.5 w-3.5" /> Information matters
+            </span>
+            <h2 className="mt-4 max-w-3xl text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">
+              Better decisions begin with what you know.
+            </h2>
+            <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground">
+              Information reaches us through conversations, documents, websites, reports and everyday experiences. But not everything we hear or read is complete, current or reliable. Knowing where information came from, what supports it and what may be missing can make a real difference when a decision affects your time, money, opportunities or organisation.
+            </p>
+            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
+              Before moving forward, it is worth understanding the facts, the context and the questions that still need answers.
+            </p>
           </div>
-          <div className="grid gap-3 sm:grid-cols-2">{capabilities.map(item => <article key={item.title} className={"rounded-2xl border border-border bg-background/70 p-4 transition hover:-translate-y-0.5 hover:shadow-md " + item.edge}><div className="flex h-9 w-9 items-center justify-center rounded-xl bg-muted text-primary"><item.icon className="h-4 w-4" /></div><h3 className="mt-3 text-sm font-semibold text-foreground">{item.title}</h3><p className="mt-1 text-xs leading-5 text-muted-foreground">{item.description}</p></article>)}</div>
+          <div className="relative flex md:justify-end">
+            <Link
+              to={product.href}
+              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-bold text-accent-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
+            >
+              {product.label} <ArrowUpRight className="h-4 w-4" />
+            </Link>
+          </div>
+        </div>
       </div>
-    </div>
-  </section>;
+    </section>
+  );
 }
 
 function SikasemSpotlight({ product }: { product: ProductLink }) {

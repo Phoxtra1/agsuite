@@ -1,232 +1,262 @@
 import { FC } from "react";
 import { motion } from "framer-motion";
-import { Link } from "react-router-dom";
 import {
-  Globe, Code, Server, Wrench, Database, Cpu,
-  ArrowRight, Users, CheckCircle2, Shield, Building2
+  GraduationCap,
+  BriefcaseBusiness,
+  FileText,
+  Plane,
+  ShieldCheck,
+  ArrowRight,
+  Search,
+  ClipboardList,
+  BarChart3,
+  FileCheck2,
 } from "lucide-react";
 
 const fadeUp = {
-  hidden: { opacity: 0, y: 30 },
-  visible: (i: number) => ({ opacity: 1, y: 0, transition: { delay: i * 0.1, duration: 0.5 } }),
+  hidden: { opacity: 0, y: 24 },
+  visible: (i: number) => ({
+    opacity: 1,
+    y: 0,
+    transition: { delay: i * 0.08, duration: 0.45 },
+  }),
 };
 
+const serviceAreas = [
+  {
+    icon: GraduationCap,
+    title: "Career & Education",
+    description: "Research and analysis for students, parents, graduates and working adults exploring education and career directions.",
+    services: [
+      "Career Reports",
+      "Educational Pathway",
+      "Career Change",
+      "Career Opportunities",
+      "One-on-One Session",
+      "Other Career Requests",
+    ],
+  },
+  {
+    icon: BriefcaseBusiness,
+    title: "Business Information",
+    description: "Information to understand business opportunities, competition, products, expansion and entry into new markets.",
+    services: [
+      "Business Opportunities",
+      "Competitor Analysis",
+      "Product & Brand Analysis",
+      "Business Expansion",
+      "Market Entry Reports",
+      "Other Requests",
+    ],
+  },
+  {
+    icon: FileText,
+    title: "Contracts & Commitments",
+    description: "Factual information to help people understand important terms, responsibilities and considerations before committing.",
+    services: [
+      "Work-and-Pay Agreements",
+      "Rental & Lease Agreements",
+      "Business Partnerships",
+      "Purchase & Sales Transactions",
+      "Contract Terms & Obligations",
+      "Other Requests",
+    ],
+  },
+  {
+    icon: Plane,
+    title: "Travel & Relocation",
+    description: "Destination research for people planning to travel, study, work or relocate to another country.",
+    services: [
+      "Country Reports",
+      "Travel Preparation",
+      "Study Abroad",
+      "Overseas Employment",
+      "Relocation",
+      "Country Comparisons",
+      "Other Travel & Relocation Requests",
+    ],
+  },
+  {
+    icon: ShieldCheck,
+    title: "Info and Reports Verification",
+    description: "Independent checking for people and organisations who already have information, documents or reports they need to verify.",
+    services: [
+      "Information Verification",
+      "Document Verification",
+      "Report Verification",
+      "Business Information Verification",
+      "Claims & Statistics Verification",
+      "Offers & Opportunities Verification",
+      "Other Verification Requests",
+    ],
+  },
+];
+
+const processSteps = [
+  {
+    icon: ClipboardList,
+    title: "Submit your question",
+    description: "Explain what you need to understand and provide any relevant background or documents.",
+  },
+  {
+    icon: Search,
+    title: "Scope and quotation",
+    description: "The request is reviewed and the research scope, source availability, timeline and fee are established before work begins.",
+  },
+  {
+    icon: BarChart3,
+    title: "Research and analysis",
+    description: "Relevant data is gathered, sources are checked, information is processed and findings are analysed.",
+  },
+  {
+    icon: FileCheck2,
+    title: "Professional report",
+    description: "Receive a structured report that presents findings, analysis, supporting sources and relevant limitations.",
+  },
+];
+
 const DataLensPage: FC = () => {
-  const serviceCategories = [
-    {
-      icon: Globe,
-      title: "Website & Application Maintenance",
-      desc: "Full lifecycle maintenance, stability monitoring, performance optimization, and active security management for mission-critical web applications.",
-      items: [
-        "Website and application troubleshooting, bug fixes, and performance optimization",
-        "Hosting and uptime management of existing web platforms where agreed and supported",
-        "Domain registration assistance, DNS record routing, and SSL certificate maintenance",
-        "Regular dependency updates, vulnerability patches, and scheduled code health audits",
-      ],
-    },
-    {
-      icon: Code,
-      title: "Software & App Development",
-      desc: "Custom full-stack web and mobile application engineering built for performance, scale, resilience, and operational excellence.",
-      items: [
-        "End-to-end custom application development tailored to unique organizational workflows",
-        "Modern frontend frameworks, responsive UI architecture, and robust backend engineering",
-        "REST and GraphQL API development, external service integrations, and webhooks",
-        "Scalable, maintainable codebases with comprehensive testing and documentation",
-      ],
-    },
-    {
-      icon: Server,
-      title: "Cloud Infrastructure & Deployment",
-      desc: "Scalable cloud architecture, continuous deployment pipelines, server provisioning, containerization, and high-availability operations.",
-      items: [
-        "Self-hosted and multi-cloud environment configuration and provisioning",
-        "Containerized application deployment with Docker, modern orchestration, and automated CI/CD",
-        "High availability, automated backups, fault tolerance, and disaster recovery planning",
-        "Performance tuning, server resource optimization, and infrastructure cost management",
-      ],
-    },
-    {
-      icon: Wrench,
-      title: "IT Support & Technical Troubleshooting",
-      desc: "Dedicated technical problem diagnosis, operational IT assistance, hardware/software configuration, and enterprise email connectivity.",
-      items: [
-        "Rapid diagnosis and resolution of system faults, hardware glitches, and application errors",
-        "Enterprise business email setup, SPF/DKIM/DMARC authentication, and domain routing",
-        "Operating system configuration, workstation setup, and software license management",
-        "Network connectivity diagnostics, secure remote access, and technical user support",
-      ],
-    },
-    {
-      icon: Database,
-      title: "Database & Data Management",
-      desc: "Enterprise data architecture, secure relational/NoSQL database management, schema migration, indexing, and backup automation.",
-      items: [
-        "Relational (PostgreSQL, MySQL) and NoSQL database installation, clustering, and tuning",
-        "Database schema design, query optimization, indexing strategies, and performance audits",
-        "Automated backup strategies, replication, point-in-time recovery, and data security",
-        "Data hygiene, automated ETL pipelines, migration, and secure data access governance",
-      ],
-    },
-    {
-      icon: Cpu,
-      title: "Business Process Automation & System Integration",
-      desc: "Connecting disparate platforms, automating recurring business tasks, syncing data across services, and eliminating operational friction.",
-      items: [
-        "Cross-platform integration between CRM, ERP, finance, communication, and storage systems",
-        "Workflow automation for repetitive manual tasks, ticket routing, and notification triggers",
-        "Custom API bridges, webhooks, and middleware connecting legacy systems to modern tools",
-        "Efficiency audits to identify operational bottlenecks and implement automated solutions",
-      ],
-    },
-  ];
-
-  const steps = [
-    { step: "1", title: "Submit Service Enquiry", desc: "Contact DataLens or submit your service request specifying your IT service, software, cloud, or technical support requirements." },
-    { step: "2", title: "Scope & Requirement Assessment", desc: "Our technical team evaluates your system needs, audits technical requirements, and determines exact deliverables and milestones." },
-    { step: "3", title: "Tailored Engagement Agreement", desc: "Agreements are structured clearly according to project scope, milestone pricing, timeline, or ongoing maintenance SLAs." },
-    { step: "4", title: "Service Execution", desc: "DataLens engineers execute development, server configuration, database tuning, troubleshooting, or systems automation." },
-    { step: "5", title: "Delivery & Continuous Support", desc: "Receive fully configured systems, deployed applications, verification reports, and dedicated ongoing maintenance." },
-  ];
-
   return (
     <div className="w-full">
-      {/* Hero */}
-      <section className="relative py-24 lg:py-36 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-primary to-primary/80" />
-        <div className="relative z-10 max-w-5xl mx-auto text-center px-6">
-          <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.6 }}>
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-accent/20 text-accent text-sm font-medium mb-6">
-              <Wrench className="h-4 w-4" /> Professional IT Services
+      <section className="relative overflow-hidden bg-gradient-to-br from-primary via-primary to-primary/85 px-6 py-24 text-primary-foreground lg:py-32">
+        <div className="pointer-events-none absolute -right-24 -top-24 h-96 w-96 rounded-full bg-accent/10 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-32 -left-20 h-96 w-96 rounded-full bg-primary-foreground/5 blur-3xl" />
+        <div className="relative z-10 mx-auto max-w-5xl text-center">
+          <motion.div initial={{ opacity: 0, y: 16 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
+            <div className="mb-6 inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/15 px-4 py-1.5 text-sm font-semibold text-accent">
+              <Search className="h-4 w-4" />
+              DataLens by Amineva Global
             </div>
-            <h1 className="text-4xl md:text-6xl font-bold text-primary-foreground mb-6">
-              Enterprise IT Services<br />
-              <span className="text-accent">Tailored to Your Operations</span>
+            <h1 className="mb-5 text-4xl font-bold leading-tight tracking-tight md:text-6xl">
+              Information Before
+              <span className="block text-accent">Important Decisions</span>
             </h1>
-            <p className="text-lg text-primary-foreground/80 max-w-3xl mx-auto mb-8 leading-relaxed">
-              DataLens provides comprehensive IT services covering website and application maintenance, custom software development, cloud infrastructure and deployment, IT support and troubleshooting, database management, and business process automation.
+            <p className="mx-auto mb-7 max-w-3xl text-lg leading-8 text-primary-foreground/85">
+              Research. Verification. Analysis. Reports.
             </p>
-            <div className="flex flex-wrap justify-center gap-4">
-              <Link
-                to="/support"
-                className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg"
+            <p className="mx-auto mb-9 max-w-3xl text-base leading-8 text-primary-foreground/75 md:text-lg">
+              DataLens gathers relevant data, checks sources, processes information and analyses findings to prepare clear, evidence-based reports for individuals and organisations.
+            </p>
+            <div className="flex flex-wrap justify-center gap-3">
+              <a
+                href="https://datalens.amineva.com/request"
+                className="inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-base font-semibold text-accent-foreground shadow-lg transition hover:-translate-y-0.5 hover:bg-accent/90"
               >
-                Request IT Service <ArrowRight className="h-5 w-5" />
-              </Link>
+                Request an Information Report <ArrowRight className="h-5 w-5" />
+              </a>
+              <a
+                href="https://datalens.amineva.com/booking"
+                className="inline-flex items-center gap-2 rounded-xl border border-primary-foreground/25 bg-primary-foreground/10 px-6 py-3.5 text-base font-semibold text-primary-foreground transition hover:bg-primary-foreground/15"
+              >
+                Book an Information Session
+              </a>
             </div>
           </motion.div>
         </div>
       </section>
 
-      {/* Services Section */}
-      <section className="max-w-7xl mx-auto py-20 px-6">
-        <div className="text-center mb-14">
-          <span className="text-sm font-semibold text-accent uppercase tracking-wider">Official IT Services</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">IT Services Provided by DataLens</h2>
-          <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">
-            All engagements are delivered on a dedicated service basis, with scope, SLA, deliverables, and terms tailored to each client's specific requirements.
+      <section className="mx-auto max-w-7xl px-5 py-20 md:px-8 lg:py-24">
+        <div className="mx-auto mb-14 max-w-3xl text-center">
+          <span className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">What you can request</span>
+          <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+            Information for the questions that matter
+          </h2>
+          <p className="mt-4 text-base leading-7 text-muted-foreground">
+            Each request is considered on its own scope. Explore the five areas to see the information and reports DataLens can prepare.
           </p>
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {serviceCategories.map((s, i) => (
-            <motion.div
-              key={s.title}
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-6">
+          {serviceAreas.map((area, index) => (
+            <motion.article
+              key={area.title}
               initial="hidden"
               whileInView="visible"
-              viewport={{ once: true }}
+              viewport={{ once: true, amount: 0.12 }}
               variants={fadeUp}
-              custom={i}
-              className="p-8 rounded-2xl border border-border bg-card shadow-sm hover:border-accent/50 transition flex flex-col justify-between"
+              custom={index}
+              className={`flex h-full flex-col rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-accent/50 hover:shadow-lg ${index < 3 ? "lg:col-span-2" : "lg:col-span-3"}`}
             >
-              <div>
-                <div className="p-3 rounded-xl bg-accent/10 text-accent w-fit mb-5">
-                  <s.icon className="h-7 w-7" />
+              <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-xl bg-accent/10 text-accent">
+                <area.icon className="h-6 w-6" />
+              </div>
+              <h3 className="text-xl font-bold tracking-tight text-foreground">{area.title}</h3>
+              <p className="mt-2 min-h-[72px] text-sm leading-6 text-muted-foreground">{area.description}</p>
+              <div className="mt-5 border-t border-border/70 pt-4">
+                <p className="mb-3 text-[10px] font-bold uppercase tracking-[0.16em] text-muted-foreground">Available requests</p>
+                <ul className="space-y-2">
+                  {area.services.map((service) => (
+                    <li key={service} className="flex items-start gap-2 text-sm text-foreground/90">
+                      <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-accent" />
+                      <span>{service}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </motion.article>
+          ))}
+        </div>
+      </section>
+
+      <section className="border-y border-border bg-secondary/40 px-5 py-20 md:px-8 lg:py-24">
+        <div className="mx-auto max-w-7xl">
+          <div className="mx-auto mb-14 max-w-3xl text-center">
+            <span className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Our approach</span>
+            <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+              From raw data to useful information
+            </h2>
+            <p className="mt-4 text-base leading-7 text-muted-foreground">
+              Reports are built through a structured process. We distinguish sourced facts from analysis and identify gaps or limitations that matter to the question.
+            </p>
+          </div>
+          <div className="grid gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {processSteps.map((step, index) => (
+              <motion.div
+                key={step.title}
+                initial="hidden"
+                whileInView="visible"
+                viewport={{ once: true, amount: 0.15 }}
+                variants={fadeUp}
+                custom={index}
+                className="rounded-2xl border border-border bg-card p-6 shadow-sm"
+              >
+                <div className="mb-5 flex h-11 w-11 items-center justify-center rounded-xl bg-primary/8 text-primary">
+                  <step.icon className="h-5 w-5" />
                 </div>
-                <h3 className="text-xl font-bold text-foreground mb-2">{s.title}</h3>
-                <p className="text-muted-foreground text-sm leading-relaxed mb-6">{s.desc}</p>
-              </div>
-
-              <div className="space-y-2.5 pt-6 border-t border-border/60">
-                {s.items.map((item, idx) => (
-                  <div key={idx} className="flex items-start gap-2 text-xs text-foreground/90">
-                    <CheckCircle2 className="h-4 w-4 text-accent flex-shrink-0 mt-0.5" />
-                    <span>{item}</span>
-                  </div>
-                ))}
-              </div>
-            </motion.div>
-          ))}
+                <p className="text-xs font-bold uppercase tracking-[0.16em] text-accent">0{index + 1}</p>
+                <h3 className="mt-2 text-lg font-semibold text-foreground">{step.title}</h3>
+                <p className="mt-2 text-sm leading-6 text-muted-foreground">{step.description}</p>
+              </motion.div>
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* IT Service Summary Box */}
-      <section className="bg-secondary/60 py-16 px-6 border-y border-border">
-        <div className="max-w-4xl mx-auto text-center space-y-4">
-          <span className="text-xs font-bold text-accent uppercase tracking-widest">IT & Technical Infrastructure</span>
-          <h3 className="text-2xl font-bold text-foreground">Flexible Technical Support for Your Organization</h3>
-          <p className="text-muted-foreground leading-relaxed">
-            Our IT services cover website and application maintenance, custom software development, cloud and server deployment, database and data architecture, business email configuration, and technical troubleshooting. Engagements are tailored directly to client requirements and agreed operational scope.
-          </p>
-        </div>
-      </section>
-
-      {/* Step-by-Step Engagement */}
-      <section className="max-w-5xl mx-auto py-20 px-6">
-        <div className="text-center mb-14">
-          <span className="text-sm font-semibold text-accent uppercase tracking-wider">How We Work</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground mt-2">Service Delivery Workflow</h2>
-          <p className="text-muted-foreground mt-3 max-w-2xl mx-auto">Engagements are structured around client needs, agreed milestones, clear technical scope, and verified execution.</p>
-        </div>
-        <div className="space-y-4">
-          {steps.map((s, i) => (
-            <motion.div key={s.step} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="flex items-start gap-5 p-5 rounded-xl border border-border bg-card">
-              <div className="flex-shrink-0 h-10 w-10 rounded-full bg-accent text-accent-foreground font-bold flex items-center justify-center text-lg">
-                {s.step}
-              </div>
-              <div>
-                <h3 className="font-semibold text-foreground">{s.title}</h3>
-                <p className="text-sm text-muted-foreground mt-1">{s.desc}</p>
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* Who Benefits */}
-      <section className="max-w-7xl mx-auto py-20 px-6 border-t border-border">
-        <div className="text-center mb-14">
-          <h2 className="text-3xl md:text-4xl font-bold text-foreground">Who Benefits from DataLens IT Services?</h2>
-        </div>
-        <div className="grid md:grid-cols-3 gap-6">
-          {[
-            { icon: Building2, title: "Growing Enterprises & Businesses", desc: "Reliable application maintenance, business email setup, database management, and process automation to drive productivity." },
-            { icon: Users, title: "Institutions & Organizations", desc: "Secure cloud deployment, custom software development, system integrations, and dedicated technical troubleshooting." },
-            { icon: Shield, title: "Platform & Product Operators", desc: "High-uptime server infrastructure, containerized deployments, automated backups, and proactive technical maintenance." },
-          ].map((b, i) => (
-            <motion.div key={b.title} initial="hidden" whileInView="visible" viewport={{ once: true }} variants={fadeUp} custom={i} className="p-6 rounded-xl border border-border bg-card text-center">
-              <b.icon className="h-10 w-10 text-accent mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-foreground mb-2">{b.title}</h3>
-              <p className="text-sm text-muted-foreground">{b.desc}</p>
-            </motion.div>
-          ))}
-        </div>
-      </section>
-
-      {/* CTA */}
-      <section className="py-20 px-6 bg-gradient-to-r from-primary to-primary/90 text-center">
-        <motion.div initial={{ opacity: 0, y: 20 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true }}>
-          <h2 className="text-3xl md:text-4xl font-bold text-primary-foreground mb-4">Discuss Your IT Requirements with DataLens</h2>
-          <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
-            Reach out to our engineering team to define your project scope, request software development, cloud infrastructure, or dedicated technical support.
-          </p>
-          <Link
-            to="/support"
-            className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg"
+      <section className="mx-auto max-w-5xl px-5 py-20 text-center md:px-8 lg:py-24">
+        <span className="text-sm font-semibold uppercase tracking-[0.18em] text-accent">Engage DataLens</span>
+        <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground md:text-4xl">
+          Start with the information you need
+        </h2>
+        <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-muted-foreground">
+          Research assignments are assessed individually. DataLens provides a quotation based on the question, scope, complexity, sources and expected work before the assignment begins. One-on-one information sessions are booked separately.
+        </p>
+        <div className="mt-8 flex flex-wrap justify-center gap-3">
+          <a
+            href="https://datalens.amineva.com/request"
+            className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-base font-semibold text-primary-foreground transition hover:bg-primary/90"
           >
-            Contact DataLens <ArrowRight className="h-5 w-5" />
-          </Link>
-        </motion.div>
+            Submit a Request <ArrowRight className="h-5 w-5" />
+          </a>
+          <a
+            href="https://datalens.amineva.com/booking"
+            className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3.5 text-base font-semibold text-foreground transition hover:bg-muted"
+          >
+            Book a Session
+          </a>
+        </div>
+        <p className="mt-7 text-xs leading-5 text-muted-foreground">
+          DataLens provides researched information, verification, analysis and reports. It does not replace qualified legal, financial or other regulated professional services.
+        </p>
       </section>
     </div>
   );
