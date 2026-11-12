@@ -7,6 +7,7 @@ import { Clock, XCircle, ArrowRight, Compass, Settings, Sun, Moon } from "lucide
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
+import { useVisitorLocation } from "@/hooks/useVisitorLocation";
 import amvLogo from "@/assets/amv_global_logo.png";
 import discoverySearch from "@/assets/info-discovery/discovery-search.svg";
 import connectedKnowledge from "@/assets/info-discovery/connected-knowledge.svg";
@@ -50,35 +51,6 @@ function getStatusBadge(status: ProductData["status"]) {
   }
 }
 
-type RegionState = { countryId: string; countryLabel: string };
-
-function readRegionFromStorage(): RegionState | null {
-  try {
-    const raw = localStorage.getItem("agstock_region");
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    const countryId = String(parsed?.countryId || "").trim();
-    const countryLabel = String(parsed?.countryLabel || "").trim();
-    if (!countryId || !countryLabel) return null;
-    return { countryId, countryLabel };
-  } catch {
-    return null;
-  }
-}
-
-function getTimeZone(countryId: string): string {
-  const id = (countryId || "").toLowerCase();
-  switch (id) {
-    case "ashanti": return "Africa/Accra";
-    case "nigeria": return "Africa/Lagos";
-    case "kenya": return "Africa/Nairobi";
-    case "south-africa": return "Africa/Johannesburg";
-    case "cfa-zone": return "Africa/Abidjan";
-    case "finland": return "Europe/Helsinki";
-    case "united-kingdom": return "Europe/London";
-    default: return "Etc/UTC";
-  }
-}
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -101,13 +73,8 @@ export default function HomePage() {
     return () => window.clearInterval(id);
   }, []);
 
-  const storedRegion = useMemo(() => readRegionFromStorage(), [agCountry, agStepConfirmed]);
-  const displayCountryId = useMemo(() => agCountry || storedRegion?.countryId || "ghana", [agCountry, storedRegion]);
-  const displayCountryLabel = useMemo(() => {
-    if (agCountry) return "";
-    return storedRegion?.countryLabel || "Ashanti";
-  }, [agCountry, storedRegion]);
-  const displayTimeZone = useMemo(() => getTimeZone(displayCountryId), [displayCountryId]);
+  const { locationLabel: visitorLocationLabel, timeZone: visitorTimeZone } = useVisitorLocation();
+  const displayTimeZone = visitorTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || "Etc/UTC";
 
   const displayTime = useMemo(() => new Intl.DateTimeFormat("en-GB", { timeZone: displayTimeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(now), [now, displayTimeZone]);
   const displayDate = useMemo(() => new Intl.DateTimeFormat("en-GB", { timeZone: displayTimeZone, day: "2-digit", month: "long", year: "numeric" }).format(now), [now, displayTimeZone]);
@@ -127,9 +94,6 @@ export default function HomePage() {
     { id: "united-kingdom", label: "United Kingdom", currencyCode: "GBP" },
     { id: "other", label: "Other Countries", currencyCode: "USD" },
   ], []);
-
-  const selectedAgOption = useMemo(() => countryCurrencyOptions.find((o) => o.id === agCountry) || null, [agCountry, countryCurrencyOptions]);
-  const effectiveCountryLabel = useMemo(() => selectedAgOption?.label || displayCountryLabel || "Ghana", [selectedAgOption, displayCountryLabel]);
 
   const workspaceProduct: ProductData = products.find((product) => product.id.toLowerCase().includes("workspace") || product.name.toLowerCase().includes("workspace")) || { id: "workspace", name: "Amineva Workspace", status: "live", order: 0 };
   const WorkspaceIcon = getProductIconSafe(workspaceProduct?.id || "workspace");
@@ -277,7 +241,7 @@ export default function HomePage() {
         <div className="p-8 flex items-start gap-4 relative z-10">
           <img src={amvLogo} alt="Amineva Global" className="h-14 w-14 rounded-full" />
           <div style={{ animation: "amvFadeUp 700ms ease-out, amvShimmer 3.6s ease-in-out infinite" }}>
-            <div className="font-semibold tracking-wide leading-none" style={{ color: "hsl(38,92%,50%)", fontSize: "22px" }}>{displayTime}, {effectiveCountryLabel}</div>
+            <div className="font-semibold tracking-wide leading-none" style={{ color: "hsl(38,92%,50%)", fontSize: "22px" }}>{displayTime}, {visitorLocationLabel}</div>
             <div className="font-medium tracking-wide text-xs mt-1" style={{ color: "hsla(38,92%,50%,0.85)" }}>{displayDate}</div>
           </div>
         </div>
