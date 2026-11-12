@@ -1,40 +1,8 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
 import { Link } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import aminevaLogo from "@/assets/amv_global_logo.png";
-
-type CountryLookupResponse = {
-  country?: string | null;
-};
-
-type RegionDisplayNamesConstructor = new (
-  locales?: string | string[],
-  options?: { type: "region" },
-) => {
-  of: (code: string) => string | undefined;
-};
-
-const getCountryName = (countryCode: string): string => {
-  const normalizedCode = countryCode.trim().toUpperCase();
-
-  if (!/^[A-Z]{2}$/.test(normalizedCode)) {
-    return "Worldwide";
-  }
-
-  try {
-    const DisplayNames = (Intl as unknown as {
-      DisplayNames?: RegionDisplayNamesConstructor;
-    }).DisplayNames;
-
-    if (DisplayNames) {
-      return new DisplayNames(["en"], { type: "region" }).of(normalizedCode) ?? "Worldwide";
-    }
-  } catch {
-    // Keep the footer useful on browsers without regional display-name support.
-  }
-
-  return normalizedCode;
-};
+import { useVisitorLocation } from "@/hooks/useVisitorLocation";
 
 const companyLinks = [
   { label: "About Us", to: "/about-us" },
@@ -59,41 +27,7 @@ const helpLinks = [
 ];
 
 export default function GlobalFooter() {
-  const [countryName, setCountryName] = useState("Worldwide");
-
-  useEffect(() => {
-    const controller = new AbortController();
-    const timeout = window.setTimeout(() => controller.abort(), 4000);
-
-    fetch("https://api.country.is/", {
-      method: "GET",
-      headers: { Accept: "application/json" },
-      credentials: "omit",
-      cache: "no-store",
-      referrerPolicy: "no-referrer",
-      signal: controller.signal,
-    })
-      .then((response) => {
-        if (!response.ok) {
-          throw new Error(`Country lookup failed with status ${response.status}`);
-        }
-        return response.json() as Promise<CountryLookupResponse>;
-      })
-      .then((data) => {
-        if (typeof data.country === "string" && data.country.trim()) {
-          setCountryName(getCountryName(data.country));
-        }
-      })
-      .catch(() => {
-        // Keep the neutral Worldwide label if location lookup is unavailable.
-      })
-      .finally(() => window.clearTimeout(timeout));
-
-    return () => {
-      window.clearTimeout(timeout);
-      controller.abort();
-    };
-  }, []);
+  const { locationLabel } = useVisitorLocation();
 
   const linkClass =
     "text-sm text-white/70 transition-colors duration-150 hover:text-amber-300 focus-visible:outline-none focus-visible:text-amber-300";
@@ -168,7 +102,7 @@ export default function GlobalFooter() {
           <p>© {new Date().getFullYear()} Amineva Global. All rights reserved.</p>
           <p className="inline-flex items-center gap-1.5" aria-live="polite">
             <MapPin className="h-3.5 w-3.5 text-amber-300" aria-hidden="true" />
-            <span>{countryName}</span>
+            <span>{locationLabel}</span>
             <span aria-hidden="true">·</span>
             <span>Global outlook</span>
           </p>
