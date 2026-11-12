@@ -11,7 +11,7 @@ const companyLinks = [
 
 const platformLinks = [
   { label: "Inventra", to: "/apps/inventra" },
-  { label: "DataLens", to: "/explainer/datalens" },
+  { label: "Info Services", to: "/explainer/info-services" },
   { label: "AgroClimate", to: "/apps/agroclimate" },
   { label: "Adesua", to: "/apps/adesua" },
   { label: "Sikasɛm", to: "/explainer/sikasem" },
