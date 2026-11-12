@@ -4,7 +4,6 @@ import { Link, NavLink } from "react-router-dom";
 import { Compass, BriefcaseBusiness, Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import amvLogo from "@/assets/amv_global_logo.png";
-import GlobalFooter from "@/components/layout/GlobalFooter";
 
 const links = [
   { to: "/info-discovery", label: "Info Discovery", icon: Compass },
@@ -80,7 +79,6 @@ export default function PortalLayout({ children }: { children: ReactNode }) {
 
       {children}
 
-      <GlobalFooter />
     </div>
   );
 }
