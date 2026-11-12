@@ -20,7 +20,6 @@ export default function Landing() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { isAuthenticated } = useAuth();
-  const isAccountPortal = location.pathname.startsWith("/info-discovery") || location.pathname.startsWith("/payments");
 
   return (
     <div className="min-h-screen bg-background">
