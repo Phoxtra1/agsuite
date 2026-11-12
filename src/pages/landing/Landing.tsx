@@ -8,15 +8,21 @@ import amvLogo from "@/assets/amv_global_logo.png";
 import GlobalFooter from "@/components/layout/GlobalFooter";
 
 const navLinks = [
+  { label: "Info System", to: "/" },
   { label: "Info Discovery", to: "/info-discovery" },
   { label: "About Us", to: "/about-us" },
-  { label: "FAQs", to: "/faqs" },
   { label: "Support", to: "/support" },
+  { label: "FAQs", to: "/faqs" },
 ];
 
 export default function Landing() {
   const location = useLocation();
   const isHome = location.pathname === "/";
+  // These routes render inside the independent Info Discovery portal shell.
+  const isAccountPortal =
+    location.pathname === "/info-discovery" ||
+    location.pathname.startsWith("/info-discovery/") ||
+    location.pathname === "/payments";
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { isAuthenticated } = useAuth();
@@ -32,7 +38,7 @@ export default function Landing() {
             </Link>
 
             <nav className="hidden md:flex items-center gap-8">
-              {navLinks.slice(0, 4).map((link) => (
+              {navLinks.map((link) => (
                 <Link
                   key={link.label}
                   to={link.to}
@@ -67,7 +73,7 @@ export default function Landing() {
               >
                 <div className="p-4 space-y-1">
                   <div className="border-t border-border my-2" />
-                  {navLinks.slice(0, 4).map((link) => (
+                  {navLinks.map((link) => (
                     <Link key={link.label} to={link.to} onClick={() => setMobileOpen(false)} className="block px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg">
                       {link.label}
                     </Link>
