@@ -73,7 +73,7 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
   {
     id: "datalens",
     name: "Info Services",
-    shortName: "DataLens",
+    shortName: "Info Services",
     description: "Information research, verification, analysis and reporting",
     status: "live",
     url: "https://datalens.amineva.com",
