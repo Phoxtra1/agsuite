@@ -1225,39 +1225,21 @@ const categories: Category[] = [
   },
   {
     slug: "it-innovation", title: "Info Services", icon: Globe2,
-    summary: "Understand why accurate, complete and well-supported information matters in everyday decisions, work and enterprise.",
-    purpose: "Information influences choices about money, education, work, travel, relationships and business. Yet what people hear, read or receive may be incomplete, outdated, misleading or difficult to interpret. Good information habits involve tracing statements to reliable sources, checking dates and context, comparing evidence and recognising uncertainty. These habits help people protect their time and resources, avoid preventable surprises and understand what still needs to be clarified before acting.",
+    summary: "Get reliable information and professional guidance for important personal, educational, travel and business decisions, with written reports or documents prepared when needed.",
+    purpose: "Amineva Global Info Services helps individuals and organisations make better-informed decisions. Whether you need clarity about an opportunity, want to understand an agreement, are planning a move abroad or need information you already have checked, we provide clear information and professional advisory support. Depending on your request, we can explain the information directly or prepare it in a well-organised written document or report.",
     sections: [
-      { title: "Why information matters", description: "Explore how the quality and timing of information can affect everyday choices and longer-term outcomes.", items: [
-        topic("Information, facts and assumptions", "Separate what is directly supported by evidence from what is believed, estimated, repeated or assumed. A confident statement is not necessarily an established fact.", ["Which parts of this statement can be checked against evidence?", "What is directly known and what is being assumed?", "Who supplied the information and what might they not know?", "What would change if the assumption proved incorrect?"]),
-        topic("The cost of incomplete information", "Important decisions can become harder or more expensive when relevant conditions, obligations, dates or risks are overlooked. Understanding what is missing can be as important as understanding what is already known.", ["What important detail has not yet been established?", "Could an overlooked condition create a cost, delay or lost opportunity?", "What should be confirmed before committing time or money?", "Which uncertainties can be reduced before a decision is made?"]),
-        topic("Information changes over time", "Rules, prices, opportunities, requirements, people and operating conditions change. Check when a piece of information was published, when it was last updated and whether it still applies.", ["When was the information published or last updated?", "Does it apply to the relevant date and location?", "Has a newer notice, version or requirement replaced it?", "How often should this information be checked again?"]),
-        topic("Context and relevance", "A fact may be accurate but still misleading when removed from its context. Consider who it applies to, where it applies, what period it covers and what conditions qualify it.", ["Who or what does the information actually apply to?", "Which location, period or circumstances are covered?", "Are there exceptions, exclusions or conditions?", "Is the information relevant to the question being considered?"]),
-      ]},
-      { title: "Understanding sources and evidence", description: "Learn how to trace information to its origin and assess the strength of the evidence behind it.", items: [
-        topic("Original sources and supporting records", "Whenever possible, follow a claim back to the original document, institution, record, dataset or person responsible for publishing it. Repeated copies may repeat the same initial error.", ["Can the original notice, record or publication be located?", "Does the source identify who issued it and when?", "Is the available copy complete and readable?", "Can the information be traced to its original context?"]),
-        topic("Credibility, authority and independence", "Assess whether a source has the authority, knowledge, access and independence needed for the question. A source can be useful for one purpose but unsuitable for another.", ["Is this source responsible for the subject or merely commenting on it?", "Does the source explain its method and evidence?", "Could the source have a commercial or personal interest?", "Is another independent source available for comparison?"]),
-        topic("Cross-checking information", "Compare important statements with other relevant sources. Agreement between independent sources can strengthen confidence, while differences may reveal missing context, timing issues or conflicting accounts.", ["Do independent sources confirm the same key details?", "Are differences caused by dates, definitions or scope?", "Are sources repeating one another rather than independently confirming the claim?", "Which points remain unresolved after comparison?"]),
-        topic("Dates, versions and traceability", "Keep track of publication dates, document versions, source links and the context in which information was collected. Traceability makes it possible to revisit and reassess findings later.", ["Is the exact version or edition identifiable?", "Are publication and access dates recorded?", "Can another person find the same source?", "Is there a record of what changed and why?"]),
-      ]},
-      { title: "Making sense of information", description: "Understand how raw details become organised findings and how analysis should be interpreted.", items: [
-        topic("From raw data to useful information", "Raw numbers, statements and documents become useful when they are organised, checked, given context and connected to a clear question. Processing should not hide where the original data came from.", ["What question is the data intended to answer?", "Are units, labels, dates and definitions consistent?", "Are missing or duplicated entries identified?", "Can the processed result be traced back to the original material?"]),
-        topic("Comparisons and meaningful measures", "Comparisons are only useful when the items being compared use compatible definitions, periods, units and conditions. Similar-looking figures may describe different things.", ["Are the compared figures using the same definition and unit?", "Do they cover the same period and population?", "Are costs, exclusions or conditions treated consistently?", "What does the comparison show—and what does it not show?"]),
-        topic("Patterns, gaps and contradictions", "Look for repeated patterns, unusual results, missing values and statements that do not agree. These may point to an important issue, but they should be investigated rather than treated as proof by themselves.", ["Which findings appear consistently across the evidence?", "Are there outliers, missing records or contradictions?", "What alternative explanation could account for the pattern?", "What additional evidence would help resolve the gap?"]),
-        topic("Limitations and uncertainty", "Good analysis explains the limits of the available evidence. A responsible conclusion states what is supported, what is probable, what remains unknown and what could not be checked.", ["Which parts of the question could not be verified?", "Is the evidence complete and current enough for the conclusion?", "Are estimates clearly distinguished from confirmed figures?", "What further information would materially improve confidence?"]),
-      ]},
-      { title: "Using information responsibly", description: "Consider how findings should be documented, communicated and used without overstating what the evidence supports.", items: [
-        topic("Clear reporting and communication", "A useful report makes its question, scope, sources, findings and reasoning understandable. Readers should be able to distinguish evidence from interpretation and see where further checking is needed.", ["Is the question and scope stated clearly?", "Can a reader trace the main findings to sources?", "Are facts separated from interpretation and opinion?", "Are limitations and unresolved points visible?"]),
-        topic("Privacy and responsible information use", "Information may include personal, confidential or commercially sensitive details. Use only what is relevant, respect applicable permissions and protect material from unnecessary disclosure.", ["Is the information necessary for the stated purpose?", "Does it contain personal or confidential details?", "Is there a lawful basis or permission to use it?", "Who should be allowed to access or receive it?"]),
-        topic("Questions to resolve before acting", "Before relying on an important piece of information, identify the remaining questions that could change the decision. Some questions may require confirmation from the responsible institution or a qualified professional.", ["Which unanswered question could change the next step?", "Who is the authoritative person or institution to confirm it?", "Is professional interpretation required?", "What evidence should be retained for future reference?"]),
-      ]},
+      { title: "Career & Education", description: "Make informed choices about career opportunities, education options and your next steps.", items: [topic("Career opportunities and education pathways", "Get clear information and professional guidance to help you understand opportunities, compare pathways and decide on practical next steps.", ["Which opportunities or pathways fit my goals?", "What requirements and options should I understand?", "Would a written summary or report help me compare my choices?"])] },
+      { title: "Business Information", description: "Understand opportunities, markets and the factors that can shape business decisions.", items: [topic("Business opportunities and market decisions", "Get information and advisory support on business opportunities, market entry, competitors, products and expansion, with a written report where required.", ["What opportunity or market should I understand?", "What should I know about competitors and products?", "What information would support an expansion or market-entry decision?"])] },
+      { title: "Contracts & Communication", description: "Understand responsibilities and practical considerations before agreements or transactions.", items: [topic("Agreements, responsibilities and communication", "Get help understanding important terms, responsibilities and practical considerations before entering an agreement or business transaction.", ["What responsibilities should I understand before committing?", "Which practical terms or conditions need clarification?", "Would a written document help set out the key considerations?"])] },
+      { title: "Travel & Relocation", description: "Get destination-specific information when planning to travel, study, work or relocate internationally.", items: [topic("Destination information and relocation planning", "Understand destination-specific requirements, opportunities and practical considerations for international travel, study, work or relocation.", ["What should I know about my intended destination?", "Which requirements and practical arrangements should I check?", "Would a destination report help me prepare?"])] },
+      { title: "Info and Reports Verification", description: "Have information, documents, reports, claims or business details independently checked before relying on them.", items: [topic("Independent information and report verification", "We check information and documents through source checks, cross-referencing and evidence-based assessment, then explain what can and cannot be confirmed.", ["Which claims or details need checking?", "Can the information be traced to dependable sources?", "What evidence supports the conclusion?"])] },
     ],
     sources: [
       { name: "UNESCO — Media and Information Literacy", scope: "Learning resources on accessing, evaluating and using information responsibly", type: "International education and information-literacy guidance", url: "https://www.unesco.org/en/media-information-literacy" },
       { name: "UK Office for Statistics Regulation", scope: "Guidance on trustworthy, high-quality and publicly useful statistics", type: "Official statistics oversight body", url: "https://osr.statisticsauthority.gov.uk/" },
       { name: "OECD Data", scope: "Country and cross-country statistical datasets with published indicators and metadata", type: "International statistical reference", url: "https://data.oecd.org/" },
     ],
-    product: { label: "Explore DataLens", href: "https://app.amineva.com/", introduction: "When a decision depends on details you cannot afford to guess, it helps to understand what reliable research and careful analysis can clarify. Explore DataLens to see how information can be examined more deeply." },
+    product: { label: "Explore More", href: "https://app.amineva.com/", introduction: "Get clear information and professional advisory support for important decisions. When you need something in writing, we can prepare a document or report shaped around your request." },
   },
   {
     slug: "business-management", title: "Business Management", icon: BriefcaseBusiness,
@@ -2890,6 +2872,10 @@ export default function InfoDiscoveryPage() {
     return <KnowledgeCompassPage onBack={() => navigate("/info-discovery")} />;
   }
 
+  if (selected?.slug === "it-innovation") {
+    return <InfoServicesLanding href={selected.product?.href || "https://app.amineva.com/"} />;
+  }
+
   if (topicSlug && selected && !selectedTopic) {
     return <main className="mx-auto max-w-3xl px-6 py-20"><h1 className="text-2xl font-semibold">Topic not found</h1><p className="mt-2 text-muted-foreground">The requested topic is not part of this discovery area.</p><Button onClick={() => goToCategory(selected.slug)} className="mt-5">Back to {selected.title}</Button></main>;
   }
@@ -2979,7 +2965,6 @@ export default function InfoDiscoveryPage() {
 
       {!selectedTopic && selected?.slug === "business-management" && selected.product && <InventraSpotlight product={selected.product} />}
       {!selectedTopic && selected?.slug === "agriculture-climate-intelligence" && selected.product && <AgroClimateSpotlight product={selected.product} />}
-      {!selectedTopic && selected?.slug === "it-innovation" && selected.product && <DataLensSpotlight product={selected.product} />}
       {!selectedTopic && selected?.slug === "financial-operations" && selected.product && <SikasemSpotlight product={selected.product} />}
 
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
@@ -3327,37 +3312,41 @@ function CategoryProductPanel({ product }: { product?: ProductLink }) {
   );
 }
 
-function DataLensSpotlight({ product }: { product: ProductLink }) {
+function InfoServicesLanding({ href }: { href: string }) {
+  const services = [
+    { icon: GraduationCap, title: "Career & Education", description: "Explore career opportunities and education pathways with clear information and professional guidance to help you choose your next step." },
+    { icon: BriefcaseBusiness, title: "Business Information", description: "Understand business opportunities, market entry, competitors, products and expansion before making important business decisions." },
+    { icon: FileText, title: "Contracts & Communication", description: "Get clarity on responsibilities, important terms and practical considerations before entering agreements or transactions." },
+    { icon: Plane, title: "Travel & Relocation", description: "Access destination-specific information when planning to travel, study, work or relocate internationally." },
+    { icon: ShieldCheck, title: "Info and Reports Verification", description: "Have existing information, documents, reports, claims and business details independently checked against relevant sources and evidence." },
+  ];
   return (
-    <section aria-label="Why information matters" className="mx-auto max-w-7xl px-5 pt-6 md:px-8">
-      <div className="overflow-hidden rounded-3xl border border-accent/30 bg-card shadow-md">
-        <div className="relative grid gap-6 border-t-4 border-t-accent p-6 md:grid-cols-[minmax(0,1fr)_auto] md:items-center md:gap-10 md:p-9">
-          <div className="pointer-events-none absolute -right-12 -top-16 h-56 w-56 rounded-full bg-accent/10 blur-3xl" />
-          <div className="relative">
-            <span className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3 py-1 text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">
-              <Globe2 className="h-3.5 w-3.5" /> Information matters
-            </span>
-            <h2 className="mt-4 max-w-3xl text-2xl font-bold leading-tight tracking-tight text-foreground md:text-3xl">
-              Better decisions begin with what you know.
-            </h2>
-            <p className="mt-4 max-w-3xl text-sm leading-7 text-muted-foreground">
-              Information reaches us through conversations, documents, websites, reports and everyday experiences. But not everything we hear or read is complete, current or reliable. Knowing where information came from, what supports it and what may be missing can make a real difference when a decision affects your time, money, opportunities or organisation.
-            </p>
-            <p className="mt-3 max-w-3xl text-sm leading-7 text-muted-foreground">
-              Before moving forward, it is worth understanding the facts, the context and the questions that still need answers.
-            </p>
-          </div>
-          <div className="relative flex md:justify-end">
-            <Link
-              to={product.href}
-              className="inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-6 py-3 text-sm font-bold text-accent-foreground shadow-sm transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2"
-            >
-              {product.label} <ArrowUpRight className="h-4 w-4" />
-            </Link>
-          </div>
+    <main className="min-h-screen bg-background text-foreground">
+      <section className="relative isolate overflow-hidden bg-primary px-5 py-20 text-primary-foreground md:px-8 md:py-28">
+        <div className="pointer-events-none absolute -right-24 -top-24 -z-10 h-96 w-96 rounded-full bg-accent/15 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-28 -left-20 -z-10 h-96 w-96 rounded-full bg-primary-foreground/10 blur-3xl" />
+        <div className="mx-auto max-w-5xl text-center">
+          <span className="inline-flex items-center gap-2 rounded-full border border-primary-foreground/20 bg-primary-foreground/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-accent"><Globe2 className="h-4 w-4" /> Amineva Global</span>
+          <h1 className="mt-6 text-4xl font-bold tracking-tight md:text-6xl">Information for <span className="block text-accent">Better Decisions</span></h1>
+          <p className="mx-auto mt-6 max-w-3xl text-base leading-8 text-primary-foreground/85 md:text-lg">Important decisions deserve clear, dependable information. Whether you are exploring an opportunity, considering an agreement, planning a move or checking details you have received, Amineva Global Info Services helps you understand what matters before you take the next step.</p>
+          <p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-primary-foreground/70 md:text-base">Receive information and professional advisory support directly, or request a carefully prepared written document or report when that better suits your needs.</p>
         </div>
-      </div>
-    </section>
+      </section>
+      <section className="mx-auto max-w-7xl px-5 py-16 md:px-8 lg:py-20">
+        <div className="mx-auto mb-12 max-w-3xl text-center"><p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">What we can help with</p><h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Our Info Services</h2><p className="mt-4 text-sm leading-7 text-muted-foreground md:text-base">Practical information and professional support across five service areas, shaped around the questions and decisions that matter to you.</p></div>
+        <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-6">
+          {services.map((service, index) => <article key={service.title} className={`group rounded-2xl border border-border bg-card p-6 shadow-sm transition duration-300 hover:-translate-y-1 hover:border-accent/50 hover:shadow-xl ${index < 3 ? "xl:col-span-2" : "xl:col-span-3"}`}><div className="flex h-12 w-12 items-center justify-center rounded-xl border border-accent/20 bg-accent/10 text-accent transition group-hover:scale-105"><service.icon className="h-6 w-6" /></div><h3 className="mt-5 text-xl font-bold tracking-tight">{service.title}</h3><p className="mt-3 text-sm leading-7 text-muted-foreground">{service.description}</p></article>)}
+        </div>
+      </section>
+      <section className="border-y border-border bg-secondary/40 px-5 py-14 md:px-8"><div className="mx-auto grid max-w-6xl gap-8 md:grid-cols-2">
+        <div className="rounded-2xl border border-border bg-card p-6 md:p-8"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent"><Globe2 className="h-5 w-5" /></div><h2 className="mt-4 text-xl font-bold">Clear information and professional advice</h2><p className="mt-3 text-sm leading-7 text-muted-foreground">Talk through the matter you need to understand and receive clear information, explanations and practical advisory support to help you consider your options.</p></div>
+        <div className="rounded-2xl border border-border bg-card p-6 md:p-8"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent"><FileText className="h-5 w-5" /></div><h2 className="mt-4 text-xl font-bold">Written documents and reports when needed</h2><p className="mt-3 text-sm leading-7 text-muted-foreground">If you prefer a written output, we can prepare a document or report that organises the relevant information around your request. The format depends on what you need.</p></div>
+      </div></section>
+      <section className="mx-auto max-w-5xl px-5 py-16 text-center md:px-8 lg:py-20"><span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Take the next step</span><h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Get the information you need to move forward.</h2><p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">Tell us what you are trying to understand. We will help you identify the information or support you need and the most suitable way to provide it.</p>
+        <a href={href} target="_blank" rel="noopener noreferrer" className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-7 py-3.5 text-sm font-bold text-accent-foreground shadow-md transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">Explore More <ArrowUpRight className="h-4 w-4" /></a>
+        <p className="mt-7 text-xs font-semibold tracking-[0.18em] text-muted-foreground">CONNECT • VERIFY • GROW</p>
+      </section>
+    </main>
   );
 }
 
