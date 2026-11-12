@@ -90,7 +90,7 @@ export default function Landing() {
 
       <Outlet />
 
-      {!isHome && !isAccountPortal && <GlobalFooter />}
+      {!isHome && <GlobalFooter />}
     </div>
   );
 }
