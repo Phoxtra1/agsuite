@@ -1,4 +1,3 @@
-import React from "react";
 import { Link } from "react-router-dom";
 import { MapPin } from "lucide-react";
 import aminevaLogo from "@/assets/amv_global_logo.png";
