@@ -11,7 +11,6 @@ import {
   ClipboardList,
   BarChart3,
   FileCheck2,
-  CheckCircle2,
 } from "lucide-react";
 
 const fadeUp = {
