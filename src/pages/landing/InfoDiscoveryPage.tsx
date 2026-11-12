@@ -1257,7 +1257,7 @@ const categories: Category[] = [
       { name: "UK Office for Statistics Regulation", scope: "Guidance on trustworthy, high-quality and publicly useful statistics", type: "Official statistics oversight body", url: "https://osr.statisticsauthority.gov.uk/" },
       { name: "OECD Data", scope: "Country and cross-country statistical datasets with published indicators and metadata", type: "International statistical reference", url: "https://data.oecd.org/" },
     ],
-    product: { label: "Explore DataLens", href: "/explainer/datalens", introduction: "When a decision depends on details you cannot afford to guess, it helps to understand what reliable research and careful analysis can clarify. Explore DataLens to see how information can be examined more deeply." },
+    product: { label: "Explore DataLens", href: "https://app.amineva.com/", introduction: "When a decision depends on details you cannot afford to guess, it helps to understand what reliable research and careful analysis can clarify. Explore DataLens to see how information can be examined more deeply." },
   },
   {
     slug: "business-management", title: "Business Management", icon: BriefcaseBusiness,
