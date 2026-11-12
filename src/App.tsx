@@ -29,7 +29,7 @@ const AminevaImpactPage = lazyWithRetry(() => import("./pages/landing/AminevaImp
 const CareerDevelopmentPage = lazyWithRetry(() => import("./pages/landing/CareerDevelopmentPage"));
 const DipaAIPage = lazyWithRetry(() => import("./pages/landing/DipaAIPage"));
 const InventraPage = lazyWithRetry(() => import("./pages/landing/InventraPage"));
-const DataLensPage = lazyWithRetry(() => import("./pages/landing/DataLensPage"));
+const InfoServicesPage = lazyWithRetry(() => import("./pages/landing/DataLensPage"));
 const ABIPage = lazyWithRetry(() => import("./pages/landing/ABIPage"));
 const AgroClimatePage = lazyWithRetry(() => import("./pages/landing/AgroClimatePage"));
 const AdesuaPage = lazyWithRetry(() => import("./pages/landing/AdesuaPage"));
@@ -266,7 +266,8 @@ function AppRoutes() {
           <Route path="/apps/agyenkwa" element={<Navigate to="/apps/agroclimate" replace />} />
           <Route path="/apps/adesua" element={<AdesuaPage />} />
           <Route path="explainer/adesua" element={<AdesuaPage />} />
-          <Route path="explainer/datalens" element={<DataLensPage />} />
+          <Route path="explainer/info-services" element={<InfoServicesPage />} />
+          <Route path="explainer/datalens" element={<Navigate to="/explainer/info-services" replace />} />
           <Route path="explainer/abi" element={<ABIPage />} />
           <Route path="explainer/sikasem" element={<SikasɛmPage />} />
           <Route path="explainer/workspace" element={<WorkspacePage />} />
