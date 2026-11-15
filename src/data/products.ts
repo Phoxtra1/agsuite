@@ -59,7 +59,7 @@ export const DEFAULT_ADMIN_PRODUCTS: ProductData[] = [
   },
   {
     id: "datalens",
-    name: "Info Services Intel",
+    name: "Info Services",
     shortName: "Info Services",
     description: "Information research, verification, analysis and professional reporting",
     status: "live",
