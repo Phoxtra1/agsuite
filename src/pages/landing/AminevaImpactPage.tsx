@@ -42,14 +42,14 @@ export const AminevaImpactPage: FC = () => {
       <section className="relative isolate overflow-hidden border-b border-border bg-gradient-to-br from-primary/[0.10] via-background to-accent/[0.08] py-14 md:py-20">
         <div className="pointer-events-none absolute -left-24 top-8 h-80 w-80 rounded-full bg-accent/10 blur-3xl" /><div className="pointer-events-none absolute -right-24 bottom-0 h-96 w-96 rounded-full bg-primary/10 blur-3xl" />
         <div className="relative mx-auto grid max-w-7xl items-center gap-10 px-6 lg:grid-cols-12">
-          <div className="space-y-6 lg:col-span-7">
+          <div className="space-y-6 lg:col-span-6">
             <div className="inline-flex items-center gap-2 rounded-full border border-accent/30 bg-accent/10 px-3.5 py-1.5 text-xs font-semibold uppercase tracking-wider text-accent"><Heart className="h-3.5 w-3.5" /> Amineva Global Initiative</div>
             <div className="space-y-3"><h1 className="text-4xl font-bold leading-tight tracking-tight md:text-6xl">Amineva <span className="text-accent">Impact</span></h1><p className="max-w-2xl text-lg font-semibold text-foreground/80">Creating access to knowledge, opportunities and support for people and communities.</p><p className="max-w-2xl text-sm leading-relaxed text-muted-foreground md:text-base">{IMPACT_INTRO.positioning}</p></div>
             <div className="flex flex-wrap gap-3"><a href="#our-focus-areas"><Button size="lg" className="gap-2">Explore our focus areas <ArrowRight className="h-4 w-4" /></Button></a><Link to="/support"><Button size="lg" variant="outline" className="gap-2">Partner with us <HeartHandshake className="h-4 w-4" /></Button></Link></div>
           </div>
-          <div className="relative lg:col-span-5">
+          <div className="relative w-full lg:col-span-6">
             <div
-              className="relative isolate aspect-[5/6] min-h-[340px] overflow-hidden rounded-3xl border border-accent/25 bg-slate-950 shadow-2xl sm:min-h-[420px]"
+              className="relative isolate aspect-[4/3] w-full overflow-hidden rounded-3xl border border-accent/25 bg-slate-950 shadow-2xl"
               role="region"
               aria-label="Amineva Impact school engagement photographs"
               aria-roledescription="carousel"
