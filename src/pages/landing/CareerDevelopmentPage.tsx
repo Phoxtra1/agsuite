@@ -13,8 +13,6 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
-  ChevronLeft,
-  ChevronRight,
   ExternalLink,
   ShieldCheck,
   Briefcase,
@@ -34,7 +32,6 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   IMPACT_INTRO,
-  FOCUS_AREAS,
   INITIATIVES,
   COLLABORATION_CATEGORIES,
   SCHOOL_ACTIVITY_IMAGES,
@@ -60,13 +57,40 @@ function handleImpactImageError(event: React.SyntheticEvent<HTMLImageElement>) {
   image.src = "/images/impact/impact-school-engagement.webp";
 }
 
-const heroSecondaryImage = {
-  type: "image" as const,
-  url: "/edu......png",
-  title: "Digital Learning & Computer Exposure",
-  caption: "Learners gathered with facilitators and computer equipment during a school-based educational engagement.",
-  altText: "School learners standing with facilitators and computer equipment during an educational engagement.",
-};
+const featuredHeroPhoto =
+  SCHOOL_ACTIVITY_IMAGES.find((photo) => photo.url === "/saleria1.jpg") ?? SCHOOL_ACTIVITY_IMAGES[0];
+
+const LEARNER_JOURNEY_STAGES = [
+  {
+    id: "discover",
+    label: "Discover strengths",
+    title: "Start with the learner.",
+    description:
+      "Help each learner reflect on their interests, personal strengths and the abilities they want to develop. Career exploration begins with understanding the person, not choosing a job title too early.",
+    focus: "Interests · strengths · self-awareness",
+    icon: Compass,
+  },
+  {
+    id: "explore",
+    label: "Explore possibilities",
+    title: "Make the world of work feel wider.",
+    description:
+      "Introduce learners to careers they may not encounter in everyday life, including technical, vocational, creative, emerging and professional pathways.",
+    focus: "Career awareness · exposure · curiosity",
+    icon: BookOpen,
+  },
+  {
+    id: "choose",
+    label: "Make informed choices",
+    title: "Connect today’s learning with tomorrow’s options.",
+    description:
+      "Help learners connect interests with educational pathways, practical skills and useful conversations with parents, teachers and professionals.",
+    focus: "Education · practical skills · guidance",
+    icon: Target,
+  },
+] as const;
+
+type LearnerJourneyStageId = (typeof LEARNER_JOURNEY_STAGES)[number]["id"];
 
 export const CareerDevelopmentPage: FC = () => {
   const { initiativeId } = useParams<{ initiativeId?: string }>();
@@ -77,28 +101,14 @@ export const CareerDevelopmentPage: FC = () => {
     initiativeId || "career-development"
   );
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string; altText: string; caption: string } | null>(null);
-  const [activeHeroPhotoIndex, setActiveHeroPhotoIndex] = useState(0);
-  const activeHeroPhoto = SCHOOL_ACTIVITY_IMAGES[activeHeroPhotoIndex] ?? SCHOOL_ACTIVITY_IMAGES[0];
+  const [activeJourneyStageId, setActiveJourneyStageId] = useState<LearnerJourneyStageId>("discover");
+  const activeJourneyStage =
+    LEARNER_JOURNEY_STAGES.find((stage) => stage.id === activeJourneyStageId) ?? LEARNER_JOURNEY_STAGES[0];
+  const JourneyStageIcon = activeJourneyStage.icon;
 
   useEffect(() => {
     document.title = "Career Development and Exploration Program | Amineva Impact";
   }, []);
-
-  useEffect(() => {
-    if (SCHOOL_ACTIVITY_IMAGES.length < 2) return;
-    const slideTimer = window.setInterval(() => {
-      setActiveHeroPhotoIndex((current) => (current + 1) % SCHOOL_ACTIVITY_IMAGES.length);
-    }, 5000);
-    return () => window.clearInterval(slideTimer);
-  }, []);
-
-  const showPreviousHeroPhoto = () => {
-    setActiveHeroPhotoIndex((current) => (current - 1 + SCHOOL_ACTIVITY_IMAGES.length) % SCHOOL_ACTIVITY_IMAGES.length);
-  };
-
-  const showNextHeroPhoto = () => {
-    setActiveHeroPhotoIndex((current) => (current + 1) % SCHOOL_ACTIVITY_IMAGES.length);
-  };
 
   useEffect(() => {
     if (!initiativeId) return;
@@ -142,49 +152,95 @@ export const CareerDevelopmentPage: FC = () => {
   return (
     <div className="w-full bg-background text-foreground min-h-screen">
             {/* PROGRAMME HERO */}
-      <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-primary/[0.10] via-background to-accent/[0.08] py-12 md:py-16">
-        <div className="max-w-7xl mx-auto px-6">
-          <Link to="/impact" className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline"><ArrowRight className="h-4 w-4 rotate-180" /> Back to Amineva Impact</Link>
-          <div className="mt-8 grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
-            <div className="space-y-5">
-              <Badge className="border-accent/20 bg-accent/10 text-accent">First Active Programme</Badge>
-              <h1 className="text-3xl font-bold leading-tight text-foreground md:text-5xl">Career Development and Exploration Program</h1>
-              <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">Helping learners understand themselves, discover a wider range of career possibilities and make more informed decisions about their educational and future pathways.</p>
-              <div className="flex flex-wrap gap-3"><Link to="/support"><Button className="gap-2">Partner with the programme <HeartHandshake className="h-4 w-4" /></Button></Link><a href="#activities-gallery"><Button variant="outline" className="gap-2">View programme evidence <ArrowRight className="h-4 w-4" /></Button></a></div>
-            </div>
-            <div className="relative isolate aspect-[4/3] w-full overflow-hidden rounded-3xl border border-border bg-slate-950 shadow-xl" role="region" aria-label="Career Development and Exploration photographs" aria-roledescription="carousel">
-              <AnimatePresence mode="wait">
-                <motion.img
-                  key={activeHeroPhoto.url}
-                  src={activeHeroPhoto.url}
-                  alt={activeHeroPhoto.altText}
-                  onError={handleImpactImageError}
-                  initial={{ opacity: 0, scale: 1.035 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ duration: 0.65, ease: "easeInOut" }}
-                  className="absolute inset-0 h-full w-full object-cover"
-                />
-              </AnimatePresence>
-              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/10 to-transparent" />
-              <div className="absolute right-3 top-3 z-20 flex gap-2">
-                <button type="button" onClick={showPreviousHeroPhoto} aria-label="Previous photograph" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-slate-950/60 text-white backdrop-blur-sm transition hover:bg-slate-950/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
-                  <ChevronLeft className="h-5 w-5" />
-                </button>
-                <button type="button" onClick={showNextHeroPhoto} aria-label="Next photograph" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-slate-950/60 text-white backdrop-blur-sm transition hover:bg-slate-950/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
-                  <ChevronRight className="h-5 w-5" />
-                </button>
+      <section className="relative isolate overflow-hidden bg-[#101d32] py-14 text-white md:py-20">
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-48 -top-40 h-[34rem] w-[34rem] rounded-full bg-cyan-400/10 blur-3xl"
+        />
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -bottom-48 left-0 h-[30rem] w-[30rem] rounded-full bg-amber-400/10 blur-3xl"
+        />
+        <div className="relative mx-auto max-w-7xl px-6">
+          <Link
+            to="/impact"
+            className="inline-flex items-center gap-2 text-sm font-medium text-white/65 transition hover:text-amber-200"
+          >
+            <ArrowRight className="h-4 w-4 rotate-180" />
+            Back to Amineva Impact
+          </Link>
+          <div className="mt-9 grid items-center gap-12 lg:grid-cols-[1.03fr_0.97fr]">
+            <div className="max-w-2xl space-y-6">
+              <Badge className="border border-emerald-300/25 bg-emerald-300/10 text-emerald-200">
+                <span className="mr-1.5 inline-block h-1.5 w-1.5 rounded-full bg-emerald-300" />
+                First active programme
+              </Badge>
+              <div>
+                <p className="text-xs font-bold uppercase tracking-[0.25em] text-amber-200">
+                  Every learner matters
+                </p>
+                <h1 className="mt-4 text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
+                  A wider view of the future starts early.
+                </h1>
               </div>
-              <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-3 p-4 sm:p-5">
-                <div className="min-w-0">
-                  <p className="text-sm font-semibold text-white drop-shadow">{activeHeroPhoto.title}</p>
-                  <p className="mt-1 text-xs leading-relaxed text-white/85 drop-shadow">{activeHeroPhoto.caption}</p>
-                </div>
-                <div className="flex shrink-0 items-center gap-1.5" aria-label="Choose a photograph">
-                  {SCHOOL_ACTIVITY_IMAGES.map((photo, index) => (
-                    <button key={photo.url} type="button" onClick={() => setActiveHeroPhotoIndex(index)} aria-label={`Show photograph ${index + 1}`} aria-pressed={index === activeHeroPhotoIndex} className={`h-2 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${index === activeHeroPhotoIndex ? "w-6 bg-white" : "w-2 bg-white/60 hover:bg-white"}`} />
-                  ))}
-                </div>
+              <p className="max-w-xl text-base leading-8 text-white/70">
+                Helping learners understand themselves, discover a wider range of career
+                possibilities and make more informed decisions about their educational and future
+                pathways.
+              </p>
+              <div className="flex flex-wrap gap-3">
+                <Link to="/support">
+                  <Button className="gap-2 bg-amber-300 text-[#14243a] hover:bg-amber-200">
+                    Partner with the programme
+                    <HeartHandshake className="h-4 w-4" />
+                  </Button>
+                </Link>
+                <a
+                  href="#learner-journey"
+                  className="inline-flex items-center gap-2 rounded-md border border-white/25 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/10"
+                >
+                  Explore the learner journey
+                  <ArrowRight className="h-4 w-4" />
+                </a>
+              </div>
+              <div className="flex flex-wrap gap-x-8 gap-y-3 border-t border-white/15 pt-6 text-xs text-white/55">
+                <span>Primary and Junior High School learners</span>
+                <span>Career awareness through real engagement</span>
+              </div>
+            </div>
+
+            <div className="relative mx-auto w-full max-w-2xl lg:ml-auto">
+              <div
+                aria-hidden="true"
+                className="absolute -inset-3 rotate-2 rounded-[2rem] border border-white/15 bg-white/[0.04]"
+              />
+              <figure className="group relative aspect-[4/4.1] overflow-hidden rounded-[1.7rem] border border-white/15 bg-slate-900 shadow-2xl sm:aspect-[5/4.2]">
+                <img
+                  src={featuredHeroPhoto.url}
+                  alt={featuredHeroPhoto.altText}
+                  onError={handleImpactImageError}
+                  className="h-full w-full object-cover transition-transform duration-700 group-hover:scale-[1.025]"
+                  loading="eager"
+                  fetchPriority="high"
+                />
+                <div className="absolute inset-0 bg-gradient-to-t from-[#081321]/90 via-transparent to-[#081321]/10" />
+                <figcaption className="absolute inset-x-0 bottom-0 p-6 sm:p-8">
+                  <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-amber-200">
+                    From the classroom
+                  </p>
+                  <p className="mt-2 text-xl font-semibold text-white sm:text-2xl">
+                    {featuredHeroPhoto.title}
+                  </p>
+                  <p className="mt-2 max-w-md text-sm leading-relaxed text-white/75">
+                    {featuredHeroPhoto.caption}
+                  </p>
+                </figcaption>
+              </figure>
+              <div className="absolute -bottom-5 -left-3 flex items-center gap-3 rounded-2xl border border-white/10 bg-white px-4 py-3 text-[#14243a] shadow-xl sm:-left-7 sm:px-5">
+                <span className="text-2xl font-bold">600+</span>
+                <span className="max-w-[145px] text-xs leading-snug text-slate-600">
+                  learners reached in one school engagement
+                </span>
               </div>
             </div>
           </div>
@@ -219,6 +275,124 @@ export const CareerDevelopmentPage: FC = () => {
             <div>
               <p className="text-lg font-bold text-foreground">Career Development</p>
               <p className="text-xs text-muted-foreground">First active initiative</p>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* INTERACTIVE LEARNER JOURNEY */}
+      <section id="learner-journey" className="scroll-mt-10 px-6 py-16 md:py-20">
+        <div className="mx-auto max-w-7xl">
+          <div className="mb-9 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div className="max-w-2xl">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">
+                A learner-centred approach
+              </p>
+              <h2 className="mt-3 text-3xl font-bold md:text-4xl">
+                Career awareness is a journey.
+              </h2>
+            </div>
+            <p className="max-w-xl text-sm leading-7 text-muted-foreground">
+              Explore how the programme helps learners move from understanding themselves to
+              recognising possibilities and making better-informed decisions.
+            </p>
+          </div>
+
+          <div className="overflow-hidden rounded-[1.75rem] border border-border bg-card shadow-sm">
+            <div className="grid lg:grid-cols-[minmax(250px,0.72fr)_minmax(0,1.28fr)]">
+              <div
+                role="tablist"
+                aria-label="Learner journey stages"
+                className="flex flex-col gap-2 bg-muted/35 p-4 sm:p-6"
+              >
+                {LEARNER_JOURNEY_STAGES.map((stage, index) => {
+                  const StageIcon = stage.icon;
+                  const isActive = stage.id === activeJourneyStageId;
+                  return (
+                    <button
+                      key={stage.id}
+                      id={"journey-tab-" + stage.id}
+                      type="button"
+                      role="tab"
+                      aria-selected={isActive}
+                      aria-controls="journey-panel"
+                      onClick={() => setActiveJourneyStageId(stage.id)}
+                      className={
+                        "group flex w-full items-center gap-4 rounded-xl p-4 text-left transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent " +
+                        (isActive
+                          ? "bg-[#101d32] text-white shadow-md"
+                          : "text-foreground hover:bg-background")
+                      }
+                    >
+                      <span
+                        className={
+                          "flex h-11 w-11 shrink-0 items-center justify-center rounded-xl " +
+                          (isActive
+                            ? "bg-amber-300 text-[#14243a]"
+                            : "bg-accent/10 text-accent")
+                        }
+                      >
+                        <StageIcon className="h-5 w-5" />
+                      </span>
+                      <span className="min-w-0">
+                        <span
+                          className={
+                            "block text-[10px] font-bold uppercase tracking-[0.18em] " +
+                            (isActive ? "text-amber-200" : "text-muted-foreground")
+                          }
+                        >
+                          Stage 0{index + 1}
+                        </span>
+                        <span className="mt-1 block text-sm font-semibold">{stage.label}</span>
+                      </span>
+                      <ArrowRight
+                        className={
+                          "ml-auto h-4 w-4 shrink-0 transition-transform " +
+                          (isActive ? "translate-x-0 text-amber-200" : "-translate-x-1 opacity-0")
+                        }
+                      />
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div
+                id="journey-panel"
+                role="tabpanel"
+                aria-labelledby={"journey-tab-" + activeJourneyStage.id}
+                className="relative flex min-h-[280px] items-center overflow-hidden p-7 sm:p-10 lg:p-12"
+              >
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none absolute -right-16 -top-20 h-64 w-64 rounded-full border border-accent/10"
+                />
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={activeJourneyStage.id}
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    exit={{ opacity: 0, y: -8 }}
+                    transition={{ duration: 0.24 }}
+                    className="relative max-w-2xl"
+                  >
+                    <p className="text-xs font-bold uppercase tracking-[0.2em] text-accent">
+                      {activeJourneyStage.focus}
+                    </p>
+                    <h3 className="mt-4 text-2xl font-bold leading-tight sm:text-3xl">
+                      {activeJourneyStage.title}
+                    </h3>
+                    <p className="mt-4 text-sm leading-8 text-muted-foreground sm:text-base">
+                      {activeJourneyStage.description}
+                    </p>
+                    <div className="mt-7 flex items-center gap-3 text-xs font-semibold text-accent">
+                      <span className="flex h-8 w-8 items-center justify-center rounded-full bg-accent/10">
+                        <JourneyStageIcon className="h-4 w-4" />
+                      </span>
+                      {activeJourneyStage.label}
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+              </div>
             </div>
           </div>
         </div>
