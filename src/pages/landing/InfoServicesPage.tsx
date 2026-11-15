@@ -1,3 +1,4 @@
+import { Link } from "react-router-dom";
 import {
   GraduationCap,
   BriefcaseBusiness,
@@ -22,7 +23,7 @@ const serviceAreas = [
   },
   {
     icon: FileText,
-    title: "Contracts & Communication",
+    title: "Contracts & Commitments",
     description: "Understand responsibilities, important terms and practical considerations before entering agreements or business transactions.",
   },
   {
@@ -32,7 +33,7 @@ const serviceAreas = [
   },
   {
     icon: ShieldCheck,
-    title: "Info and Reports Verification",
+    title: "Info and Report Verification",
     description: "Have information, documents, reports, claims and business details independently checked through source checks, cross-referencing and evidence-based assessment.",
   },
 ];
@@ -59,12 +60,12 @@ export default function InfoServicesPage() {
               Receive information and professional advisory support directly, or request a carefully prepared written document or report when that better suits your needs.
             </p>
             <div className="mt-9 flex flex-wrap justify-center gap-3">
-              <a href="https://datalens.amineva.com/request" className="inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-base font-semibold text-accent-foreground shadow-lg transition hover:-translate-y-0.5 hover:bg-accent/90">
+              <Link to="/support?subject=info-services&request=enquiry" className="inline-flex items-center gap-2 rounded-xl bg-accent px-6 py-3.5 text-base font-semibold text-accent-foreground shadow-lg transition hover:-translate-y-0.5 hover:bg-accent/90">
                 Make an Enquiry <ArrowRight className="h-5 w-5" />
-              </a>
-              <a href="https://datalens.amineva.com/booking" className="inline-flex items-center gap-2 rounded-xl border border-primary-foreground/25 bg-primary-foreground/10 px-6 py-3.5 text-base font-semibold text-primary-foreground transition hover:bg-primary-foreground/15">
+              </Link>
+              <Link to="/support?subject=info-services&request=session" className="inline-flex items-center gap-2 rounded-xl border border-primary-foreground/25 bg-primary-foreground/10 px-6 py-3.5 text-base font-semibold text-primary-foreground transition hover:bg-primary-foreground/15">
                 <MessageCircle className="h-4 w-4" /> Book an Information Session
-              </a>
+              </Link>
             </div>
           </div>
         </div>
@@ -121,8 +122,8 @@ export default function InfoServicesPage() {
         <h2 className="mt-3 text-3xl font-bold tracking-tight text-foreground md:text-4xl">Tell us what you need to understand.</h2>
         <p className="mx-auto mt-4 max-w-3xl text-base leading-7 text-muted-foreground">We will help you identify the information or support you need and the most suitable way to provide it.</p>
         <div className="mt-8 flex flex-wrap justify-center gap-3">
-          <a href="https://datalens.amineva.com/request" className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-base font-semibold text-primary-foreground transition hover:bg-primary/90">Submit an Enquiry <ArrowRight className="h-5 w-5" /></a>
-          <a href="https://datalens.amineva.com/booking" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3.5 text-base font-semibold text-foreground transition hover:bg-muted">Book a Session</a>
+          <Link to="/support?subject=info-services&request=enquiry" className="inline-flex items-center gap-2 rounded-xl bg-primary px-6 py-3.5 text-base font-semibold text-primary-foreground transition hover:bg-primary/90">Submit an Enquiry <ArrowRight className="h-5 w-5" /></Link>
+          <Link to="/support?subject=info-services&request=session" className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-6 py-3.5 text-base font-semibold text-foreground transition hover:bg-muted">Book a Session</Link>
         </div>
       </section>
     </main>
