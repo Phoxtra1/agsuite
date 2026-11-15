@@ -55,7 +55,7 @@ describe("Amineva Impact Data Layer", () => {
     expect(
       careerDev?.verifiedMetrics?.find((metric) => metric.label === "Schools Engaged")?.figure
     ).toBe("5");
-    expect(SCHOOL_ACTIVITY_IMAGES).toHaveLength(8);
+    expect(SCHOOL_ACTIVITY_IMAGES).toHaveLength(12);
 
     const photoUrls = SCHOOL_ACTIVITY_IMAGES.map((photo) => photo.url);
     expect(photoUrls).toContain("/images/impact/IMG_20261028_084846.jpg");
@@ -64,6 +64,10 @@ describe("Amineva Impact Data Layer", () => {
     expect(photoUrls).toContain("/images/impact/IMG_20261028_090243.jpg");
     expect(photoUrls).not.toContain("/eduu.png");
     expect(photoUrls).not.toContain("/images/impact/impact-school-engagement.webp");
+    expect(photoUrls).toContain("/patg1.jpg");
+    expect(photoUrls).toContain("/patg2.jpg");
+    expect(photoUrls).toContain("/patg3.jpg");
+    expect(photoUrls).toContain("/patg4.jpg");
   });
 
   it("contains institutional collaboration categories and contact links", () => {
