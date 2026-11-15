@@ -1,10 +1,13 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import SwitchDashboard from "@/pages/landing/SwitchDashboard";
 
 vi.mock("@/contexts/AuthContext", () => ({
   useAuth: () => ({ user: { email: "billing@example.com" } }),
 }));
+
+const renderDashboard = () => render(<MemoryRouter><SwitchDashboard /></MemoryRouter>);
 
 describe("Amineva Switch dashboard", () => {
   beforeEach(() => {
@@ -12,7 +15,7 @@ describe("Amineva Switch dashboard", () => {
   });
 
   it("renders the account dashboard and makes the three billing views accessible", () => {
-    render(<SwitchDashboard />);
+    renderDashboard();
 
     expect(screen.getByRole("heading", { name: "Amineva Switch" })).toBeInTheDocument();
     expect(screen.getByText("billing@example.com")).toBeInTheDocument();
@@ -24,7 +27,7 @@ describe("Amineva Switch dashboard", () => {
   });
 
   it("switches between invoice, subscription and payment empty states without inventing records", () => {
-    render(<SwitchDashboard />);
+    renderDashboard();
 
     expect(screen.getByText("Invoices will appear here when an application billing feed is connected.")).toBeInTheDocument();
 
@@ -36,7 +39,7 @@ describe("Amineva Switch dashboard", () => {
   });
 
   it("filters the application connection list", () => {
-    render(<SwitchDashboard />);
+    renderDashboard();
 
     fireEvent.change(screen.getByRole("combobox", { name: "Filter by application" }), {
       target: { value: "DataLens" },
