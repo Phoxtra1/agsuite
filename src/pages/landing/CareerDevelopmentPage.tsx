@@ -145,7 +145,7 @@ export const CareerDevelopmentPage: FC = () => {
       <section className="relative overflow-hidden border-b border-border bg-gradient-to-br from-primary/[0.10] via-background to-accent/[0.08] py-12 md:py-16">
         <div className="max-w-7xl mx-auto px-6">
           <Link to="/impact" className="inline-flex items-center gap-2 text-sm font-semibold text-accent hover:underline"><ArrowRight className="h-4 w-4 rotate-180" /> Back to Amineva Impact</Link>
-          <div className="mt-8 grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.72fr)]">
+          <div className="mt-8 grid items-center gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(320px,0.9fr)]">
             <div className="space-y-5">
               <Badge className="border-accent/20 bg-accent/10 text-accent">First Active Programme</Badge>
               <h1 className="text-3xl font-bold leading-tight text-foreground md:text-5xl">Career Development and Exploration Program</h1>
