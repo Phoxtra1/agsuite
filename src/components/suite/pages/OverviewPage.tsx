@@ -98,8 +98,8 @@ export function OverviewPage() {
                 desc="Climate-tech and environmental intelligence infrastructure for agriculture, forecasting, transport resilience, and operational risk." />
               <EcoCard icon={Shield} title="Inventra"
                 desc="AI-backed inventory, commerce, sales, and operational management infrastructure for smart business systems." />
-              <EcoCard icon={CheckCircle} title="DataLens"
-                desc="Enterprise IT services providing website maintenance, custom software development, cloud infrastructure, IT support, database management, and process automation." />
+              <EcoCard icon={CheckCircle} title="Info Services"
+                desc="Professional information research, advisory support, verification, and report preparation across career and education, business information, contracts and commitments, and travel and relocation." />
               <EcoCard icon={TrendingUp} title="Sikasɛm"
                 desc="AI-backed financial operations, monitoring systems, workflow intelligence, and operational oversight infrastructure." />
               <EcoCard icon={Eye} title="ABI"
