@@ -180,8 +180,11 @@ export const CareerDevelopmentPage: FC = () => {
                   Every learner matters
                 </p>
                 <h1 className="mt-4 text-4xl font-bold leading-[1.08] tracking-tight sm:text-5xl lg:text-6xl">
-                  A wider view of the future starts early.
+                  Career Development and Exploration Program
                 </h1>
+                <p className="max-w-xl text-xl font-semibold leading-snug text-amber-200 sm:text-2xl">
+                  A wider view of the future starts early.
+                </p>
               </div>
               <p className="max-w-xl text-base leading-8 text-white/70">
                 Helping learners understand themselves, discover a wider range of career
