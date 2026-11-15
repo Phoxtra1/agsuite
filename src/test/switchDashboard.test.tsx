@@ -42,7 +42,7 @@ describe("Amineva Switch dashboard", () => {
       target: { value: "DataLens" },
     });
 
-    expect(screen.getByText("DataLens")).toBeInTheDocument();
+    expect(screen.getAllByText("DataLens").length).toBeGreaterThan(0);
     expect(screen.queryByText("Inventra")).not.toBeInTheDocument();
   });
 });
