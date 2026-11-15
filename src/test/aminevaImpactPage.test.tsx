@@ -1,6 +1,6 @@
 import React from "react";
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import AminevaImpactPage from "../pages/landing/AminevaImpactPage";
 import CareerDevelopmentPage from "../pages/landing/CareerDevelopmentPage";
@@ -30,11 +30,13 @@ describe("Amineva Impact public routes", () => {
     );
 
     expect(screen.getByRole("heading", { name: /Amineva Impact/i, level: 1 })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: /Our Focus Areas/i })).toBeTruthy();
-    expect(screen.getByRole("heading", { name: /What we work to achieve/i })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /Our active programme/i })).toBeTruthy();
+    expect(screen.getByRole("heading", { name: /Purpose that starts with people/i })).toBeTruthy();
     expect(
-      screen.getByRole("link", { name: /Explore the Career Development and Exploration Program/i })
+      screen.getByRole("link", { name: /Explore the active programme/i })
     ).toBeTruthy();
+    expect(screen.queryByRole("heading", { name: /Our Focus Areas/i })).toBeNull();
+    expect(screen.queryByText(/Youth Empowerment and Skills Development/i)).toBeNull();
   });
 
   it("renders the dedicated Career Development and Exploration programme route", () => {
@@ -53,7 +55,16 @@ describe("Amineva Impact public routes", () => {
       })
     ).toBeTruthy();
     expect(screen.getByText(/More than 600 learners/i)).toBeTruthy();
-    expect(screen.getByRole("region", { name: /Career Development and Exploration photographs/i })).toBeTruthy();
-    expect(screen.getByRole("button", { name: /Next photograph/i })).toBeTruthy();
+    const featuredPhotographs = screen.getAllByRole("img", {
+      name: /Learners participating in a school-based career development programme/i,
+    });
+    expect(featuredPhotographs[0].getAttribute("src")).toBe("/saleria1.jpg");
+    expect(screen.queryByRole("button", { name: /Next photograph/i })).toBeNull();
+
+    expect(screen.getByRole("tab", { name: /Discover strengths/i })).toBeTruthy();
+    fireEvent.click(screen.getByRole("tab", { name: /Explore possibilities/i }));
+    expect(screen.getByRole("tabpanel").textContent).toContain(
+      "Make the world of work feel wider."
+    );
   });
 });
