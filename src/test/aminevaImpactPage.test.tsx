@@ -39,7 +39,7 @@ describe("Amineva Impact public routes", () => {
     expect(screen.queryByText(/Youth Empowerment and Skills Development/i)).toBeNull();
   });
 
-  it("renders the dedicated Career Development and Exploration programme route", () => {
+  it("renders the dedicated Career Development and Exploration programme route", async () => {
     render(
       <MemoryRouter initialEntries={["/impact/career-development"]}>
         <Routes>
