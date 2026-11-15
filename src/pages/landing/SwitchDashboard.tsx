@@ -171,9 +171,9 @@ export default function SwitchDashboard() {
                   </div>
                   <div className="grid grid-cols-4 gap-3 border-b border-border bg-muted/30 px-4 py-3 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
                     <span>Application</span>
-                    <span className="hidden sm:block">Record</span>
-                    <span className="hidden sm:block">Status</span>
-                    <span className="text-right">Activity</span>
+                    <span className="hidden sm:block">Data feed</span>
+                    <span className="hidden sm:block">Connection</span>
+                    <span className="text-right">Latest sync</span>
                   </div>
                   {filteredProducts.length > 0 ? filteredProducts.map((product) => (
                     <div key={product.name} className="grid grid-cols-4 items-center gap-3 border-b border-border px-4 py-4 last:border-0">
