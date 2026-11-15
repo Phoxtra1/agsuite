@@ -13,6 +13,8 @@ import {
   ArrowRight,
   ChevronDown,
   ChevronUp,
+  ChevronLeft,
+  ChevronRight,
   ExternalLink,
   ShieldCheck,
   Briefcase,
@@ -75,10 +77,28 @@ export const CareerDevelopmentPage: FC = () => {
     initiativeId || "career-development"
   );
   const [selectedImage, setSelectedImage] = useState<{ url: string; title: string; altText: string; caption: string } | null>(null);
+  const [activeHeroPhotoIndex, setActiveHeroPhotoIndex] = useState(0);
+  const activeHeroPhoto = SCHOOL_ACTIVITY_IMAGES[activeHeroPhotoIndex] ?? SCHOOL_ACTIVITY_IMAGES[0];
 
   useEffect(() => {
     document.title = "Career Development and Exploration Program | Amineva Impact";
   }, []);
+
+  useEffect(() => {
+    if (SCHOOL_ACTIVITY_IMAGES.length < 2) return;
+    const slideTimer = window.setInterval(() => {
+      setActiveHeroPhotoIndex((current) => (current + 1) % SCHOOL_ACTIVITY_IMAGES.length);
+    }, 5000);
+    return () => window.clearInterval(slideTimer);
+  }, []);
+
+  const showPreviousHeroPhoto = () => {
+    setActiveHeroPhotoIndex((current) => (current - 1 + SCHOOL_ACTIVITY_IMAGES.length) % SCHOOL_ACTIVITY_IMAGES.length);
+  };
+
+  const showNextHeroPhoto = () => {
+    setActiveHeroPhotoIndex((current) => (current + 1) % SCHOOL_ACTIVITY_IMAGES.length);
+  };
 
   useEffect(() => {
     if (!initiativeId) return;
@@ -132,7 +152,41 @@ export const CareerDevelopmentPage: FC = () => {
               <p className="max-w-2xl text-base leading-relaxed text-muted-foreground">Helping learners understand themselves, discover a wider range of career possibilities and make more informed decisions about their educational and future pathways.</p>
               <div className="flex flex-wrap gap-3"><Link to="/support"><Button className="gap-2">Partner with the programme <HeartHandshake className="h-4 w-4" /></Button></Link><a href="#activities-gallery"><Button variant="outline" className="gap-2">View programme evidence <ArrowRight className="h-4 w-4" /></Button></a></div>
             </div>
-            <div className="overflow-hidden rounded-3xl border border-border bg-muted shadow-lg"><img onError={handleImpactImageError} src="/saleria1.jpg" alt="Learners participating in a Career Development and Exploration school engagement." className="h-full max-h-[320px] w-full object-cover" /></div>
+            <div className="relative isolate aspect-[4/3] w-full overflow-hidden rounded-3xl border border-border bg-slate-950 shadow-xl" role="region" aria-label="Career Development and Exploration photographs" aria-roledescription="carousel">
+              <AnimatePresence mode="wait">
+                <motion.img
+                  key={activeHeroPhoto.url}
+                  src={activeHeroPhoto.url}
+                  alt={activeHeroPhoto.altText}
+                  onError={handleImpactImageError}
+                  initial={{ opacity: 0, scale: 1.035 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0 }}
+                  transition={{ duration: 0.65, ease: "easeInOut" }}
+                  className="absolute inset-0 h-full w-full object-cover"
+                />
+              </AnimatePresence>
+              <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-slate-950/80 via-slate-950/10 to-transparent" />
+              <div className="absolute right-3 top-3 z-20 flex gap-2">
+                <button type="button" onClick={showPreviousHeroPhoto} aria-label="Previous photograph" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-slate-950/60 text-white backdrop-blur-sm transition hover:bg-slate-950/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button type="button" onClick={showNextHeroPhoto} aria-label="Next photograph" className="flex h-10 w-10 items-center justify-center rounded-full border border-white/60 bg-slate-950/60 text-white backdrop-blur-sm transition hover:bg-slate-950/85 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white">
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+              <div className="absolute inset-x-0 bottom-0 z-10 flex items-end justify-between gap-3 p-4 sm:p-5">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-white drop-shadow">{activeHeroPhoto.title}</p>
+                  <p className="mt-1 text-xs leading-relaxed text-white/85 drop-shadow">{activeHeroPhoto.caption}</p>
+                </div>
+                <div className="flex shrink-0 items-center gap-1.5" aria-label="Choose a photograph">
+                  {SCHOOL_ACTIVITY_IMAGES.map((photo, index) => (
+                    <button key={photo.url} type="button" onClick={() => setActiveHeroPhotoIndex(index)} aria-label={`Show photograph ${index + 1}`} aria-pressed={index === activeHeroPhotoIndex} className={`h-2 rounded-full transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white ${index === activeHeroPhotoIndex ? "w-6 bg-white" : "w-2 bg-white/60 hover:bg-white"}`} />
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
@@ -344,13 +398,9 @@ export const CareerDevelopmentPage: FC = () => {
                   <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
                     <School className="w-5 h-5 text-accent" /> Activity Photo Gallery
                   </h3>
-                  <p className="text-xs text-muted-foreground">
-                    Photographic documentation captured during our active basic school outreach sessions.
-                  </p>
+
                 </div>
-                <Badge variant="outline" className="text-xs text-accent border-accent/30">
-                  {SCHOOL_ACTIVITY_IMAGES.length} Photographs
-                </Badge>
+
               </div>
 
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-5">
