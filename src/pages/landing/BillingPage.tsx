@@ -4,7 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 
 const subscriptionProducts = [
   { name: "AgroClimate", description: "Agricultural and climate intelligence services." },
-  { name: "SikaSem", description: "Financial operations and management services." },
+  { name: "Sikasɛm", description: "Financial operations and management services." },
   { name: "Adesua", description: "Practical learning and education services." },
 ];
 
@@ -64,14 +64,14 @@ export default function BillingPage() {
               <Receipt className="h-5 w-5 text-accent" />
               <div>
                 <h2 className="font-semibold">Service quotations and invoices</h2>
-                <p className="text-xs text-muted-foreground">DataLens service model</p>
+                <p className="text-xs text-muted-foreground">Info Services model</p>
               </div>
             </div>
             <p className="mt-4 text-sm leading-6 text-muted-foreground">
-              DataLens engagements follow a scoped service request, quotation, customer acceptance, invoice and verified payment process—not an automatic recurring subscription.
+              Info Services engagements follow a scoped service request, quotation, customer acceptance, invoice and verified payment process—not an automatic recurring subscription.
             </p>
-            <Link to="/explainer/datalens" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
-              Explore DataLens services <ArrowRight className="h-4 w-4" />
+            <Link to="/explainer/info-services" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-primary hover:underline">
+              Explore Info Services <ArrowRight className="h-4 w-4" />
             </Link>
           </section>
         </div>
