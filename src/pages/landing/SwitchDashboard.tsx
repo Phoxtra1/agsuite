@@ -21,8 +21,8 @@ type BillingView = "invoices" | "subscriptions" | "payments";
 
 const connectedProducts = [
   { name: "Inventra", description: "Inventory, sales and customer invoices" },
-  { name: "DataLens", description: "Service quotations, invoices and verified payments" },
-  { name: "SikaSem", description: "Approved financial-product billing records" },
+  { name: "Info Services", description: "Service quotations, invoices and verified payments" },
+  { name: "Sikasɛm", description: "Approved financial-product billing records" },
   { name: "AgroClimate", description: "Agricultural service billing, where applicable" },
   { name: "Adesua", description: "Education service billing, where applicable" },
 ];
