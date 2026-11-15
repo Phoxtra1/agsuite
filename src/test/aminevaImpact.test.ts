@@ -58,6 +58,7 @@ describe("Amineva Impact Data Layer", () => {
     expect(SCHOOL_ACTIVITY_IMAGES).toHaveLength(12);
 
     const photoUrls = SCHOOL_ACTIVITY_IMAGES.map((photo) => photo.url);
+    expect(photoUrls.slice(0, 4)).toEqual(["/patg1.jpg", "/patg2.jpg", "/patg3.jpg", "/patg4.jpg"]);
     expect(photoUrls).toContain("/images/impact/IMG_20261028_084846.jpg");
     expect(photoUrls).toContain("/images/impact/IMG_20261028_084908.jpg");
     expect(photoUrls).toContain("/images/impact/IMG_20261028_090003.jpg");
@@ -72,6 +73,12 @@ describe("Amineva Impact Data Layer", () => {
     expect(new Set(anniversaryPhotos.map((photo) => photo.title)).size).toBe(4);
     expect(anniversaryPhotos.map((photo) => photo.title)).not.toContain("Career Programme Engagement 1");
     expect(anniversaryPhotos.every((photo) => photo.caption.toLowerCase().includes("anniversary"))).toBe(true);
+    expect(anniversaryPhotos.map((photo) => photo.title)).toEqual([
+      "25th Anniversary Career Session",
+      "Career Pathways with Learners",
+      "School Anniversary Outreach",
+      "Learner Career Guidance",
+    ]);
   });
 
   it("contains institutional collaboration categories and contact links", () => {
