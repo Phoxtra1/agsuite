@@ -111,6 +111,10 @@ export const SCHOOL_ACTIVITY_IMAGES: MediaItem[] = [
   { type: "image", url: "/edu...png", title: "Digital Learning & Computer Exposure", caption: "Learners and facilitators during a school-based digital learning engagement.", altText: "School learners with facilitators beside computer equipment." },
   { type: "image", url: "/saleria1.jpg", title: "Career Exploration in the Classroom", caption: "Learners taking part in an Amineva Global career development and exploration session.", altText: "Learners participating in a school-based career development programme." },
   { type: "image", url: "/saleria2.jpg", title: "Learner Participation and Discovery", caption: "A further moment showing learners engaged in the career development programme.", altText: "Learners participating in a school-based career development programme." },
+  { type: "image", url: "/patg1.jpg", title: "Career Programme Engagement 1", caption: "Additional photographic documentation from the Career Development and Exploration Program.", altText: "School engagement photograph from the Career Development and Exploration Program, photograph 1." },
+  { type: "image", url: "/patg2.jpg", title: "Career Programme Engagement 2", caption: "Additional photographic documentation from the Career Development and Exploration Program.", altText: "School engagement photograph from the Career Development and Exploration Program, photograph 2." },
+  { type: "image", url: "/patg3.jpg", title: "Career Programme Engagement 3", caption: "Additional photographic documentation from the Career Development and Exploration Program.", altText: "School engagement photograph from the Career Development and Exploration Program, photograph 3." },
+  { type: "image", url: "/patg4.jpg", title: "Career Programme Engagement 4", caption: "Additional photographic documentation from the Career Development and Exploration Program.", altText: "School engagement photograph from the Career Development and Exploration Program, photograph 4." },
 ];
 
 export const INITIATIVES: Initiative[] = [
