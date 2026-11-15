@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, within } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import SwitchDashboard from "@/pages/landing/SwitchDashboard";
@@ -31,10 +31,11 @@ describe("Amineva Switch dashboard", () => {
 
     expect(screen.getByText("Invoices will appear here when an application billing feed is connected.")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: /subscriptions/i }));
+    // Radix Tabs activates its triggers on the primary-button mousedown event.
+    fireEvent.mouseDown(screen.getByRole("tab", { name: /subscriptions/i }), { button: 0 });
     expect(screen.getByText("Subscription records will appear here when an application billing feed is connected.")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("tab", { name: /payments/i }));
+    fireEvent.mouseDown(screen.getByRole("tab", { name: /payments/i }), { button: 0 });
     expect(screen.getByText("Verified payment records will appear here when an application billing feed is connected.")).toBeInTheDocument();
   });
 
@@ -45,7 +46,9 @@ describe("Amineva Switch dashboard", () => {
       target: { value: "DataLens" },
     });
 
-    expect(screen.getAllByText("DataLens").length).toBeGreaterThan(0);
-    expect(screen.queryByText("Inventra")).not.toBeInTheDocument();
+    const connectionsSection = screen.getByRole("heading", { name: "Application connections" }).closest("section");
+    expect(connectionsSection).not.toBeNull();
+    expect(within(connectionsSection as HTMLElement).getByText("DataLens")).toBeInTheDocument();
+    expect(within(connectionsSection as HTMLElement).queryByText("Inventra")).not.toBeInTheDocument();
   });
 });
