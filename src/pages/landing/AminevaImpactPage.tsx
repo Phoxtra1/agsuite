@@ -16,7 +16,7 @@ import { Button } from "@/components/ui/button";
 import { IMPACT_INTRO, IMPACT_VIDEO_ID, SCHOOL_ACTIVITY_IMAGES } from "@/data/impact";
 
 const FEATURED_IMPACT_PHOTO =
-  SCHOOL_ACTIVITY_IMAGES.find((photo) => photo.url === "/saleria1.jpg") ?? SCHOOL_ACTIVITY_IMAGES[0];
+  SCHOOL_ACTIVITY_IMAGES.find((photo) => photo.url === "/patg1.jpg") ?? SCHOOL_ACTIVITY_IMAGES[0];
 
 export const AminevaImpactPage: FC = () => {
   useEffect(() => {
