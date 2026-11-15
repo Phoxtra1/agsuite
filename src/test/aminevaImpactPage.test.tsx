@@ -65,6 +65,6 @@ describe("Amineva Impact public routes", () => {
     fireEvent.click(screen.getByRole("tab", { name: /Explore possibilities/i }));
     expect(
       screen.getByRole("tabpanel", { name: /Explore possibilities/i }).textContent
-    ).toContain("Introduce learners to careers they may not encounter in everyday life");
+    ).toContain("including technical, vocational, creative, emerging and professional pathways.");
   });
 });
