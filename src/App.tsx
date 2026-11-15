@@ -29,7 +29,7 @@ const AminevaImpactPage = lazyWithRetry(() => import("./pages/landing/AminevaImp
 const CareerDevelopmentPage = lazyWithRetry(() => import("./pages/landing/CareerDevelopmentPage"));
 const DipaAIPage = lazyWithRetry(() => import("./pages/landing/DipaAIPage"));
 const InventraPage = lazyWithRetry(() => import("./pages/landing/InventraPage"));
-const InfoServicesPage = lazyWithRetry(() => import("./pages/landing/DataLensPage"));
+const InfoServicesPage = lazyWithRetry(() => import("./pages/landing/InfoServicesPage"));
 const ABIPage = lazyWithRetry(() => import("./pages/landing/ABIPage"));
 const AgroClimatePage = lazyWithRetry(() => import("./pages/landing/AgroClimatePage"));
 const AdesuaPage = lazyWithRetry(() => import("./pages/landing/AdesuaPage"));
