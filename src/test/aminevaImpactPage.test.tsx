@@ -53,5 +53,7 @@ describe("Amineva Impact public routes", () => {
       })
     ).toBeTruthy();
     expect(screen.getByText(/More than 600 learners/i)).toBeTruthy();
+    expect(screen.getByRole("region", { name: /Career Development and Exploration photographs/i })).toBeTruthy();
+    expect(screen.getByRole("button", { name: /Next photograph/i })).toBeTruthy();
   });
 });
