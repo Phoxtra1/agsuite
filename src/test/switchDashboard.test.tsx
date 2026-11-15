@@ -48,7 +48,7 @@ describe("Amineva Switch dashboard", () => {
 
     const connectionsSection = screen.getByRole("heading", { name: "Application connections" }).closest("section");
     expect(connectionsSection).not.toBeNull();
-    expect(within(connectionsSection as HTMLElement).getByText("DataLens")).toBeInTheDocument();
+    expect(within(connectionsSection as HTMLElement).getByText("Info Services")).toBeInTheDocument();
     expect(within(connectionsSection as HTMLElement).queryByText("Inventra")).not.toBeInTheDocument();
   });
 });
