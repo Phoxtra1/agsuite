@@ -111,7 +111,7 @@ export default function SwitchDashboard() {
             <div>
               <h2 className="font-semibold">Application billing feeds are not connected yet</h2>
               <p className="mt-1 text-sm leading-6 text-muted-foreground">
-                The Switch dashboard is ready to display consolidated billing records, but the secure server-side ingestion and read API have not been enabled. No live invoices, subscriptions or payments are available here yet. This page will not invent totals or transaction history.
+                Your Amineva applications will continue to handle payments themselves. Their invoices, payment records and subscriptions will appear here when those applications are connected.
               </p>
             </div>
           </div>
