@@ -1,6 +1,5 @@
 import React, { FC, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { motion } from "framer-motion";
 import {
   ArrowRight,
   CheckCircle2,
@@ -45,11 +44,12 @@ export const AminevaImpactPage: FC = () => {
               People · Education · Opportunity
             </p>
             <h1 className="mt-4 max-w-2xl text-5xl font-bold leading-[1.04] tracking-tight sm:text-6xl lg:text-7xl">
-              Open doors.
-              <br />
-              Expand <span className="text-amber-300">possibility.</span>
+              Amineva <span className="text-amber-300">Impact</span>
             </h1>
-            <p className="mt-6 max-w-xl text-base leading-8 text-white/70 md:text-lg">
+            <p className="mt-5 max-w-xl text-2xl font-semibold leading-snug text-white sm:text-3xl">
+              Open doors. Expand possibility.
+            </p>
+            <p className="mt-5 max-w-xl text-base leading-8 text-white/70 md:text-lg">
               Creating access to knowledge, opportunities and support for people and communities.
             </p>
             <div className="mt-9 flex flex-wrap gap-3">
@@ -236,7 +236,7 @@ export const AminevaImpactPage: FC = () => {
                   </a>
                 </div>
               </div>
-              <div className="relative min-h-[280px] overflow-hidden lg:min-h-[440px]">
+              <div id="programme-film" className="relative min-h-[280px] overflow-hidden lg:min-h-[440px]">
                 <div className="absolute inset-0">
                   <iframe
                     className="h-full w-full"
