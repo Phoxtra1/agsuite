@@ -1,4 +1,5 @@
 import React, { Suspense, lazy, useEffect, useState, useCallback } from "react";
+import InfoServicesPage from "./pages/landing/InfoServicesPage";
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { isSealAuthenticated } from "@/lib/sealAuth";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -29,7 +30,6 @@ const AminevaImpactPage = lazyWithRetry(() => import("./pages/landing/AminevaImp
 const CareerDevelopmentPage = lazyWithRetry(() => import("./pages/landing/CareerDevelopmentPage"));
 const DipaAIPage = lazyWithRetry(() => import("./pages/landing/DipaAIPage"));
 const InventraPage = lazyWithRetry(() => import("./pages/landing/InventraPage"));
-const InfoServicesPage = lazyWithRetry(() => import("./pages/landing/InfoServicesPage"));
 const ABIPage = lazyWithRetry(() => import("./pages/landing/ABIPage"));
 const AgroClimatePage = lazyWithRetry(() => import("./pages/landing/AgroClimatePage"));
 const AdesuaPage = lazyWithRetry(() => import("./pages/landing/AdesuaPage"));
@@ -268,7 +268,10 @@ function AppRoutes() {
           <Route path="/apps/adesua" element={<AdesuaPage />} />
           <Route path="explainer/adesua" element={<AdesuaPage />} />
           <Route path="explainer/info-services" element={<InfoServicesPage />} />
+          <Route path="info-services" element={<Navigate to="/explainer/info-services" replace />} />
+          <Route path="apps/info-services" element={<Navigate to="/explainer/info-services" replace />} />
           <Route path="explainer/datalens" element={<Navigate to="/explainer/info-services" replace />} />
+          <Route path="apps/datalens" element={<Navigate to="/explainer/info-services" replace />} />
           <Route path="explainer/abi" element={<ABIPage />} />
           <Route path="explainer/sikasem" element={<SikasɛmPage />} />
           <Route path="explainer/workspace" element={<WorkspacePage />} />
