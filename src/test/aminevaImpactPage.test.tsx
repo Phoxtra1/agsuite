@@ -63,8 +63,8 @@ describe("Amineva Impact public routes", () => {
 
     expect(screen.getByRole("tab", { name: /Discover strengths/i })).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: /Explore possibilities/i }));
-    expect(screen.getByRole("tabpanel").textContent).toContain(
-      "Make the world of work feel wider."
-    );
+    expect(
+      screen.getByRole("tabpanel", { name: /Explore possibilities/i }).textContent
+    ).toContain("Make the world of work feel wider.");
   });
 });
