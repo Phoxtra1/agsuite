@@ -1,4 +1,5 @@
 import { FC, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { motion } from "framer-motion";
 import { SupportComs } from "@/core/coms/hooks";
 import { toast } from "sonner";
@@ -15,10 +16,19 @@ const fadeUp = {
 };
 
 const SupportPage: FC = () => {
+  const [searchParams] = useSearchParams();
+  const requestedService = searchParams.get("subject");
+  const requestedAction = searchParams.get("request");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
-  const [subject, setSubject] = useState("general");
-  const [message, setMessage] = useState("");
+  const [subject, setSubject] = useState(requestedService === "info-services" ? "datalens" : "general");
+  const [message, setMessage] = useState(
+    requestedService === "info-services" && requestedAction === "session"
+      ? "I would like to request an Info Services information session."
+      : requestedService === "info-services" && requestedAction === "enquiry"
+        ? "I would like to make an enquiry about Info Services."
+        : "",
+  );
   const [submitted, setSubmitted] = useState(false);
 
   const [sending, setSending] = useState(false);
@@ -63,7 +73,7 @@ const SupportPage: FC = () => {
   const subjects = [
     { value: "general", label: "General Inquiry" },
     { value: "agstock", label: "Nyansa" },
-    { value: "agis", label: "Info Services" },
+    { value: "datalens", label: "Info Services" },
     { value: "amniva", label: "ABI" },
     { value: "agroclimate", label: "AgroClimate" },
     { value: "aminevaops", label: "Sikasɛm" },
