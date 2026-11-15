@@ -2965,7 +2965,7 @@ export default function InfoDiscoveryPage() {
 
       {!selectedTopic && selected?.slug === "business-management" && selected.product && <InventraSpotlight product={selected.product} />}
       {!selectedTopic && selected?.slug === "agriculture-climate-intelligence" && selected.product && <AgroClimateSpotlight product={selected.product} />}
-      {!selectedTopic && selected?.slug === "financial-operations" && selected.product && <SikasemSpotlight product={selected.product} />}
+      {!selectedTopic && selected?.slug === "financial-operations" && selected.product && <SikasɛmSpotlight product={selected.product} />}
 
       <div className="mx-auto grid max-w-7xl gap-8 px-5 py-9 md:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <aside className="space-y-5">
@@ -3349,7 +3349,7 @@ function InfoServicesLanding({ href }: { href: string }) {
   );
 }
 
-function SikasemSpotlight({ product }: { product: ProductLink }) {
+function SikasɛmSpotlight({ product }: { product: ProductLink }) {
   const capabilities = [
     { icon: Store, title: "Mobile money and vendor operations", description: "Record activity across cash, mobile money and bank channels, with transaction references and vendor oversight.", edge: "border-t-4 border-t-primary" },
     { icon: Wallet, title: "Cash and digital float", description: "Track physical cash and electronic float movements so operators can understand available working balances.", edge: "border-r-4 border-r-accent" },
