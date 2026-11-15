@@ -137,12 +137,12 @@ export default function HomePage() {
       else if (p.url) window.location.assign(p.url);
       return;
     }
-    const isSikasem =
+    const isSikasɛm =
       pid.includes("aminevaops") ||
       pid.includes("sikas") ||
       pname.includes("sikas") ||
       purl.includes("ops.amineva.com");
-    if (isSikasem) {
+    if (isSikasɛm) {
       window.location.href = p.url || "https://ops.amineva.com";
       return;
     }
