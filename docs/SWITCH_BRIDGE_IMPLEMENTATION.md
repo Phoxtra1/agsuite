@@ -123,10 +123,15 @@ Do not assume every product is subscription-based. Product catalogue and commerc
 1. **Contract (this change):** shared event schema, naming and security rules.
 2. **Central ingestion service:** choose and confirm the production backend, add client registry, signing-key management, durable inbox, idempotency and read-model persistence.
 3. **Read API:** expose authenticated, account-scoped invoice, transaction and subscription queries to Switch.
-4. **Dashboard:** replace placeholder billing copy with real empty/loading/error/data states backed by the read API.
+4. **Dashboard UI (frontend foundation):** a visible `/switch` portal page now provides invoice, subscription and payment views, application filtering, account context, summary placeholders and explicit unconnected-feed states. It intentionally shows no fabricated financial totals or records. The live read API and data-backed states remain pending.
 5. **First connector:** integrate one product in a test environment; verify signature failure, replay, duplicate delivery, delayed delivery, amount/currency mismatch and reconciliation.
 6. **Rollout:** onboard DataLens, Inventra, SikaSem and other products individually after security and access-isolation tests.
 
 ## Deployment gate
 
 This repository currently documents multiple backend options and a provider-neutral billing design. Do not deploy a webhook receiver or apply billing tables to a live database until the production identity/database authority, hosting target, secret storage, existing schema and operational owners are confirmed. This change intentionally does not invent credentials, connect payment providers, migrate product databases or claim that live billing data is available.
+
+
+## Current dashboard implementation status
+
+The visible Amineva Switch dashboard is available in the frontend at `/switch` (the legacy `/payments` route redirects there). The portal navigation includes an Amineva Switch entry. This is a presentation layer only: no billing read endpoint, ingestion receiver, database tables, product connectors or live transaction data are enabled by the dashboard UI change. Application feeds must be connected through the secured server-side architecture above before any customer billing records can appear.
