@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import {
-  ArrowDownToLine,
   ArrowUpRight,
   AlertCircle,
-  CheckCircle2,
   CircleDollarSign,
   Clock3,
   CreditCard,
