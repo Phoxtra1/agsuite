@@ -1239,7 +1239,7 @@ const categories: Category[] = [
       { name: "UK Office for Statistics Regulation", scope: "Guidance on trustworthy, high-quality and publicly useful statistics", type: "Official statistics oversight body", url: "https://osr.statisticsauthority.gov.uk/" },
       { name: "OECD Data", scope: "Country and cross-country statistical datasets with published indicators and metadata", type: "International statistical reference", url: "https://data.oecd.org/" },
     ],
-    product: { label: "Explore More", href: "https://app.amineva.com/", introduction: "Get clear information and professional advisory support for important decisions. When you need something in writing, we can prepare a document or report shaped around your request." },
+    product: { label: "Visit Info Services", href: "https://info.amineva.com/", introduction: "Continue to the main Info Services site to explore the service and take the next step with your request." },
   },
   {
     slug: "business-management", title: "Business Management", icon: BriefcaseBusiness,
