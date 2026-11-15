@@ -43,7 +43,7 @@ describe("Amineva Switch dashboard", () => {
     renderDashboard();
 
     fireEvent.change(screen.getByRole("combobox", { name: "Filter by application" }), {
-      target: { value: "DataLens" },
+      target: { value: "Info Services" },
     });
 
     const connectionsSection = screen.getByRole("heading", { name: "Application connections" }).closest("section");
