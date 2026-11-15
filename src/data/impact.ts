@@ -104,9 +104,9 @@ export const FOCUS_AREAS: FocusArea[] = [
 
 export const SCHOOL_ACTIVITY_IMAGES: MediaItem[] = [
   { type: "image", url: "/patg1.jpg", title: "25th Anniversary Career Session", caption: "Career awareness at the school's 25th anniversary celebration.", altText: "Career development and exploration at a school's 25th anniversary celebration." },
-  { type: "image", url: "/patg2.jpg", title: "Career Pathways with Learners", caption: "Introducing students to different career directions.", altText: "Students taking part in career awareness during the anniversary celebration." },
+  { type: "image", url: "/patg2.jpg", title: "Career Pathways with Learners", caption: "Career pathways shared with learners during the anniversary.", altText: "Students taking part in career awareness during the anniversary celebration." },
   { type: "image", url: "/patg3.jpg", title: "School Anniversary Outreach", caption: "Career development activities during the anniversary event.", altText: "Career development outreach during a school's anniversary celebration." },
-  { type: "image", url: "/patg4.jpg", title: "Learner Career Guidance", caption: "Sharing career guidance with students at the celebration.", altText: "Learners receiving career guidance during a school's anniversary celebration." },
+  { type: "image", url: "/patg4.jpg", title: "Learner Career Guidance", caption: "Career guidance shared during the anniversary celebration.", altText: "Learners receiving career guidance during a school's anniversary celebration." },
   { type: "image", url: "/images/impact/IMG_20261028_084846.jpg", title: "Career Guidance in the Classroom", caption: "A facilitator speaking with learners during a school-based career development session.", altText: "A facilitator addressing learners in a classroom." },
   { type: "image", url: "/images/impact/IMG_20261028_084908.jpg", title: "Learner Participation", caption: "Learners taking part in a school engagement documented by Amineva Global.", altText: "Learners participating in a school activity." },
   { type: "image", url: "/images/impact/IMG_20261028_090003.jpg", title: "Student Engagement", caption: "A further moment from the programme's school activities.", altText: "Students during a school-based programme activity." },
