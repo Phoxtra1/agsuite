@@ -2,7 +2,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import {
-  ArrowLeft, ArrowRight, Search, GraduationCap, Plane, BriefcaseBusiness, Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink, ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass, ArrowUpRight, AlertTriangle, Info, Lightbulb, Bookmark, BookmarkCheck, Printer, Download, FolderPlus, FileCheck2, Wallet, Store, Users, BarChart3, CreditCard, Landmark, Package, ShoppingCart, Warehouse } from "lucide-react";
+  ArrowLeft, ArrowRight, Search, GraduationCap, Plane, BriefcaseBusiness, Sprout, ShieldCheck, Globe2, SlidersHorizontal, ExternalLink, ChevronRight, BookOpen, CloudSun, Loader2, CheckCircle2, Compass, ArrowUpRight, AlertTriangle, Info, Lightbulb, Bookmark, BookmarkCheck, Printer, Download, FolderPlus, FileCheck2, FileText, Wallet, Store, Users, BarChart3, CreditCard, Landmark, Package, ShoppingCart, Warehouse } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -2873,7 +2873,7 @@ export default function InfoDiscoveryPage() {
   }
 
   if (selected?.slug === "it-innovation") {
-    return <InfoServicesLanding href={selected.product?.href || "https://app.amineva.com/"} />;
+    return <InfoServicesLanding href={selected.product?.href || "https://info.amineva.com/"} />;
   }
 
   if (topicSlug && selected && !selectedTopic) {
@@ -3343,7 +3343,7 @@ function InfoServicesLanding({ href }: { href: string }) {
         <div className="rounded-2xl border border-border bg-card p-6 md:p-8"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-accent/10 text-accent"><FileText className="h-5 w-5" /></div><h2 className="mt-4 text-xl font-bold">Written documents and reports when needed</h2><p className="mt-3 text-sm leading-7 text-muted-foreground">If you prefer a written output, we can prepare a document or report that organises the relevant information around your request. The format depends on what you need.</p></div>
       </div></section>
       <section className="mx-auto max-w-5xl px-5 py-16 text-center md:px-8 lg:py-20"><span className="text-xs font-bold uppercase tracking-[0.2em] text-accent">Take the next step</span><h2 className="mt-3 text-3xl font-bold tracking-tight md:text-4xl">Get the information you need to move forward.</h2><p className="mx-auto mt-4 max-w-3xl text-sm leading-7 text-muted-foreground md:text-base">Tell us what you are trying to understand. We will help you identify the information or support you need and the most suitable way to provide it.</p>
-        <a href={href} target="_blank" rel="noopener noreferrer" className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-7 py-3.5 text-sm font-bold text-accent-foreground shadow-md transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">Explore More <ArrowUpRight className="h-4 w-4" /></a>
+        <a href={href} target="_blank" rel="noopener noreferrer" className="mt-8 inline-flex min-h-12 items-center justify-center gap-2 rounded-xl bg-accent px-7 py-3.5 text-sm font-bold text-accent-foreground shadow-md transition hover:-translate-y-0.5 hover:bg-accent/90 hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2">Visit Info Services <ArrowUpRight className="h-4 w-4" /></a>
       </section>
     </main>
   );
