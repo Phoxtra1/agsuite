@@ -42,9 +42,10 @@ export const PRODUCT_ROUTES: Record<string, ProductRouteConfig> = {
     defaultPath: '/',
     requiresCountry: false,
   },
+  // Keep the legacy key for existing product records, but open the public Info Services page.
   datalens: {
-    baseUrl: 'https://datalens.amineva.com',
-    defaultPath: '/',
+    baseUrl: '',
+    defaultPath: '/explainer/info-services',
     requiresCountry: false,
   },
   abi: {
