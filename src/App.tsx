@@ -236,7 +236,7 @@ function AppRoutes() {
         {/* Landing pages */}
         <Route path="/" element={<Landing />}>
           <Route index element={<PublicHome />} />
-          {/* Keep the Info System menu URL working as an alias to the homepage. */}
+          {/* Keep the legacy /info-system address working as a homepage alias; it is not a navigation item. */}
           <Route path="info-system" element={<Navigate to="/" replace />} />
           <Route path="get-started" element={<GetStartedPage />} />
           <Route
