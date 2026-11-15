@@ -215,7 +215,7 @@ export default function SwitchDashboard() {
             </span>
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-            {connectedProducts.map((product) => (
+            {filteredProducts.map((product) => (
               <article key={product.name} className="flex items-start justify-between gap-3 rounded-xl border border-border bg-background p-4">
                 <div className="min-w-0">
                   <h3 className="text-sm font-semibold">{product.name}</h3>
