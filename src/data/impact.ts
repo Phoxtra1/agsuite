@@ -103,6 +103,10 @@ export const FOCUS_AREAS: FocusArea[] = [
 ];
 
 export const SCHOOL_ACTIVITY_IMAGES: MediaItem[] = [
+  { type: "image", url: "/patg1.jpg", title: "25th Anniversary Career Session", caption: "Career awareness at the school's 25th anniversary celebration.", altText: "Career development and exploration at a school's 25th anniversary celebration." },
+  { type: "image", url: "/patg2.jpg", title: "Career Pathways with Learners", caption: "Introducing students to different career directions.", altText: "Students taking part in career awareness during the anniversary celebration." },
+  { type: "image", url: "/patg3.jpg", title: "School Anniversary Outreach", caption: "Career development activities during the anniversary event.", altText: "Career development outreach during a school's anniversary celebration." },
+  { type: "image", url: "/patg4.jpg", title: "Learner Career Guidance", caption: "Sharing career guidance with students at the celebration.", altText: "Learners receiving career guidance during a school's anniversary celebration." },
   { type: "image", url: "/images/impact/IMG_20261028_084846.jpg", title: "Career Guidance in the Classroom", caption: "A facilitator speaking with learners during a school-based career development session.", altText: "A facilitator addressing learners in a classroom." },
   { type: "image", url: "/images/impact/IMG_20261028_084908.jpg", title: "Learner Participation", caption: "Learners taking part in a school engagement documented by Amineva Global.", altText: "Learners participating in a school activity." },
   { type: "image", url: "/images/impact/IMG_20261028_090003.jpg", title: "Student Engagement", caption: "A further moment from the programme's school activities.", altText: "Students during a school-based programme activity." },
@@ -111,10 +115,6 @@ export const SCHOOL_ACTIVITY_IMAGES: MediaItem[] = [
   { type: "image", url: "/edu...png", title: "Digital Learning & Computer Exposure", caption: "Learners and facilitators during a school-based digital learning engagement.", altText: "School learners with facilitators beside computer equipment." },
   { type: "image", url: "/saleria1.jpg", title: "Career Exploration in the Classroom", caption: "Learners taking part in an Amineva Global career development and exploration session.", altText: "Learners participating in a school-based career development programme." },
   { type: "image", url: "/saleria2.jpg", title: "Learner Participation and Discovery", caption: "A further moment showing learners engaged in the career development programme.", altText: "Learners participating in a school-based career development programme." },
-  { type: "image", url: "/patg1.jpg", title: "Career Guidance at the 25th Anniversary", caption: "Amineva Global’s Career Development and Exploration Program featured during the school’s 25th anniversary celebration.", altText: "Career development and exploration activity shared during the school’s 25th anniversary celebration." },
-  { type: "image", url: "/patg2.jpg", title: "Introducing Learners to Career Pathways", caption: "The anniversary invitation created an opportunity to introduce students to career choices and educational pathways.", altText: "Students being introduced to career choices and educational pathways during the anniversary programme." },
-  { type: "image", url: "/patg3.jpg", title: "Career Exploration Beyond the Classroom", caption: "A different moment from the school visit, using the anniversary gathering to encourage learners to explore future possibilities.", altText: "Career exploration and awareness shared with learners at the school anniversary event." },
-  { type: "image", url: "/patg4.jpg", title: "Turning an Anniversary Invitation into a Learning Opportunity", caption: "An opportunity to celebrate the school’s 25th anniversary while sharing useful career guidance with its students.", altText: "Students taking part in a career guidance opportunity connected with the school’s 25th anniversary." },
 ];
 
 export const INITIATIVES: Initiative[] = [
