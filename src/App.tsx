@@ -22,7 +22,7 @@ const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const AboutUs = lazyWithRetry(() => import("./pages/landing/AboutUs"));
 const InfoDiscoveryPage = lazyWithRetry(() => import("./pages/landing/InfoDiscoveryPage"));
 const GetStartedPage = lazyWithRetry(() => import("./pages/GetStartedPage"));
-const BillingPage = lazyWithRetry(() => import("./pages/landing/BillingPage"));
+const SwitchDashboard = lazyWithRetry(() => import("./pages/landing/SwitchDashboard"));
 const PortalLayout = lazyWithRetry(() => import("./components/portal/PortalLayout"));
 const PortalAuthGate = lazyWithRetry(() => import("./components/auth/PortalAuthGate"));
 const AminevaImpactPage = lazyWithRetry(() => import("./pages/landing/AminevaImpactPage"));
@@ -252,9 +252,10 @@ function AppRoutes() {
             element={<PortalAuthGate><PortalLayout><InfoDiscoveryPage /></PortalLayout></PortalAuthGate>}
           />
           <Route
-            path="payments"
-            element={<PortalAuthGate><PortalLayout><BillingPage /></PortalLayout></PortalAuthGate>}
+            path="switch"
+            element={<PortalAuthGate><PortalLayout><SwitchDashboard /></PortalLayout></PortalAuthGate>}
           />
+          <Route path="payments" element={<Navigate to="/switch" replace />} />
           <Route path="about-us" element={<AboutUs />} />
           <Route path="impact" element={<AminevaImpactPage />} />
           <Route path="impact/career-development" element={<CareerDevelopmentPage />} />
