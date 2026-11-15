@@ -1,6 +1,6 @@
 import React from "react";
 import { afterEach, beforeEach, describe, it, expect, vi } from "vitest";
-import { fireEvent, render, screen } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { MemoryRouter, Route, Routes } from "react-router-dom";
 import AminevaImpactPage from "../pages/landing/AminevaImpactPage";
 import CareerDevelopmentPage from "../pages/landing/CareerDevelopmentPage";
@@ -63,8 +63,10 @@ describe("Amineva Impact public routes", () => {
 
     expect(screen.getByRole("tab", { name: /Discover strengths/i })).toBeTruthy();
     fireEvent.click(screen.getByRole("tab", { name: /Explore possibilities/i }));
-    expect(
-      screen.getByRole("tabpanel", { name: /Explore possibilities/i }).textContent
-    ).toContain("including technical, vocational, creative, emerging and professional pathways.");
+    await waitFor(() => {
+      expect(
+        screen.getByRole("tabpanel", { name: /Explore possibilities/i }).textContent
+      ).toContain("including technical, vocational, creative, emerging and professional pathways.");
+    });
   });
 });
