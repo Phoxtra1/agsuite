@@ -18,11 +18,12 @@ const navLinks = [
 export default function Landing() {
   const location = useLocation();
   const isHome = location.pathname === "/";
-  // These routes render inside the independent Info Discovery portal shell.
+  // These routes render inside the independent account portal shell.
   const isAccountPortal =
     location.pathname === "/info-discovery" ||
     location.pathname.startsWith("/info-discovery/") ||
-    location.pathname === "/payments";
+    location.pathname === "/payments" ||
+    location.pathname === "/switch";
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { isAuthenticated } = useAuth();
