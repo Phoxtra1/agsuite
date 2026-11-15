@@ -1,6 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import InfoServicesPage from "@/pages/landing/DataLensPage";
+import InfoServicesPage from "@/pages/landing/InfoServicesPage";
 
 describe("Info Services page", () => {
   it("renders the page heading, all five service areas and enquiry actions", () => {
