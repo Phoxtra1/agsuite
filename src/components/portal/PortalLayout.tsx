@@ -1,13 +1,14 @@
 import { useState } from "react";
 import type { ReactNode } from "react";
 import { Link, NavLink } from "react-router-dom";
-import { Compass, BriefcaseBusiness, Menu, X, Sun, Moon } from "lucide-react";
+import { Compass, BriefcaseBusiness, Wallet, Menu, X, Sun, Moon } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
 import amvLogo from "@/assets/amv_global_logo.png";
 
 const links = [
   { to: "/info-discovery", label: "Info Discovery", icon: Compass },
   { to: "/workspace", label: "Workspace", icon: BriefcaseBusiness },
+  { to: "/switch", label: "Amineva Switch", icon: Wallet },
 ];
 
 export default function PortalLayout({ children }: { children: ReactNode }) {
