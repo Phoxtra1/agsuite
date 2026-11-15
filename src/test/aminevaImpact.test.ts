@@ -68,6 +68,10 @@ describe("Amineva Impact Data Layer", () => {
     expect(photoUrls).toContain("/patg2.jpg");
     expect(photoUrls).toContain("/patg3.jpg");
     expect(photoUrls).toContain("/patg4.jpg");
+    const anniversaryPhotos = SCHOOL_ACTIVITY_IMAGES.filter((photo) => /^\/patg[1-4]\.jpg$/.test(photo.url));
+    expect(new Set(anniversaryPhotos.map((photo) => photo.title)).size).toBe(4);
+    expect(anniversaryPhotos.map((photo) => photo.title)).not.toContain("Career Programme Engagement 1");
+    expect(anniversaryPhotos.every((photo) => photo.caption.toLowerCase().includes("anniversary"))).toBe(true);
   });
 
   it("contains institutional collaboration categories and contact links", () => {
