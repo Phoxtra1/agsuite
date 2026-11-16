@@ -2606,7 +2606,7 @@ function KnowledgeCompassPage({ onBack }: { onBack: () => void }) {
           <h2 className="text-lg font-semibold">{query.trim() ? "Search matches" : "Suggested resources"}</h2>
           <span className="text-xs text-muted-foreground">{visible.length} of {ranked.length}</span>
         </div>
-        {visible.length > 0 && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        {query.trim() && visible.length === 0 && <p className="rounded-xl border border-dashed border-border p-6 text-sm text-muted-foreground">No curated pathway matched that search. Try a broader topic or choose a different subject; related research is searched separately below.</p>}\n        {visible.length > 0 && <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {visible.map(({ item }) => <article key={item.id} className="min-w-0 rounded-xl border border-border bg-card p-3 shadow-sm transition hover:border-accent/40 hover:shadow-md">
             <div className="flex flex-wrap items-center gap-1.5">
               <Badge variant="secondary" className="max-w-full truncate text-[10px]">{item.subject}</Badge>
