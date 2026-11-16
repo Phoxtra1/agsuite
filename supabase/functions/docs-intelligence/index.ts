@@ -122,7 +122,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
           sourceType: "Google Search result",
           supports: "Retrieved as a supporting source for this event",
         };
-      }).filter(Boolean).slice(0, 6);
+      }).filter((source): source is NonNullable<typeof source> => source !== null).slice(0, 6);
 
       if (
         String(item.occurrenceDate || "") !== date ||
@@ -147,7 +147,7 @@ Deno.serve(async (request: Request): Promise<Response> => {
         caveat: String(item.caveat || "").slice(0, 600),
         sources,
       };
-    }).filter(Boolean);
+    }).filter((event): event is NonNullable<typeof event> => event !== null);
 
     events.sort((a, b) =>
       a.region === b.region
