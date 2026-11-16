@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { compassTokens, scoreCompassPathway, type KnowledgePathway } from "@/lib/infoDiscovery/knowledgeCompass";
+import { beforeEach, describe, expect, it } from "vitest";
+import { setWorkspaceUser } from "@/lib/workspace/scope";
+import { cacheCompassResearchResults, compassTokens, readCompassResearchCache, scoreCompassPathway, type KnowledgePathway } from "@/lib/infoDiscovery/knowledgeCompass";
 
 const africanHistoryPathway: KnowledgePathway = {
   id: "african-history",
@@ -13,6 +14,10 @@ const africanHistoryPathway: KnowledgePathway = {
 };
 
 describe("Knowledge Compass search", () => {
+  beforeEach(() => {
+    localStorage.clear();
+    setWorkspaceUser(null);
+  });
   it("splits multi-word labels into individual searchable tokens", () => {
     expect(compassTokens("African history")).toEqual(["african", "history"]);
   });
@@ -37,6 +42,19 @@ describe("Knowledge Compass search", () => {
 
   it("normalises punctuation and accented characters without merging words", () => {
     expect(compassTokens("Culture & identité")).toEqual(["culture", "identite"]);
+  });
+
+  it("caches live research matches locally using a normalised query", () => {
+    const records = [{ id: "crossref:1", title: "African history research" }];
+    cacheCompassResearchResults("  African   history ", records, 1_000);
+
+    expect(readCompassResearchCache("african history", 2_000)).toEqual(records);
+  });
+
+  it("does not return expired local research matches", () => {
+    cacheCompassResearchResults("African history", [{ id: "crossref:1" }], 1_000);
+
+    expect(readCompassResearchCache("African history", 50_000, 1_000)).toBeNull();
   });
 
   it("returns no score for an empty query", () => {
