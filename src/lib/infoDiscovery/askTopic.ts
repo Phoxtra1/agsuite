@@ -216,7 +216,7 @@ export async function searchDateIncidents(params: {
   category?: string;
 }): Promise<DateIncidentRecord[]> {
   const { date, region = "Africa first", category = "all" } = params;
-  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || Number.isNaN(Date.parse(date + "T00:00:00Z"))) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date + "T00:00:00Z"))) {
     throw new Error("Choose a valid date, including the year.");
   }
 
