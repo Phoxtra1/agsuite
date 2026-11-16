@@ -7,6 +7,7 @@
  * dynamic key, so no npm install / SDK version drift is involved.
  */
 import crypto from "node:crypto";
+import { cleanModelJson, isExactISODate, isHttpUrl, publisherFromUrl } from "./historicalEvents.js";
 
 const ID_CHARS = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
 const randomCode = (len) =>
@@ -192,7 +193,7 @@ export default async ({ req, res, log, error }) => {
       const date = String(body.date || "").trim();
       const region = String(body.region || "Africa first").slice(0, 40);
       const category = String(body.category || "all").slice(0, 80);
-      if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || Number.isNaN(Date.parse(date + "T00:00:00Z")) || new Date(date + "T00:00:00Z").toISOString().slice(0, 10) !== date) {
+      if (!isExactISODate(date)) {
         return res.json({ error: "A valid exact date including year is required." }, 400);
       }
 
@@ -236,7 +237,7 @@ export default async ({ req, res, log, error }) => {
       const raw = (candidate?.content?.parts || []).map(part => part.text || "").join("");
       let parsed;
       try {
-        const cleaned = raw.replace(/^\\s*```(?:json)?\\s*/i, "").replace(/\\s*```\\s*$/, "");
+        const cleaned = cleanModelJson(raw);
         parsed = JSON.parse(cleaned);
       } catch {
         throw new Error("Historical research returned an invalid structured result.");
@@ -247,9 +248,8 @@ export default async ({ req, res, log, error }) => {
         const indexes = Array.isArray(item.sourceIndexes) ? [...new Set(item.sourceIndexes.map(Number).filter(index => Number.isInteger(index) && index >= 0 && index < chunks.length))] : [];
         const sources = indexes.map(index => {
           const web = chunks[index]?.web;
-          if (!web?.uri || !/^https?:\\/\\//i.test(web.uri)) return null;
-          let publisher = "";
-          try { publisher = new URL(web.uri).hostname.replace(/^www\\./, ""); } catch {}
+          if (!web?.uri || !isHttpUrl(web.uri)) return null;
+          const publisher = publisherFromUrl(web.uri);
           return { name: String(web.title || publisher || "Historical source"), publisher, url: web.uri, sourceType: "Google Search result", supports: "Retrieved as a supporting source for this event" };
         }).filter(Boolean).slice(0, 6);
 
