@@ -1,4 +1,5 @@
 import { beforeEach, describe, expect, it } from "vitest";
+import { setWorkspaceUser } from "@/lib/workspace/scope";
 import {
   cacheDateIncidentResults,
   readCachedDateIncidentResults,
@@ -24,6 +25,7 @@ const record: DateIncidentRecord = {
 describe("Date & Incidents local cache", () => {
   beforeEach(() => {
     localStorage.clear();
+    setWorkspaceUser(null);
   });
 
   it("stores and retrieves results for the same date and filters", () => {
