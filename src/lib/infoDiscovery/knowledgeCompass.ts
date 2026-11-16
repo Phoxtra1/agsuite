@@ -83,7 +83,7 @@ type CompassResearchCacheEntry<T> = { cachedAt: number; records: T[] };
 type CompassResearchCache<T> = Record<string, CompassResearchCacheEntry<T>>;
 
 function compassCacheQueryKey(query: string): string {
-  return query.trim().toLocaleLowerCase().replace(/\\s+/g, " ");
+  return query.trim().toLocaleLowerCase().replace(/\s+/g, " ");
 }
 
 /** Return locally saved research matches while a fresh search is running or offline. */
