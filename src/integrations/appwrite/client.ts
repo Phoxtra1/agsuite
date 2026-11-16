@@ -736,7 +736,7 @@ const storageAdapter = {
 const functionsAdapter = {
   async invoke(functionName: string, options?: { body?: any; headers?: Record<string, string> }) {
     try {
-      const functionId = (import.meta as any).env?.VITE_SUITE_FUNCTION_ID || "69689f59003426b9e5e3";
+      const functionId = (import.meta as any).env?.VITE_SUITE_FUNCTION_ID;
       if (!functionId) {
         return { data: null, error: { message: "The Appwrite function ID is not configured (VITE_SUITE_FUNCTION_ID)." } };
       }
