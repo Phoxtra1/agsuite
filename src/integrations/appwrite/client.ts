@@ -1,4 +1,4 @@
-import client, { account, databases, storage as appwriteStorage, functions as appwriteFunctions, APPWRITE_DB_ID, ID } from "@/lib/appwrite";
+import client, { account, databases, storage as appwriteStorage, functions as appwriteFunctions, APPWRITE_DB_ID, APPWRITE_ENDPOINT, ID } from "@/lib/appwrite";
 import { Query, Permission, Role } from "appwrite";
 import { createClient } from "@supabase/supabase-js";
 
@@ -736,7 +736,7 @@ const storageAdapter = {
 const functionsAdapter = {
   async invoke(functionName: string, options?: { body?: any; headers?: Record<string, string> }) {
     try {
-      const functionId = (import.meta as any).env?.VITE_SUITE_FUNCTION_ID;
+      const functionId = (import.meta as any).env?.VITE_SUITE_FUNCTION_ID || "69689f59003426b9e5e3";
       if (!functionId) {
         return { data: null, error: { message: "The Appwrite function ID is not configured (VITE_SUITE_FUNCTION_ID)." } };
       }
@@ -744,17 +744,21 @@ const functionsAdapter = {
       // which action to run.
       const rawBody = typeof options?.body === "string" ? JSON.parse(options.body || "{}") : (options?.body || {});
       const payload = JSON.stringify({ action: functionName, ...rawBody });
-      const execution = await appwriteFunctions.createExecution(functionId, payload);
+      const execution = await appwriteFunctions.createExecution(functionId, payload, false);
       let data = null;
       try {
         data = JSON.parse(execution.responseBody);
       } catch {
         data = execution.responseBody;
       }
-      return { data, error: execution.status === "failed" ? { message: "Execution failed" } : null };
+      const responseStatus = Number(execution.responseStatusCode || 0);
+      const executionMessage = data?.error || execution.errors || (responseStatus >= 400 ? "agSuite returned HTTP " + responseStatus + "." : "The agSuite function execution failed.");
+      return { data, error: execution.status === "failed" || responseStatus >= 400 ? { message: String(executionMessage) } : null };
     } catch (err: any) {
       console.error(`[Appwrite Functions] Function '${functionName}' invocation failed:`, err?.message || err);
-      return { data: null, error: { message: err?.message || "The Appwrite function could not be reached." } };
+      const message = err?.message || "The Appwrite function could not be reached.";
+      const networkFailure = /failed to fetch|networkerror|network request failed/i.test(message);
+      return { data: null, error: { message: networkFailure ? "Could not connect to the Appwrite service at " + APPWRITE_ENDPOINT + ". Check the service connection and browser network access." : message } };
     }
   },
 };
