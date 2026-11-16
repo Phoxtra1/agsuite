@@ -18,7 +18,7 @@ Set `GEMINI_API_KEY` in Appwrite Console → Functions → agSuite → Settings 
 - Source: `appwrite/functions/agsuite/src/main.js`.
 - Deploy with the repository's Appwrite CLI configuration after setting the server-side key.
 
-The code is committed to GitHub; it is not deployed to the live Appwrite function by a GitHub source commit alone.
+The code is committed to GitHub; it is not deployed to the live Appwrite function by a GitHub source commit alone. The root `appwrite.json` now registers function `69689f59003426b9e5e3` and points its deployment path to `appwrite/functions/agsuite` with `src/main.js` as the entrypoint.
 
 ## Result requirements
 
@@ -33,7 +33,7 @@ The code is committed to GitHub; it is not deployed to the live Appwrite functio
 
 1. Add `GEMINI_API_KEY` to the agSuite function environment.
 2. Confirm Node.js 18+ and a 60-second execution timeout.
-3. Deploy the updated agSuite function.
+3. Authenticate the Appwrite CLI against the `amineva` project and run `appwrite push functions` from the repository root. The function definition is in `appwrite.json`; its source path is `appwrite/functions/agsuite`. Do not use `--with-variables` unless you intentionally want to replace the remote function variables.\n4. Confirm the new deployment is active and `GEMINI_API_KEY` remains configured in the function environment.
 4. Search known African and international dates, including dates where no prominent event is expected.
 5. Verify exact-year/date matching, geographical filters, source links and caveats.
 6. Monitor Appwrite execution logs and Gemini usage/costs.
