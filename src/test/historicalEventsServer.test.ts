@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
-import { cleanModelJson, isExactISODate, isHttpUrl, publisherFromUrl } from "../../appwrite/functions/agsuite/src/historicalEvents.js";
+import { cleanModelJson, isExactISODate, isHttpUrl, publisherFromUrl } from "../../supabase/functions/docs-intelligence/historicalEvents";
 
-describe("server-side historical event helpers", () => {
+describe("Supabase historical event helpers", () => {
   it("accepts exact valid ISO dates and rejects invalid calendar dates", () => {
     expect(isExactISODate("1957-03-06")).toBe(true);
     expect(isExactISODate("2000-02-29")).toBe(true);
