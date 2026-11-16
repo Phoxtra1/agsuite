@@ -1,3 +1,5 @@
+import { wsKey } from "@/lib/workspace/scope";
+
 export type KnowledgePathway = {
   id: string;
   situation: string;
@@ -73,4 +75,49 @@ export function scoreCompassPathway(item: KnowledgePathway, query: string): numb
   }
 
   return score;
+}
+
+const COMPASS_RESEARCH_CACHE_KEY = "amineva_knowledge_compass_research_v1";
+const COMPASS_RESEARCH_CACHE_TTL_MS = 12 * 60 * 60 * 1000;
+type CompassResearchCacheEntry<T> = { cachedAt: number; records: T[] };
+type CompassResearchCache<T> = Record<string, CompassResearchCacheEntry<T>>;
+
+function compassCacheQueryKey(query: string): string {
+  return query.trim().toLocaleLowerCase().replace(/\\s+/g, " ");
+}
+
+/** Return locally saved research matches while a fresh search is running or offline. */
+export function readCompassResearchCache<T>(
+  query: string,
+  now = Date.now(),
+  maxAgeMs = COMPASS_RESEARCH_CACHE_TTL_MS,
+): T[] | null {
+  if (typeof localStorage === "undefined" || query.trim().length < 3) return null;
+  try {
+    const raw = localStorage.getItem(wsKey(COMPASS_RESEARCH_CACHE_KEY));
+    if (!raw) return null;
+    const cache = JSON.parse(raw) as CompassResearchCache<T>;
+    const entry = cache?.[compassCacheQueryKey(query)];
+    if (!entry || !Array.isArray(entry.records) || !Number.isFinite(entry.cachedAt)) return null;
+    return now - entry.cachedAt <= maxAgeMs ? entry.records : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Keep a small, account-scoped browser cache of recent Compass research searches. */
+export function cacheCompassResearchResults<T>(query: string, records: T[], now = Date.now()): void {
+  if (typeof localStorage === "undefined" || query.trim().length < 3 || !records.length) return;
+  try {
+    const key = wsKey(COMPASS_RESEARCH_CACHE_KEY);
+    const raw = localStorage.getItem(key);
+    const cache = (raw ? JSON.parse(raw) : {}) as CompassResearchCache<T>;
+    cache[compassCacheQueryKey(query)] = { cachedAt: now, records };
+    const newestFirst = Object.entries(cache)
+      .sort((a, b) => b[1].cachedAt - a[1].cachedAt)
+      .slice(0, 30);
+    localStorage.setItem(key, JSON.stringify(Object.fromEntries(newestFirst)));
+  } catch (error) {
+    console.warn("[Knowledge Compass] Could not save local research cache:", error);
+  }
 }
