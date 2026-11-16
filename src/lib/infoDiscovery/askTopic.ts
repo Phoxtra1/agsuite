@@ -1,4 +1,5 @@
-import { supabase } from "@/integrations/appwrite/client";
+import { isSupabaseConfigured, supabase } from "@/integrations/supabase/client";
+import { wsKey } from "@/lib/workspace/scope";
 
 export interface TopicSummaryResult {
   summary: string;
@@ -68,7 +69,7 @@ const MULTI_PART_PUBLIC_SUFFIXES = new Set([
 function sourcePublisherIdentity(source: DateIncidentSource): string {
   let hostname = "";
   try {
-    hostname = new URL(source.url).hostname.toLowerCase().replace(/^www\\./, "");
+    hostname = new URL(source.url).hostname.toLowerCase().replace(/^www\./, "");
   } catch {
     return String(source.publisher || source.name || "").toLowerCase().trim();
   }
@@ -152,18 +153,84 @@ export function normaliseDateIncidentResults(data: any, requestedDate: string): 
  * AI-assisted discovery features, with a date-specific historical search
  * instruction and a strict occurrence-date result contract.
  */
+
+const DATE_INCIDENT_CACHE_KEY = "amineva_date_incidents_cache_v1";
+const DATE_INCIDENT_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+type DateIncidentCacheEntry = { cachedAt: number; records: DateIncidentRecord[] };
+type DateIncidentCache = Record<string, DateIncidentCacheEntry>;
+
+function dateIncidentQueryKey(params: { date: string; region: string; category: string }): string {
+  return [params.date, params.region, params.category].join("|");
+}
+
+export function readCachedDateIncidentResults(
+  params: { date: string; region?: string; category?: string },
+  maxAgeMs = DATE_INCIDENT_CACHE_TTL_MS,
+  now = Date.now(),
+): DateIncidentRecord[] | null {
+  if (typeof localStorage === "undefined") return null;
+  try {
+    const raw = localStorage.getItem(wsKey(DATE_INCIDENT_CACHE_KEY));
+    if (!raw) return null;
+    const cache = JSON.parse(raw) as DateIncidentCache;
+    const entry = cache?.[dateIncidentQueryKey({
+      date: params.date,
+      region: params.region || "Africa first",
+      category: params.category || "all",
+    })];
+    if (!entry || !Array.isArray(entry.records) || !Number.isFinite(entry.cachedAt)) return null;
+    if (now - entry.cachedAt > maxAgeMs) return null;
+    return entry.records;
+  } catch {
+    return null;
+  }
+}
+
+export function cacheDateIncidentResults(
+  params: { date: string; region?: string; category?: string },
+  records: DateIncidentRecord[],
+  now = Date.now(),
+): void {
+  if (typeof localStorage === "undefined" || !records.length) return;
+  try {
+    const storageKey = wsKey(DATE_INCIDENT_CACHE_KEY);
+    const raw = localStorage.getItem(storageKey);
+    const cache = (raw ? JSON.parse(raw) : {}) as DateIncidentCache;
+    cache[dateIncidentQueryKey({
+      date: params.date,
+      region: params.region || "Africa first",
+      category: params.category || "all",
+    })] = { cachedAt: now, records };
+    const newestFirst = Object.entries(cache)
+      .sort((a, b) => b[1].cachedAt - a[1].cachedAt)
+      .slice(0, 40);
+    localStorage.setItem(storageKey, JSON.stringify(Object.fromEntries(newestFirst)));
+  } catch (error) {
+    console.warn("[Date & Incidents] Could not save local results:", error);
+  }
+}
+
 export async function searchDateIncidents(params: {
   date: string;
   region?: "Africa first" | "Africa" | "International" | "all";
   category?: string;
 }): Promise<DateIncidentRecord[]> {
   const { date, region = "Africa first", category = "all" } = params;
-  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(Date.parse(date + "T00:00:00Z"))) {
+  if (!/^\\d{4}-\\d{2}-\\d{2}$/.test(date) || Number.isNaN(Date.parse(date + "T00:00:00Z"))) {
     throw new Error("Choose a valid date, including the year.");
   }
 
   const selectedDate = new Date(date + "T00:00:00Z");
   if (selectedDate.toISOString().slice(0, 10) !== date) throw new Error("Choose a valid calendar date.");
+
+  const cached = readCachedDateIncidentResults(params);
+  if (cached?.length) return cached;
+  const staleCache = readCachedDateIncidentResults(params, Number.POSITIVE_INFINITY);
+
+  if (!isSupabaseConfigured) {
+    if (staleCache?.length) return staleCache;
+    throw new Error("No saved results are available for this date, and Supabase is not configured in this deployment.");
+  }
 
   const dateLabel = selectedDate.toLocaleDateString("en", {
     weekday: "long", year: "numeric", month: "long", day: "numeric", timeZone: "UTC",
@@ -187,24 +254,30 @@ export async function searchDateIncidents(params: {
     "Return JSON only with this shape: { \"events\": [{ \"occurrenceDate\": \"YYYY-MM-DD\", \"title\": \"\", \"location\": \"\", \"region\": \"Africa|International\", \"category\": \"\", \"summary\": \"\", \"significance\": \"\", \"people\": [], \"prominence\": \"major|notable\", \"dateBasis\": \"\", \"confidence\": \"corroborated|single-source|contested\", \"caveat\": \"\", \"sources\": [{ \"name\": \"\", \"publisher\": \"\", \"url\": \"https://...\", \"sourceType\": \"primary|institutional|scholarly|news\", \"supports\": \"\" }] }] }",
   ].join("\n\n");
 
-  const { data, error } = await invokeDipa("docs-intelligence", {
-    action: "historical_events_search",
-    task: "date_and_incidents",
-    date,
-    region,
-    category,
-    text: prompt,
-    query: prompt,
-    responseFormat: "json",
-  });
-  if (error) throw new Error(error.message || "The historical search service could not complete the search.");
-  if (!data || data.error) throw new Error(data?.error || "The historical search service did not return results.");
+  try {
+    const { data, error } = await invokeDipa("docs-intelligence", {
+      action: "historical_events_search",
+      task: "date_and_incidents",
+      date,
+      region,
+      category,
+      text: prompt,
+      query: prompt,
+      responseFormat: "json",
+    });
+    if (error) throw new Error(error.message || "The historical search service could not complete the search.");
+    if (!data || data.error) throw new Error(data?.error || "The historical search service did not return results.");
 
-  const records = normaliseDateIncidentResults(data, date);
-  if (!records.length) {
-    throw new Error("No well-sourced events were returned for this exact date. Try a different date or geographical filter.");
+    const records = normaliseDateIncidentResults(data, date);
+    if (!records.length) {
+      throw new Error("No well-sourced events were returned for this exact date. Try a different date or geographical filter.");
+    }
+    cacheDateIncidentResults(params, records);
+    return records;
+  } catch (error: any) {
+    if (staleCache?.length) return staleCache;
+    throw new Error(error?.message || "The historical search could not be completed. Check the connection and try again.");
   }
-  return records;
 }
 
 /**
