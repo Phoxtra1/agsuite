@@ -28,7 +28,7 @@ import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracke
 import { searchResearchRepositories, type ResearchRecord } from "@/lib/infoDiscovery/researchSearch";
 import { searchDateIncidents, type DateIncidentRecord } from "@/lib/infoDiscovery/askTopic";
 import { searchVerifiedDiscoveryRecords, getVerifiedDiscoveryDocumentUrl } from "@/lib/infoDiscovery/discoveryLibrary";
-import { scoreCompassPathway, type KnowledgePathway } from "@/lib/infoDiscovery/knowledgeCompass";
+import { cacheCompassResearchResults, readCompassResearchCache, scoreCompassPathway, type KnowledgePathway } from "@/lib/infoDiscovery/knowledgeCompass";
 import { InvestigationsArchive } from "@/components/infoDiscovery/InvestigationsArchive";
 import { BusinessCaseReference } from "@/components/infoDiscovery/BusinessCaseReference";
 
@@ -2551,26 +2551,69 @@ function KnowledgeCompassPage({ onBack }: { onBack: () => void }) {
       setLiveLoading(false);
       return;
     }
+
+    const cached = readCompassResearchCache<ResearchRecord>(clean);
+    if (cached?.length) setLiveRecords(cached);
+    else setLiveRecords([]);
+
     const controller = new AbortController();
     const timer = window.setTimeout(async () => {
       setLiveLoading(true);
       setLiveError("");
       try {
-        const result = await searchResearchRepositories(clean, controller.signal);
-        if (!controller.signal.aborted) {
-          setLiveRecords(result.records);
-          if (result.sourceErrors.length) {
-            setLiveError("Some repositories could not be reached: " + result.sourceErrors.map(item => item.source).join(", "));
+        const [externalResult, approvedResult] = await Promise.allSettled([
+          searchResearchRepositories(clean, controller.signal),
+          searchVerifiedDiscoveryRecords(clean, controller.signal),
+        ]);
+        if (controller.signal.aborted) return;
+
+        const external = externalResult.status === "fulfilled"
+          ? externalResult.value
+          : { records: [] as ResearchRecord[], sourceErrors: [{ source: "Research indexes", message: (externalResult.reason as Error)?.message || "Unavailable" }] };
+        const approved = approvedResult.status === "fulfilled"
+          ? approvedResult.value
+          : [];
+
+        const merged = new Map<string, ResearchRecord>();
+        for (const record of [...external.records, ...approved]) {
+          const doi = record.doi?.toLowerCase().replace(/^https?:\/\/(dx\.)?doi\.org\//, "");
+          const key = doi ? "doi:" + doi : "title:" + record.title.toLocaleLowerCase().trim();
+          const current = merged.get(key);
+          if (!current || record.verificationStatus === "editorially-verified") {
+            merged.set(key, current ? {
+              ...record,
+              sources: Array.from(new Set([...record.sources, ...current.sources])),
+            } : record);
+          } else {
+            current.sources = Array.from(new Set([...current.sources, ...record.sources]));
           }
         }
+
+        const combined = Array.from(merged.values()).sort((a, b) =>
+          Number(b.verificationStatus === "editorially-verified") - Number(a.verificationStatus === "editorially-verified")
+          || (b.year || 0) - (a.year || 0)
+        );
+        setLiveRecords(combined);
+        if (combined.length) cacheCompassResearchResults(clean, combined);
+
+        const errors = [
+          ...external.sourceErrors.map(item => item.source),
+          ...(approvedResult.status === "rejected" ? ["Amineva reviewed library"] : []),
+        ];
+        if (!combined.length && errors.length) {
+          setLiveError("Research sources could not be reached: " + errors.join(", ") + ". Your curated Knowledge Compass pathways remain available.");
+        } else if (errors.length) {
+          setLiveError("Some research sources were unavailable: " + errors.join(", ") + ". Results from available sources are shown.");
+        }
       } catch (error) {
-        if (!controller.signal.aborted && (error as Error)?.name !== "AbortError") {
-          setLiveError("Live repository discovery is temporarily unavailable. Your curated pathways remain available.");
+        if (!controller.signal.aborted) {
+          setLiveError((error as Error)?.message || "Live research discovery is temporarily unavailable. Saved results and curated pathways remain available.");
         }
       } finally {
         if (!controller.signal.aborted) setLiveLoading(false);
       }
-    }, 650);
+    }, 500);
+
     return () => {
       window.clearTimeout(timer);
       controller.abort();
