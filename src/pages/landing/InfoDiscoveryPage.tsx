@@ -28,6 +28,7 @@ import { ProjectGoalTracker } from "@/components/infoDiscovery/ProjectGoalTracke
 import { searchResearchRepositories, type ResearchRecord } from "@/lib/infoDiscovery/researchSearch";
 import { searchDateIncidents, type DateIncidentRecord } from "@/lib/infoDiscovery/askTopic";
 import { searchVerifiedDiscoveryRecords, getVerifiedDiscoveryDocumentUrl } from "@/lib/infoDiscovery/discoveryLibrary";
+import { scoreCompassPathway, type KnowledgePathway } from "@/lib/infoDiscovery/knowledgeCompass";
 import { InvestigationsArchive } from "@/components/infoDiscovery/InvestigationsArchive";
 import { BusinessCaseReference } from "@/components/infoDiscovery/BusinessCaseReference";
 
@@ -2379,19 +2380,6 @@ function ClimateExplorer() {
 }
 
 
-type KnowledgePathway = {
-  id: string;
-  situation: string;
-  subject: string;
-  materialType: string;
-  title: string;
-  creator: string;
-  why: string;
-  perspective?: string;
-  keywords?: string[];
-  audience?: string;
-};
-
 const KNOWLEDGE_PATHWAYS: KnowledgePathway[] = [
   { id: "online-business", subject: "Business and income", situation: "You want to understand how an online business can create real value and income instead of chasing quick-money promises.", materialType: "Book", title: "The Personal MBA", creator: "Josh Kaufman", why: "Introduces core business disciplines such as value creation, marketing, sales, finance and systems in accessible language." },
   { id: "entrepreneurship", subject: "Business and income", situation: "You have an idea and want to understand how to test whether people will actually pay for it before investing heavily.", materialType: "Book", title: "The Mom Test", creator: "Rob Fitzpatrick", why: "Shows how to ask customers useful questions and avoid misleading feedback when validating an idea." },
@@ -2532,29 +2520,6 @@ const KNOWLEDGE_PATHWAYS: KnowledgePathway[] = [
   { id: "music-brain", subject: "Music and the arts", situation: "You want to understand how music interacts with memory, perception, emotion and the brain.", materialType: "Book", title: "Musicophilia", creator: "Oliver Sacks", why: "Explores neurological case studies and the many ways music shapes human experience.", keywords: ["music", "neuroscience", "brain", "psychology", "arts"] },
 ];
 
-const COMPASS_INTENT_GROUPS: Record<string, string[]> = {
-  "earn money online": ["online income", "digital business", "ecommerce", "freelancing", "internet business", "make money online"],
-  "start a business": ["entrepreneurship", "business idea", "startup", "customers", "market validation", "small business"],
-  "poverty and inequality": ["poverty", "inequality", "development", "economic hardship", "low income", "underdevelopment"],
-  "culture and identity": ["culture", "traditions", "customs", "anthropology", "identity", "society"],
-  "become a lawyer": ["law", "legal reasoning", "advocacy", "court", "lawyer", "legal practice"],
-  "become a scientist": ["science", "scientific method", "research", "evidence", "experiments", "discovery"],
-  "become a writer": ["writing", "writer", "storytelling", "communication", "craft", "research"],
-  "understand people": ["psychology", "human behaviour", "decision making", "influence", "relationships", "judgement"],
-  "become a doctor": ["medicine", "medical", "clinical", "health", "diagnosis", "public health"],
-  "build technology": ["technology", "computer", "software", "engineering", "coding", "invention"],
-  "lead a team": ["leadership", "management", "organisation", "team", "negotiation", "systems"],
-  "teach better": ["teaching", "education", "learning", "classroom", "instruction"],
-  "understand africa": ["africa", "african history", "colonialism", "culture", "development"],
-  "african history": ["african history", "ghana", "west africa", "colonialism", "independence", "asante", "history"],
-  "african literature": ["african literature", "nigerian literature", "ghanaian literature", "novel", "poetry", "theatre", "writers"],
-  "african philosophy": ["african philosophy", "akan philosophy", "ethics", "decolonisation", "knowledge", "worldviews"],
-  "african science": ["african science", "indigenous knowledge", "astronomy", "mathematics", "technology", "medicinal plants"],
-  "african governance": ["african governance", "democracy", "political reform", "institutions", "leadership", "citizenship"],
-  "african society": ["african society", "contemporary africa", "african cities", "urbanisation", "identity", "development"],
-  "protect the environment": ["environment", "climate", "ecology", "agriculture", "conservation"],
-};
-
 const COMPASS_STARTERS = [
   "I want to earn money online",
   "I want to understand people and influence",
@@ -2563,29 +2528,6 @@ const COMPASS_STARTERS = [
   "I want to become a scientist",
   "I want to improve my writing",
 ];
-
-function compassTokens(value: string) {
-  return value.toLowerCase().normalize("NFKD").replace(/[^a-z0-9\\s]/g, " ").split(/\\s+/).filter(token => token.length > 2);
-}
-
-function scoreCompassPathway(item: KnowledgePathway, query: string) {
-  const cleanQuery = query.trim().toLowerCase();
-  if (!cleanQuery) return 0;
-  const tokens = compassTokens(cleanQuery);
-  const itemText = [item.situation, item.subject, item.materialType, item.title, item.creator, item.why, ...(item.keywords || [])].join(" ").toLowerCase();
-  const itemTokens = new Set(compassTokens(itemText));
-  let score = 0;
-  for (const token of tokens) if (itemTokens.has(token)) score += 2;
-  if (item.situation.toLowerCase().includes(cleanQuery)) score += 8;
-  if (item.title.toLowerCase().includes(cleanQuery)) score += 5;
-  for (const [phrase, expansions] of Object.entries(COMPASS_INTENT_GROUPS)) {
-    if (cleanQuery.includes(phrase) || expansions.some(term => cleanQuery.includes(term))) {
-      const related = [phrase, ...expansions].flatMap(compassTokens);
-      for (const term of related) if (itemTokens.has(term)) score += 2;
-    }
-  }
-  return score;
-}
 
 function KnowledgeCompassPage({ onBack }: { onBack: () => void }) {
   const [query, setQuery] = useState("");
