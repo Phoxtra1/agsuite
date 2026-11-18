@@ -21,12 +21,9 @@ import { NetworkStatus } from "@/components/pwa/NetworkStatus";
 const Landing = lazyWithRetry(() => import("./pages/landing/Landing"));
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const AboutUs = lazyWithRetry(() => import("./pages/landing/AboutUs"));
-const InfoDiscoveryPage = lazyWithRetry(() => import("./pages/landing/InfoDiscoveryPage"));
 const ExplorePage = lazyWithRetry(() => import("./pages/landing/ExplorePage"));
 const GetStartedPage = lazyWithRetry(() => import("./pages/GetStartedPage"));
 const SwitchDashboard = lazyWithRetry(() => import("./pages/landing/SwitchDashboard"));
-const PortalLayout = lazyWithRetry(() => import("./components/portal/PortalLayout"));
-const PortalAuthGate = lazyWithRetry(() => import("./components/auth/PortalAuthGate"));
 const AminevaImpactPage = lazyWithRetry(() => import("./pages/landing/AminevaImpactPage"));
 const CareerDevelopmentPage = lazyWithRetry(() => import("./pages/landing/CareerDevelopmentPage"));
 const DipaAIPage = lazyWithRetry(() => import("./pages/landing/DipaAIPage"));
@@ -242,18 +239,6 @@ function AppRoutes() {
           {/* Keep the legacy /info-system address working as a homepage alias; it is not a navigation item. */}
           <Route path="info-system" element={<Navigate to="/" replace />} />
           <Route path="get-started" element={<GetStartedPage />} />
-          <Route
-            path="info-discovery"
-            element={<PortalAuthGate><PortalLayout><InfoDiscoveryPage /></PortalLayout></PortalAuthGate>}
-          />
-          <Route
-            path="info-discovery/:categorySlug"
-            element={<PortalAuthGate><PortalLayout><InfoDiscoveryPage /></PortalLayout></PortalAuthGate>}
-          />
-          <Route
-            path="info-discovery/:categorySlug/:topicSlug"
-            element={<PortalAuthGate><PortalLayout><InfoDiscoveryPage /></PortalLayout></PortalAuthGate>}
-          />
           <Route
             path="switch"
             element={<PortalAuthGate><PortalLayout><SwitchDashboard /></PortalLayout></PortalAuthGate>}
