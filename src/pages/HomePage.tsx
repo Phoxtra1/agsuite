@@ -9,10 +9,6 @@ import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVisitorLocation } from "@/hooks/useVisitorLocation";
 import amvLogo from "@/assets/amv_global_logo.png";
-import discoverySearch from "@/assets/info-discovery/discovery-search.svg";
-import connectedKnowledge from "@/assets/info-discovery/connected-knowledge.svg";
-import researchInsight from "@/assets/info-discovery/research-insight.svg";
-import worldOfIdeas from "@/assets/info-discovery/world-of-ideas.svg";
 import AuthCard from "@/components/home/AuthCard";
 
 import { getProductIcon } from "@/lib/products";
@@ -302,7 +298,7 @@ export default function HomePage() {
         <div className="w-full max-w-xl">
           {/* Primary navigation and appearance settings. Workspace is accessed from its dedicated panel below. */}
           <div className="w-full flex justify-end gap-6 text-base font-semibold text-muted-foreground flex-wrap items-center">
-            <button type="button" className="hover:text-foreground transition cursor-pointer text-accent font-bold" onClick={() => navigate("/info-discovery")}>Info Discovery</button>
+            <button type="button" className="hover:text-foreground transition cursor-pointer text-accent font-bold" onClick={() => navigate("/explore")}>Explore</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
@@ -388,19 +384,15 @@ export default function HomePage() {
             </>
           ) : (
             <>
-              <section className="mt-10 rounded-2xl border border-border bg-card p-6 md:p-7">
-                <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                  <Compass className="h-4 w-4" /> Info Discovery
+              <section className="relative mt-10 overflow-hidden rounded-2xl border border-primary/20 bg-card p-6 shadow-sm md:p-7">
+                <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-primary/[0.08] blur-2xl" />
+                <div className="relative flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
+                  <Compass className="h-4 w-4" /> Amineva Global Ecosystem
                 </div>
-                <p className="mt-3 text-sm leading-6 text-muted-foreground">Explore useful knowledge across subjects, places, history, culture, education, business and everyday life. Find clear explanations, understand the context, and follow reliable sources as you discover more.</p>
-                <div className="mt-6 grid grid-cols-2 gap-3" aria-label="Info Discovery artwork">
-                  <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={discoverySearch} alt="A magnifying glass exploring information" className="block h-auto w-full" loading="eager" /></div>
-                  <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={connectedKnowledge} alt="Connected ideas and knowledge" className="block h-auto w-full" loading="lazy" /></div>
-                  <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={researchInsight} alt="Research and evidence" className="block h-auto w-full" loading="lazy" /></div>
-                  <div className="overflow-hidden rounded-xl border border-border/70 bg-muted/20"><img src={worldOfIdeas} alt="A connected world of ideas" className="block h-auto w-full" loading="lazy" /></div>
-                </div>
-                <button type="button" onClick={() => navigate("/info-discovery")} className="mt-5 inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
-                  Explore Info Discovery <ArrowRight className="ml-2 h-4 w-4" />
+                <h2 className="relative mt-3 text-2xl font-semibold tracking-tight text-foreground">Explore</h2>
+                <p className="relative mt-2 text-sm leading-6 text-muted-foreground">Discover the products and platforms across Amineva Global.</p>
+                <button type="button" onClick={() => navigate("/explore")} className="relative mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
+                  Explore products <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
               </section>
 
