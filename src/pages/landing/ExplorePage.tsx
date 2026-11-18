@@ -28,7 +28,7 @@ const products: Product[] = [
 
 const careerOptions: Product[] = [
   { name: "Amineva Impact", description: "Career Development & Exploration Programme.", group: "Impact", icon: Sparkles, href: "https://www.amineva.com/Impact", external: true },
-  { name: "Adesua", description: "Learning and practical education.", group: "Education", icon: GraduationCap, href: "/apps/adesua" },
+  { name: "Adesua", description: "Learning and practical education.", group: "Education", icon: GraduationCap, href: "https://as.amiva.com", external: true },
 ];
 
 const filters = ["All", "Business", "People", "Intelligence", "Agriculture", "Finance", "Information"];
