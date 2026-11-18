@@ -22,6 +22,7 @@ const Landing = lazyWithRetry(() => import("./pages/landing/Landing"));
 const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const AboutUs = lazyWithRetry(() => import("./pages/landing/AboutUs"));
 const InfoDiscoveryPage = lazyWithRetry(() => import("./pages/landing/InfoDiscoveryPage"));
+const ExplorePage = lazyWithRetry(() => import("./pages/landing/ExplorePage"));
 const GetStartedPage = lazyWithRetry(() => import("./pages/GetStartedPage"));
 const SwitchDashboard = lazyWithRetry(() => import("./pages/landing/SwitchDashboard"));
 const PortalLayout = lazyWithRetry(() => import("./components/portal/PortalLayout"));
@@ -236,6 +237,8 @@ function AppRoutes() {
         {/* Landing pages */}
         <Route path="/" element={<Landing />}>
           <Route index element={<PublicHome />} />
+          <Route path="explore" element={<ExplorePage />} />
+          <Route path="explore/:section" element={<ExplorePage />} />
           {/* Keep the legacy /info-system address working as a homepage alias; it is not a navigation item. */}
           <Route path="info-system" element={<Navigate to="/" replace />} />
           <Route path="get-started" element={<GetStartedPage />} />
