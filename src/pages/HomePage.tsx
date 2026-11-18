@@ -334,7 +334,7 @@ export default function HomePage() {
             </div>
             <button
               type="button"
-              onClick={() => navigate(isAuthenticated ? "/info-discovery" : "/get-started?mode=register")}
+              onClick={() => navigate(isAuthenticated ? "/workspace" : "/get-started?mode=register")}
               className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
             >
               {isAuthenticated ? "Open Portal" : "Get Started"}
