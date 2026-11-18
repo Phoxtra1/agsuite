@@ -24,6 +24,8 @@ const AboutUs = lazyWithRetry(() => import("./pages/landing/AboutUs"));
 const ExplorePage = lazyWithRetry(() => import("./pages/landing/ExplorePage"));
 const GetStartedPage = lazyWithRetry(() => import("./pages/GetStartedPage"));
 const SwitchDashboard = lazyWithRetry(() => import("./pages/landing/SwitchDashboard"));
+const PortalLayout = lazyWithRetry(() => import("./components/portal/PortalLayout"));
+const PortalAuthGate = lazyWithRetry(() => import("./components/auth/PortalAuthGate"));
 const AminevaImpactPage = lazyWithRetry(() => import("./pages/landing/AminevaImpactPage"));
 const CareerDevelopmentPage = lazyWithRetry(() => import("./pages/landing/CareerDevelopmentPage"));
 const DipaAIPage = lazyWithRetry(() => import("./pages/landing/DipaAIPage"));
