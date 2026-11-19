@@ -64,7 +64,8 @@ export default function HomePage() {
   const { theme, setTheme } = useTheme();
   const { isAuthenticated } = useAuth();
 
-  const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);\n  const [activeSolutionIndex, setActiveSolutionIndex] = useState(0);
+  const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
+  const [activeSolutionIndex, setActiveSolutionIndex] = useState(0);
   const [authTab, setAuthTab] = useState<"signin" | "register">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
