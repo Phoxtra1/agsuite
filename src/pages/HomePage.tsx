@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useCategoryProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
-import { Clock, XCircle, ArrowUpRight, ChevronRight, Compass, Settings, Sun, Moon, LayoutDashboard, GraduationCap, Sprout, Wallet, Package, BrainCircuit, BriefcaseBusiness, Clock3, FileText, Sheet, Presentation, ClipboardList } from "lucide-react";
+import { Clock, XCircle, ArrowUpRight, ChevronRight, Compass, Settings, Sun, Moon, LayoutDashboard, GraduationCap, Sprout, Wallet, Package, BrainCircuit, BriefcaseBusiness, Clock3, FileText, Sheet, Presentation, ClipboardList, Bell, Settings2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVisitorLocation } from "@/hooks/useVisitorLocation";
 import amvLogo from "@/assets/amv_global_logo.png";
 import AuthCard from "@/components/home/AuthCard";
+import { ApplicationHubTools } from "@/components/home/ApplicationHubTools";
 
 import { getProductIcon } from "@/lib/products";
 import { PUBLIC_AUTH_PAUSED, publicEntryPath } from "@/lib/auth/availability";
@@ -89,6 +90,8 @@ export default function HomePage() {
 
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
   const [recentSolutionIds, setRecentSolutionIds] = useState<string[]>(readRecentSolutions);
+  const [applicationHubOpen, setApplicationHubOpen] = useState(false);
+  const [applicationHubTab, setApplicationHubTab] = useState<"notifications" | "settings" | "account" | "about" | "devices">("notifications");
   const [authTab, setAuthTab] = useState<"signin" | "register">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -435,9 +438,11 @@ export default function HomePage() {
                     <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">Your Amineva environment</h2>
                     <p className="mt-1 text-sm leading-5 text-muted-foreground">One place to access your solutions and productivity workspace.</p>
                   </div>
-                  <span className="inline-flex items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-[10px] font-medium text-muted-foreground">
-                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ecosystem gateway
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => { setApplicationHubTab("notifications"); setApplicationHubOpen(true); }} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:border-primary/40 hover:bg-muted"><Bell className="h-4 w-4" /> Notifications</button>
+                    <button type="button" onClick={() => { setApplicationHubTab("settings"); setApplicationHubOpen(true); }} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:border-primary/40 hover:bg-muted"><Settings2 className="h-4 w-4" /> Settings</button>
+                    <span className="hidden items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-[10px] font-medium text-muted-foreground xl:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ecosystem gateway</span>
+                  </div>
                 </div>
 
                 <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card p-4 shadow-sm sm:p-5">
@@ -523,6 +528,7 @@ export default function HomePage() {
                   ) : <p className="mt-2 text-[10px] leading-4 text-muted-foreground">Solutions you open from this device will appear here for quick access.</p>}
                 </div>
               </section>
+              <ApplicationHubTools open={applicationHubOpen} onOpenChange={setApplicationHubOpen} initialTab={applicationHubTab} />
 
             </>
           )}
