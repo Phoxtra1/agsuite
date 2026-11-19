@@ -17,18 +17,18 @@ type Product = {
 };
 
 const products: Product[] = [
-  { name: "Info Solutions", description: "Discover information. Access professional services.", group: "Information", icon: Compass, href: "https://info.amiva.com", external: true },
+  { name: "Info Solutions", description: "Discover information. Access professional services.", group: "Information", icon: Compass, href: "https://info.amineva.com", external: true },
   { name: "Career & Education", description: "Explore pathways, learning and opportunity.", group: "People", icon: GraduationCap, href: "/explore/career-education" },
-  { name: "AgroClimate", description: "Agriculture and climate intelligence.", group: "Agriculture", icon: Sprout, href: "https://agro.amiva.com", external: true },
+  { name: "AgroClimate", description: "Agriculture and climate intelligence.", group: "Agriculture", icon: Sprout, href: "https://agro.amineva.com", external: true },
   { name: "DataLens", description: "A new service is in development.", group: "Business", icon: BriefcaseBusiness, status: "coming-soon" },
-  { name: "Sikasem", description: "Financial operations and management.", group: "Finance", icon: Wallet, href: "https://ops.amiva.com", external: true },
-  { name: "Inventra", description: "Inventory and sales management.", group: "Business", icon: Package, href: "https://stock.amiva.com", external: true },
-  { name: "Dipa", description: "Artificial intelligence.", group: "Intelligence", icon: BrainCircuit, href: "https://ode.amiva.com", external: true },
+  { name: "Sikasem", description: "Financial operations and management.", group: "Finance", icon: Wallet, href: "https://ops.amineva.com", external: true },
+  { name: "Inventra", description: "Inventory and sales management.", group: "Business", icon: Package, href: "https://stock.amineva.com", external: true },
+  { name: "Dipa", description: "Artificial intelligence.", group: "Intelligence", icon: BrainCircuit, href: "https://ode.amineva.com", external: true },
 ];
 
 const careerOptions: Product[] = [
   { name: "Amineva Impact", description: "Career Development & Exploration Programme.", group: "Impact", icon: Sparkles, href: "https://www.amineva.com/Impact", external: true },
-  { name: "Adesua", description: "Learning and practical education.", group: "Education", icon: GraduationCap, href: "https://as.amiva.com", external: true },
+  { name: "Adesua", description: "Learning and practical education.", group: "Education", icon: GraduationCap, href: "https://as.amineva.com", external: true },
 ];
 
 const filters = ["All", "Business", "People", "Intelligence", "Agriculture", "Finance", "Information"];
