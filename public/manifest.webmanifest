@@ -1,7 +1,7 @@
 {
-  "name": "Amineva Global",
+  "name": "Amineva",
   "short_name": "Amineva",
-  "description": "Amineva Global — public information, programmes and applications, with offline access to previously loaded pages and locally saved work.",
+  "description": "Amineva — an integrated application environment for accessing Amineva products, services and workspace tools.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
