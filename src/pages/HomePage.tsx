@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useCategoryProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
-import { Clock, XCircle, ArrowRight, Compass, Settings, Sun, Moon } from "lucide-react";
+import { Clock, XCircle, ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Compass, Settings, Sun, Moon, GraduationCap, Sprout, Wallet, Package, BrainCircuit, BriefcaseBusiness } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -48,6 +48,16 @@ function getStatusBadge(status: ProductData["status"]) {
 }
 
 
+const solutionSpotlights = [
+  { name: "Info Solutions", category: "Information discovery", description: "Discover, assess and verify information, then turn findings into clear, useful outcomes.", icon: Compass, status: "Available" },
+  { name: "Career & Education", category: "People and opportunity", description: "Explore educational pathways, career direction and practical learning opportunities.", icon: GraduationCap, status: "Explore programme" },
+  { name: "AgroClimate", category: "Agriculture and climate", description: "Technology and intelligence supporting agricultural decisions and climate resilience.", icon: Sprout, status: "Platform" },
+  { name: "SikaSem", category: "Financial operations", description: "Operational tools for mobile money, savings, lending and financial service providers.", icon: Wallet, status: "Platform" },
+  { name: "Inventra", category: "Business operations", description: "Manage inventory movement, stock visibility and sales operations.", icon: Package, status: "Platform" },
+  { name: "Dipa", category: "Applied artificial intelligence", description: "AI capabilities designed to support practical workflows and specialised applications.", icon: BrainCircuit, status: "Platform" },
+  { name: "DataLens", category: "IT support and services", description: "Web application maintenance, technical support and service request management.", icon: BriefcaseBusiness, status: "In development" },
+];
+
 export default function HomePage() {
   const navigate = useNavigate();
   const { products } = useCategoryProducts();
@@ -55,6 +65,7 @@ export default function HomePage() {
   const { isAuthenticated } = useAuth();
 
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
+  const [activeSolutionIndex, setActiveSolutionIndex] = useState(0);
   const [authTab, setAuthTab] = useState<"signin" | "register">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -68,6 +79,18 @@ export default function HomePage() {
     const id = window.setInterval(() => setNow(new Date()), 1000);
     return () => window.clearInterval(id);
   }, []);
+
+  useEffect(() => {
+    const timer = window.setInterval(() => {
+      setActiveSolutionIndex((current) => (current + 1) % solutionSpotlights.length);
+    }, 5600);
+    return () => window.clearInterval(timer);
+  }, []);
+
+  const showPreviousSolution = () => setActiveSolutionIndex((current) => (current - 1 + solutionSpotlights.length) % solutionSpotlights.length);
+  const showNextSolution = () => setActiveSolutionIndex((current) => (current + 1) % solutionSpotlights.length);
+  const activeSolution = solutionSpotlights[activeSolutionIndex];
+  const ActiveSolutionIcon = activeSolution.icon;
 
   const { locationLabel: visitorLocationLabel, timeZone: visitorTimeZone } = useVisitorLocation();
   const displayTimeZone = visitorTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || "Etc/UTC";
@@ -298,7 +321,7 @@ export default function HomePage() {
         <div className="w-full max-w-xl">
           {/* Primary navigation and appearance settings. Workspace is accessed from its dedicated panel below. */}
           <div className="w-full flex justify-end gap-6 text-base font-semibold text-muted-foreground flex-wrap items-center">
-            <button type="button" className="hover:text-foreground transition cursor-pointer text-accent font-bold" onClick={() => navigate("/explore")}>Explore</button>
+            <button type="button" className="hover:text-foreground transition cursor-pointer text-accent font-bold" onClick={() => navigate("/explore")}>Solutions</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>
             <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
@@ -389,13 +412,51 @@ export default function HomePage() {
                 <div className="relative flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
                   <Compass className="h-4 w-4" /> Amineva Global Ecosystem
                 </div>
-                <h2 className="relative mt-3 text-2xl font-semibold tracking-tight text-foreground">Explore</h2>
+                <h2 className="relative mt-3 text-2xl font-semibold tracking-tight text-foreground">Solutions</h2>
                 <p className="relative mt-2 text-sm leading-6 text-muted-foreground">Discover the products and platforms across Amineva Global.</p>
                 <button type="button" onClick={() => navigate("/explore")} className="relative mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
-                  Explore products <ArrowRight className="ml-2 h-4 w-4" />
+                  Explore Solutions <ArrowRight className="ml-2 h-4 w-4" />
                 </button>
               </section>
 
+              <section aria-label="Amineva Global solution spotlight" className="mt-4 overflow-hidden rounded-2xl border border-border/80 bg-card/80 shadow-sm">
+                <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.12)]" />
+                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Solution spotlight</span>
+                  </div>
+                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground">{String(activeSolutionIndex + 1).padStart(2, "0")} <span className="text-muted-foreground/50">/</span> {String(solutionSpotlights.length).padStart(2, "0")}</span>
+                </div>
+                <div className="relative min-h-[150px] p-4 sm:p-5">
+                  <AnimatePresence mode="wait">
+                    <motion.div key={activeSolution.name} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.24 }} className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/[0.08] text-primary shadow-inner">
+                        <ActiveSolutionIcon className="h-6 w-6" strokeWidth={1.7} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-2">
+                          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">{activeSolution.category}</span>
+                          <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[9px] font-medium text-muted-foreground">{activeSolution.status}</span>
+                        </div>
+                        <h3 className="mt-1.5 text-base font-semibold tracking-tight text-foreground">{activeSolution.name}</h3>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">{activeSolution.description}</p>
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                </div>
+                <div className="flex items-center justify-between border-t border-border/70 bg-muted/25 px-4 py-2.5">
+                  <div className="flex items-center gap-1.5" aria-label="Choose solution">
+                    {solutionSpotlights.map((solution, index) => (
+                      <button key={solution.name} type="button" aria-label={`Show ${solution.name}`} aria-pressed={activeSolutionIndex === index} onClick={() => setActiveSolutionIndex(index)} className={`h-1.5 rounded-full transition-all duration-300 ${activeSolutionIndex === index ? "w-5 bg-primary" : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"}`} />
+                    ))}
+                  </div>
+                  <div className="flex items-center gap-1">
+                    <button type="button" onClick={showPreviousSolution} aria-label="Previous solution" className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition hover:border-primary/40 hover:text-foreground"><ChevronLeft className="h-4 w-4" /></button>
+                    <button type="button" onClick={showNextSolution} aria-label="Next solution" className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition hover:border-primary/40 hover:text-foreground"><ChevronRight className="h-4 w-4" /></button>
+                    <button type="button" onClick={() => navigate("/explore")} className="ml-1 inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-primary transition hover:bg-primary/10">All solutions <ArrowUpRight className="h-3.5 w-3.5" /></button>
+                  </div>
+                </div>
+              </section>
             </>
           )}
         </div>
