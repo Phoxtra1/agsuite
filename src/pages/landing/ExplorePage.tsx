@@ -76,7 +76,7 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
   if (product.external) {
     return <a href={product.href} target="_blank" rel="noopener noreferrer" aria-label={`Open ${product.name} solution`}>{content}</a>;
   }
-  return <Link to={product.href} aria-label={`Explore ${product.name}`}>{content}</Link>;
+  return <Link to={product.href} aria-label={`Open ${product.name} solution`}>{content}</Link>;
 }
 
 export default function ExplorePage() {
