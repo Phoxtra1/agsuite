@@ -2,7 +2,7 @@ import React, { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import {
-  ArrowLeft, ArrowUpRight, GraduationCap, Search, X, Sparkles
+  ArrowLeft, ArrowUpRight, Compass, GraduationCap, Search, X, Sparkles
 } from "lucide-react";
 
 type Product = {
@@ -17,7 +17,7 @@ type Product = {
 };
 
 const products: Product[] = [
-  { name: "Info Solutions", description: "Discover information. Access professional services.", group: "Information", href: "https://info.amineva.com", external: true },
+  { name: "Info Solutions", description: "Discover information. Access professional services.", group: "Information", icon: Compass, href: "https://info.amineva.com", external: true },
   { name: "Career & Education", description: "Explore pathways, learning and opportunity.", group: "People", image: "/adesua.png", href: "/explore/career-education" },
   { name: "AgroClimate", description: "Agriculture and climate intelligence.", group: "Agriculture", image: "/agroclimate.png", href: "https://agro.amineva.com", external: true },
   { name: "DataLens", description: "A new service is in development.", group: "Business", image: "/datalens.png", status: "coming-soon" },
@@ -33,7 +33,7 @@ const careerOptions: Product[] = [
 
 const filters = ["All", "Business", "People", "Intelligence", "Agriculture", "Finance", "Information"];
 
-function ProductCard({ product, index }: { product: Product; index: number }) {
+function ProductCard({ product, index, showDescription = true, showGroup = false }: { product: Product; index: number; showDescription?: boolean; showGroup?: boolean }) {
   const Icon = product.icon;
   const content = (
     <motion.article
@@ -41,12 +41,12 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32, delay: index * 0.045 }}
       whileHover={product.status ? undefined : { y: -4 }}
-      className={`group relative flex min-h-[148px] flex-col overflow-hidden rounded-2xl border border-border/80 bg-card/90 p-4 shadow-sm transition-all duration-300 hover:border-primary/45 hover:shadow-lg ${product.status ? "opacity-80" : ""}`}
+      className={`group relative flex min-h-[132px] flex-col overflow-hidden rounded-xl border border-border/80 bg-card/90 p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/45 hover:shadow-lg sm:min-h-[138px] sm:p-3.5 ${product.status ? "opacity-80" : ""}`}
     >
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/[0.06] blur-2xl transition-all duration-500 group-hover:bg-primary/[0.13]" />
       <div className="relative flex items-start justify-between gap-3">
         {(product.image || Icon) && (
-          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-primary/15 bg-primary/[0.08] p-1 transition-transform duration-300 group-hover:scale-105">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-primary/15 bg-primary/[0.08] p-1 transition-transform duration-300 group-hover:scale-105">
             {product.image ? (
               <img src={product.image} alt={`${product.name} icon`} className="h-full w-full object-contain" />
             ) : Icon ? (
@@ -60,12 +60,13 @@ function ProductCard({ product, index }: { product: Product; index: number }) {
           <ArrowUpRight className="h-4 w-4 text-muted-foreground/60 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
         )}
       </div>
-      <div className="relative mt-4">
-        <h2 className="text-[15px] font-semibold tracking-tight text-foreground">{product.name}</h2>
-        <p className="mt-1 text-xs leading-5 text-muted-foreground">{product.description}</p>
+      <div className="relative mt-3">
+        <h2 className="text-sm font-semibold leading-snug tracking-tight text-foreground sm:text-[14px]">{product.name}</h2>
+        {showDescription && <p className="mt-1 text-xs leading-5 text-muted-foreground">{product.description}</p>}
+        {showGroup && <span className="mt-1.5 inline-flex rounded-full border border-border/80 bg-muted/55 px-2 py-0.5 text-[9px] font-medium tracking-wide text-muted-foreground">{product.group}</span>}
       </div>
-      <div className="relative mt-auto pt-3 text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/80">
-        Solutions
+      <div className="relative mt-auto pt-2.5 text-[9px] font-semibold uppercase tracking-[0.14em] text-primary/80">
+        Solution
       </div>
     </motion.article>
   );
@@ -119,21 +120,26 @@ export default function ExplorePage() {
                 <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted-foreground">One ecosystem. Connected solutions.</p>
               </div>
 
-              <div className="mx-auto mb-5 max-w-2xl">
+              <div className="mx-auto mb-3 max-w-2xl">
                 <div className="flex h-12 items-center gap-3 rounded-2xl border border-border bg-card/90 px-4 shadow-sm transition focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10">
                   <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
                   <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a solution..." aria-label="Find a solution" className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/70" />
                   {query && <button type="button" onClick={clearSearch} aria-label="Clear search" className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"><X className="h-4 w-4" /></button>}
                 </div>
               </div>
+              <p className="mx-auto mb-6 max-w-2xl text-center text-xs leading-5 text-muted-foreground sm:text-sm">Explore our connected solutions across business, people, intelligence, agriculture, finance and information.</p>
 
               <div className="mb-7 flex flex-wrap justify-center gap-2">
                 {filters.map((item) => <button key={item} type="button" onClick={() => setFilter(item)} className={`rounded-full border px-3 py-1.5 text-[11px] font-medium transition ${filter === item ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-card/70 text-muted-foreground hover:border-primary/35 hover:text-foreground"}`}>{item}</button>)}
               </div>
 
               {visibleProducts.length ? (
-                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-                  {visibleProducts.map((product, index) => <ProductCard key={product.name} product={product} index={index} />)}
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-10">
+                  {visibleProducts.map((product, index) => (
+                    <div key={product.name} className={index >= 5 ? "col-span-1 lg:col-span-5" : "col-span-1 lg:col-span-2"}>
+                      <ProductCard product={product} index={index} showDescription={false} showGroup />
+                    </div>
+                  ))}
                 </div>
               ) : (
                 <div className="rounded-2xl border border-dashed border-border bg-card/60 px-5 py-12 text-center">
