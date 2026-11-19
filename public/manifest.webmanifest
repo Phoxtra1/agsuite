@@ -10,21 +10,10 @@
   "icons": [
     {
       "src": "/amv_logo.png",
-      "sizes": "192x192",
+      "sizes": "742x742",
       "type": "image/png",
       "purpose": "any"
-    },
-    {
-      "src": "/amv_logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "/amv_logo.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
     }
-  ]
+  ],
+  "id": "/"
 }
