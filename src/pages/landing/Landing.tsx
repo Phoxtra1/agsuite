@@ -8,7 +8,7 @@ import amvLogo from "@/assets/amv_global_logo.png";
 import GlobalFooter from "@/components/layout/GlobalFooter";
 
 const navLinks = [
-  { label: "Info Discovery", to: "/info-discovery" },
+  { label: "Explore", to: "/explore" },
   { label: "About Us", to: "/about-us" },
   { label: "Support", to: "/support" },
   { label: "FAQs", to: "/faqs" },
@@ -17,12 +17,8 @@ const navLinks = [
 export default function Landing() {
   const location = useLocation();
   const isHome = location.pathname === "/";
-  // These routes render inside the independent account portal shell.
-  const isAccountPortal =
-    location.pathname === "/info-discovery" ||
-    location.pathname.startsWith("/info-discovery/") ||
-    location.pathname === "/payments" ||
-    location.pathname === "/switch";
+  // These routes render inside the account portal shell.
+  const isAccountPortal = location.pathname === "/payments" || location.pathname === "/switch";
   const [mobileOpen, setMobileOpen] = useState(false);
   const { theme, setTheme } = useTheme();
   const { isAuthenticated } = useAuth();
@@ -51,7 +47,7 @@ export default function Landing() {
               ))}
               <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground" aria-label="Toggle appearance settings"><Settings className="h-4 w-4" /> Settings</button>
               <Link
-                to="/info-discovery"
+                to="/explore"
                 className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
               >
                 Get Started
@@ -80,7 +76,7 @@ export default function Landing() {
                   ))}
                   <button type="button" onClick={() => { setTheme(theme === "dark" ? "light" : "dark"); setMobileOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-foreground hover:bg-accent/10"><Settings className="h-4 w-4" /> Settings <span className="ml-auto text-xs text-muted-foreground">{theme === "dark" ? "Dark mode" : "Light mode"}</span></button>
                   <Link
-                    to="/info-discovery"
+                    to="/explore"
                     onClick={() => setMobileOpen(false)}
                     className="mt-2 flex items-center justify-center rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground"
                   >
