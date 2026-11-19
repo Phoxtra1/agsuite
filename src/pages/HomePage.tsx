@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useCategoryProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
-import { Clock, XCircle, ArrowRight, ArrowUpRight, ChevronRight, Compass, Settings, Sun, Moon, LayoutDashboard, GraduationCap, Sprout, Wallet, Package, BrainCircuit, BriefcaseBusiness, Clock3, FileText, Sheet, Presentation, ClipboardList } from "lucide-react";
+import { Clock, XCircle, ArrowUpRight, ChevronRight, Compass, Settings, Sun, Moon, LayoutDashboard, GraduationCap, Sprout, Wallet, Package, BrainCircuit, BriefcaseBusiness, Clock3, FileText, Sheet, Presentation, ClipboardList } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
