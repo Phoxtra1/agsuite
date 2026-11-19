@@ -109,14 +109,14 @@ export default function ExplorePage() {
             <motion.section key="all-products" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} transition={{ duration: 0.22 }}>
               <div className="mb-9 text-center">
                 <span className="inline-flex items-center gap-2 rounded-full border border-primary/20 bg-primary/[0.07] px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-primary"><Sparkles className="h-3.5 w-3.5" /> Amineva Global</span>
-                <h1 className="mt-5 text-4xl font-bold tracking-tight sm:text-5xl">Explore</h1>
+                <h1 className="mt-5 text-4xl font-bold tracking-tight sm:text-5xl">Solutions</h1>
                 <p className="mx-auto mt-3 max-w-xl text-sm leading-6 text-muted-foreground">One ecosystem. Connected solutions.</p>
               </div>
 
               <div className="mx-auto mb-5 max-w-2xl">
                 <div className="flex h-12 items-center gap-3 rounded-2xl border border-border bg-card/90 px-4 shadow-sm transition focus-within:border-primary/50 focus-within:ring-2 focus-within:ring-primary/10">
                   <Search className="h-4 w-4 shrink-0 text-muted-foreground" />
-                  <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a product..." aria-label="Find a product" className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/70" />
+                  <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Find a solution..." aria-label="Find a solution" className="h-full min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground/70" />
                   {query && <button type="button" onClick={clearSearch} aria-label="Clear search" className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"><X className="h-4 w-4" /></button>}
                 </div>
               </div>
