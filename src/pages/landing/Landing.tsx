@@ -8,7 +8,7 @@ import amvLogo from "@/assets/amv_global_logo.png";
 import GlobalFooter from "@/components/layout/GlobalFooter";
 
 const navLinks = [
-  { label: "Explore", to: "/explore" },
+  { label: "Solutions", to: "/explore" },
   { label: "About Us", to: "/about-us" },
   { label: "Support", to: "/support" },
   { label: "FAQs", to: "/faqs" },
