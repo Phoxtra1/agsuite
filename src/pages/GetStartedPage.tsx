@@ -1,74 +1,54 @@
-import { useEffect, useState } from "react";
-import { Navigate, useNavigate, useSearchParams } from "react-router-dom";
-import { PUBLIC_AUTH_PAUSED, publicEntryPath } from "@/lib/auth/availability";
-import { Compass, BriefcaseBusiness } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
-import AuthCard from "@/components/home/AuthCard";
-import type { ProductData } from "@/types/product";
-
-const portalAccount: ProductData = {
-  id: "information-discovery",
-  name: "Info Discovery",
-  shortName: "Amineva Global",
-  description: "Explore Info Discovery.",
-  status: "live",
-  order: 0,
-};
+import { useState } from "react";
+import { Link, useSearchParams } from "react-router-dom";
+import { ArrowLeft, LockKeyhole, Mail, UserRound } from "lucide-react";
 
 export default function GetStartedPage() {
-  const navigate = useNavigate();
   const [params] = useSearchParams();
-  const { isAuthenticated, isLoading } = useAuth();
-  const [authTab, setAuthTab] = useState<"signin" | "register">(
-    params.get("mode") === "register" ? "register" : "signin"
-  );
+  const [mode, setMode] = useState<"register" | "signin">(params.get("mode") === "signin" ? "signin" : "register");
+  const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  useEffect(() => {
-    if (PUBLIC_AUTH_PAUSED) return;
-    if (!isLoading && isAuthenticated) navigate("/info-discovery", { replace: true });
-  }, [isAuthenticated, isLoading, navigate]);
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [message, setMessage] = useState("");
+  const [error, setError] = useState("");
 
-  if (PUBLIC_AUTH_PAUSED) return <Navigate to={publicEntryPath(params.get("returnTo"))} replace />;
+  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    setError("");
+    setMessage("");
+    if (!email.trim() || !password) return setError("Enter your email address and password.");
+    if (mode === "register") {
+      if (!name.trim()) return setError("Enter your name.");
+      if (password.length < 8) return setError("Use a password with at least 8 characters.");
+      if (password !== confirmPassword) return setError("The passwords do not match.");
+    }
+    setMessage("Your form is ready. Account registration and sign-in will be activated when the authentication backend is available. No information has been submitted or stored.");
+  };
 
   return (
-    <main className="min-h-[calc(100vh-4rem)] bg-background px-5 py-10 text-foreground md:px-8 md:py-16">
-      <div className="mx-auto grid max-w-6xl items-center gap-10 lg:grid-cols-[minmax(0,1fr)_minmax(360px,440px)] lg:gap-16">
-        <section className="max-w-2xl">
-          <div className="inline-flex items-center gap-2 rounded-full border border-accent/25 bg-accent/10 px-3 py-1.5 text-xs font-semibold uppercase tracking-[0.16em] text-accent">
-            <Compass className="h-4 w-4" />
+    <main className="flex min-h-[calc(100vh-4rem)] items-center justify-center bg-background px-4 py-12 text-foreground">
+      <div className="w-full max-w-md">
+        <Link to="/" className="mb-7 inline-flex items-center gap-2 text-sm text-muted-foreground transition hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Back to home</Link>
+        <section className="rounded-2xl border border-border bg-card p-6 shadow-xl sm:p-8">
+          <div className="mb-7 text-center">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-primary/10 text-primary"><LockKeyhole className="h-6 w-6" /></div>
+            <h1 className="mt-4 text-2xl font-semibold">{mode === "register" ? "Create your Amineva account" : "Sign in to Amineva"}</h1>
+            <p className="mt-2 text-sm text-muted-foreground">Register or sign in to continue to Solutions and your Workspace.</p>
           </div>
-          <h1 className="mt-5 text-4xl font-semibold leading-tight tracking-tight md:text-5xl">
-            Welcome to Amineva Global
-          </h1>
-          <p className="mt-5 text-base leading-8 text-muted-foreground">
-            Sign in to continue to your selected service.
-          </p>
-          <div className="mt-8 grid gap-3 sm:grid-cols-3">
-            <div className="rounded-2xl border border-border bg-card p-4">
-              <Compass className="h-5 w-5 text-accent" />
-              <h2 className="mt-3 text-sm font-semibold">Info Discovery</h2>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">Explore connected subjects, investigation guides and original sources.</p>
-            </div>
-            <div className="rounded-2xl border border-border bg-card p-4">
-              <BriefcaseBusiness className="h-5 w-5 text-accent" />
-              <h2 className="mt-3 text-sm font-semibold">Workspace</h2>
-              <p className="mt-1 text-xs leading-5 text-muted-foreground">Open Docs, Sheets, Slides, Forms and Drive without a second login.</p>
-            </div>
+          <div className="mb-6 grid grid-cols-2 rounded-lg bg-muted p-1">
+            <button type="button" onClick={() => { setMode("register"); setError(""); setMessage(""); }} className={`rounded-md px-3 py-2 text-sm font-medium ${mode === "register" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}>Register</button>
+            <button type="button" onClick={() => { setMode("signin"); setError(""); setMessage(""); }} className={`rounded-md px-3 py-2 text-sm font-medium ${mode === "signin" ? "bg-background text-foreground shadow-sm" : "text-muted-foreground"}`}>Sign In</button>
           </div>
-        </section>
-
-        <section className="w-full" aria-label="Sign in or create an account">
-          <AuthCard
-            product={portalAccount}
-            authTab={authTab}
-            setAuthTab={setAuthTab}
-            email={email}
-            setEmail={setEmail}
-            password={password}
-            setPassword={setPassword}
-            onChangeSelection={() => navigate("/", { replace: true })}
-          />
+          <form onSubmit={handleSubmit} className="space-y-4">
+            {mode === "register" && <div><label className="mb-1.5 block text-sm font-medium">Full name</label><div className="relative"><UserRound className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" /><input required autoComplete="name" value={name} onChange={e => setName(e.target.value)} className="h-11 w-full rounded-lg border border-input bg-background pl-10 pr-3 text-sm outline-none focus:border-primary" placeholder="Your full name" /></div></div>}
+            <div><label className="mb-1.5 block text-sm font-medium">Email address</label><div className="relative"><Mail className="pointer-events-none absolute left-3 top-3.5 h-4 w-4 text-muted-foreground" /><input required type="email" autoComplete="email" value={email} onChange={e => setEmail(e.target.value)} className="h-11 w-full rounded-lg border border-input bg-background pl-10 pr-3 text-sm outline-none focus:border-primary" placeholder="name@example.com" /></div></div>
+            <div><label className="mb-1.5 block text-sm font-medium">Password</label><input required type="password" autoComplete={mode === "register" ? "new-password" : "current-password"} value={password} onChange={e => setPassword(e.target.value)} className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary" placeholder="At least 8 characters" /></div>
+            {mode === "register" && <div><label className="mb-1.5 block text-sm font-medium">Confirm password</label><input required type="password" autoComplete="new-password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} className="h-11 w-full rounded-lg border border-input bg-background px-3 text-sm outline-none focus:border-primary" placeholder="Enter your password again" /></div>}
+            {error && <p role="alert" className="rounded-lg border border-destructive/30 bg-destructive/10 p-3 text-sm text-destructive">{error}</p>}
+            {message && <p role="status" className="rounded-lg border border-primary/25 bg-primary/5 p-3 text-sm text-muted-foreground">{message}</p>}
+            <button type="submit" className="h-11 w-full rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">{mode === "register" ? "Create account" : "Sign in"}</button>
+          </form>
+          <p className="mt-5 text-center text-xs leading-5 text-muted-foreground">Authentication is temporarily in preparation. This form is frontend-only and does not send or save your details.</p>
         </section>
       </div>
     </main>
