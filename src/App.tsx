@@ -23,6 +23,7 @@ const HomePage = lazyWithRetry(() => import("./pages/HomePage"));
 const AboutUs = lazyWithRetry(() => import("./pages/landing/AboutUs"));
 const ExplorePage = lazyWithRetry(() => import("./pages/landing/ExplorePage"));
 const GetStartedPage = lazyWithRetry(() => import("./pages/GetStartedPage"));
+const AccountSettingsPage = lazyWithRetry(() => import("./pages/AccountSettingsPage"));
 const SwitchDashboard = lazyWithRetry(() => import("./pages/landing/SwitchDashboard"));
 const PortalLayout = lazyWithRetry(() => import("./components/portal/PortalLayout"));
 const PortalAuthGate = lazyWithRetry(() => import("./components/auth/PortalAuthGate"));
@@ -241,6 +242,7 @@ function AppRoutes() {
           {/* Keep the legacy /info-system address working as a homepage alias; it is not a navigation item. */}
           <Route path="info-system" element={<Navigate to="/" replace />} />
           <Route path="get-started" element={<GetStartedPage />} />
+          <Route path="account-settings" element={<AccountSettingsPage />} />
           <Route
             path="switch"
             element={<PortalAuthGate><PortalLayout><SwitchDashboard /></PortalLayout></PortalAuthGate>}
