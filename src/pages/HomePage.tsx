@@ -3,13 +3,14 @@ import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useCategoryProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
-import { Clock, XCircle, ArrowRight, ArrowUpRight, ChevronLeft, ChevronRight, Compass, Settings, Sun, Moon, GraduationCap, Sprout, Wallet, Package, BrainCircuit, BriefcaseBusiness } from "lucide-react";
+import { Clock, XCircle, ArrowUpRight, ChevronRight, Compass, Settings, Sun, Moon, LayoutDashboard, GraduationCap, Sprout, Wallet, Package, BrainCircuit, BriefcaseBusiness, Clock3, FileText, Sheet, Presentation, ClipboardList, Bell, Settings2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import { useVisitorLocation } from "@/hooks/useVisitorLocation";
 import amvLogo from "@/assets/amv_global_logo.png";
 import AuthCard from "@/components/home/AuthCard";
+import { ApplicationHubTools } from "@/components/home/ApplicationHubTools";
 
 import { getProductIcon } from "@/lib/products";
 import { PUBLIC_AUTH_PAUSED, publicEntryPath } from "@/lib/auth/availability";
@@ -22,6 +23,39 @@ type CountryCurrencyOption = {
 
 function getProductIconSafe(productId: string) {
   return getProductIcon(productId);
+}
+
+type DashboardSolution = {
+  id: string;
+  name: string;
+  description: string;
+  category: string;
+  href?: string;
+  external?: boolean;
+  comingSoon?: boolean;
+  icon: React.ElementType;
+};
+
+const dashboardSolutions: DashboardSolution[] = [
+  { id: "info-solutions", name: "Info Solutions", description: "Discover, assess and verify information, with research and useful outcomes.", category: "Information", href: "https://info.amineva.com", external: true, icon: Compass },
+  { id: "career-education", name: "Career & Education", description: "Explore career development, educational pathways and learning opportunities.", category: "People", href: "/explore/career-education", icon: GraduationCap },
+  { id: "agroclimate", name: "AgroClimate", description: "Agricultural intelligence, climate insights and farm-focused tools.", category: "Agriculture", href: "https://agro.amineva.com", external: true, icon: Sprout },
+  { id: "sikasem", name: "SikaSem", description: "Financial operations for mobile money and financial service providers.", category: "Finance", href: "https://ops.amineva.com", external: true, icon: Wallet },
+  { id: "inventra", name: "Inventra", description: "Inventory, stock movement and sales management.", category: "Business", href: "https://stock.amineva.com", external: true, icon: Package },
+  { id: "dipa", name: "Dipa", description: "Applied AI capabilities for specialised workflows and services.", category: "Intelligence", href: "https://ode.amineva.com", external: true, icon: BrainCircuit },
+  { id: "datalens", name: "DataLens", description: "IT support and web application services.", category: "Business", comingSoon: true, icon: BriefcaseBusiness },
+];
+
+const RECENT_SOLUTIONS_KEY = "amineva_recent_solutions_v1";
+
+function readRecentSolutions(): string[] {
+  try {
+    const stored = localStorage.getItem(RECENT_SOLUTIONS_KEY);
+    const parsed = stored ? JSON.parse(stored) : [];
+    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
+  } catch {
+    return [];
+  }
 }
 
 function getStatusBadge(status: ProductData["status"]) {
@@ -65,7 +99,9 @@ export default function HomePage() {
   const { isAuthenticated } = useAuth();
 
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
-  const [activeSolutionIndex, setActiveSolutionIndex] = useState(0);
+  const [recentSolutionIds, setRecentSolutionIds] = useState<string[]>(readRecentSolutions);
+  const [applicationHubOpen, setApplicationHubOpen] = useState(false);
+  const [applicationHubTab, setApplicationHubTab] = useState<"notifications" | "settings" | "account" | "about" | "devices">("notifications");
   const [authTab, setAuthTab] = useState<"signin" | "register">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -142,6 +178,14 @@ export default function HomePage() {
     return true;
   }, [isAgStock, agStepConfirmed, selectedProduct]);
 
+
+  const recordRecentSolution = (solutionId: string) => {
+    setRecentSolutionIds((current) => {
+      const next = [solutionId, ...current.filter((id) => id !== solutionId)].slice(0, 4);
+      try { localStorage.setItem(RECENT_SOLUTIONS_KEY, JSON.stringify(next)); } catch {}
+      return next;
+    });
+  };
 
   const onPickProduct = (p: ProductData) => {
     if (p.status === "coming_soon" || p.status === "offline") return;
@@ -407,17 +451,106 @@ export default function HomePage() {
             </>
           ) : (
             <>
-              <section className="relative mt-10 overflow-hidden rounded-2xl border border-primary/20 bg-card p-6 shadow-sm md:p-7">
-                <div className="pointer-events-none absolute -right-12 -top-12 h-36 w-36 rounded-full bg-primary/[0.08] blur-2xl" />
-                <div className="relative flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-primary">
-                  <Compass className="h-4 w-4" /> Amineva Global Ecosystem
+              <section className="mt-7 space-y-5" aria-label="Amineva application dashboard">
+                <div className="flex flex-wrap items-end justify-between gap-3">
+                  <div>
+                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
+                      <LayoutDashboard className="h-3.5 w-3.5" /> Application dashboard
+                    </div>
+                    <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">Your Amineva environment</h2>
+                    <p className="mt-1 text-sm leading-5 text-muted-foreground">One place to access your solutions and productivity workspace.</p>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <button type="button" onClick={() => { setApplicationHubTab("notifications"); setApplicationHubOpen(true); }} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:border-primary/40 hover:bg-muted"><Bell className="h-4 w-4" /> Notifications</button>
+                    <button type="button" onClick={() => { setApplicationHubTab("settings"); setApplicationHubOpen(true); }} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:border-primary/40 hover:bg-muted"><Settings2 className="h-4 w-4" /> Settings</button>
+                    <span className="hidden items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-[10px] font-medium text-muted-foreground xl:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ecosystem gateway</span>
+                  </div>
                 </div>
-                <h2 className="relative mt-3 text-2xl font-semibold tracking-tight text-foreground">Solutions</h2>
-                <p className="relative mt-2 text-sm leading-6 text-muted-foreground">Discover the products and platforms across Amineva Global.</p>
-                <button type="button" onClick={() => navigate("/explore")} className="relative mt-5 inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
-                  Explore Solutions <ArrowRight className="ml-2 h-4 w-4" />
-                </button>
+
+                <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card p-4 shadow-sm sm:p-5">
+                  <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-primary/[0.10] blur-3xl" />
+                  <div className="relative flex items-start justify-between gap-4">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
+                        <LayoutDashboard className="h-4 w-4" /> Amineva Workspace
+                      </div>
+                      <h3 className="mt-2 text-lg font-semibold text-foreground">Your productivity space</h3>
+                      <p className="mt-1 max-w-md text-xs leading-5 text-muted-foreground">Create and manage documents, spreadsheets, presentations and forms in one connected workspace.</p>
+                    </div>
+                    <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/[0.08] text-primary sm:flex">
+                      <FileText className="h-5 w-5" />
+                    </div>
+                  </div>
+                  <div className="relative mt-4 flex flex-wrap items-center gap-2">
+                    {[
+                      { label: "Docs", icon: FileText },
+                      { label: "Sheets", icon: Sheet },
+                      { label: "Slides", icon: Presentation },
+                      { label: "Forms", icon: ClipboardList },
+                    ].map((item) => {
+                      const ItemIcon = item.icon;
+                      return <span key={item.label} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/80 px-2.5 py-1.5 text-[10px] font-medium text-muted-foreground"><ItemIcon className="h-3.5 w-3.5" />{item.label}</span>;
+                    })}
+                    <button type="button" onClick={() => onPickProduct(workspaceProduct)} className="ml-auto inline-flex h-9 items-center justify-center rounded-lg bg-primary px-3.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90">
+                      {isAuthenticated ? "Open Workspace" : "Access Workspace"} <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
+                    </button>
+                  </div>
+                  {!isAuthenticated && <p className="relative mt-2 text-[10px] text-muted-foreground">Workspace registration or sign-in is required. Other solutions keep their own access arrangements.</p>}
+                </div>
+
+                <div>
+                  <div className="mb-3 flex items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-sm font-semibold text-foreground">Solutions</h3>
+                      <p className="mt-0.5 text-[11px] text-muted-foreground">Open the independent services you need.</p>
+                    </div>
+                    <button type="button" onClick={() => navigate("/explore")} className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition hover:underline">All solutions <ChevronRight className="h-3.5 w-3.5" /></button>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                    {dashboardSolutions.map((solution) => {
+                      const SolutionIcon = solution.icon;
+                      const card = (
+                        <div className={`group relative flex h-full min-h-[116px] flex-col rounded-xl border border-border/80 bg-card p-3 shadow-sm transition-all duration-200 ${solution.comingSoon ? "opacity-65" : "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"}`}>
+                          <div className="flex items-start justify-between gap-2">
+                            <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/15 bg-primary/[0.07] text-primary"><SolutionIcon className="h-[18px] w-[18px]" strokeWidth={1.8} /></span>
+                            {solution.comingSoon ? <span className="rounded-full border border-border bg-muted px-2 py-1 text-[8px] font-semibold uppercase tracking-wider text-muted-foreground">Coming soon</span> : <ArrowUpRight className="h-4 w-4 text-muted-foreground/60 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />}
+                          </div>
+                          <h4 className="mt-2.5 text-xs font-semibold text-foreground">{solution.name}</h4>
+                          <p className="mt-1 text-[10px] leading-4 text-muted-foreground">{solution.description}</p>
+                          <span className="mt-auto pt-2 text-[8px] font-semibold uppercase tracking-[0.14em] text-primary/75">{solution.category}</span>
+                        </div>
+                      );
+                      if (solution.comingSoon || !solution.href) return <div key={solution.id} aria-label={`${solution.name}, coming soon`}>{card}</div>;
+                      if (solution.external) return <a key={solution.id} href={solution.href} target="_blank" rel="noopener noreferrer" onClick={() => recordRecentSolution(solution.id)} aria-label={`Open ${solution.name} in a new tab`}>{card}</a>;
+                      return <button key={solution.id} type="button" onClick={() => { recordRecentSolution(solution.id); navigate(solution.href!); }} className="text-left">{card}</button>;
+                    })}
+                  </div>
+                </div>
+
+                <div className="rounded-xl border border-border/80 bg-card/70 p-4">
+                  <div className="flex items-center justify-between gap-3">
+                    <div className="flex items-center gap-2">
+                      <Clock3 className="h-4 w-4 text-muted-foreground" />
+                      <h3 className="text-xs font-semibold text-foreground">Recently opened</h3>
+                    </div>
+                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground">This device</span>
+                  </div>
+                  {recentSolutionIds.length ? (
+                    <div className="mt-3 flex flex-wrap gap-2">
+                      {recentSolutionIds.map((id) => {
+                        const solution = dashboardSolutions.find((item) => item.id === id);
+                        if (!solution || solution.comingSoon || !solution.href) return null;
+                        return solution.external ? (
+                          <a key={id} href={solution.href} target="_blank" rel="noopener noreferrer" onClick={() => recordRecentSolution(id)} className="rounded-lg border border-border bg-background px-3 py-2 text-[10px] font-medium text-foreground transition hover:border-primary/40">{solution.name} <ArrowUpRight className="ml-1 inline h-3 w-3" /></a>
+                        ) : (
+                          <button key={id} type="button" onClick={() => { recordRecentSolution(id); navigate(solution.href!); }} className="rounded-lg border border-border bg-background px-3 py-2 text-[10px] font-medium text-foreground transition hover:border-primary/40">{solution.name} <ChevronRight className="ml-1 inline h-3 w-3" /></button>
+                        );
+                      })}
+                    </div>
+                  ) : <p className="mt-2 text-[10px] leading-4 text-muted-foreground">Solutions you open from this device will appear here for quick access.</p>}
+                </div>
               </section>
+              <ApplicationHubTools open={applicationHubOpen} onOpenChange={setApplicationHubOpen} initialTab={applicationHubTab} />
 
               <section aria-label="Amineva Global solution spotlight" className="mt-4 overflow-hidden rounded-2xl border border-border/80 bg-card/80 shadow-sm">
                 <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
