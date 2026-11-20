@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import type { ChangeEvent } from "react";
-import { NavLink, useNavigate } from "react-router-dom";
+import { NavLink, useLocation, useNavigate } from "react-router-dom";
 import { LayoutGrid, FolderOpen, FileText, Sheet as SheetIcon, Presentation, ClipboardList, ArrowLeft, LogOut, Menu, X, Download, Upload, Lock } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useWorkspaceSession } from "@/components/workspace/WorkspaceGate";
@@ -22,6 +22,7 @@ export function WorkspaceNav() {
   const { user, logout } = useAuth() as any;
   const workspaceSession = useWorkspaceSession();
   const navigate = useNavigate();
+  const location = useLocation();
   const restoreInputRef = useRef<HTMLInputElement>(null);
   const [backupBusy, setBackupBusy] = useState(false);
   const [open, setOpen] = useState(false);
@@ -121,7 +122,7 @@ export function WorkspaceNav() {
       )}
 
       <aside
-        className={`fixed inset-y-0 top-14 z-50 w-64 bg-card border-r border-border flex flex-col transition-transform duration-200 ${
+        className={`fixed top-14 bottom-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transition-transform duration-200 ${
           open ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0`}
       >
