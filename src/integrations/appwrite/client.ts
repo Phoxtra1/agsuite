@@ -2,6 +2,18 @@ import client, { account, databases, storage as appwriteStorage, functions as ap
 import { Query, Permission, Role } from "appwrite";
 import { createClient } from "@supabase/supabase-js";
 
+const isTestEnv =
+  (typeof process !== "undefined" && (process.env?.NODE_ENV === "test" || Boolean(process.env?.VITEST))) ||
+  (typeof import.meta !== "undefined" && (import.meta as any).env?.MODE === "test");
+
+function withOpTimeout<T>(promise: Promise<T>, ms = isTestEnv ? 80 : 3500): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) => setTimeout(() => reject(new Error("Operation timed out")), ms))
+  ]);
+}
+
+
 // Helper: Convert Appwrite document -> standard shape with id, created_at, updated_at
 function mapAppwriteDoc(doc: any): any {
   if (!doc || typeof doc !== "object") return doc;
@@ -240,7 +252,7 @@ class AppwriteQueryBuilder {
       if (this.operation === "select") {
         const queries = [...this.queries];
         if (ws && !queries.some((q) => q.includes('"limit"'))) queries.push(Query.limit(200));
-        const res = await databases.listDocuments(APPWRITE_DB_ID, this.collection, queries);
+        const res = await withOpTimeout(databases.listDocuments(APPWRITE_DB_ID, this.collection, queries));
         const mapped = res.documents.map((d: any) => (ws ? workspaceFromRemote(ws, d) : mapAppwriteDoc(d)));
 
         if (this.isSingle) {
@@ -269,10 +281,10 @@ class AppwriteQueryBuilder {
             const perms = ownerPermissions(item.owner_id);
             let doc: any;
             try {
-              doc = await databases.createDocument(APPWRITE_DB_ID, this.collection, docId, row, perms);
+              doc = await withOpTimeout(databases.createDocument(APPWRITE_DB_ID, this.collection, docId, row, perms));
             } catch (e: any) {
               if (!perms || e?.code === 409) throw e;
-              doc = await databases.createDocument(APPWRITE_DB_ID, this.collection, docId, row);
+              doc = await withOpTimeout(databases.createDocument(APPWRITE_DB_ID, this.collection, docId, row));
             }
             inserted.push(workspaceFromRemote(ws, doc));
             continue;
@@ -283,10 +295,10 @@ class AppwriteQueryBuilder {
           const ownPerms = this.collection === "workspace_forms" ? ownerPermissions(clean.owner_id) : undefined;
           let doc: any;
           try {
-            doc = await databases.createDocument(APPWRITE_DB_ID, this.collection, docId, clean, ownPerms);
+            doc = await withOpTimeout(databases.createDocument(APPWRITE_DB_ID, this.collection, docId, clean, ownPerms));
           } catch (e: any) {
             if (!ownPerms || e?.code === 409) throw e;
-            doc = await databases.createDocument(APPWRITE_DB_ID, this.collection, docId, clean);
+            doc = await withOpTimeout(databases.createDocument(APPWRITE_DB_ID, this.collection, docId, clean));
           }
           inserted.push(mapAppwriteDoc(doc));
         }
@@ -296,7 +308,7 @@ class AppwriteQueryBuilder {
       }
 
       if (this.operation === "update") {
-        const list = await databases.listDocuments(APPWRITE_DB_ID, this.collection, this.queries);
+        const list = await withOpTimeout(databases.listDocuments(APPWRITE_DB_ID, this.collection, this.queries));
         const updated: any[] = [];
         const clean = cleanPayload(this.payload);
         delete clean.id;
@@ -304,11 +316,11 @@ class AppwriteQueryBuilder {
         for (const doc of list.documents) {
           if (ws) {
             const row = workspaceToRemote(ws, clean, (doc as any)[WORKSPACE_SCHEMAS[ws].blob]);
-            const res = await databases.updateDocument(APPWRITE_DB_ID, this.collection, doc.$id, row);
+            const res = await withOpTimeout(databases.updateDocument(APPWRITE_DB_ID, this.collection, doc.$id, row));
             updated.push(workspaceFromRemote(ws, res));
             continue;
           }
-          const res = await databases.updateDocument(APPWRITE_DB_ID, this.collection, doc.$id, clean);
+          const res = await withOpTimeout(databases.updateDocument(APPWRITE_DB_ID, this.collection, doc.$id, clean));
           updated.push(mapAppwriteDoc(res));
         }
 
@@ -327,7 +339,7 @@ class AppwriteQueryBuilder {
 
           if (docId) {
             try {
-              const updated = await databases.updateDocument(APPWRITE_DB_ID, this.collection, docId, clean);
+              const updated = await withOpTimeout(databases.updateDocument(APPWRITE_DB_ID, this.collection, docId, clean));
               results.push(mapAppwriteDoc(updated));
               continue;
             } catch {
@@ -335,7 +347,7 @@ class AppwriteQueryBuilder {
             }
           }
 
-          const created = await databases.createDocument(APPWRITE_DB_ID, this.collection, docId || ID.unique(), clean);
+          const created = await withOpTimeout(databases.createDocument(APPWRITE_DB_ID, this.collection, docId || ID.unique(), clean));
           results.push(mapAppwriteDoc(created));
         }
 
@@ -346,7 +358,7 @@ class AppwriteQueryBuilder {
       if (this.operation === "delete") {
         const list = await databases.listDocuments(APPWRITE_DB_ID, this.collection, this.queries);
         for (const doc of list.documents) {
-          await databases.deleteDocument(APPWRITE_DB_ID, this.collection, doc.$id);
+          await withOpTimeout(databases.deleteDocument(APPWRITE_DB_ID, this.collection, doc.$id));
         }
         return { data: null, error: null };
       }
@@ -437,7 +449,7 @@ const authAdapter = {
       invalidateAuthCache();
       const cleanEmail = email.trim();
       // Ensure any existing session is cleared before creating a new session
-      await account.deleteSession("current").catch(() => null);
+      await withOpTimeout(account.deleteSession("current")).catch(() => null);
 
       const session = await account.createEmailPasswordSession(cleanEmail, password);
       const user = await account.get();
@@ -500,7 +512,7 @@ const authAdapter = {
       await account.deleteSession("current").catch(() => null);
       let createdUser: any;
       try {
-        createdUser = await account.create(userId, cleanEmail, password, name);
+        createdUser = await withOpTimeout(account.create(userId, cleanEmail, password, name));
       } catch (createErr: any) {
         const createMsg = createErr?.message || "";
         const createCode = createErr?.code;

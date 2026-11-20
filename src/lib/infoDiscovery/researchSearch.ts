@@ -18,9 +18,10 @@ export type ResearchRecord = {
   sources: string[];
   openAccess?: boolean;
   subjects: string[];
-  verificationStatus: "metadata-only" | "editorially-verified";
+  verificationStatus: "metadata-only" | "editorially-verified" | string;
+  jurisdiction?: string;
   verificationNote: string;
-  accessStatus?: "metadata_only" | "open_access" | "restricted" | "unknown";
+  accessStatus?: "metadata_only" | "open_access" | "restricted" | "unknown" | string;
   license?: string;
   fullTextUrl?: string;
   libraryRecordId?: string;

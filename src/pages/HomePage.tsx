@@ -3,7 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useCategoryProducts } from "@/hooks/useProducts";
 import { Badge } from "@/components/ui/badge";
-import { Clock, XCircle, ArrowUpRight, ChevronRight, Compass, Settings, Sun, Moon, LayoutDashboard, GraduationCap, Sprout, Wallet, Package, BrainCircuit, BriefcaseBusiness, Clock3, FileText, Sheet, Presentation, ClipboardList, Bell, Settings2 } from "lucide-react";
+import { Clock, XCircle, ArrowUpRight, ChevronLeft, ChevronRight, Compass, Settings, Sun, Moon, LayoutDashboard, GraduationCap, Sprout, Wallet, Package, BrainCircuit, BriefcaseBusiness, Clock3, FileText, Sheet, Presentation, ClipboardList, Bell, Settings2 } from "lucide-react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
@@ -150,6 +150,7 @@ export default function HomePage() {
     { id: "united-kingdom", label: "United Kingdom", currencyCode: "GBP" },
     { id: "other", label: "Other Countries", currencyCode: "USD" },
   ], []);
+  const selectedAgOption = countryCurrencyOptions.find((opt) => opt.id === agCountry);
 
   const workspaceProduct: ProductData = products.find((product) => product.id.toLowerCase().includes("workspace") || product.name.toLowerCase().includes("workspace")) || { id: "workspace", name: "Amineva Workspace", status: "live", order: 0 };
   const WorkspaceIcon = getProductIconSafe(workspaceProduct?.id || "workspace");
