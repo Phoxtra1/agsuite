@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { FormEvent } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { ArrowLeft, LockKeyhole, Mail, UserRound } from "lucide-react";
 
@@ -12,7 +13,7 @@ export default function GetStartedPage() {
   const [message, setMessage] = useState("");
   const [error, setError] = useState("");
 
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
     setMessage("");
