@@ -26,7 +26,7 @@ const APP_VERSION = "0.1.0";
 export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifications" }: {
   open: boolean; onOpenChange: (open: boolean) => void; initialTab?: HubTab;
 }) {
-  const { user, isAuthenticated, updateProfile, logout } = useAuth();
+  const { user, isAuthenticated, updateProfile, updateAppPreferences, logout } = useAuth();
   const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [tab, setTab] = useState<HubTab>(initialTab);
@@ -47,6 +47,15 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
 
   useEffect(() => { if (open) setTab(initialTab); }, [open, initialTab]);
   useEffect(() => { setDisplayName(user?.name || ""); }, [user?.name]);
+
+  useEffect(() => {
+    const accountPrefs = user?.preferences;
+    if (!accountPrefs || typeof accountPrefs !== "object") return;
+    const next = { ...readPreferences(), ...accountPrefs };
+    setPrefs(next);
+    try { localStorage.setItem(PREF_KEY, JSON.stringify(next)); } catch {}
+    if (accountPrefs.theme === "light" || accountPrefs.theme === "dark") setTheme(accountPrefs.theme);
+  }, [user?.preferences, setTheme]);
 
   useEffect(() => {
     if (!open || tab !== "notifications" || !isAuthenticated || !user?.id) return;
@@ -102,10 +111,29 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
     return () => { active = false; };
   }, [open, tab]);
 
-  const updatePref = (key: keyof Preferences, value: boolean) => {
+  const updatePref = async (key: keyof Preferences, value: boolean) => {
     const next = { ...prefs, [key]: value };
     setPrefs(next);
     try { localStorage.setItem(PREF_KEY, JSON.stringify(next)); } catch {}
+    if (isAuthenticated) {
+      try {
+        await updateAppPreferences({ ...next, theme });
+        setMessage("Preference saved to your Amineva account.");
+      } catch (error: any) {
+        setMessage(error?.message || "Preference saved on this device, but account sync failed.");
+      }
+    }
+  };
+
+  const updateTheme = async (nextTheme: "light" | "dark") => {
+    setTheme(nextTheme);
+    if (!isAuthenticated) return;
+    try {
+      await updateAppPreferences({ ...prefs, theme: nextTheme });
+      setMessage("Appearance preference saved to your Amineva account.");
+    } catch (error: any) {
+      setMessage(error?.message || "Appearance saved on this device, but account sync failed.");
+    }
   };
 
   const markRead = async (item: InboxItem) => {
@@ -226,8 +254,8 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
             {([[ "inAppNotifications", "In-app notifications", "Show messages received through Amineva." ],[ "emailNotifications", "Email notifications", "Your preference for email updates." ],[ "productUpdates", "Product updates", "Your preference for product announcements." ]] as const).map(([key,label,desc]) => <div key={key} className="flex items-center justify-between gap-4"><div><Label>{label}</Label><p className="mt-1 text-sm text-muted-foreground">{desc}</p></div><Switch checked={prefs[key]} onCheckedChange={value => updatePref(key,value)} /></div>)}
           </CardContent></Card>
           <Card><CardHeader><CardTitle className="text-base">Appearance</CardTitle><CardDescription>Choose light or dark mode for the Amineva software environment.</CardDescription></CardHeader><CardContent><div className="grid grid-cols-2 gap-3">
-            <button type="button" onClick={() => setTheme("light")} aria-pressed={theme === "light"} className={`flex items-center justify-between rounded-xl border p-4 text-left transition ${theme === "light" ? "border-primary bg-primary/5 text-foreground" : "border-border hover:bg-muted"}`}><span className="flex items-center gap-3"><Sun className="h-5 w-5" /><span className="text-sm font-medium">Light mode</span></span>{theme === "light" && <Check className="h-4 w-4 text-primary" />}</button>
-            <button type="button" onClick={() => setTheme("dark")} aria-pressed={theme === "dark"} className={`flex items-center justify-between rounded-xl border p-4 text-left transition ${theme === "dark" ? "border-primary bg-primary/5 text-foreground" : "border-border hover:bg-muted"}`}><span className="flex items-center gap-3"><Moon className="h-5 w-5" /><span className="text-sm font-medium">Dark mode</span></span>{theme === "dark" && <Check className="h-4 w-4 text-primary" />}</button>
+            <button type="button" onClick={() => void updateTheme("light")} aria-pressed={theme === "light"} className={`flex items-center justify-between rounded-xl border p-4 text-left transition ${theme === "light" ? "border-primary bg-primary/5 text-foreground" : "border-border hover:bg-muted"}`}><span className="flex items-center gap-3"><Sun className="h-5 w-5" /><span className="text-sm font-medium">Light mode</span></span>{theme === "light" && <Check className="h-4 w-4 text-primary" />}</button>
+            <button type="button" onClick={() => void updateTheme("dark")} aria-pressed={theme === "dark"} className={`flex items-center justify-between rounded-xl border p-4 text-left transition ${theme === "dark" ? "border-primary bg-primary/5 text-foreground" : "border-border hover:bg-muted"}`}><span className="flex items-center gap-3"><Moon className="h-5 w-5" /><span className="text-sm font-medium">Dark mode</span></span>{theme === "dark" && <Check className="h-4 w-4 text-primary" />}</button>
           </div></CardContent></Card>
         </section>}
         {tab === "account" && <section className="space-y-4">
