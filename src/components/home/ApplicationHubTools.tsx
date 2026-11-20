@@ -284,7 +284,7 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
               <Button onClick={() => void changePassword()} disabled={savingPassword || !password || !confirmPassword}><Lock className="mr-2 h-4 w-4" />{savingPassword ? "Updating…" : "Update password"}</Button>
             </CardContent></Card>
             <Card><CardHeader><CardTitle className="text-base">Sign out</CardTitle><CardDescription>End this Amineva session on the current device.</CardDescription></CardHeader><CardContent><Button variant="destructive" onClick={() => void logout().then(() => navigate("/"))}><LogOut className="mr-2 h-4 w-4" />Sign out of this device</Button></CardContent></Card>
-            <Card><CardContent className="py-4 text-sm text-muted-foreground">Multi-factor authentication and remote session management are not exposed as active controls here. The existing legacy step-up authentication helper is a no-op and is not being represented as real two-factor security.</CardContent></Card>
+            <Card><CardContent className="py-4 text-sm text-muted-foreground">Multi-factor authentication and remote session management are not yet available. Sensitive actions must not treat the legacy step-up check as verified; it now fails closed until a real server-verified MFA flow is implemented.</CardContent></Card>
           </>}
         </section>}
         {tab === "permissions" && <section className="space-y-4">
