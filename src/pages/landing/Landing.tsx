@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Settings } from "lucide-react";
-import { useAuth } from "@/contexts/AuthContext";
 import amvLogo from "@/assets/amv_global_logo.png";
 import GlobalFooter from "@/components/layout/GlobalFooter";
 
@@ -11,9 +10,8 @@ export default function Landing() {
   const isHome = location.pathname === "/";
   const isAccountPortal = location.pathname === "/payments" || location.pathname === "/switch";
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
-
-  const solutionsLink = isAuthenticated ? "/explore" : "/get-started?mode=register&returnTo=%2Fexplore";
+  const isSoftwareEnvironment = location.pathname.startsWith("/explore") || location.pathname === "/account-settings";
+  const solutionsLink = "/explore";
 
   return (
     <div className="min-h-screen bg-background">
@@ -25,7 +23,7 @@ export default function Landing() {
               <span className="text-lg font-semibold tracking-tight text-foreground">Amineva Global</span>
             </Link>
             <nav className="hidden items-center gap-8 md:flex">
-              {isAuthenticated && (location.pathname.startsWith("/explore") || location.pathname === "/account-settings") ? (
+              {isSoftwareEnvironment ? (
                 <>
                   <Link to="/explore" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">Solutions</Link>
                   <Link to="/workspace" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">Workspace</Link>
@@ -69,7 +67,7 @@ export default function Landing() {
         </header>
       )}
       <Outlet />
-      {!isHome && <GlobalFooter />}
+      {!isHome && !isSoftwareEnvironment && <GlobalFooter />}
     </div>
   );
 }
