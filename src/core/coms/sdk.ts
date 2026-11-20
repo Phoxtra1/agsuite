@@ -217,6 +217,7 @@ export const ComsSDK = {
     // Marketing/product-announcement email must respect the account's saved
     // opt-outs. Transactional and security-critical messages are not blocked.
     if (messageType === "marketing" &&
+      userId && to.some((recipient) => recipient.email.toLowerCase() === String(userData?.user?.email || "").toLowerCase()) &&
       (preferences.emailNotifications === false || preferences.productUpdates === false)) {
       if (userId) {
         try {
@@ -319,6 +320,10 @@ export const ComsSDK = {
     const userId = userData?.user?.id;
     const targetUserId = options.targetUserId || userId;
     if (!targetUserId) throw new ComsRoutingError("pushNotification", "no_recipient_mapping", "ComsSDK: target user not available");
+    const preferences = userData?.user?.user_metadata?.amineva_preferences || {};
+    if (targetUserId === userId && preferences.inAppNotifications === false) {
+      return { skipped: true, reason: "recipient_preferences", message: "The current user has disabled in-app notifications." };
+    }
 
     const { error } = await (supabase.from as any)("inbound_messages").insert({
       user_id: targetUserId,
