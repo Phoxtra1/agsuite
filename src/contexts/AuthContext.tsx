@@ -32,6 +32,7 @@ type AuthContextValue = {
   register: (email: string, password: string, name?: string, registeredProduct?: string) => Promise<{ user: any; session: any } | null>;
   socialLogin: (provider: "google" | "apple") => Promise<void>;
   sendMagicLink: (email: string) => Promise<void>;
+  updateProfile: (name: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -46,6 +47,7 @@ function mapUser(supaUser: any): AuthUser | null {
     id: supaUser.id,
     email: supaUser.email ?? "",
     name: supaUser.user_metadata?.name ?? supaUser.email,
+    avatarUrl: supaUser.user_metadata?.avatar_url ?? null,
     role: supaUser.user_metadata?.role ?? "user",
   };
 }
@@ -208,6 +210,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (error) throw error;
   }, []);
 
+  const updateProfile = useCallback(async (name: string) => {
+    assertSupabaseConfigured();
+    const cleanName = name.trim();
+    if (!cleanName) throw new Error("Display name cannot be empty.");
+    const { data, error } = await supabase.auth.updateUser({ data: { name: cleanName } });
+    if (error) throw error;
+    const mapped = mapUser(data.user);
+    if (mapped) setUser(mapped);
+  }, []);
+
   const logout = useCallback(async () => {
     authActionInProgress.current = true;
     setIsLoading(true);
@@ -230,8 +242,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [queryClient]);
 
   const value = useMemo(
-    () => ({ user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, logout }),
-    [user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, logout]
+    () => ({ user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, updateProfile, logout }),
+    [user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, updateProfile, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
