@@ -112,9 +112,9 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
         {tab === "app-info" && <section className="space-y-4">
           <div><h2 className="text-xl font-semibold">App information</h2><p className="mt-1 text-sm text-muted-foreground">Basic information about this software.</p></div>
           <Card><CardContent className="divide-y divide-border p-0">
-            <div className="flex items-center justify-between gap-4 px-5 py-4"><span className="text-sm text-muted-foreground">Software</span><span className="text-sm font-medium">Amineva Suite</span></div>
-            <div className="flex items-center justify-between gap-4 px-5 py-4"><span className="text-sm text-muted-foreground">Version</span><span className="text-sm font-medium">0.0.0</span></div>
-            <div className="flex items-center justify-between gap-4 px-5 py-4"><span className="text-sm text-muted-foreground">Developer</span><span className="text-sm font-medium">Amineva Global</span></div>
+            <div className="flex items-center justify-between gap-4 px-5 py-4"><span className="text-sm text-muted-foreground">Software</span><span className="text-sm font-medium">Amoeba</span></div>
+            <div className="flex items-center justify-between gap-4 px-5 py-4"><span className="text-sm text-muted-foreground">Version</span><span className="text-sm font-medium">0.1.0</span></div>
+            <div className="flex items-center justify-between gap-4 px-5 py-4"><span className="text-sm text-muted-foreground">Developer</span><span className="text-sm font-medium">Amoeba Global</span></div>
           </CardContent></Card>
         </section>}
       </div>
