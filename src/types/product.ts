@@ -71,5 +71,11 @@ export const DEFAULT_CATEGORIES: ProductCategory[] = [
     order: 4,
     products: ["workspace"],
   },
+  {
+    id: "agriculture",
+    name: "Agriculture",
+    order: 5,
+    products: ["agroclimate"],
+  },
 ];
 
