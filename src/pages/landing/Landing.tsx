@@ -25,14 +25,19 @@ export default function Landing() {
               <span className="text-lg font-semibold tracking-tight text-foreground">Amineva Global</span>
             </Link>
             <nav className="hidden items-center gap-8 md:flex">
-              <Link to={solutionsLink} className="text-sm font-medium text-muted-foreground transition hover:text-foreground">Solutions</Link>
-              {isAuthenticated ? (
+              {isAuthenticated && (location.pathname.startsWith("/explore") || location.pathname === "/account-settings") ? (
                 <>
+                  <Link to="/explore" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">Solutions</Link>
+                  <Link to="/workspace" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">Workspace</Link>
                   <Link to="/account-settings" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"><Settings className="h-4 w-4" /> Settings</Link>
-                  <Link to="/workspace" className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">Workspace</Link>
                 </>
               ) : (
-                <Link to="/get-started?mode=register" className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">Get Started</Link>
+                <>
+                  <Link to={solutionsLink} className="text-sm font-medium text-muted-foreground transition hover:text-foreground">Solutions</Link>
+                  <Link to="/about-us" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">About Us</Link>
+                  <Link to="/faqs" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">FAQs</Link>
+                  <Link to="/get-started?mode=register" className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">Get Started</Link>
+                </>
               )}
             </nav>
             <button type="button" aria-label="Toggle navigation" className="text-foreground md:hidden" onClick={() => setMobileOpen(value => !value)}>
@@ -43,14 +48,19 @@ export default function Landing() {
             {mobileOpen && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-border md:hidden">
                 <div className="space-y-1 p-4">
-                  <Link to={solutionsLink} onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Solutions</Link>
-                  {isAuthenticated ? (
+                  {isAuthenticated && (location.pathname.startsWith("/explore") || location.pathname === "/account-settings") ? (
                     <>
+                      <Link to="/explore" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Solutions</Link>
+                      <Link to="/workspace" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Workspace</Link>
                       <Link to="/account-settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10"><Settings className="h-4 w-4" /> Settings</Link>
-                      <Link to="/workspace" onClick={() => setMobileOpen(false)} className="block rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground">Workspace</Link>
                     </>
                   ) : (
-                    <Link to="/get-started?mode=register" onClick={() => setMobileOpen(false)} className="block rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground">Get Started</Link>
+                    <>
+                      <Link to={solutionsLink} onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Solutions</Link>
+                      <Link to="/about-us" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">About Us</Link>
+                      <Link to="/faqs" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">FAQs</Link>
+                      <Link to="/get-started?mode=register" onClick={() => setMobileOpen(false)} className="block rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground">Get Started</Link>
+                    </>
                   )}
                 </div>
               </motion.div>
