@@ -42,3 +42,28 @@ export function registerServiceWorker() {
     });
   }, { once: true });
 }
+
+
+/** Return only Amineva's own root-scoped worker, never another site's worker. */
+export async function getAminevaServiceWorkerRegistration(): Promise<ServiceWorkerRegistration | null> {
+  if (!("serviceWorker" in navigator)) return null;
+  const registrations = await navigator.serviceWorker.getRegistrations();
+  return registrations.find((registration) => {
+    const workerUrl =
+      registration.active?.scriptURL ||
+      registration.waiting?.scriptURL ||
+      registration.installing?.scriptURL ||
+      "";
+    if (!workerUrl) return false;
+    try {
+      const script = new URL(workerUrl);
+      const scope = new URL(registration.scope);
+      return script.origin === window.location.origin &&
+        script.pathname === SW_URL &&
+        scope.origin === window.location.origin &&
+        scope.pathname === "/";
+    } catch {
+      return false;
+    }
+  }) ?? null;
+}
