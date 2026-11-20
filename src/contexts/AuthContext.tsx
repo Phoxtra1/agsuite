@@ -33,6 +33,7 @@ type AuthContextValue = {
   socialLogin: (provider: "google" | "apple") => Promise<void>;
   sendMagicLink: (email: string) => Promise<void>;
   updateProfile: (name: string) => Promise<void>;
+  updateAppPreferences: (preferences: Record<string, boolean | string>) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -48,6 +49,7 @@ function mapUser(supaUser: any): AuthUser | null {
     email: supaUser.email ?? "",
     name: supaUser.user_metadata?.name ?? supaUser.email,
     avatarUrl: supaUser.user_metadata?.avatar_url ?? null,
+    preferences: supaUser.user_metadata?.amineva_preferences ?? {},
     role: supaUser.user_metadata?.role ?? "user",
   };
 }
@@ -220,6 +222,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     if (mapped) setUser(mapped);
   }, []);
 
+  const updateAppPreferences = useCallback(async (preferences: Record<string, boolean | string>) => {
+    assertSupabaseConfigured();
+    const { data, error } = await supabase.auth.updateUser({
+      data: { amineva_preferences: preferences },
+    });
+    if (error) throw error;
+    const mapped = mapUser(data.user);
+    if (mapped) setUser(mapped);
+  }, []);
+
   const logout = useCallback(async () => {
     authActionInProgress.current = true;
     setIsLoading(true);
@@ -242,8 +254,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [queryClient]);
 
   const value = useMemo(
-    () => ({ user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, updateProfile, logout }),
-    [user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, updateProfile, logout]
+    () => ({ user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, updateProfile, updateAppPreferences, logout }),
+    [user, isAuthenticated, isLoading, login, register, socialLogin, sendMagicLink, updateProfile, updateAppPreferences, logout]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
