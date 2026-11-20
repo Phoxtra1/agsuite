@@ -114,6 +114,18 @@ export const DEFAULT_CATEGORY_PRODUCTS: ProductData[] = [
     order: 4,
     isPublic: true,
   },
+  {
+    id: "agroclimate",
+    name: "AgroClimate",
+    shortName: "AgroClimate",
+    description: "Agricultural climate intelligence, farm operations, post-harvest monitoring and logistics",
+    status: "live",
+    url: "https://agro.amineva.com",
+    category: "agriculture",
+    order: 5,
+    isPublic: true,
+    isExternal: true,
+  },
 ];
 
 // Local cache keys
