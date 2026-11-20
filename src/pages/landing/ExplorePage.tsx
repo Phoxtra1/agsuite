@@ -1,7 +1,6 @@
 import React, { useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, ArrowUpRight, Compass, GraduationCap, Search, X, Sparkles
 } from "lucide-react";
