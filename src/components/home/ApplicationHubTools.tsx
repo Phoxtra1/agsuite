@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ComsSDK } from "@/core/coms/sdk";
 import { Button } from "@/components/ui/button";
@@ -8,9 +9,9 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Settings, UserRound, Info, CheckCheck, ArrowLeft, X } from "lucide-react";
+import { Bell, Settings, UserRound, Info, ArrowLeft, X, Sun, Moon, Check } from "lucide-react";
 
-type HubTab = "notifications" | "settings" | "account" | "about";
+type HubTab = "notifications" | "settings" | "account" | "app-info";
 type InboxItem = { id: string; subject: string; body: string; source_app: string | null; created_at: string; is_read: boolean; type: string; };
 
 const PREF_KEY = "amineva_application_preferences_v1";
@@ -25,6 +26,7 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
   open: boolean; onOpenChange: (open: boolean) => void; initialTab?: HubTab;
 }) {
   const { user, isAuthenticated } = useAuth();
+  const { theme, setTheme } = useTheme();
   const navigate = useNavigate();
   const [tab, setTab] = useState<HubTab>(initialTab);
   const [items, setItems] = useState<InboxItem[]>([]);
@@ -71,7 +73,7 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "settings", label: "Preferences", icon: Settings },
     { id: "account", label: "Account", icon: UserRound },
-    { id: "about", label: "About Amineva", icon: Info },
+    { id: "app-info", label: "App information", icon: Info },
   ];
 
   return <main className="min-h-screen bg-background text-foreground">
@@ -98,17 +100,21 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
           <Card><CardHeader><CardTitle className="text-base">Notifications</CardTitle><CardDescription>Choose which types of updates you prefer to receive.</CardDescription></CardHeader><CardContent className="space-y-5">
             {([["inAppNotifications","In-app notifications","Show messages received through Amineva."],["emailNotifications","Email notifications","Your preference for email updates; delivery is controlled by the sending service."],["productUpdates","Product updates","Receive product announcements where supported."]] as const).map(([key,label,desc]) => <div key={key} className="flex items-center justify-between gap-4"><div><Label>{label}</Label><p className="mt-1 text-sm text-muted-foreground">{desc}</p></div><Switch checked={prefs[key]} onCheckedChange={(v) => updatePref(key,v)} /></div>)}
           </CardContent></Card>
-          <Card><CardHeader><CardTitle className="text-base">Appearance</CardTitle><CardDescription>Choose how the software environment looks on this device.</CardDescription></CardHeader><CardContent><p className="text-sm text-muted-foreground">Appearance controls are available from the platform theme control.</p></CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-base">Appearance</CardTitle><CardDescription>Choose light or dark mode for the Amineva software environment.</CardDescription></CardHeader><CardContent><div className="grid grid-cols-2 gap-3">
+            <button type="button" onClick={() => setTheme("light")} aria-pressed={theme === "light"} className={`flex items-center justify-between rounded-xl border p-4 text-left transition ${theme === "light" ? "border-primary bg-primary/5 text-foreground" : "border-border hover:bg-muted"}`}><span className="flex items-center gap-3"><Sun className="h-5 w-5" /><span className="text-sm font-medium">Light mode</span></span>{theme === "light" && <Check className="h-4 w-4 text-primary" />}</button>
+            <button type="button" onClick={() => setTheme("dark")} aria-pressed={theme === "dark"} className={`flex items-center justify-between rounded-xl border p-4 text-left transition ${theme === "dark" ? "border-primary bg-primary/5 text-foreground" : "border-border hover:bg-muted"}`}><span className="flex items-center gap-3"><Moon className="h-5 w-5" /><span className="text-sm font-medium">Dark mode</span></span>{theme === "dark" && <Check className="h-4 w-4 text-primary" />}</button>
+          </div></CardContent></Card>
         </section>}
         {tab === "account" && <section className="space-y-4">
           <div><h2 className="text-xl font-semibold">Account</h2><p className="mt-1 text-sm text-muted-foreground">Your Amineva account details.</p></div>
           {isAuthenticated && user ? <Card><CardContent className="space-y-4 p-5"><div><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Display name</p><p className="mt-1 text-sm font-medium">{user.name || "Not provided"}</p></div><div><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Email address</p><p className="mt-1 text-sm font-medium">{user.email}</p></div><p className="border-t pt-4 text-sm text-muted-foreground">Your account credentials are securely managed by Amineva. Individual applications may maintain their own account profiles where required.</p></CardContent></Card> : <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">You are browsing Amineva without signing in. Sign in to view your account details.</CardContent></Card>}
         </section>}
-        {tab === "about" && <section className="space-y-4">
-          <div><h2 className="text-xl font-semibold">About Amineva Global</h2><p className="mt-1 text-sm text-muted-foreground">Information about the platform.</p></div>
-          <Card><CardHeader><CardTitle className="text-base">Amineva Global</CardTitle><CardDescription>Connected software solutions and digital services.</CardDescription></CardHeader><CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
-            <p>Amineva Global brings together a range of digital applications and services across information, education, agriculture, finance, business operations and artificial intelligence.</p>
-            <p>Each application provides its own interface and functionality. Device and hardware compatibility is determined within the relevant application according to its purpose and supported equipment.</p>
+        {tab === "app-info" && <section className="space-y-4">
+          <div><h2 className="text-xl font-semibold">App information</h2><p className="mt-1 text-sm text-muted-foreground">Basic information about this software.</p></div>
+          <Card><CardContent className="divide-y divide-border p-0">
+            <div className="flex items-center justify-between gap-4 px-5 py-4"><span className="text-sm text-muted-foreground">Software</span><span className="text-sm font-medium">Amineva Suite</span></div>
+            <div className="flex items-center justify-between gap-4 px-5 py-4"><span className="text-sm text-muted-foreground">Version</span><span className="text-sm font-medium">0.0.0</span></div>
+            <div className="flex items-center justify-between gap-4 px-5 py-4"><span className="text-sm text-muted-foreground">Developer</span><span className="text-sm font-medium">Amineva Global</span></div>
           </CardContent></Card>
         </section>}
       </div>
