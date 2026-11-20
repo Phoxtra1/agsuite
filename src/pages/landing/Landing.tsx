@@ -46,7 +46,7 @@ export default function Landing() {
             {mobileOpen && (
               <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden border-t border-border md:hidden">
                 <div className="space-y-1 p-4">
-                  {isAuthenticated && (location.pathname.startsWith("/explore") || location.pathname === "/account-settings") ? (
+                  {isSoftwareEnvironment ? (
                     <>
                       <Link to="/explore" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Solutions</Link>
                       <Link to="/workspace" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Workspace</Link>
