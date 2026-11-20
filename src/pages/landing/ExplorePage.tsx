@@ -75,11 +75,14 @@ function ProductCard({ product, index, showDescription = true, showGroup = false
   if (product.status === "coming-soon" || !product.href) {
     return <div aria-label={`${product.name} solution`}>{content}</div>;
   }
-  return (
-    <button type="button" onClick={() => onSelect?.(product)} className="block w-full text-left" aria-label={`Open ${product.name} solution within Amineva`}>
-      {content}
-    </button>
-  );
+  if (product.external) {
+    return (
+      <button type="button" onClick={() => onSelect?.(product)} className="block w-full text-left" aria-label={`Open ${product.name} solution within Amineva`}>
+        {content}
+      </button>
+    );
+  }
+  return <Link to={product.href} aria-label={`Open ${product.name} solution`}>{content}</Link>;
 }
 
 export default function ExplorePage() {
