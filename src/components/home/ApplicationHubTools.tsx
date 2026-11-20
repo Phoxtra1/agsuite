@@ -82,20 +82,56 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
   useEffect(() => {
     if (!open || tab !== "updates") return;
     let active = true;
-    if (!("serviceWorker" in navigator)) { setUpdateState("This browser does not support service-worker updates."); return; }
+    let currentRegistration: ServiceWorkerRegistration | null = null;
+    let installingWorker: ServiceWorker | null = null;
+    const handleWorkerState = () => {
+      if (!active || !installingWorker) return;
+      if (installingWorker.state === "installed" && navigator.serviceWorker.controller) {
+        setUpdateState("A new Amineva version has been downloaded and is ready.");
+        setRegistration(currentRegistration);
+      } else if (installingWorker.state === "installing") {
+        setUpdateState("An Amineva update is downloading.");
+      }
+    };
+    const handleUpdateFound = () => {
+      installingWorker = currentRegistration?.installing ?? null;
+      installingWorker?.addEventListener("statechange", handleWorkerState);
+      handleWorkerState();
+    };
+
+    if (!("serviceWorker" in navigator)) {
+      setRegistration(null);
+      setUpdateState("This browser does not support service-worker updates.");
+      return;
+    }
+
     getAminevaServiceWorkerRegistration().then(reg => {
       if (!active) return;
-      setRegistration(reg || null);
-      setUpdateState(reg ? "Amineva update service is active. Updates are normally applied automatically." : "No Amineva service worker is registered on this device. Install/update support becomes available after the production app is loaded in a supported browser.");
-      if (reg?.waiting) setUpdateState("An update is ready to install.");
-      reg?.addEventListener("updatefound", () => {
-        const worker = reg.installing;
-        worker?.addEventListener("statechange", () => {
-          if (worker.state === "installed" && navigator.serviceWorker.controller) setUpdateState("A new version has been downloaded and is ready.");
-        });
-      });
-    }).catch(() => setUpdateState("Unable to inspect update status on this device."));
-    return () => { active = false; };
+      currentRegistration = reg;
+      setRegistration(reg);
+      if (!reg) {
+        setUpdateState("No Amineva service worker is registered on this device.");
+        return;
+      }
+      setUpdateState(reg.waiting
+        ? "An Amineva update is ready to install."
+        : reg.installing
+          ? "An Amineva update is downloading."
+          : "Amineva update service is active. Updates are normally applied automatically.");
+      reg.addEventListener("updatefound", handleUpdateFound);
+      if (reg.installing) {
+        installingWorker = reg.installing;
+        installingWorker.addEventListener("statechange", handleWorkerState);
+      }
+    }).catch(() => {
+      if (active) setUpdateState("Unable to inspect Amineva update status on this device.");
+    });
+
+    return () => {
+      active = false;
+      currentRegistration?.removeEventListener("updatefound", handleUpdateFound);
+      installingWorker?.removeEventListener("statechange", handleWorkerState);
+    };
   }, [open, tab]);
 
   useEffect(() => {
