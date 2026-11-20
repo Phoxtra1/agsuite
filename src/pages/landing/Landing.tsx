@@ -10,7 +10,7 @@ export default function Landing() {
   const isHome = location.pathname === "/";
   const isAccountPortal = location.pathname === "/payments" || location.pathname === "/switch";
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isSoftwareEnvironment = location.pathname.startsWith("/explore") || location.pathname === "/account-settings";
+  const isSoftwareEnvironment = location.pathname.startsWith("/explore") || location.pathname === "/workspace" || location.pathname.startsWith("/workspace/") || location.pathname === "/account-settings";
   const solutionsLink = "/explore";
 
   return (
