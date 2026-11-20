@@ -237,12 +237,9 @@ function AppRoutes() {
         {/* Landing pages */}
         <Route path="/" element={<Landing />}>
           <Route index element={<PublicHome />} />
-          <Route path="explore" element={<ExplorePage />} />
-          <Route path="explore/:section" element={<ExplorePage />} />
           {/* Keep the legacy /info-system address working as a homepage alias; it is not a navigation item. */}
           <Route path="info-system" element={<Navigate to="/" replace />} />
           <Route path="get-started" element={<GetStartedPage />} />
-          <Route path="account-settings" element={<AccountSettingsPage />} />
           <Route
             path="switch"
             element={<PortalAuthGate><PortalLayout><SwitchDashboard /></PortalLayout></PortalAuthGate>}
@@ -272,6 +269,11 @@ function AppRoutes() {
           <Route path="terms" element={<TermsPage />} />
           <Route path="privacy" element={<PrivacyPage />} />
         </Route>
+
+        {/* Standalone software environment and application routes */}
+        <Route path="/explore" element={<Landing />}><Route index element={<ExplorePage />} /></Route>
+        <Route path="/explore/:section" element={<ExplorePage />} />
+        <Route path="/account-settings" element={<AccountSettingsPage />} />
 
         {/* Auth */}
         <Route path="/invite/:product" element={<InviteBridge />} />
