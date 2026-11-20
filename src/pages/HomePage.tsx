@@ -260,7 +260,7 @@ export default function HomePage() {
         <div className="w-full max-w-xl">
           {/* Public homepage navigation */}
           <div className="w-full flex justify-end gap-6 text-sm font-semibold text-muted-foreground flex-wrap items-center">
-            <button type="button" className="hover:text-foreground transition" onClick={() => navigate(isAuthenticated ? "/explore" : "/get-started?mode=register&returnTo=%2Fexplore")}>Solutions</button>
+            <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/explore")}>Solutions</button>
             <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/about-us")}>About Us</button>
             <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/faqs")}>FAQs</button>
             <button type="button" onClick={() => navigate("/get-started?mode=register")} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">Get Started</button>
