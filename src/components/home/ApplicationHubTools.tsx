@@ -160,7 +160,7 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
       let state: PermissionState = "unknown";
       if (kind === "notifications") {
         if (!("Notification" in window)) state = "unsupported";
-        else state = await Notification.requestPermission();
+        else { const result = await Notification.requestPermission(); state = result === "default" ? "prompt" : result; }
       } else if (kind === "location") {
         if (!navigator.geolocation) state = "unsupported";
         else await new Promise<void>((resolve, reject) => navigator.geolocation.getCurrentPosition(() => resolve(), error => reject(error), { timeout: 10000 }));
