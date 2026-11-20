@@ -10,9 +10,9 @@ import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Settings, UserRound, Info, ArrowLeft, X, Sun, Moon, Check, Shield, Smartphone, RefreshCw, Save, Lock, LogOut } from "lucide-react";
+import { Bell, Settings, UserRound, Info, ArrowLeft, X, Sun, Moon, Check, Shield, Smartphone, RefreshCw, Save, Lock, LogOut, HardDrive, ShieldCheck } from "lucide-react";
 
-type HubTab = "notifications" | "settings" | "account" | "updates" | "security" | "permissions" | "app-info";
+type HubTab = "notifications" | "settings" | "account" | "updates" | "offline" | "security" | "permissions" | "app-info";
 type InboxItem = { id: string; subject: string; body: string; source_app: string | null; created_at: string; is_read: boolean; type: string; };
 const PREF_KEY = "amineva_application_preferences_v1";
 type Preferences = { emailNotifications: boolean; productUpdates: boolean; inAppNotifications: boolean; };
@@ -45,9 +45,21 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
   const [checkingUpdate, setCheckingUpdate] = useState(false);
   const [permissions, setPermissions] = useState<Record<string, PermissionState>>({});
   const [permissionBusy, setPermissionBusy] = useState("");
+  const [storageEstimate, setStorageEstimate] = useState<{ usage?: number; quota?: number } | null>(null);
+  const [storagePersisted, setStoragePersisted] = useState<boolean | null>(null);
+  const [storageBusy, setStorageBusy] = useState(false);
 
   useEffect(() => { if (open) setTab(initialTab); }, [open, initialTab]);
   useEffect(() => { setDisplayName(user?.name || ""); }, [user?.name]);
+
+  useEffect(() => {
+    const syncLocalPreferences = (event: StorageEvent) => {
+      if (event.key !== PREF_KEY) return;
+      setPrefs(readPreferences());
+    };
+    window.addEventListener("storage", syncLocalPreferences);
+    return () => window.removeEventListener("storage", syncLocalPreferences);
+  }, []);
 
   useEffect(() => {
     const accountPrefs = user?.preferences;
@@ -59,7 +71,7 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
   }, [user?.preferences, setTheme]);
 
   useEffect(() => {
-    if (!open || tab !== "notifications" || !isAuthenticated || !user?.id) return;
+    if (!open || tab !== "notifications" || !prefs.inAppNotifications || !isAuthenticated || !user?.id) return;
     let active = true;
     setLoading(true);
     const load = async () => {
@@ -77,7 +89,7 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
       }
     });
     return () => { active = false; unsubscribe(); };
-  }, [open, tab, isAuthenticated, user?.id]);
+  }, [open, tab, prefs.inAppNotifications, isAuthenticated, user?.id]);
 
   useEffect(() => {
     if (!open || tab !== "updates") return;
@@ -247,17 +259,52 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
     } finally { setPermissionBusy(""); }
   };
 
-  const unread = useMemo(() => items.filter(item => !item.is_read).length, [items]);
+  const unread = useMemo(() => prefs.inAppNotifications ? items.filter(item => !item.is_read).length : 0, [items, prefs.inAppNotifications]);
   const visibleItems = prefs.inAppNotifications ? items : [];
   const tabs: { id: HubTab; label: string; icon: React.ElementType }[] = [
     { id: "notifications", label: "Notifications", icon: Bell },
     { id: "settings", label: "Preferences", icon: Settings },
     { id: "account", label: "Account & profile", icon: UserRound },
     { id: "updates", label: "Application updates", icon: RefreshCw },
+    { id: "offline", label: "Offline & storage", icon: HardDrive },
     { id: "security", label: "Security", icon: Shield },
     { id: "permissions", label: "Device permissions", icon: Smartphone },
     { id: "app-info", label: "App information", icon: Info },
   ];
+
+  const refreshStorageStatus = async () => {
+    if (!navigator.storage) { setStorageEstimate(null); setStoragePersisted(false); return; }
+    try {
+      const results = await Promise.all([navigator.storage.estimate(), navigator.storage.persisted()]);
+      setStorageEstimate({ usage: results[0].usage, quota: results[0].quota });
+      setStoragePersisted(results[1]);
+    } catch { setStorageEstimate(null); setStoragePersisted(null); }
+  };
+
+  useEffect(() => {
+    if (open && tab === "offline") void refreshStorageStatus();
+  }, [open, tab]);
+
+  const requestPersistentStorage = async () => {
+    if (!navigator.storage?.persist) { setMessage("Persistent storage requests are not supported by this browser."); return; }
+    setStorageBusy(true);
+    try {
+      const granted = await navigator.storage.persist();
+      setStoragePersisted(granted);
+      await refreshStorageStatus();
+      setMessage(granted ? "The browser granted persistent storage for Amineva on this device." : "The browser did not grant persistent storage. Existing local data remains subject to browser storage policies.");
+    } catch (error: any) { setMessage(error?.message || "Could not request persistent storage."); }
+    finally { setStorageBusy(false); }
+  };
+
+  const formatBytes = (value?: number) => {
+    if (value == null) return "Unavailable";
+    const units = ["B", "KB", "MB", "GB"];
+    let size = value; let unit = 0;
+    while (size >= 1024 && unit < units.length - 1) { size /= 1024; unit++; }
+    return size.toFixed(unit === 0 ? 0 : 1) + " " + units[unit];
+  };
+
   const permissionRows = [
     ["notifications", "Notifications", "Browser notifications for supported Amineva features.", "notifications"],
     ["location", "Location", "Location access when a feature explicitly needs it.", "geolocation"],
@@ -310,6 +357,24 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
             <p className="text-sm">{updateState}</p>
             <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => void checkForUpdates()} disabled={checkingUpdate}><RefreshCw className={`mr-2 h-4 w-4 ${checkingUpdate ? "animate-spin" : ""}`} />{checkingUpdate ? "Checking…" : "Check for updates"}</Button>{registration?.waiting && <Button onClick={installUpdate}>Install update and restart</Button>}</div>
             <p className="text-xs text-muted-foreground">The application currently uses its service-worker update mechanism. If no service worker is registered, update availability cannot be checked from this screen.</p>
+          </CardContent></Card>
+        </section>}
+
+        {tab === "offline" && <section className="space-y-4">
+          <div><h2 className="text-xl font-semibold">Offline & storage</h2><p className="mt-1 text-sm text-muted-foreground">Understand what remains available when your connection is interrupted.</p></div>
+          <Card><CardHeader><CardTitle className="flex items-center gap-2 text-base"><HardDrive className="h-4 w-4" /> Device storage</CardTitle><CardDescription>Amineva uses browser-managed storage for cached application files and locally saved workspace data.</CardDescription></CardHeader><CardContent className="space-y-4">
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Storage used by this browser</p><p className="mt-1 text-lg font-semibold">{formatBytes(storageEstimate?.usage)}</p></div>
+              <div className="rounded-lg border p-3"><p className="text-xs text-muted-foreground">Estimated storage quota</p><p className="mt-1 text-lg font-semibold">{formatBytes(storageEstimate?.quota)}</p></div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3"><div><p className="text-sm font-medium">Persistent storage</p><p className="text-xs text-muted-foreground">{storagePersisted === true ? "Granted by this browser." : storagePersisted === false ? "Not granted. Browser cleanup policies may remove local data." : "Status unavailable."}</p></div><Badge variant={storagePersisted === true ? "default" : "secondary"}>{storagePersisted === true ? "Protected from routine eviction" : "Browser managed"}</Badge></div>
+            <div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => void requestPersistentStorage()} disabled={storageBusy || storagePersisted === true}><ShieldCheck className="mr-2 h-4 w-4" />{storageBusy ? "Requesting…" : "Request persistent storage"}</Button><Button variant="ghost" onClick={() => void refreshStorageStatus()}>Refresh storage status</Button></div>
+          </CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-base">What works offline</CardTitle></CardHeader><CardContent className="space-y-3 text-sm text-muted-foreground">
+            <p><strong className="text-foreground">Application shell:</strong> after the app has loaded successfully online, its service worker can cache the app shell and eligible static assets for a later visit.</p>
+            <p><strong className="text-foreground">Locally saved workspace data:</strong> documents and other workspace data already saved on this device may remain accessible, subject to the browser retaining its storage.</p>
+            <p><strong className="text-foreground">Cloud services:</strong> sign-in, server requests, email delivery, real-time notifications and cloud synchronisation require a working connection.</p>
+            <p><strong className="text-foreground">Pending changes:</strong> this build does not promise a universal offline action queue or automatic conflict resolution. Do not close a page with an unsaved cloud operation while offline.</p>
           </CardContent></Card>
         </section>}
         {tab === "security" && <section className="space-y-4">
