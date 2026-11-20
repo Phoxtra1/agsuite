@@ -1,18 +1,13 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
 import { useCategoryProducts } from "@/hooks/useProducts";
-import { Badge } from "@/components/ui/badge";
-import { Clock, XCircle, ArrowUpRight, ChevronLeft, ChevronRight, Compass, Settings, Sun, Moon, LayoutDashboard, GraduationCap, Sprout, Wallet, Package, BrainCircuit, BriefcaseBusiness, Clock3, FileText, Sheet, Presentation, ClipboardList, Bell, Settings2 } from "lucide-react";
-import { AnimatePresence, motion } from "framer-motion";
-import { useTheme } from "@/contexts/ThemeContext";
+
 import { useAuth } from "@/contexts/AuthContext";
 import { useVisitorLocation } from "@/hooks/useVisitorLocation";
 import amvLogo from "@/assets/amv_global_logo.png";
 import AuthCard from "@/components/home/AuthCard";
-import { ApplicationHubTools } from "@/components/home/ApplicationHubTools";
 
-import { getProductIcon } from "@/lib/products";
 import { PUBLIC_AUTH_PAUSED, publicEntryPath } from "@/lib/auth/availability";
 
 type CountryCurrencyOption = {
@@ -21,88 +16,13 @@ type CountryCurrencyOption = {
   currencyCode: string;
 };
 
-function getProductIconSafe(productId: string) {
-  return getProductIcon(productId);
-}
-
-type DashboardSolution = {
-  id: string;
-  name: string;
-  description: string;
-  category: string;
-  href?: string;
-  external?: boolean;
-  comingSoon?: boolean;
-  icon: React.ElementType;
-};
-
-const dashboardSolutions: DashboardSolution[] = [
-  { id: "info-solutions", name: "Info Solutions", description: "Discover, assess and verify information, with research and useful outcomes.", category: "Information", href: "https://info.amineva.com", external: true, icon: Compass },
-  { id: "career-education", name: "Career & Education", description: "Explore career development, educational pathways and learning opportunities.", category: "People", href: "/explore/career-education", icon: GraduationCap },
-  { id: "agroclimate", name: "AgroClimate", description: "Agricultural intelligence, climate insights and farm-focused tools.", category: "Agriculture", href: "https://agro.amineva.com", external: true, icon: Sprout },
-  { id: "sikasem", name: "SikaSem", description: "Financial operations for mobile money and financial service providers.", category: "Finance", href: "https://ops.amineva.com", external: true, icon: Wallet },
-  { id: "inventra", name: "Inventra", description: "Inventory, stock movement and sales management.", category: "Business", href: "https://stock.amineva.com", external: true, icon: Package },
-  { id: "dipa", name: "Dipa", description: "Applied AI capabilities for specialised workflows and services.", category: "Intelligence", href: "https://ode.amineva.com", external: true, icon: BrainCircuit },
-  { id: "datalens", name: "DataLens", description: "IT support and web application services.", category: "Business", comingSoon: true, icon: BriefcaseBusiness },
-];
-
-const RECENT_SOLUTIONS_KEY = "amineva_recent_solutions_v1";
-
-function readRecentSolutions(): string[] {
-  try {
-    const stored = localStorage.getItem(RECENT_SOLUTIONS_KEY);
-    const parsed = stored ? JSON.parse(stored) : [];
-    return Array.isArray(parsed) ? parsed.filter((id): id is string => typeof id === "string") : [];
-  } catch {
-    return [];
-  }
-}
-
-function getStatusBadge(status: ProductData["status"]) {
-  switch (status) {
-    case "live":
-      return <Badge className="bg-success/20 text-success text-xs">Live</Badge>;
-    case "coming_soon":
-      return (
-        <Badge variant="secondary" className="text-xs gap-1">
-          <Clock className="w-3 h-3" />
-          Coming Soon
-        </Badge>
-      );
-    case "offline":
-      return (
-        <Badge variant="destructive" className="text-xs gap-1">
-          <XCircle className="w-3 h-3" />
-          Offline
-        </Badge>
-      );
-    default:
-      return null;
-  }
-}
-
-
-const solutionSpotlights = [
-  { name: "Info Solutions", category: "Information discovery", description: "Discover, assess and verify information, then turn findings into clear, useful outcomes.", icon: Compass, status: "Available" },
-  { name: "Career & Education", category: "People and opportunity", description: "Explore educational pathways, career direction and practical learning opportunities.", icon: GraduationCap, status: "Explore programme" },
-  { name: "AgroClimate", category: "Agriculture and climate", description: "Technology and intelligence supporting agricultural decisions and climate resilience.", icon: Sprout, status: "Platform" },
-  { name: "SikaSem", category: "Financial operations", description: "Operational tools for mobile money, savings, lending and financial service providers.", icon: Wallet, status: "Platform" },
-  { name: "Inventra", category: "Business operations", description: "Manage inventory movement, stock visibility and sales operations.", icon: Package, status: "Platform" },
-  { name: "Dipa", category: "Applied artificial intelligence", description: "AI capabilities designed to support practical workflows and specialised applications.", icon: BrainCircuit, status: "Platform" },
-  { name: "DataLens", category: "IT support and services", description: "Web application maintenance, technical support and service request management.", icon: BriefcaseBusiness, status: "In development" },
-];
 
 export default function HomePage() {
   const navigate = useNavigate();
   const { products } = useCategoryProducts();
-  const { theme, setTheme } = useTheme();
   const { isAuthenticated } = useAuth();
 
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
-  const [recentSolutionIds, setRecentSolutionIds] = useState<string[]>(readRecentSolutions);
-  const [activeSolutionIndex, setActiveSolutionIndex] = useState(0);
-  const [applicationHubOpen, setApplicationHubOpen] = useState(false);
-  const [applicationHubTab, setApplicationHubTab] = useState<"notifications" | "settings" | "account" | "about" | "devices">("notifications");
   const [authTab, setAuthTab] = useState<"signin" | "register">("signin");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -117,17 +37,7 @@ export default function HomePage() {
     return () => window.clearInterval(id);
   }, []);
 
-  useEffect(() => {
-    const timer = window.setInterval(() => {
-      setActiveSolutionIndex((current) => (current + 1) % solutionSpotlights.length);
-    }, 5600);
-    return () => window.clearInterval(timer);
-  }, []);
 
-  const showPreviousSolution = () => setActiveSolutionIndex((current) => (current - 1 + solutionSpotlights.length) % solutionSpotlights.length);
-  const showNextSolution = () => setActiveSolutionIndex((current) => (current + 1) % solutionSpotlights.length);
-  const activeSolution = solutionSpotlights[activeSolutionIndex];
-  const ActiveSolutionIcon = activeSolution.icon;
 
   const { locationLabel: visitorLocationLabel, timeZone: visitorTimeZone } = useVisitorLocation();
   const displayTimeZone = visitorTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || "Etc/UTC";
@@ -153,7 +63,6 @@ export default function HomePage() {
   const selectedAgOption = countryCurrencyOptions.find((opt) => opt.id === agCountry);
 
   const workspaceProduct: ProductData = products.find((product) => product.id.toLowerCase().includes("workspace") || product.name.toLowerCase().includes("workspace")) || { id: "workspace", name: "Amineva Workspace", status: "live", order: 0 };
-  const WorkspaceIcon = getProductIconSafe(workspaceProduct?.id || "workspace");
 
   // A direct /workspace visit returns here for authentication; restore the
   // Workspace sign-in card instead of leaving the user at product selection.
@@ -181,13 +90,7 @@ export default function HomePage() {
   }, [isAgStock, agStepConfirmed, selectedProduct]);
 
 
-  const recordRecentSolution = (solutionId: string) => {
-    setRecentSolutionIds((current) => {
-      const next = [solutionId, ...current.filter((id) => id !== solutionId)].slice(0, 4);
-      try { localStorage.setItem(RECENT_SOLUTIONS_KEY, JSON.stringify(next)); } catch {}
-      return next;
-    });
-  };
+
 
   const onPickProduct = (p: ProductData) => {
     if (p.status === "coming_soon" || p.status === "offline") return;
@@ -268,16 +171,6 @@ export default function HomePage() {
     } catch {}
   };
 
-  // Settings dropdown items
-  const [settingsOpen, setSettingsOpen] = useState(false);
-  const settingsRef = useRef<HTMLDivElement>(null);
-  useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (settingsRef.current && !settingsRef.current.contains(e.target as Node)) setSettingsOpen(false);
-    }
-    if (settingsOpen) document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [settingsOpen]);
 
   return (
     <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2 relative">
@@ -365,49 +258,13 @@ export default function HomePage() {
       {/* RIGHT PANEL */}
       <div className="relative flex items-start justify-center p-6 lg:p-10 bg-background text-foreground">
         <div className="w-full max-w-xl">
-          {/* Primary navigation and appearance settings. Workspace is accessed from its dedicated panel below. */}
-          <div className="w-full flex justify-end gap-6 text-base font-semibold text-muted-foreground flex-wrap items-center">
-            <button type="button" className="hover:text-foreground transition cursor-pointer text-accent font-bold" onClick={() => navigate("/explore")}>Solutions</button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/about-us")}>About Us</button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/support")}>Support</button>
-            <button type="button" className="hover:text-foreground transition cursor-pointer" onClick={() => navigate("/faqs")}>FAQs</button>
-
-            {/* Settings with theme toggle */}
-            <div className="relative" ref={settingsRef}>
-              <button type="button" className="hover:text-foreground transition cursor-pointer flex items-center gap-1" onClick={() => setSettingsOpen(!settingsOpen)}>
-                <Settings className="h-4 w-4" /> Settings
-              </button>
-              <AnimatePresence>
-                {settingsOpen && (
-                  <motion.div
-                    initial={{ opacity: 0, y: 8 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: 8 }}
-                    transition={{ duration: 0.15 }}
-                    className="absolute right-0 mt-2 w-52 rounded-xl border border-border bg-card shadow-xl z-50 overflow-hidden"
-                  >
-                    <div className="p-3 space-y-2">
-                      <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Appearance</p>
-                      <button
-                        type="button"
-                        onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
-                        className="w-full flex items-center gap-3 px-3 py-2.5 text-sm text-foreground hover:bg-accent/10 rounded-lg transition"
-                      >
-                        {theme === "dark" ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-                        {theme === "dark" ? "Light Mode" : "Dark Mode"}
-                      </button>
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-            <button
-              type="button"
-              onClick={() => navigate(isAuthenticated ? "/workspace" : "/get-started?mode=register")}
-              className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
-            >
-              {isAuthenticated ? "Open Portal" : "Get Started"}
-            </button>
+          {/* Public site navigation */}
+          <div className="w-full flex justify-end gap-6 text-sm font-semibold text-muted-foreground flex-wrap items-center">
+            <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/explore")}>Explore</button>
+            <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/about-us")}>About</button>
+            <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/support")}>Support</button>
+            <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/faqs")}>FAQs</button>
+            <button type="button" onClick={() => navigate("/get-started?mode=register")} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">Get Started</button>
           </div>
 
           {selectedProduct ? (
@@ -452,147 +309,23 @@ export default function HomePage() {
               )}
             </>
           ) : (
-            <>
-              <section className="mt-7 space-y-5" aria-label="Amineva application dashboard">
-                <div className="flex flex-wrap items-end justify-between gap-3">
-                  <div>
-                    <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-[0.18em] text-primary">
-                      <LayoutDashboard className="h-3.5 w-3.5" /> Application dashboard
-                    </div>
-                    <h2 className="mt-2 text-2xl font-semibold tracking-tight text-foreground">Your Amineva environment</h2>
-                    <p className="mt-1 text-sm leading-5 text-muted-foreground">One place to access your solutions and productivity workspace.</p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <button type="button" onClick={() => { setApplicationHubTab("notifications"); setApplicationHubOpen(true); }} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:border-primary/40 hover:bg-muted"><Bell className="h-4 w-4" /> Notifications</button>
-                    <button type="button" onClick={() => { setApplicationHubTab("settings"); setApplicationHubOpen(true); }} className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-card px-3 text-xs font-medium text-foreground transition hover:border-primary/40 hover:bg-muted"><Settings2 className="h-4 w-4" /> Settings</button>
-                    <span className="hidden items-center gap-1.5 rounded-full border border-border bg-card px-2.5 py-1 text-[10px] font-medium text-muted-foreground xl:inline-flex"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Ecosystem gateway</span>
-                  </div>
-                </div>
-
-                <div className="relative overflow-hidden rounded-2xl border border-primary/20 bg-card p-4 shadow-sm sm:p-5">
-                  <div className="pointer-events-none absolute -right-10 -top-12 h-36 w-36 rounded-full bg-primary/[0.10] blur-3xl" />
-                  <div className="relative flex items-start justify-between gap-4">
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.14em] text-primary">
-                        <LayoutDashboard className="h-4 w-4" /> Amineva Workspace
-                      </div>
-                      <h3 className="mt-2 text-lg font-semibold text-foreground">Your productivity space</h3>
-                      <p className="mt-1 max-w-md text-xs leading-5 text-muted-foreground">Create and manage documents, spreadsheets, presentations and forms in one connected workspace.</p>
-                    </div>
-                    <div className="hidden h-11 w-11 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/[0.08] text-primary sm:flex">
-                      <FileText className="h-5 w-5" />
-                    </div>
-                  </div>
-                  <div className="relative mt-4 flex flex-wrap items-center gap-2">
-                    {[
-                      { label: "Docs", icon: FileText },
-                      { label: "Sheets", icon: Sheet },
-                      { label: "Slides", icon: Presentation },
-                      { label: "Forms", icon: ClipboardList },
-                    ].map((item) => {
-                      const ItemIcon = item.icon;
-                      return <span key={item.label} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background/80 px-2.5 py-1.5 text-[10px] font-medium text-muted-foreground"><ItemIcon className="h-3.5 w-3.5" />{item.label}</span>;
-                    })}
-                    <button type="button" onClick={() => onPickProduct(workspaceProduct)} className="ml-auto inline-flex h-9 items-center justify-center rounded-lg bg-primary px-3.5 text-xs font-semibold text-primary-foreground transition hover:bg-primary/90">
-                      {isAuthenticated ? "Open Workspace" : "Access Workspace"} <ArrowUpRight className="ml-1.5 h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                  {!isAuthenticated && <p className="relative mt-2 text-[10px] text-muted-foreground">Workspace registration or sign-in is required. Other solutions keep their own access arrangements.</p>}
-                </div>
-
-                <div>
-                  <div className="mb-3 flex items-center justify-between gap-3">
-                    <div>
-                      <h3 className="text-sm font-semibold text-foreground">Solutions</h3>
-                      <p className="mt-0.5 text-[11px] text-muted-foreground">Open the independent services you need.</p>
-                    </div>
-                    <button type="button" onClick={() => navigate("/explore")} className="inline-flex items-center gap-1 text-xs font-semibold text-primary transition hover:underline">All solutions <ChevronRight className="h-3.5 w-3.5" /></button>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                    {dashboardSolutions.map((solution) => {
-                      const SolutionIcon = solution.icon;
-                      const card = (
-                        <div className={`group relative flex h-full min-h-[116px] flex-col rounded-xl border border-border/80 bg-card p-3 shadow-sm transition-all duration-200 ${solution.comingSoon ? "opacity-65" : "hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md"}`}>
-                          <div className="flex items-start justify-between gap-2">
-                            <span className="flex h-9 w-9 items-center justify-center rounded-lg border border-primary/15 bg-primary/[0.07] text-primary"><SolutionIcon className="h-[18px] w-[18px]" strokeWidth={1.8} /></span>
-                            {solution.comingSoon ? <span className="rounded-full border border-border bg-muted px-2 py-1 text-[8px] font-semibold uppercase tracking-wider text-muted-foreground">Coming soon</span> : <ArrowUpRight className="h-4 w-4 text-muted-foreground/60 transition group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />}
-                          </div>
-                          <h4 className="mt-2.5 text-xs font-semibold text-foreground">{solution.name}</h4>
-                          <p className="mt-1 text-[10px] leading-4 text-muted-foreground">{solution.description}</p>
-                          <span className="mt-auto pt-2 text-[8px] font-semibold uppercase tracking-[0.14em] text-primary/75">{solution.category}</span>
-                        </div>
-                      );
-                      if (solution.comingSoon || !solution.href) return <div key={solution.id} aria-label={`${solution.name}, coming soon`}>{card}</div>;
-                      if (solution.external) return <a key={solution.id} href={solution.href} target="_blank" rel="noopener noreferrer" onClick={() => recordRecentSolution(solution.id)} aria-label={`Open ${solution.name} in a new tab`}>{card}</a>;
-                      return <button key={solution.id} type="button" onClick={() => { recordRecentSolution(solution.id); navigate(solution.href!); }} className="text-left">{card}</button>;
-                    })}
-                  </div>
-                </div>
-
-                <div className="rounded-xl border border-border/80 bg-card/70 p-4">
-                  <div className="flex items-center justify-between gap-3">
-                    <div className="flex items-center gap-2">
-                      <Clock3 className="h-4 w-4 text-muted-foreground" />
-                      <h3 className="text-xs font-semibold text-foreground">Recently opened</h3>
-                    </div>
-                    <span className="text-[9px] uppercase tracking-wider text-muted-foreground">This device</span>
-                  </div>
-                  {recentSolutionIds.length ? (
-                    <div className="mt-3 flex flex-wrap gap-2">
-                      {recentSolutionIds.map((id) => {
-                        const solution = dashboardSolutions.find((item) => item.id === id);
-                        if (!solution || solution.comingSoon || !solution.href) return null;
-                        return solution.external ? (
-                          <a key={id} href={solution.href} target="_blank" rel="noopener noreferrer" onClick={() => recordRecentSolution(id)} className="rounded-lg border border-border bg-background px-3 py-2 text-[10px] font-medium text-foreground transition hover:border-primary/40">{solution.name} <ArrowUpRight className="ml-1 inline h-3 w-3" /></a>
-                        ) : (
-                          <button key={id} type="button" onClick={() => { recordRecentSolution(id); navigate(solution.href!); }} className="rounded-lg border border-border bg-background px-3 py-2 text-[10px] font-medium text-foreground transition hover:border-primary/40">{solution.name} <ChevronRight className="ml-1 inline h-3 w-3" /></button>
-                        );
-                      })}
-                    </div>
-                  ) : <p className="mt-2 text-[10px] leading-4 text-muted-foreground">Solutions you open from this device will appear here for quick access.</p>}
-                </div>
-              </section>
-              <ApplicationHubTools open={applicationHubOpen} onOpenChange={setApplicationHubOpen} initialTab={applicationHubTab} />
-
-              <section aria-label="Amineva Global solution spotlight" className="mt-4 overflow-hidden rounded-2xl border border-border/80 bg-card/80 shadow-sm">
-                <div className="flex items-center justify-between border-b border-border/70 px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <span className="h-2 w-2 rounded-full bg-emerald-500 shadow-[0_0_0_3px_rgba(16,185,129,0.12)]" />
-                    <span className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Solution spotlight</span>
-                  </div>
-                  <span className="font-mono text-[10px] tabular-nums text-muted-foreground">{String(activeSolutionIndex + 1).padStart(2, "0")} <span className="text-muted-foreground/50">/</span> {String(solutionSpotlights.length).padStart(2, "0")}</span>
-                </div>
-                <div className="relative min-h-[150px] p-4 sm:p-5">
-                  <AnimatePresence mode="wait">
-                    <motion.div key={activeSolution.name} initial={{ opacity: 0, y: 8 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -6 }} transition={{ duration: 0.24 }} className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border border-primary/20 bg-primary/[0.08] text-primary shadow-inner">
-                        <ActiveSolutionIcon className="h-6 w-6" strokeWidth={1.7} />
-                      </div>
-                      <div className="min-w-0 flex-1">
-                        <div className="flex flex-wrap items-center gap-2">
-                          <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">{activeSolution.category}</span>
-                          <span className="rounded-full border border-border bg-background px-2 py-0.5 text-[9px] font-medium text-muted-foreground">{activeSolution.status}</span>
-                        </div>
-                        <h3 className="mt-1.5 text-base font-semibold tracking-tight text-foreground">{activeSolution.name}</h3>
-                        <p className="mt-1 text-xs leading-5 text-muted-foreground">{activeSolution.description}</p>
-                      </div>
-                    </motion.div>
-                  </AnimatePresence>
-                </div>
-                <div className="flex items-center justify-between border-t border-border/70 bg-muted/25 px-4 py-2.5">
-                  <div className="flex items-center gap-1.5" aria-label="Choose solution">
-                    {solutionSpotlights.map((solution, index) => (
-                      <button key={solution.name} type="button" aria-label={`Show ${solution.name}`} aria-pressed={activeSolutionIndex === index} onClick={() => setActiveSolutionIndex(index)} className={`h-1.5 rounded-full transition-all duration-300 ${activeSolutionIndex === index ? "w-5 bg-primary" : "w-1.5 bg-muted-foreground/30 hover:bg-muted-foreground/60"}`} />
-                    ))}
-                  </div>
-                  <div className="flex items-center gap-1">
-                    <button type="button" onClick={showPreviousSolution} aria-label="Previous solution" className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition hover:border-primary/40 hover:text-foreground"><ChevronLeft className="h-4 w-4" /></button>
-                    <button type="button" onClick={showNextSolution} aria-label="Next solution" className="inline-flex h-7 w-7 items-center justify-center rounded-lg border border-border bg-background text-muted-foreground transition hover:border-primary/40 hover:text-foreground"><ChevronRight className="h-4 w-4" /></button>
-                    <button type="button" onClick={() => navigate("/explore")} className="ml-1 inline-flex h-7 items-center gap-1 rounded-lg px-2 text-[11px] font-semibold text-primary transition hover:bg-primary/10">All solutions <ArrowUpRight className="h-3.5 w-3.5" /></button>
-                  </div>
-                </div>
-              </section>
-            </>
+            <section className="mx-auto mt-20 max-w-lg text-center sm:mt-28" aria-label="Amineva Global introduction">
+              <p className="text-xs font-semibold uppercase tracking-[0.22em] text-primary">Amineva Global</p>
+              <h1 className="mt-4 text-4xl font-semibold leading-tight tracking-tight text-foreground sm:text-5xl">
+                Practical solutions for a changing world.
+              </h1>
+              <p className="mx-auto mt-5 max-w-md text-base leading-7 text-muted-foreground">
+                We provide practical solutions through technology, connecting people, businesses and institutions with useful digital services.
+              </p>
+              <div className="mt-8 flex flex-wrap justify-center gap-3">
+                <button type="button" onClick={() => navigate("/explore")} className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:border-primary/50 hover:bg-muted">
+                  Explore Amineva
+                </button>
+                <button type="button" onClick={() => navigate("/get-started?mode=register")} className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
+                  Get Started
+                </button>
+              </div>
+            </section>
           )}
         </div>
 
