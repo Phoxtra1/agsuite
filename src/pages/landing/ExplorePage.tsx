@@ -34,7 +34,7 @@ const careerOptions: Product[] = [
 
 const filters = ["All", "Business", "People", "Intelligence", "Agriculture", "Finance", "Information"];
 
-function ProductCard({ product, index, showDescription = true, showGroup = false }: { product: Product; index: number; showDescription?: boolean; showGroup?: boolean }) {
+function ProductCard({ product, index, showDescription = true, showGroup = false, onSelect }: { product: Product; index: number; showDescription?: boolean; showGroup?: boolean; onSelect?: (product: Product) => void }) {
   const Icon = product.icon;
   const content = (
     <motion.article
@@ -76,7 +76,11 @@ function ProductCard({ product, index, showDescription = true, showGroup = false
     return <div aria-label={`${product.name} solution`}>{content}</div>;
   }
   if (product.external) {
-    return <a href={product.href} target="_blank" rel="noopener noreferrer" aria-label={`Open ${product.name} solution`}>{content}</a>;
+    return (
+      <button type="button" onClick={() => onSelect?.(product)} className="block w-full text-left" aria-label={`Open ${product.name} solution within Amineva`}>
+        {content}
+      </button>
+    );
   }
   return <Link to={product.href} aria-label={`Open ${product.name} solution`}>{content}</Link>;
 }
@@ -86,6 +90,7 @@ export default function ExplorePage() {
   const { isAuthenticated, isLoading } = useAuth();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All");
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const isCareer = section === "career-education";
 
   if (isLoading) return <main className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">Loading account…</main>;
@@ -98,12 +103,36 @@ export default function ExplorePage() {
   }), [filter, query]);
 
   const clearSearch = () => setQuery("");
+  const returnToSolutions = () => setSelectedProduct(null);
 
   return (
     <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-background px-4 py-10 text-foreground sm:px-6 sm:py-14">
       <div aria-hidden="true" className="pointer-events-none absolute -left-40 top-0 h-80 w-80 rounded-full bg-primary/[0.08] blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute -right-40 top-48 h-96 w-96 rounded-full bg-violet-500/[0.07] blur-3xl" />
       <div className="relative mx-auto max-w-6xl">
+        {selectedProduct ? (
+          <section className="min-h-[70vh]">
+            <button type="button" onClick={returnToSolutions} className="mb-6 inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-sm font-medium text-muted-foreground transition hover:border-primary/40 hover:text-foreground">
+              <ArrowLeft className="h-4 w-4" /> Back to Solutions
+            </button>
+            <div className="mb-4">
+              <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">{selectedProduct.name}</h1>
+              <p className="mt-1 text-sm text-muted-foreground">Running within the Amineva software environment.</p>
+            </div>
+            <div className="min-h-[70vh] overflow-hidden rounded-xl border border-border bg-card shadow-sm">
+              <iframe
+                key={selectedProduct.name}
+                src={selectedProduct.href}
+                title={`${selectedProduct.name} application`}
+                className="h-[75vh] min-h-[620px] w-full border-0 bg-background"
+                allow="clipboard-read; clipboard-write; camera; microphone; geolocation; fullscreen"
+                allowFullScreen
+                referrerPolicy="strict-origin-when-cross-origin"
+              />
+            </div>
+            <p className="mt-3 text-xs leading-5 text-muted-foreground">If this solution does not appear, its website may restrict being displayed inside another application. The solution will need an integration-compatible entry point before it can run fully inside this environment.</p>
+          </section>
+        ) : (
         <AnimatePresence mode="wait">
           {isCareer ? (
             <motion.section key="career" initial={{ opacity: 0, x: 12 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -12 }} transition={{ duration: 0.22 }}>
@@ -114,7 +143,7 @@ export default function ExplorePage() {
                 <p className="mt-3 text-sm text-muted-foreground">Explore the initiative or continue to the learning platform.</p>
               </div>
               <div className="mx-auto grid max-w-3xl gap-4 sm:grid-cols-2">
-                {careerOptions.map((product, index) => <ProductCard key={product.name} product={product} index={index} />)}
+                {careerOptions.map((product, index) => <ProductCard key={product.name} product={product} index={index} onSelect={setSelectedProduct} />)}
               </div>
             </motion.section>
           ) : (
@@ -142,7 +171,7 @@ export default function ExplorePage() {
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-10">
                   {visibleProducts.map((product, index) => (
                     <div key={product.name} className={index >= 5 ? "col-span-1 lg:col-span-5" : "col-span-1 lg:col-span-2"}>
-                      <ProductCard product={product} index={index} showDescription={false} showGroup />
+                      <ProductCard product={product} index={index} showDescription={false} showGroup onSelect={setSelectedProduct} />
                     </div>
                   ))}
                 </div>
@@ -156,6 +185,7 @@ export default function ExplorePage() {
             </motion.section>
           )}
         </AnimatePresence>
+        )}
       </div>
     </main>
   );

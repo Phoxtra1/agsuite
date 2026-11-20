@@ -23,7 +23,7 @@ export default function GetStartedPage() {
       if (password.length < 8) return setError("Use a password with at least 8 characters.");
       if (password !== confirmPassword) return setError("The passwords do not match.");
     }
-    setMessage("Your form is ready. Account registration and sign-in will be activated when the authentication backend is available. No information has been submitted or stored.");
+    setMessage("Registration and sign-in are not active yet. Nothing has been submitted, sent, or saved.");
   };
 
   return (
