@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link, Navigate, useParams } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
+import { useAuth } from "@/contexts/AuthContext";
 import {
   ArrowLeft, ArrowUpRight, Compass, GraduationCap, Search, X, Sparkles
 } from "lucide-react";
@@ -82,9 +83,13 @@ function ProductCard({ product, index, showDescription = true, showGroup = false
 
 export default function ExplorePage() {
   const { section } = useParams();
+  const { isAuthenticated, isLoading } = useAuth();
   const [query, setQuery] = useState("");
   const [filter, setFilter] = useState("All");
   const isCareer = section === "career-education";
+
+  if (isLoading) return <main className="flex min-h-[60vh] items-center justify-center text-sm text-muted-foreground">Loading account…</main>;
+  if (!isAuthenticated) return <Navigate to="/get-started?mode=register&returnTo=%2Fexplore" replace />;
 
   const visibleProducts = useMemo(() => products.filter((product) => {
     const matchesFilter = filter === "All" || product.group === filter;
