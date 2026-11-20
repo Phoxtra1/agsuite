@@ -85,8 +85,23 @@ export function WorkspaceNav() {
 
   return (
     <>
-      {/* Mobile top bar */}
-      <div className="md:hidden sticky top-0 z-40 h-14 flex items-center gap-3 px-4 border-b border-border bg-card">
+      {/* Shared software-environment navigation: same three destinations on desktop and mobile. */}
+      <header className="sticky top-0 z-[60] h-14 border-b border-border bg-background/95 backdrop-blur">
+        <div className="mx-auto flex h-full max-w-7xl items-center justify-between gap-4 px-4 sm:px-6">
+          <div className="flex min-w-0 items-center gap-2">
+            <img src={amvLogo} alt="Amineva Global" className="h-8 w-8 rounded-full" />
+            <span className="hidden text-sm font-semibold text-foreground sm:inline">Amineva Global</span>
+          </div>
+          <nav aria-label="Software environment" className="flex items-center gap-1 sm:gap-3">
+            <NavLink to="/explore" className={({ isActive }) => `rounded-lg px-3 py-2 text-xs font-medium transition sm:text-sm ${isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>Solutions</NavLink>
+            <NavLink to="/workspace" end className={({ isActive }) => `rounded-lg px-3 py-2 text-xs font-medium transition sm:text-sm ${isActive || location.pathname.startsWith("/workspace/") ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>Workspace</NavLink>
+            <NavLink to="/account-settings" className={({ isActive }) => `rounded-lg px-3 py-2 text-xs font-medium transition sm:text-sm ${isActive ? "bg-accent text-accent-foreground" : "text-muted-foreground hover:bg-muted hover:text-foreground"}`}>Settings</NavLink>
+          </nav>
+        </div>
+      </header>
+
+      {/* Mobile workspace tools menu */}
+      <div className="md:hidden sticky top-14 z-40 h-14 flex items-center gap-3 px-4 border-b border-border bg-card">
         <button
           aria-label="Open workspace menu"
           onClick={() => setOpen(true)}
@@ -106,7 +121,7 @@ export function WorkspaceNav() {
       )}
 
       <aside
-        className={`fixed inset-y-0 left-0 z-50 w-64 bg-card border-r border-border flex flex-col transition-transform duration-200 ${
+        className={`fixed inset-y-0 top-14 z-50 w-64 bg-card border-r border-border flex flex-col transition-transform duration-200 ${
           open ? "translate-x-0" : "-translate-x-full"
         } md:translate-x-0`}
       >
