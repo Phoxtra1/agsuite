@@ -2,17 +2,11 @@ import React, { useState } from "react";
 import { Outlet, Link, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Settings } from "lucide-react";
-import { useTheme } from "@/contexts/ThemeContext";
 import { useAuth } from "@/contexts/AuthContext";
 import amvLogo from "@/assets/amv_global_logo.png";
 import GlobalFooter from "@/components/layout/GlobalFooter";
 
-const navLinks = [
-  { label: "Solutions", to: "/explore" },
-  { label: "About Us", to: "/about-us" },
-  { label: "Support", to: "/support" },
-  { label: "FAQs", to: "/faqs" },
-];
+const navLinks = [{ label: "Solutions", to: "/explore" }];
 
 export default function Landing() {
   const location = useLocation();
@@ -20,7 +14,6 @@ export default function Landing() {
   // These routes render inside the account portal shell.
   const isAccountPortal = location.pathname === "/payments" || location.pathname === "/switch";
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { theme, setTheme } = useTheme();
   const { isAuthenticated } = useAuth();
 
   return (
@@ -45,13 +38,12 @@ export default function Landing() {
                   {link.label}
                 </Link>
               ))}
-              <button type="button" onClick={() => setTheme(theme === "dark" ? "light" : "dark")} className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground" aria-label="Toggle appearance settings"><Settings className="h-4 w-4" /> Settings</button>
-              <Link
-                to="/workspace"
+              {isAuthenticated ? <Link to="/settings" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"><Settings className="h-4 w-4" /> Settings</Link> : <Link to="/get-started?mode=register" className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground">Get Started</Link>}
+              {isAuthenticated && {isAuthenticated && <Link to="/workspace"
                 className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90"
               >
                 Workspace
-              </Link>
+              </Link>}
             </nav>
 
             <button className="md:hidden text-foreground" onClick={() => setMobileOpen(!mobileOpen)}>
@@ -74,14 +66,14 @@ export default function Landing() {
                       {link.label}
                     </Link>
                   ))}
-                  <button type="button" onClick={() => { setTheme(theme === "dark" ? "light" : "dark"); setMobileOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2.5 text-left text-sm text-foreground hover:bg-accent/10"><Settings className="h-4 w-4" /> Settings <span className="ml-auto text-xs text-muted-foreground">{theme === "dark" ? "Dark mode" : "Light mode"}</span></button>
+                  {isAuthenticated ? <Link to="/settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10"><Settings className="h-4 w-4" /> Settings</Link> : <Link to="/get-started?mode=register" onClick={() => setMobileOpen(false)} className="mt-2 flex items-center justify-center rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground">Get Started</Link>}
                   <Link
                     to="/workspace"
                     onClick={() => setMobileOpen(false)}
                     className="mt-2 flex items-center justify-center rounded-lg bg-primary px-3 py-2.5 text-sm font-semibold text-primary-foreground"
                   >
                     Workspace
-                  </Link>
+                  </Link>}
                 </div>
               </motion.div>
             )}
