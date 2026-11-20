@@ -16,10 +16,6 @@ type CountryCurrencyOption = {
   currencyCode: string;
 };
 
-function getProductIconSafe(productId: string) {
-  return getProductIcon(productId);
-}
-
 
 export default function HomePage() {
   const navigate = useNavigate();
@@ -175,8 +171,6 @@ export default function HomePage() {
     } catch {}
   };
 
-  return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [settingsOpen]);
 
   return (
     <div className="min-h-screen w-full grid grid-cols-1 lg:grid-cols-2 relative">
