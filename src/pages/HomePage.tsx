@@ -260,11 +260,8 @@ export default function HomePage() {
         <div className="w-full max-w-xl">
           {/* Public site navigation */}
           <div className="w-full flex justify-end gap-6 text-sm font-semibold text-muted-foreground flex-wrap items-center">
-            <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/explore")}>Explore</button>
-            <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/about-us")}>About</button>
-            <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/support")}>Support</button>
-            <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/faqs")}>FAQs</button>
-            <button type="button" onClick={() => navigate("/get-started?mode=register")} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">Get Started</button>
+            <button type="button" className="hover:text-foreground transition" onClick={() => navigate(isAuthenticated ? "/explore" : "/get-started?mode=register&returnTo=%2Fexplore")}>Solutions</button>
+            <button type="button" onClick={() => navigate("/get-started?mode=register&returnTo=%2Fexplore")} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">Get Started</button>
           </div>
 
           {selectedProduct ? (
@@ -315,14 +312,11 @@ export default function HomePage() {
                 Practical solutions for a changing world.
               </h1>
               <p className="mx-auto mt-5 max-w-md text-base leading-7 text-muted-foreground">
-                We provide practical solutions through technology, connecting people, businesses and institutions with useful digital services.
+                We provide practical solutions through technology.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <button type="button" onClick={() => navigate("/explore")} className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:border-primary/50 hover:bg-muted">
-                  Explore Amineva
-                </button>
-                <button type="button" onClick={() => navigate("/get-started?mode=register")} className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
-                  Get Started
+                <button type="button" onClick={() => navigate(isAuthenticated ? "/explore" : "/get-started?mode=register&returnTo=%2Fexplore")} className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:border-primary/50 hover:bg-muted">
+                  Explore Solutions
                 </button>
               </div>
             </section>
