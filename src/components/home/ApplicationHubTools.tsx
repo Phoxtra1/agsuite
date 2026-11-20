@@ -1,16 +1,16 @@
 import React, { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ComsSDK } from "@/core/coms/sdk";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Bell, Settings, UserRound, Info, RadioTower, CheckCheck, ExternalLink, Wifi, Sprout, ScanBarcode, MonitorSmartphone } from "lucide-react";
+import { Bell, Settings, UserRound, Info, CheckCheck, ArrowLeft, X } from "lucide-react";
 
-type HubTab = "notifications" | "settings" | "account" | "about" | "devices";
+type HubTab = "notifications" | "settings" | "account" | "about";
 type InboxItem = { id: string; subject: string; body: string; source_app: string | null; created_at: string; is_read: boolean; type: string; };
 
 const PREF_KEY = "amineva_application_preferences_v1";
@@ -25,6 +25,7 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
   open: boolean; onOpenChange: (open: boolean) => void; initialTab?: HubTab;
 }) {
   const { user, isAuthenticated } = useAuth();
+  const navigate = useNavigate();
   const [tab, setTab] = useState<HubTab>(initialTab);
   const [items, setItems] = useState<InboxItem[]>([]);
   const [loading, setLoading] = useState(false);
@@ -68,51 +69,49 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
   const unread = items.filter((item) => !item.is_read).length;
   const tabs: { id: HubTab; label: string; icon: React.ElementType }[] = [
     { id: "notifications", label: "Notifications", icon: Bell },
-    { id: "settings", label: "Settings", icon: Settings },
+    { id: "settings", label: "Preferences", icon: Settings },
     { id: "account", label: "Account", icon: UserRound },
-    { id: "about", label: "App information", icon: Info },
-    { id: "devices", label: "Device connections", icon: RadioTower },
+    { id: "about", label: "About Amineva", icon: Info },
   ];
 
-  return <Dialog open={open} onOpenChange={onOpenChange}>
-    <DialogContent className="max-h-[88vh] w-[min(760px,calc(100vw-24px))] max-w-none overflow-hidden p-0">
-      <DialogHeader className="border-b px-5 py-4 pr-12 text-left">
-        <DialogTitle>Amineva application centre</DialogTitle>
-        <DialogDescription>Manage your application preferences, account, notifications and compatible device connections.</DialogDescription>
-      </DialogHeader>
-      <div className="grid min-h-[460px] md:grid-cols-[190px_1fr]">
-        <nav className="flex gap-1 overflow-x-auto border-b p-2 md:flex-col md:border-b-0 md:border-r">
-          {tabs.map((entry) => { const Icon = entry.icon; return <button key={entry.id} onClick={() => setTab(entry.id)} className={`flex shrink-0 items-center gap-2 rounded-lg px-3 py-2.5 text-left text-xs transition ${tab === entry.id ? "bg-primary/10 font-semibold text-primary" : "text-muted-foreground hover:bg-muted"}`}><Icon className="h-4 w-4" />{entry.label}{entry.id === "notifications" && unread > 0 && <Badge variant="destructive" className="ml-auto">{unread}</Badge>}</button>; })}
-        </nav>
-        <div className="max-h-[68vh] overflow-y-auto p-4 sm:p-5">
-          {tab === "notifications" && <section className="space-y-3">
-            <div><h3 className="font-semibold">Notifications</h3><p className="text-xs text-muted-foreground">Messages delivered to your account through Amineva ComsSystem.</p></div>
-            {!isAuthenticated ? <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Sign in to view notifications sent to your account.</CardContent></Card> : loading ? <p className="py-8 text-center text-sm text-muted-foreground">Loading notifications…</p> : items.length === 0 ? <Card><CardContent className="py-8 text-center"><Bell className="mx-auto mb-2 h-7 w-7 text-muted-foreground" /><p className="text-sm text-muted-foreground">No notifications yet.</p></CardContent></Card> : items.map((item) => <button key={item.id} onClick={() => void markRead(item)} className={`w-full rounded-xl border p-3 text-left transition hover:bg-muted/60 ${item.is_read ? "border-border" : "border-primary/30 bg-primary/[0.04]"}`}><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-sm font-semibold">{item.subject || "Amineva notification"}</p><p className="mt-1 whitespace-pre-wrap text-xs leading-5 text-muted-foreground">{item.body}</p><p className="mt-2 text-[10px] text-muted-foreground">{item.source_app || "Amineva"} · {new Date(item.created_at).toLocaleString()}</p></div>{!item.is_read && <Badge>New</Badge>}</div></button>)}
-          </section>}
-          {tab === "settings" && <section className="space-y-4">
-            <div><h3 className="font-semibold">Application settings</h3><p className="text-xs text-muted-foreground">Preferences are saved on this device. Notification delivery still depends on the relevant service and your account settings.</p></div>
-            <Card><CardHeader className="pb-3"><CardTitle className="text-sm">Notifications</CardTitle><CardDescription>Choose which notification categories this application should display or prefer.</CardDescription></CardHeader><CardContent className="space-y-4">
-              {([["inAppNotifications","In-app notifications","Show messages received through ComsSystem."],["emailNotifications","Email notifications","Your preference for email updates; delivery is controlled by the sending service."],["productUpdates","Product updates","Receive product announcements where supported."]] as const).map(([key,label,desc]) => <div key={key} className="flex items-center justify-between gap-4"><div><Label>{label}</Label><p className="text-xs text-muted-foreground">{desc}</p></div><Switch checked={prefs[key]} onCheckedChange={(v) => updatePref(key,v)} /></div>)}
-            </CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm">Appearance</CardTitle></CardHeader><CardContent><p className="text-xs text-muted-foreground">Use the theme control on the Amineva dashboard to switch between light and dark appearance.</p></CardContent></Card>
-          </section>}
-          {tab === "account" && <section className="space-y-4">
-            <div><h3 className="font-semibold">Account</h3><p className="text-xs text-muted-foreground">Your Amineva gateway account. Independent products continue to manage their own accounts and sign-in.</p></div>
-            {isAuthenticated && user ? <Card><CardContent className="space-y-3 p-4"><div><p className="text-[10px] uppercase tracking-wider text-muted-foreground">Display name</p><p className="text-sm font-medium">{user.name || "Not provided"}</p></div><div><p className="text-[10px] uppercase tracking-wider text-muted-foreground">Email</p><p className="text-sm font-medium">{user.email}</p></div><div><p className="text-[10px] uppercase tracking-wider text-muted-foreground">Account identifier</p><p className="break-all font-mono text-xs text-muted-foreground">{user.id}</p></div><p className="border-t pt-3 text-xs text-muted-foreground">Account profile and credentials are managed by the Amineva authentication provider. Product-specific accounts remain separate.</p></CardContent></Card> : <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">You are browsing Amineva without signing in. Workspace sign-in remains separate from independent product accounts.</CardContent></Card>}
-          </section>}
-          {tab === "about" && <section className="space-y-4">
-            <div><h3 className="font-semibold">Application information</h3><p className="text-xs text-muted-foreground">Amineva application identity and runtime information.</p></div>
-            <Card><CardContent className="space-y-3 p-4"><div className="flex items-center gap-3"><div className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary"><MonitorSmartphone className="h-6 w-6" /></div><div><p className="font-semibold">Amineva</p><p className="text-xs text-muted-foreground">Amineva Global application environment</p></div></div><div className="grid grid-cols-2 gap-3 border-t pt-3"><div><p className="text-[10px] text-muted-foreground">Access mode</p><p className="text-sm">{window.matchMedia("(display-mode: standalone)").matches ? "Installed application" : "Browser / PWA"}</p></div><div><p className="text-[10px] text-muted-foreground">Platform</p><p className="text-sm">{(navigator as Navigator & { userAgentData?: { platform?: string } }).userAgentData?.platform || navigator.platform || "Unknown"}</p></div></div><p className="text-xs text-muted-foreground">Build version is not yet published by the current deployment. It will appear here once release versioning is connected.</p></CardContent></Card>
-          </section>}
-          {tab === "devices" && <section className="space-y-4">
-            <div><h3 className="font-semibold">Device connections</h3><p className="text-xs text-muted-foreground">A common place to access compatible device integrations as product connectors become available.</p></div>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><Sprout className="h-4 w-4 text-primary" /> AgroClimate</CardTitle><CardDescription>Farm sensors, weather stations and environmental monitoring devices.</CardDescription></CardHeader><CardContent><Badge variant="outline">Connector integration planned</Badge><p className="mt-2 text-xs text-muted-foreground">Device data will be connected to AgroClimate through supported vendor APIs, gateways or protocols. No device is currently registered through this dashboard.</p></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><ScanBarcode className="h-4 w-4 text-primary" /> Inventra</CardTitle><CardDescription>Barcode scanners, RFID readers and inventory terminals.</CardDescription></CardHeader><CardContent><Badge variant="outline">Connector integration planned</Badge><p className="mt-2 text-xs text-muted-foreground">Compatible peripherals will be connected through browser/device APIs or vendor SDKs where supported.</p></CardContent></Card>
-            <Card><CardHeader className="pb-2"><CardTitle className="text-sm flex items-center gap-2"><MonitorSmartphone className="h-4 w-4 text-primary" /> Info Solutions</CardTitle><CardDescription>Information kiosks and institutional touchscreen terminals.</CardDescription></CardHeader><CardContent><Badge variant="outline">Connector integration planned</Badge><p className="mt-2 text-xs text-muted-foreground">Dedicated terminal integration will be designed for supported operating systems and managed deployments.</p></CardContent></Card>
-            <div className="rounded-lg border border-dashed p-3 text-xs text-muted-foreground">This is the device integration hub interface, not a live hardware pairing service yet. Actual pairing requires each product's connector, supported device protocol and backend integration.</div>
-          </section>}
+  return <main className="min-h-screen bg-background text-foreground">
+    <header className="sticky top-0 z-20 border-b border-border bg-background/95 backdrop-blur">
+      <div className="mx-auto flex h-16 max-w-6xl items-center justify-between gap-4 px-4 sm:px-6">
+        <div className="flex min-w-0 items-center gap-3">
+          <Button variant="ghost" size="icon" aria-label="Back to Solutions" onClick={() => navigate("/explore")}><ArrowLeft className="h-5 w-5" /></Button>
+          <div className="min-w-0"><h1 className="truncate text-base font-semibold">Settings</h1><p className="text-xs text-muted-foreground">Manage your Amineva account and preferences</p></div>
         </div>
+        <Button variant="outline" size="sm" onClick={() => navigate("/explore")}><X className="mr-2 h-4 w-4" /> Close</Button>
       </div>
-    </DialogContent>
-  </Dialog>;
+    </header>
+    <div className="mx-auto grid max-w-6xl gap-6 px-4 py-6 sm:px-6 md:grid-cols-[220px_minmax(0,1fr)] md:py-8">
+      <nav aria-label="Settings sections" className="flex gap-2 overflow-x-auto md:flex-col md:overflow-visible">
+        {tabs.map((entry) => { const Icon = entry.icon; return <button key={entry.id} onClick={() => setTab(entry.id)} className={`flex shrink-0 items-center gap-2 rounded-xl border px-3 py-3 text-left text-sm transition md:w-full ${tab === entry.id ? "border-primary/30 bg-primary/10 font-semibold text-primary" : "border-border bg-card text-muted-foreground hover:bg-muted"}`}><Icon className="h-4 w-4" />{entry.label}{entry.id === "notifications" && unread > 0 && <Badge variant="destructive" className="ml-auto">{unread}</Badge>}</button>; })}
+      </nav>
+      <div className="min-w-0 space-y-5">
+        {tab === "notifications" && <section className="space-y-3">
+          <div><h2 className="text-xl font-semibold">Notifications</h2><p className="mt-1 text-sm text-muted-foreground">Messages delivered to your account through Amineva ComsSystem.</p></div>
+          {!isAuthenticated ? <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">Sign in to view notifications sent to your account.</CardContent></Card> : loading ? <p className="py-8 text-center text-sm text-muted-foreground">Loading notifications…</p> : items.length === 0 ? <Card><CardContent className="py-8 text-center"><Bell className="mx-auto mb-2 h-7 w-7 text-muted-foreground" /><p className="text-sm text-muted-foreground">No notifications yet.</p></CardContent></Card> : items.map((item) => <button key={item.id} onClick={() => void markRead(item)} className={`w-full rounded-xl border p-4 text-left transition hover:bg-muted/60 ${item.is_read ? "border-border" : "border-primary/30 bg-primary/[0.04]"}`}><div className="flex items-start justify-between gap-3"><div className="min-w-0"><p className="text-sm font-semibold">{item.subject || "Amineva notification"}</p><p className="mt-1 whitespace-pre-wrap text-sm leading-6 text-muted-foreground">{item.body}</p><p className="mt-2 text-xs text-muted-foreground">{item.source_app || "Amineva"} · {new Date(item.created_at).toLocaleString()}</p></div>{!item.is_read && <Badge>New</Badge>}</div></button>)}
+        </section>}
+        {tab === "settings" && <section className="space-y-4">
+          <div><h2 className="text-xl font-semibold">Preferences</h2><p className="mt-1 text-sm text-muted-foreground">Control the notifications and appearance preferences for your Amineva account.</p></div>
+          <Card><CardHeader><CardTitle className="text-base">Notifications</CardTitle><CardDescription>Choose which types of updates you prefer to receive.</CardDescription></CardHeader><CardContent className="space-y-5">
+            {([["inAppNotifications","In-app notifications","Show messages received through Amineva."],["emailNotifications","Email notifications","Your preference for email updates; delivery is controlled by the sending service."],["productUpdates","Product updates","Receive product announcements where supported."]] as const).map(([key,label,desc]) => <div key={key} className="flex items-center justify-between gap-4"><div><Label>{label}</Label><p className="mt-1 text-sm text-muted-foreground">{desc}</p></div><Switch checked={prefs[key]} onCheckedChange={(v) => updatePref(key,v)} /></div>)}
+          </CardContent></Card>
+          <Card><CardHeader><CardTitle className="text-base">Appearance</CardTitle><CardDescription>Choose how the software environment looks on this device.</CardDescription></CardHeader><CardContent><p className="text-sm text-muted-foreground">Appearance controls are available from the platform theme control.</p></CardContent></Card>
+        </section>}
+        {tab === "account" && <section className="space-y-4">
+          <div><h2 className="text-xl font-semibold">Account</h2><p className="mt-1 text-sm text-muted-foreground">Your Amineva account details.</p></div>
+          {isAuthenticated && user ? <Card><CardContent className="space-y-4 p-5"><div><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Display name</p><p className="mt-1 text-sm font-medium">{user.name || "Not provided"}</p></div><div><p className="text-xs font-medium uppercase tracking-wide text-muted-foreground">Email address</p><p className="mt-1 text-sm font-medium">{user.email}</p></div><p className="border-t pt-4 text-sm text-muted-foreground">Your account credentials are securely managed by Amineva. Individual applications may maintain their own account profiles where required.</p></CardContent></Card> : <Card><CardContent className="py-8 text-center text-sm text-muted-foreground">You are browsing Amineva without signing in. Sign in to view your account details.</CardContent></Card>}
+        </section>}
+        {tab === "about" && <section className="space-y-4">
+          <div><h2 className="text-xl font-semibold">About Amineva Global</h2><p className="mt-1 text-sm text-muted-foreground">Information about the platform.</p></div>
+          <Card><CardHeader><CardTitle className="text-base">Amineva Global</CardTitle><CardDescription>Connected software solutions and digital services.</CardDescription></CardHeader><CardContent className="space-y-3 text-sm leading-6 text-muted-foreground">
+            <p>Amineva Global brings together a range of digital applications and services across information, education, agriculture, finance, business operations and artificial intelligence.</p>
+            <p>Each application provides its own interface and functionality. Device and hardware compatibility is determined within the relevant application according to its purpose and supported equipment.</p>
+          </CardContent></Card>
+        </section>}
+      </div>
+    </div>
+  </main>;
 }
