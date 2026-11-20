@@ -76,7 +76,7 @@ function ProductCard({ product, index, showDescription = true, showGroup = false
   }
   if (product.external) {
     return (
-      <a href={product.href} target="_blank" rel="noopener noreferrer" className="block w-full" aria-label={`Open ${product.name} application in a new tab`}>
+      <a href={product.href} className="block w-full" aria-label={`Open ${product.name} application`}>
         {content}
       </a>
     );
