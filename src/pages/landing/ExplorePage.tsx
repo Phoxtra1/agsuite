@@ -141,7 +141,7 @@ export default function ExplorePage() {
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-10">
                   {visibleProducts.map((product, index) => (
                     <div key={product.name} className={index >= 5 ? "col-span-1 lg:col-span-5" : "col-span-1 lg:col-span-2"}>
-                      <ProductCard product={product} index={index} showDescription={false} showGroup onSelect={setSelectedProduct} />
+                      <ProductCard product={product} index={index} showDescription={false} showGroup />
                     </div>
                   ))}
                 </div>
