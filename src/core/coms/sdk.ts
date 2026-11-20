@@ -212,6 +212,29 @@ export const ComsSDK = {
 
     const { data: userData } = await supabase.auth.getUser();
     const userId = userData?.user?.id;
+    const preferences = userData?.user?.user_metadata?.amineva_preferences || {};
+
+    // Marketing/product-announcement email must respect the account's saved
+    // opt-outs. Transactional and security-critical messages are not blocked.
+    if (messageType === "marketing" &&
+      (preferences.emailNotifications === false || preferences.productUpdates === false)) {
+      if (userId) {
+        try {
+          await supabase.from("coms_logs").insert({
+            user_id: userId,
+            event: "suppressed",
+            channel: "email",
+            recipient: to.map((recipient) => recipient.email).join(", "),
+            subject,
+            source_app: sourceApp,
+            message_type: messageType,
+            delivery_status: "suppressed",
+            details: "Marketing email suppressed by the recipient's Amineva notification preferences.",
+          });
+        } catch { /* suppression is still enforced if audit logging is unavailable */ }
+      }
+      return { skipped: true, reason: "recipient_preferences", message: "The recipient has opted out of marketing/product emails." };
+    }
 
     // 1. Send via edge function
     const { data, error } = await supabase.functions.invoke("send-email", {
