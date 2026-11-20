@@ -4,6 +4,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useTheme } from "@/contexts/ThemeContext";
 import { supabase } from "@/integrations/supabase/client";
 import { ComsSDK } from "@/core/coms/sdk";
+import { getAminevaServiceWorkerRegistration } from "@/pwa/registerServiceWorker";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
@@ -82,7 +83,7 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
     if (!open || tab !== "updates") return;
     let active = true;
     if (!("serviceWorker" in navigator)) { setUpdateState("This browser does not support service-worker updates."); return; }
-    navigator.serviceWorker.getRegistration("/").then(reg => {
+    getAminevaServiceWorkerRegistration().then(reg => {
       if (!active) return;
       setRegistration(reg || null);
       setUpdateState(reg ? "Amineva update service is active. Updates are normally applied automatically." : "No Amineva service worker is registered on this device. Install/update support becomes available after the production app is loaded in a supported browser.");
@@ -165,11 +166,11 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
   const checkForUpdates = async () => {
     setCheckingUpdate(true);
     try {
-      const reg = await navigator.serviceWorker?.getRegistration("/");
-      if (!reg) { setUpdateState("No registered service worker was found. Load the production Amineva app in a supported browser first."); return; }
+      const reg = await getAminevaServiceWorkerRegistration();
+      if (!reg) { setRegistration(null); setUpdateState("No Amineva service worker was found for this application. Other site workers are ignored."); return; }
       setRegistration(reg);
       await reg.update();
-      setUpdateState(reg.waiting ? "An update is ready to install." : "Update check completed. This device is using the latest version currently available to its service worker.");
+      setUpdateState(reg.waiting ? "An update is ready to install." : reg.installing ? "An update is downloading. This screen will refresh its status when you reopen it." : "Update check completed. No waiting Amineva update was found.");
     } catch { setUpdateState("Update check failed. Check your internet connection and try again."); }
     finally { setCheckingUpdate(false); }
   };
