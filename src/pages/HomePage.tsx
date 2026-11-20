@@ -100,6 +100,7 @@ export default function HomePage() {
 
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
   const [recentSolutionIds, setRecentSolutionIds] = useState<string[]>(readRecentSolutions);
+  const [activeSolutionIndex, setActiveSolutionIndex] = useState(0);
   const [applicationHubOpen, setApplicationHubOpen] = useState(false);
   const [applicationHubTab, setApplicationHubTab] = useState<"notifications" | "settings" | "account" | "about" | "devices">("notifications");
   const [authTab, setAuthTab] = useState<"signin" | "register">("signin");
