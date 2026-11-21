@@ -10,7 +10,7 @@ const mapMetric=(metric:string)=>metric==="humidity"?"relative_humidity":metric;
 async function sendAgroClimate(url:string,key:string,token:string,body:Record<string,unknown>,path="agroclimate-device-gateway"){
  const response=await fetch(url.replace(/\/$/,"")+"/functions/v1/"+path,{method:"POST",headers:{"Content-Type":"application/json","apikey":key,"x-device-token":token},body:JSON.stringify(body)});
  const result=await response.json().catch(()=>({error:"AgroClimate gateway returned a non-JSON response"}));
- if(!response.ok||result?.accepted!==true)throw new Error(typeof result?.error==="string"?result.error:"AgroClimate gateway rejected the observation (HTTP "+response.status+").");
+ if(!response.ok||result?.accepted!==true){const failure=new Error(typeof result?.error==="string"?result.error:"AgroClimate gateway rejected the observation (HTTP "+response.status+").");(failure as Error & {status:number}).status=response.status;throw failure;}
  return result;
 }
 Deno.serve(async(req)=>{if(req.method==="OPTIONS")return new Response("ok",{headers:cors});if(req.method!=="POST")return json({error:"Method not allowed"},405);
@@ -64,7 +64,7 @@ Deno.serve(async(req)=>{if(req.method==="OPTIONS")return new Response("ok",{head
     const remoteBody={action:"ingest",expected_component:component,metric:remoteMetric,value,unit,observed_at:new Date(measured).toISOString(),idempotency_key:body.event_id,metadata:{...metadata,source:"amineva-central-device-service",central_device_id:device.id,source_model:device.model||null}};
     await sendAgroClimate(agroUrl,agroKey,token,remoteBody);delivery="agroclimate-component";
    }
-  } catch(error) { return json({accepted:false,central_saved:true,delivery:"pending",error:error instanceof Error?error.message:"AgroClimate delivery failed; retry this event"},502); }
+  } catch(error) { const status=Number((error as {status?:number})?.status);const responseStatus=status>=400&&status<500?status:502;return json({accepted:false,central_saved:true,delivery:"pending",error:error instanceof Error?error.message:"AgroClimate delivery failed; retry this event"},responseStatus); }
  }
  await admin.from("amineva_devices").update({last_seen_at:new Date().toISOString(),status:"connected"}).eq("id",device.id).eq("owner_id",user.id);
  return json({accepted:true,duplicate:Boolean(insertError?.code==="23505"),delivery,observation:persisted},insertError?.code==="23505"?200:201);
