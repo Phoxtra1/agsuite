@@ -53,8 +53,6 @@ const AgroClimatePage: FC = () => {
             </p>
             <a
               href="https://agro.amineva.com"
-              target="_blank"
-              rel="noreferrer"
               className="inline-flex items-center gap-2 px-8 py-3.5 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition text-lg"
             >
               Get Started <ArrowRight className="h-5 w-5" />
