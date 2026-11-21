@@ -29,6 +29,10 @@ jobs:
           cache: npm
       - name: Install locked dependencies
         run: npm ci
+      - name: Install Deno for Edge Function validation
+        run: curl -fsSL https://deno.land/install.sh | sh
+      - name: Type-check authenticated device ingestion function
+        run: ~/.deno/bin/deno check --no-lock supabase/functions/amineva-device-ingest/index.ts
       - name: Build production bundle
         run: npm run build
       - name: Run test suite
