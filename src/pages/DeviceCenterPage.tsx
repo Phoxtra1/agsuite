@@ -12,7 +12,8 @@ import { connectProfiledDevice, discoverForProfile, type ConnectedDriver } from 
 import { routeDeviceObservation } from "@/core/devices/observationRouter";
 import { disconnectDevice, registerActiveConnection, subscribeToDeviceEvents } from "@/core/devices/deviceManager";
 import type { DeviceRegistration, AppId } from "@/core/devices/observationTypes";
-import type { DeviceCapability, DeviceTransport } from "@/core/devices/types";\nimport type { ObservationMetric } from "@/core/devices/observationTypes";
+import type { DeviceCapability, DeviceTransport } from "@/core/devices/types";
+import type { ObservationMetric } from "@/core/devices/observationTypes";
 
 type SavedDevice={id:string;device_key:string;name:string;transport:DeviceTransport;capabilities:DeviceCapability[];status:string;app_id:AppId;component_id:string;driver_profile_id:string;driver_config:Record<string,unknown>;manufacturer?:string|null;model?:string|null;last_seen_at?:string|null};
 const APPS=[{id:"agroclimate",name:"AgroClimate"},{id:"inventra",name:"Inventra"},{id:"info-solutions",name:"Info Solutions"}] as const;
