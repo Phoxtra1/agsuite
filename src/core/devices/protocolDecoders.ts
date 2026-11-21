@@ -56,6 +56,14 @@ export function parseMavlinkFrames(buffer:Uint8Array):{frames:MavlinkFrame[];rem
 export function decodeMavlinkFrame(frame:{messageId:number;payload:Uint8Array}):DecodedMeasurement[]{
  const v=new DataView(frame.payload.buffer,frame.payload.byteOffset,frame.payload.byteLength);
  if(frame.messageId===33&&v.byteLength>=28){const lat=v.getInt32(4,true)/1e7,lon=v.getInt32(8,true)/1e7,alt=v.getInt32(12,true)/1000;const out:DecodedMeasurement[]=[];if(validateMetricValue("latitude",lat,"°"))out.push({metric:"latitude",value:lat,unit:"°"});if(validateMetricValue("longitude",lon,"°"))out.push({metric:"longitude",value:lon,unit:"°"});if(validateMetricValue("aircraft_altitude",alt,"m"))out.push({metric:"aircraft_altitude",value:alt,unit:"m"});return out;}
+ if(frame.messageId===24&&v.byteLength>=30){
+  const lat=v.getInt32(8,true)/1e7,lon=v.getInt32(12,true)/1e7,alt=v.getInt32(16,true)/1000;
+  const out:DecodedMeasurement[]=[];
+  if(validateMetricValue("latitude",lat,"°"))out.push({metric:"latitude",value:lat,unit:"°"});
+  if(validateMetricValue("longitude",lon,"°"))out.push({metric:"longitude",value:lon,unit:"°"});
+  if(validateMetricValue("aircraft_altitude",alt,"m"))out.push({metric:"aircraft_altitude",value:alt,unit:"m"});
+  return out;
+ }
  if(frame.messageId===1&&v.byteLength>=31){const voltage=v.getUint16(14,true)/1000,remaining=v.getInt8(30);const out:DecodedMeasurement[]=[];if(voltage>0)out.push({metric:"aircraft_battery",value:voltage,unit:"V"});if(remaining>=0)out.push({metric:"aircraft_battery",value:remaining,unit:"%"});return out;}
  return [];
 }
