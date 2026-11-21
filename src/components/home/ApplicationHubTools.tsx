@@ -319,6 +319,7 @@ export function ApplicationHubTools({ open, onOpenChange, initialTab = "notifica
           <Button variant="ghost" size="icon" aria-label="Back to Solutions" onClick={() => navigate("/explore")}><ArrowLeft className="h-5 w-5" /></Button>
           <div className="min-w-0"><h1 className="truncate text-base font-semibold">Settings</h1><p className="text-xs text-muted-foreground">Manage your Amineva account and preferences</p></div>
         </div>
+        <Button variant="outline" size="sm" onClick={() => navigate("/devices")}><Smartphone className="mr-2 h-4 w-4" /> Device Center</Button>
         <Button variant="outline" size="sm" onClick={() => navigate("/explore")}><X className="mr-2 h-4 w-4" /> Close</Button>
       </div>
     </header>
