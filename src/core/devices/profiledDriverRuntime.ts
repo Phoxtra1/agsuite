@@ -1,7 +1,6 @@
 import { decodeBleCharacteristic, decodeCustomBleCharacteristic, decodeHidReport, decodeNmea0183Line, decodeSerialJsonLine, parseMavlinkFrames, decodeMavlinkFrame, type DecodedMeasurement } from "./protocolDecoders";
 import type { DriverProfile } from "./driverProfiles";
 import type { DeviceRegistration } from "./observationTypes";
-import type { DeviceTransport } from "./types";
 
 export interface ConnectedDriver { close:()=>Promise<void>; detail:string; }
 export async function discoverForProfile(profile:DriverProfile,config:Record<string,unknown>={}):Promise<{browserDevice:any;deviceKey:string;name:string;metadata:Record<string,unknown>}> {
