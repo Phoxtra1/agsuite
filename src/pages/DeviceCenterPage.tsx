@@ -10,7 +10,7 @@ import { COMPONENT_DEVICE_REQUIREMENTS, getBrowserTransportSupport } from "@/cor
 import { BUILTIN_DRIVER_PROFILES } from "@/core/devices/driverProfiles";
 import { connectProfiledDevice, discoverForProfile, type ConnectedDriver } from "@/core/devices/profiledDriverRuntime";
 import { routeDeviceObservation } from "@/core/devices/observationRouter";
-import { disconnectDevice, registerActiveConnection } from "@/core/devices/deviceManager";
+import { disconnectDevice, registerActiveConnection, subscribeToDeviceEvents } from "@/core/devices/deviceManager";
 import type { DeviceRegistration, AppId } from "@/core/devices/observationTypes";
 import type { DeviceCapability, DeviceTransport } from "@/core/devices/types";
 
@@ -28,13 +28,11 @@ export default function DeviceCenterPage(){
  const closers=useRef(new Map<string,ConnectedDriver>());
  const profile=BUILTIN_DRIVER_PROFILES.find(p=>p.id===profileId)||BUILTIN_DRIVER_PROFILES[0];
  const components=useMemo(()=>COMPONENT_DEVICE_REQUIREMENTS.filter(r=>r.appId===appId),[appId]);
- const profiles=useMemo(()=>BUILTIN_DRIVER_PROFILES.filter(p=>p.transport===profile.transport),[profile.transport]);
  const load=useCallback(async()=>{if(!user?.id)return;const {data,error}=await supabase.from("amineva_devices").select("id,device_key,name,transport,capabilities,status,app_id,component_id,driver_profile_id,driver_config,metadata,last_seen_at").eq("owner_id",user.id).order("updated_at",{ascending:false});if(error){setNotice(error.message);return;}setDevices((data||[]).map((row:any)=>({...row,app_id:row.app_id||"agroclimate",component_id:row.component_id||"weather-observations",driver_profile_id:row.driver_profile_id||"serial-json-lines",driver_config:row.driver_config||{},manufacturer:row.metadata?.manufacturer,model:row.metadata?.model})) as SavedDevice[]);},[user?.id]);
  useEffect(()=>{if(!isLoading&&!isAuthenticated)navigate("/get-started",{replace:true});},[isLoading,isAuthenticated,navigate]);
  useEffect(()=>{void load();setSupport(getBrowserTransportSupport());return()=>{for(const [id] of closers.current){void disconnectDevice(id);}closers.current.clear();};},[load]);
- useEffect(()=>{const {subscribeToDeviceEvents}=require("@/core/devices/deviceManager");return subscribeToDeviceEvents((event:any)=>setEvents(old=>[event,...old].slice(0,30)));},[]);
+ useEffect(()=>subscribeToDeviceEvents((event:any)=>setEvents(old=>[event,...old].slice(0,30))),[]);
  useEffect(()=>{if(!components.some(c=>c.componentId===componentId))setComponentId(components[0]?.componentId||"");},[components,componentId]);
- useEffect(()=>{if(!BUILTIN_DRIVER_PROFILES.some(p=>p.id===profileId&&p.transport===profile.transport))setProfileId(BUILTIN_DRIVER_PROFILES.find(p=>p.transport===profile.transport)?.id||"serial-json-lines");},[profile.transport,profileId]);
  const discover=async()=>{setBusy("discover");setNotice("");try{const selectedProfile=BUILTIN_DRIVER_PROFILES.find(p=>p.id===profileId);if(!selectedProfile)throw new Error("Select a supported driver profile.");const result=await discoverForProfile(selectedProfile);const deviceName=name.trim()||result.name;const config:Record<string,unknown>={baudRate:Number(baudRate),byteOffset:Number(byteOffset),multiplier:Number(multiplier),unit};const {data,error}=await supabase.from("amineva_devices").upsert({owner_id:user!.id,device_key:result.deviceKey,name:deviceName,transport:selectedProfile.transport,capabilities:selectedProfile.capabilities,status:"available",app_id:appId,component_id:componentId,driver_profile_id:selectedProfile.id,driver_config:config,metadata:{...result.metadata,manufacturer:manufacturer.trim()||selectedProfile.manufacturer,model:model.trim()||selectedProfile.model,driver_verified_standard:selectedProfile.verifiedStandard}},{onConflict:"owner_id,device_key"}).select("id,device_key").single();if(error)throw error;setSelected(old=>({...old,[result.deviceKey]:{browserDevice:result.browserDevice,profile:selectedProfile}}));setNotice("Discovered and registered "+deviceName+". Assigned to "+appId+" / "+componentId+".");setName("");await load();}catch(e:any){setNotice(e?.message||"Device discovery failed.");}finally{setBusy("");}};
  const connect=async(saved:SavedDevice)=>{const selection=selected[saved.device_key];if(!selection){setNotice("Reconnect the device through its browser chooser before connecting.");return;}setBusy(saved.device_key);setNotice("");try{
   const {error:statusError}=await supabase.from("amineva_devices").update({status:"connected"}).eq("owner_id",user!.id).eq("id",saved.id);if(statusError)throw statusError;
