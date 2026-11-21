@@ -5,8 +5,6 @@ export interface DriverProfile {
  capabilities:DeviceCapability[]; metrics:ObservationMetric[]; verifiedStandard:boolean;
  description:string; configuration?:Record<string,unknown>;
 }
-const BLE_BASE="0000181a-0000-1000-8000-00805f9b34fb";
-const BLE_WEIGHT="0000181d-0000-1000-8000-00805f9b34fb";
 export const BUILTIN_DRIVER_PROFILES:DriverProfile[]=[
  {id:"ble-sig-environmental-sensing",label:"Bluetooth SIG Environmental Sensing",transport:"web-bluetooth",manufacturer:"Bluetooth SIG standard",model:"Environmental Sensing Service (0x181A)",capabilities:["temperature","humidity","environmental"],metrics:["temperature","humidity"],verifiedStandard:true,description:"Standard Temperature (0x2A6E) and Humidity (0x2A6F) characteristics; not a soil-moisture profile."},
  {id:"ble-sig-weight-scale",label:"Bluetooth SIG Weight Scale",transport:"web-bluetooth",manufacturer:"Bluetooth SIG standard",model:"Weight Scale Service (0x181D)",capabilities:["weight"],metrics:["weight"],verifiedStandard:true,description:"Weight Scale Measurement (0x2A9D), with flag-based lb/kg conversion."},
