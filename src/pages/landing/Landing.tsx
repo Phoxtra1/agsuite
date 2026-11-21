@@ -4,14 +4,13 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Settings } from "lucide-react";
 import amvLogo from "@/assets/amv_global_logo.png";
 import GlobalFooter from "@/components/layout/GlobalFooter";
-import ExploreServiceMarquee from "@/components/layout/ExploreServiceMarquee";
 
 export default function Landing() {
   const location = useLocation();
   const isHome = location.pathname === "/";
   const isAccountPortal = location.pathname === "/payments" || location.pathname === "/switch";
   const [mobileOpen, setMobileOpen] = useState(false);
-  const isSoftwareEnvironment = location.pathname === "/explore";
+  const isSoftwareEnvironment = location.pathname.startsWith("/explore");
   const solutionsLink = "/explore";
 
   return (
@@ -68,7 +67,7 @@ export default function Landing() {
         </header>
       )}
       <Outlet />
-      {isSoftwareEnvironment && <ExploreServiceMarquee />}
+      {isSoftwareEnvironment && <div className="flex h-9 shrink-0 items-center justify-center bg-[#101D32] px-4 text-center text-[11px] font-medium tracking-wide text-white">© {new Date().getFullYear()} Amineva Global. All Rights Reserved.</div>}
       {!isHome && !isSoftwareEnvironment && <GlobalFooter />}
     </div>
   );
