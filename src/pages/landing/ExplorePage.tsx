@@ -41,7 +41,7 @@ function ProductCard({ product, index, showDescription = true, showGroup = false
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.32, delay: index * 0.045 }}
       whileHover={product.status ? undefined : { y: -4 }}
-      className={`group relative flex min-h-[132px] flex-col overflow-hidden rounded-xl border border-border/80 bg-card/90 p-3 shadow-sm transition-all duration-300 hover:-translate-y-1 hover:border-primary/45 hover:shadow-lg sm:min-h-[138px] sm:p-3.5 ${product.status ? "opacity-80" : ""}`}
+      className="group relative flex min-h-[148px] flex-col overflow-hidden rounded-xl border border-border/80 bg-card/95 p-3.5 shadow-sm transition-[transform,border-color,box-shadow] duration-200 hover:-translate-y-1 hover:border-primary/45 hover:shadow-lg focus-within:border-primary/50 focus-within:shadow-lg sm:min-h-[154px] sm:p-4"
     >
       <div className="pointer-events-none absolute -right-8 -top-8 h-24 w-24 rounded-full bg-primary/[0.06] blur-2xl transition-all duration-500 group-hover:bg-primary/[0.13]" />
       <div className="relative flex items-start justify-between gap-3">
