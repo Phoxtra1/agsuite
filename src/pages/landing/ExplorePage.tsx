@@ -13,22 +13,22 @@ type Product = {
   image?: string;
   href?: string;
   external?: boolean;
-  status?: "coming-soon";
+  status?: "live" | "in-development" | "coming-soon";
 };
 
 const products: Product[] = [
-  { name: "Info Solutions", description: "Discover information. Access professional services.", group: "Information", icon: Compass, href: "https://info.amineva.com", external: true },
-  { name: "Career & Education", description: "Explore pathways, learning and opportunity.", group: "People", image: "/adesua.png", href: "/explore/career-education" },
-  { name: "AgroClimate", description: "Agriculture and climate intelligence.", group: "Agriculture", image: "/agroclimate.png", href: "https://agro.amineva.com", external: true },
-  { name: "DataLens", description: "A new service is in development.", group: "Business", image: "/datalens.png", status: "coming-soon" },
-  { name: "Sikasem", description: "Financial operations and management.", group: "Finance", image: "/sikasem.png", href: "https://ops.amineva.com", external: true },
-  { name: "Inventra", description: "Inventory and sales management.", group: "Business", image: "/inventra.png", href: "https://stock.amineva.com", external: true },
-  { name: "Dipa", description: "Artificial intelligence.", group: "Intelligence", image: "/Dipa-icon.webp", href: "https://ode.amineva.com", external: true },
+  { name: "Info Solutions", description: "Discover information. Access professional services.", group: "Information", icon: Compass, status: "live", href: "https://info.amineva.com", external: true },
+  { name: "Career & Education", description: "Explore pathways, learning and opportunity.", group: "People", image: "/adesua.png", status: "live", href: "/explore/career-education" },
+  { name: "AgroClimate", description: "Agriculture and climate intelligence.", group: "Agriculture", image: "/agroclimate.png", status: "live", href: "https://agro.amineva.com", external: true },
+  { name: "DataLens", description: "A new service is in development.", group: "Business", image: "/datalens.png", status: "in-development" },
+  { name: "Sikasem", description: "Financial operations and management.", group: "Finance", image: "/sikasem.png", status: "live", href: "https://ops.amineva.com", external: true },
+  { name: "Inventra", description: "Inventory and sales management.", group: "Business", image: "/inventra.png", status: "live", href: "https://stock.amineva.com", external: true },
+  { name: "Dipa", description: "Artificial intelligence.", group: "Intelligence", image: "/Dipa-icon.webp", status: "live", href: "https://ode.amineva.com", external: true },
 ];
 
 const careerOptions: Product[] = [
-  { name: "Amineva Impact", description: "Career Development & Exploration Programme.", group: "Impact", icon: Sparkles, href: "https://www.amineva.com/Impact", external: true },
-  { name: "Adesua", description: "Learning and practical education.", group: "Education", image: "/adesua.png", href: "https://as.amineva.com", external: true },
+  { name: "Amineva Impact", description: "Career Development & Exploration Programme.", group: "Impact", icon: Sparkles, status: "live", href: "https://www.amineva.com/Impact", external: true },
+  { name: "Adesua", description: "Learning and practical education.", group: "Education", image: "/adesua.png", status: "live", href: "https://as.amineva.com", external: true },
 ];
 
 const filters = ["All", "Business", "People", "Intelligence", "Agriculture", "Finance", "Information"];
@@ -54,8 +54,12 @@ function ProductCard({ product, index, showDescription = true, showGroup = false
             ) : null}
           </span>
         )}
-        {product.status === "coming-soon" ? (
+        {product.status === "in-development" ? (
+          <span className="rounded-full border border-amber-500/30 bg-amber-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-amber-700 dark:text-amber-300">In development</span>
+        ) : product.status === "coming-soon" ? (
           <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Coming soon</span>
+        ) : product.status === "live" ? (
+          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Live</span>
         ) : (
           <ArrowUpRight className="h-4 w-4 text-muted-foreground/60 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
         )}
@@ -99,7 +103,7 @@ export default function ExplorePage() {
   const clearSearch = () => setQuery("");
 
   return (
-    <main className="relative min-h-[calc(100vh-9.5rem)] overflow-hidden bg-background px-4 py-10 text-foreground sm:px-6 sm:py-14">
+    <main className="relative min-h-[calc(100vh-6.25rem)] overflow-hidden bg-background px-4 py-10 text-foreground sm:px-6 sm:py-14">
       <div aria-hidden="true" className="pointer-events-none absolute -left-40 top-0 h-80 w-80 rounded-full bg-primary/[0.08] blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute -right-40 top-48 h-96 w-96 rounded-full bg-violet-500/[0.07] blur-3xl" />
       <div className="relative mx-auto max-w-6xl">
@@ -138,11 +142,9 @@ export default function ExplorePage() {
               </div>
 
               {visibleProducts.length ? (
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-10">
+                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 lg:gap-4">
                   {visibleProducts.map((product, index) => (
-                    <div key={product.name} className={index >= 5 ? "col-span-1 lg:col-span-5" : "col-span-1 lg:col-span-2"}>
-                      <ProductCard product={product} index={index} showDescription={false} showGroup />
-                    </div>
+                    <ProductCard key={product.name} product={product} index={index} showDescription={false} showGroup />
                   ))}
                 </div>
               ) : (
