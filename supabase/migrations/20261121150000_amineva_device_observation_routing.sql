@@ -1,3 +1,15 @@
+alter table public.amineva_devices add column if not exists app_id text;
+alter table public.amineva_devices add column if not exists component_id text;
+alter table public.amineva_devices add column if not exists driver_profile_id text;
+alter table public.amineva_devices add column if not exists driver_config jsonb not null default '{}'::jsonb;
+do $$ begin
+ if not exists(select 1 from pg_constraint where conname='amineva_devices_app_id_check') then
+  alter table public.amineva_devices add constraint amineva_devices_app_id_check check(app_id is null or app_id in ('agroclimate','inventra','info-solutions'));
+ end if;
+ if not exists(select 1 from pg_constraint where conname='amineva_devices_component_id_check') then
+  alter table public.amineva_devices add constraint amineva_devices_component_id_check check(component_id is null or char_length(trim(component_id)) between 1 and 100);
+ end if;
+end $$;
 create table if not exists public.amineva_device_observations (
  id uuid primary key default gen_random_uuid(),
  event_id uuid not null,
