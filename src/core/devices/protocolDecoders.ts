@@ -6,7 +6,14 @@ export function decodeBleCharacteristic(profileId:string,characteristicUuid:stri
  let item:DecodedMeasurement|null=null;
  if(profileId==="ble-sig-environmental-sensing"&&uuid.endsWith("2a6e")) item={metric:"temperature",value:view.byteLength>=2?view.getInt16(0,true)/100:NaN,unit:"°C"};
  if(profileId==="ble-sig-environmental-sensing"&&uuid.endsWith("2a6f")) item={metric:"humidity",value:view.byteLength>=2?view.getUint16(0,true)/100:NaN,unit:"%RH"};
- if(profileId==="ble-sig-weight-scale"&&uuid.endsWith("2a9d")&&view.byteLength>=3){const flags=view.getUint8(0);const raw=view.getUint16(1,true)/100;item={metric:"weight",value:flags&1?raw*0.45359237:raw,unit:"kg",metadata:{sourceUnit:flags&1?"lb":"kg"}};}
+ if(profileId==="ble-sig-weight-scale"&&uuid.endsWith("2a9d")&&view.byteLength>=3){
+  const flags=view.getUint8(0),raw=view.getUint16(1,true);
+  let mantissa=raw&0x0fff;if(mantissa>=0x0800)mantissa-=0x1000;
+  let exponent=(raw>>12)&0x0f;if(exponent>=0x08)exponent-=0x10;
+  const scaled=mantissa*Math.pow(10,exponent);
+  const kilograms=flags&0x01?scaled*0.45359237:scaled;
+  item={metric:"weight",value:kilograms,unit:"kg",metadata:{sourceUnit:flags&1?"lb":"kg",decoder:"ieee11073-sfloat"}};
+ }
  return item&&validateMetricValue(item.metric,item.value,item.unit)?item:null;
 }
 export function decodeHidReport(profileId:string,view:DataView,config:Record<string,unknown>):DecodedMeasurement|null {
@@ -21,7 +28,7 @@ export function decodeHidReport(profileId:string,view:DataView,config:Record<str
 export function decodeSerialJsonLine(line:string):DecodedMeasurement[]{
  let data:any;try{data=JSON.parse(line);}catch{return [];}
  if(!data||typeof data!=="object"||Array.isArray(data)||typeof data.metric!=="string"||typeof data.value!=="number"||typeof data.unit!=="string")return [];
- const metric=data.metric as ObservationMetric;const value=data.value,unit=data.unit;
+ const aliases:Record<string,ObservationMetric>={relative_humidity:"humidity"};const metric=(aliases[data.metric]||data.metric) as ObservationMetric;const value=data.value,unit=data.unit;
  if(!validateMetricValue(metric,value,unit))return [];
  const measuredAt=typeof data.measuredAt==="string"?data.measuredAt:typeof data.measured_at==="string"?data.measured_at:undefined;
  return [{metric,value,unit,measuredAt,metadata:{...(typeof data.sequence==="number"?{sequence:data.sequence}:{}),...(typeof data.sensorId==="string"?{sensorId:data.sensorId.slice(0,100)}:{})}}];
