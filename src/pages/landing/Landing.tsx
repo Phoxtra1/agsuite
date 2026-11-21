@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 import { Menu, X, Settings } from "lucide-react";
 import amvLogo from "@/assets/amv_global_logo.png";
 import GlobalFooter from "@/components/layout/GlobalFooter";
+import ExploreServiceMarquee from "@/components/layout/ExploreServiceMarquee";
 
 export default function Landing() {
   const location = useLocation();
@@ -67,6 +68,7 @@ export default function Landing() {
         </header>
       )}
       <Outlet />
+      {isSoftwareEnvironment && <ExploreServiceMarquee />}
       {!isHome && !isSoftwareEnvironment && <GlobalFooter />}
     </div>
   );
