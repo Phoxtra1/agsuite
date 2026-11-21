@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { decodeBleCharacteristic, decodeHidReport, decodeNmea0183Line, decodeSerialJsonLine } from "./protocolDecoders";
+import { decodeBleCharacteristic, decodeCustomBleCharacteristic, decodeHidReport, decodeNmea0183Line, decodeSerialJsonLine } from "./protocolDecoders";
 
 describe("model/protocol decoders",()=>{
  it("decodes Bluetooth SIG temperature and relative humidity characteristics",()=>{
@@ -12,6 +12,11 @@ describe("model/protocol decoders",()=>{
   const bytes=new Uint8Array([0,0xe8,0xe3]);
   const value=new DataView(bytes.buffer);
   expect(decodeBleCharacteristic("ble-sig-weight-scale","00002a9d-0000-1000-8000-00805f9b34fb",value)).toMatchObject({metric:"weight",value:10,unit:"kg"});
+ });
+ it("decodes vendor-specific BLE characteristic data using an explicit model profile",()=>{
+  const buffer=new ArrayBuffer(4);new DataView(buffer).setFloat32(0,0.34,true);
+  expect(decodeCustomBleCharacteristic(new DataView(buffer),{metric:"soil_moisture",unit:"m³/m³",format:"float32le",byteOffset:0,scale:1,offset:0})).toMatchObject({metric:"soil_moisture",value:0.34,unit:"m³/m³"});
+  expect(decodeCustomBleCharacteristic(new DataView(buffer),{metric:"soil_ph",unit:"pH",format:"float32le",byteOffset:0,scale:100,offset:0})).toBeNull();
  });
  it("decodes a configured HID float32 little-endian scale report",()=>{
   const buffer=new ArrayBuffer(4);new DataView(buffer).setFloat32(0,2.5,true);
