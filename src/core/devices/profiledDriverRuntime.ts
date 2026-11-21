@@ -1,14 +1,17 @@
-import { decodeBleCharacteristic, decodeHidReport, decodeNmea0183Line, decodeSerialJsonLine, parseMavlinkFrames, decodeMavlinkFrame, type DecodedMeasurement } from "./protocolDecoders";
+import { decodeBleCharacteristic, decodeCustomBleCharacteristic, decodeHidReport, decodeNmea0183Line, decodeSerialJsonLine, parseMavlinkFrames, decodeMavlinkFrame, type DecodedMeasurement } from "./protocolDecoders";
 import type { DriverProfile } from "./driverProfiles";
 import type { DeviceRegistration } from "./observationTypes";
 import type { DeviceTransport } from "./types";
 
 export interface ConnectedDriver { close:()=>Promise<void>; detail:string; }
-export async function discoverForProfile(profile:DriverProfile):Promise<{browserDevice:any;deviceKey:string;name:string;metadata:Record<string,unknown>}> {
+export async function discoverForProfile(profile:DriverProfile,config:Record<string,unknown>={}):Promise<{browserDevice:any;deviceKey:string;name:string;metadata:Record<string,unknown>}> {
  if(profile.transport==="web-bluetooth"){
   const api=(navigator as any).bluetooth;if(!api?.requestDevice)throw new Error("Web Bluetooth is not supported in this browser.");
-  const services=profile.id==="ble-sig-environmental-sensing"?["environmental_sensing"]:["weight_scale"];
-  const device=await api.requestDevice({filters:[{services}],optionalServices:services});
+  const services=profile.id==="ble-sig-environmental-sensing"||profile.id==="ble-custom-characteristic"?["environmental_sensing"]:["weight_scale"];
+  const customService=String(config.serviceUuid||"").trim();
+  const optionalServices=profile.id==="ble-custom-characteristic"?(customService?[customService]:[]):services;
+  const filters=profile.id==="ble-custom-characteristic"?(customService?[{services:[customService]}]:[{acceptAllDevices:true}]):[{services}];
+  const device=await api.requestDevice({filters,optionalServices});
   return {browserDevice:device,deviceKey:"ble:"+device.id,name:device.name||profile.label,metadata:{browserId:device.id}};
  }
  if(profile.transport==="web-hid"){
@@ -30,14 +33,16 @@ export async function connectProfiledDevice(device:DeviceRegistration,browserDev
  if(profile.transport==="web-bluetooth"){
   const gatt=browserDevice?.gatt;if(!gatt)throw new Error("Selected Bluetooth device has no GATT interface.");
   const server=await gatt.connect();const subscriptions:Array<{characteristic:any;listener:(e:any)=>void}>=[];
+  const customService=String(device.driverConfig.serviceUuid||"").trim();
+  const customCharacteristic=String(device.driverConfig.characteristicUuid||"").trim();
   const specs=profile.id==="ble-sig-environmental-sensing"?[
    ["environmental_sensing","temperature"],["environmental_sensing","humidity"]
-  ]:[["weight_scale","weight"]];
+  ]:profile.id==="ble-custom-characteristic"?[[customService,customCharacteristic]]:[["weight_scale","weight"]];
   for(const [serviceShort,metric] of specs){
-   const serviceUuid=serviceShort==="environmental_sensing"?"0000181a-0000-1000-8000-00805f9b34fb":"0000181d-0000-1000-8000-00805f9b34fb";
-   const characteristicUuid=metric==="temperature"?"00002a6e-0000-1000-8000-00805f9b34fb":metric==="humidity"?"00002a6f-0000-1000-8000-00805f9b34fb":"00002a9d-0000-1000-8000-00805f9b34fb";
+   const serviceUuid=profile.id==="ble-custom-characteristic"?customService:serviceShort==="environmental_sensing"?"0000181a-0000-1000-8000-00805f9b34fb":"0000181d-0000-1000-8000-00805f9b34fb";
+   const characteristicUuid=profile.id==="ble-custom-characteristic"?customCharacteristic:metric==="temperature"?"00002a6e-0000-1000-8000-00805f9b34fb":metric==="humidity"?"00002a6f-0000-1000-8000-00805f9b34fb":"00002a9d-0000-1000-8000-00805f9b34fb";
    try{const svc=await server.getPrimaryService(serviceUuid);const characteristic=await svc.getCharacteristic(characteristicUuid);
-    const listener=(event:any)=>{const view=event?.target?.value as DataView|undefined;if(!view)return;const decoded=decodeBleCharacteristic(profile.id,characteristicUuid,view);if(decoded&&authorised(device,decoded))onMeasurement(decoded);};
+    const listener=(event:any)=>{const view=event?.target?.value as DataView|undefined;if(!view)return;const decoded=profile.id==="ble-custom-characteristic"?decodeCustomBleCharacteristic(view,device.driverConfig):decodeBleCharacteristic(profile.id,characteristicUuid,view);if(decoded&&authorised(device,decoded))onMeasurement(decoded);};
     characteristic.addEventListener("characteristicvaluechanged",listener);await characteristic.startNotifications();subscriptions.push({characteristic,listener});
    }catch{/* The model may expose only a subset of standard characteristics. */}
   }
