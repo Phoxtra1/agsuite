@@ -50,7 +50,7 @@ export function decodeHidReport(profileId:string,view:DataView,config:Record<str
 export function decodeSerialJsonLine(line:string):DecodedMeasurement[]{
  let data:any;try{data=JSON.parse(line);}catch{return [];}
  if(!data||typeof data!=="object"||Array.isArray(data)||typeof data.metric!=="string"||typeof data.value!=="number"||typeof data.unit!=="string")return [];
- const aliases:Record<string,ObservationMetric>={relative_humidity:"humidity"};const metric=(aliases[data.metric]||data.metric) as ObservationMetric;const value=data.value,unit=data.unit;
+ const aliases:Record<string,ObservationMetric>={relative_humidity:"humidity","soil-moisture":"soil_moisture","soil-temperature":"soil_temperature","soil-ph":"soil_ph","electrical-conductivity":"electrical_conductivity","wind-speed":"wind_speed","wind-direction":"wind_direction","water-level":"water_level","vehicle-speed":"vehicle_speed","aircraft-altitude":"aircraft_altitude","aircraft-battery":"aircraft_battery"};const metric=(aliases[data.metric]||data.metric) as ObservationMetric;const value=data.value,unit=data.unit;
  if(!validateMetricValue(metric,value,unit))return [];
  const measuredAt=typeof data.measuredAt==="string"?data.measuredAt:typeof data.measured_at==="string"?data.measured_at:undefined;
  return [{metric,value,unit,measuredAt,metadata:{...(typeof data.sequence==="number"?{sequence:data.sequence}:{}),...(typeof data.sensorId==="string"?{sensorId:data.sensorId.slice(0,100)}:{})}}];
