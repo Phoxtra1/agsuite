@@ -62,7 +62,7 @@ export async function connectProfiledDevice(device:DeviceRegistration,browserDev
   let stopped=false;const reader=browserDevice.readable.getReader();const decoder=new TextDecoder();let pending="",mavBuffer=new Uint8Array();
   const task=(async()=>{try{while(!stopped){const {value,done}=await reader.read();if(done)break;
    if(profile.id==="serial-mavlink-readonly"){const merged=new Uint8Array(mavBuffer.length+value.length);merged.set(mavBuffer);merged.set(value,mavBuffer.length);const parsed=parseMavlinkFrames(merged);mavBuffer=parsed.remaining;for(const frame of parsed.frames){for(const m of decodeMavlinkFrame(frame)){if(authorised(device,m))onMeasurement(m);}}continue;}
-   pending+=decoder.decode(value,{stream:true});const lines=pending.split(/\r?\n/);pending=lines.pop()||"";
+   pending+=decoder.decode(value,{stream:true});if(pending.length>8192){pending="";onDisconnected?.(new Error("Serial device exceeded the maximum line buffer."));break;}const lines=pending.split(/\r?\n/);pending=lines.pop()||"";
    for(const line of lines){const decoded=profile.id==="serial-nmea0183"?decodeNmea0183Line(line):decodeSerialJsonLine(line);for(const m of decoded){if(authorised(device,m))onMeasurement(m);}}
   }}catch(error){if(!stopped)onDisconnected?.(error);}finally{try{reader.releaseLock();}catch{}}})();
   return {detail:profile.id==="serial-nmea0183"?"NMEA 0183 checksum-validated RMC/GGA reader active.":profile.id==="serial-mavlink-readonly"?"MAVLink v1/v2 read-only telemetry parser active.":"Serial JSON-lines decoder active.",close:async()=>{stopped=true;try{await reader.cancel();}catch{}await task.catch(()=>undefined);try{await browserDevice.close();}catch{}}};
