@@ -16,6 +16,28 @@ export function decodeBleCharacteristic(profileId:string,characteristicUuid:stri
  }
  return item&&validateMetricValue(item.metric,item.value,item.unit)?item:null;
 }
+export function decodeCustomBleCharacteristic(view:DataView,config:Record<string,unknown>):DecodedMeasurement|null {
+ const metric=String(config.metric||"") as ObservationMetric,unit=String(config.unit||"");
+ const format=String(config.format||"float32le"),offset=Number(config.byteOffset??0),scale=Number(config.scale??1),add=Number(config.offset??0);
+ if(!Number.isInteger(offset)||offset<0||!Number.isFinite(scale)||!Number.isFinite(add))return null;
+ let raw:number;
+ try {
+  switch(format){
+   case "int8": if(view.byteLength<offset+1)return null;raw=view.getInt8(offset);break;
+   case "uint8": if(view.byteLength<offset+1)return null;raw=view.getUint8(offset);break;
+   case "int16le": if(view.byteLength<offset+2)return null;raw=view.getInt16(offset,true);break;
+   case "uint16le": if(view.byteLength<offset+2)return null;raw=view.getUint16(offset,true);break;
+   case "int32le": if(view.byteLength<offset+4)return null;raw=view.getInt32(offset,true);break;
+   case "uint32le": if(view.byteLength<offset+4)return null;raw=view.getUint32(offset,true);break;
+   case "float32le": if(view.byteLength<offset+4)return null;raw=view.getFloat32(offset,true);break;
+   case "float64le": if(view.byteLength<offset+8)return null;raw=view.getFloat64(offset,true);break;
+   case "ascii": {const text=new TextDecoder().decode(new Uint8Array(view.buffer,view.byteOffset+offset,view.byteLength-offset)).replace(/\\0/g,"").trim();raw=Number.parseFloat(text);break;}
+   default:return null;
+  }
+ } catch{return null;}
+ const value=raw*scale+add;
+ return validateMetricValue(metric,value,unit)?{metric,value,unit,metadata:{decoder:"ble-custom-characteristic",format,byteOffset:offset,scale,offset:add}}:null;
+}
 export function decodeHidReport(profileId:string,view:DataView,config:Record<string,unknown>):DecodedMeasurement|null {
  const offset=Number(config.byteOffset??0),multiplier=Number(config.multiplier??1),unit=String(config.unit??"kg");
  if(!Number.isInteger(offset)||offset<0||!Number.isFinite(multiplier)||multiplier<=0)return null;
