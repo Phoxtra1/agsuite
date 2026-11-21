@@ -99,7 +99,7 @@ export default function ExplorePage() {
   const clearSearch = () => setQuery("");
 
   return (
-    <main className="relative min-h-[calc(100vh-4rem)] overflow-hidden bg-background px-4 py-10 text-foreground sm:px-6 sm:py-14">
+    <main className="relative min-h-[calc(100vh-9.5rem)] overflow-hidden bg-background px-4 py-10 text-foreground sm:px-6 sm:py-14">
       <div aria-hidden="true" className="pointer-events-none absolute -left-40 top-0 h-80 w-80 rounded-full bg-primary/[0.08] blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute -right-40 top-48 h-96 w-96 rounded-full bg-violet-500/[0.07] blur-3xl" />
       <div className="relative mx-auto max-w-6xl">
