@@ -41,12 +41,12 @@ const SikasɛmPage: FC = () => {
               Sikasɛm powers financial networks across Africa — from mobile money vendors and microcredit agencies to credit unions, microfinance institutions, forex bureaus, and insurance companies.
             </p>
             <div className="mt-8 flex flex-wrap gap-4 justify-center">
-              <Link
-                to="/"
+              <a
+                href="https://ops.amineva.com"
                 className="inline-flex items-center gap-2 px-8 py-3 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition"
               >
                 Get Started <ArrowRight className="h-4 w-4" />
-              </Link>
+              </a>
             </div>
           </motion.div>
         </div>
@@ -192,9 +192,9 @@ const SikasɛmPage: FC = () => {
           <p className="text-primary-foreground/80 max-w-xl mx-auto mb-8">
             Join the growing ecosystem of African financial institutions powered by Sikasɛm.
           </p>
-          <Link to="/" className="inline-flex items-center gap-2 px-8 py-3 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition">
+          <a href="https://ops.amineva.com" className="inline-flex items-center gap-2 px-8 py-3 rounded-lg bg-accent text-accent-foreground font-semibold hover:bg-accent/90 transition">
             Get Started <ArrowRight className="h-4 w-4" />
-          </Link>
+          </a>
         </motion.div>
       </section>
     </div>
