@@ -26,6 +26,6 @@ export const METRIC_UNITS:Record<ObservationMetric,string[]>={
 };
 export function validateMetricValue(metric:ObservationMetric,value:number,unit:string){
  if(!Number.isFinite(value)||!METRIC_UNITS[metric]?.includes(unit))return false;
- const range:Partial<Record<ObservationMetric,[number,number]>>={humidity:[0,100],soil_moisture:unit==="m³/m³"?[0,1]:[0,100],soil_ph:[0,14],wind_direction:[0,360],latitude:[-90,90],longitude:[-180,180],aircraft_battery:unit==="%"?[0,100]:[0,100],rainfall:[0,100000],wind_speed:[0,150],weight:[0,1000000],vehicle_speed:[0,1500],aircraft_altitude:[-1000,100000],water_level:[0,100000],electrical_conductivity:[0,1000000],barcode_count:[0,100000000]};
+ const range:Partial<Record<ObservationMetric,[number,number]>>={temperature:[-80,100],humidity:[0,100],soil_temperature:[-80,100],soil_moisture:unit==="m³/m³"?[0,1]:[0,100],soil_ph:[0,14],wind_direction:[0,360],latitude:[-90,90],longitude:[-180,180],aircraft_battery:unit==="%"?[0,100]:[0,100],rainfall:[0,100000],wind_speed:[0,150],weight:[0,1000000],vehicle_speed:[0,1500],aircraft_altitude:[-1000,100000],water_level:[0,100000],electrical_conductivity:[0,1000000],barcode_count:[0,100000000]};
  const r=range[metric];return !r||(value>=r[0]&&value<=r[1]);
 }
