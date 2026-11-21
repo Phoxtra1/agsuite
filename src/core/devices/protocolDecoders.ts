@@ -4,9 +4,9 @@ export interface DecodedMeasurement { metric:ObservationMetric; value:number; un
 export function decodeBleCharacteristic(profileId:string,characteristicUuid:string,view:DataView):DecodedMeasurement|null {
  const uuid=characteristicUuid.toLowerCase();
  let item:DecodedMeasurement|null=null;
- if(profileId==="ble-sig-environmental-sensing"&&uuid.endsWith("2a6e")) item={metric:"temperature",value:view.byteLength>=2?view.getInt16(0,true)/100:NaN,unit:"°C"};
- if(profileId==="ble-sig-environmental-sensing"&&uuid.endsWith("2a6f")) item={metric:"humidity",value:view.byteLength>=2?view.getUint16(0,true)/100:NaN,unit:"%RH"};
- if(profileId==="ble-sig-weight-scale"&&uuid.endsWith("2a9d")&&view.byteLength>=3){
+ if(profileId==="ble-sig-environmental-sensing"&&uuid.includes("2a6e")) item={metric:"temperature",value:view.byteLength>=2?view.getInt16(0,true)/100:NaN,unit:"°C"};
+ if(profileId==="ble-sig-environmental-sensing"&&uuid.includes("2a6f")) item={metric:"humidity",value:view.byteLength>=2?view.getUint16(0,true)/100:NaN,unit:"%RH"};
+ if(profileId==="ble-sig-weight-scale"&&uuid.includes("2a9d")&&view.byteLength>=3){
   const flags=view.getUint8(0),raw=view.getUint16(1,true);
   let mantissa=raw&0x0fff;if(mantissa>=0x0800)mantissa-=0x1000;
   let exponent=(raw>>12)&0x0f;if(exponent>=0x08)exponent-=0x10;
