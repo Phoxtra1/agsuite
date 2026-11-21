@@ -5,7 +5,10 @@ import type { DeviceRegistration, DeviceObservation, ObservationMetric } from ".
 import type { DeviceCapability } from "./types";
 const capabilityMetrics:Record<string,ObservationMetric[]>={"temperature":["temperature"],"humidity":["humidity"],"soil-moisture":["soil_moisture"],"soil-temperature":["soil_temperature"],"soil-ph":["soil_ph"],"electrical-conductivity":["electrical_conductivity"],"rainfall":["rainfall"],"wind":["wind_speed","wind_direction"],"water-level":["water_level"],"weight":["weight"],"barcode":["barcode_count"],"qr-code":["barcode_count"],"location":["latitude","longitude"],"gnss":["latitude","longitude","vehicle_speed"],"flight-telemetry":["latitude","longitude","aircraft_altitude","aircraft_battery"],"environmental":["temperature","humidity"],"inventory-count":["barcode_count"],"point-of-sale":["weight","barcode_count"]};
 type PendingRoute={device:DeviceRegistration;observation:DeviceObservation;token?:string};
-const pending=new Map<string,PendingRoute>();\nlet retryTimer:ReturnType<typeof setTimeout>|undefined;\nlet retryAttempt=0;\nfunction scheduleRetry(){if(retryTimer||typeof window==="undefined")return;const delay=Math.min(30000,1000*Math.pow(2,retryAttempt++));retryTimer=setTimeout(()=>{retryTimer=undefined;void flushPendingDeviceRoutes();},delay);}
+const pending=new Map<string,PendingRoute>();
+let retryTimer:ReturnType<typeof setTimeout>|undefined;
+let retryAttempt=0;
+function scheduleRetry(){if(retryTimer||typeof window==="undefined")return;const delay=Math.min(30000,1000*Math.pow(2,retryAttempt++));retryTimer=setTimeout(()=>{retryTimer=undefined;void flushPendingDeviceRoutes();},delay);}
 export function deviceCanEmitMetric(device:DeviceRegistration,metric:ObservationMetric){return device.capabilities.some(cap=>capabilityMetrics[cap]?.includes(metric));}
 async function deliver(route:PendingRoute){
  const o=route.observation;
