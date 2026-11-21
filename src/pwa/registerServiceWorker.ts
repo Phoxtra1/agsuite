@@ -3,7 +3,7 @@
 // so a deployment cannot leave clients pinned to an obsolete asset manifest.
 const SW_URL = "/sw.js";
 const UPDATE_CHECK_INTERVAL_MS = 60 * 60 * 1000;
-const RELOAD_KEY = "__amv_sw_controller_reload";
+const RELOAD_KEY = "__amv_sw_controller_reload_at";
 
 function isBlockedContext(): boolean {
   if (!import.meta.env.PROD) return true;
@@ -51,8 +51,9 @@ async function unregisterAppWorkers(): Promise<void> {
 
 function reloadOnceAfterControllerChange(): void {
   try {
-    if (sessionStorage.getItem(RELOAD_KEY) === "1") return;
-    sessionStorage.setItem(RELOAD_KEY, "1");
+    const lastReload = Number(sessionStorage.getItem(RELOAD_KEY) || "0");
+    if (Date.now() - lastReload < 15_000) return;
+    sessionStorage.setItem(RELOAD_KEY, String(Date.now()));
     window.location.reload();
   } catch {
     // If storage is unavailable, don't risk an uncontrolled reload loop.
