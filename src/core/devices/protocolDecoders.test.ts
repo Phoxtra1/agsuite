@@ -15,7 +15,7 @@ describe("model/protocol decoders",()=>{
  });
  it("decodes vendor-specific BLE characteristic data using an explicit model profile",()=>{
   const buffer=new ArrayBuffer(4);new DataView(buffer).setFloat32(0,0.34,true);
-  expect(decodeCustomBleCharacteristic(new DataView(buffer),{metric:"soil_moisture",unit:"m³/m³",format:"float32le",byteOffset:0,scale:1,offset:0})).toMatchObject({metric:"soil_moisture",value:0.34,unit:"m³/m³"});
+  const decoded=decodeCustomBleCharacteristic(new DataView(buffer),{metric:"soil_moisture",unit:"m³/m³",format:"float32le",byteOffset:0,scale:1,offset:0});\n  expect(decoded).toMatchObject({metric:"soil_moisture",unit:"m³/m³"});\n  expect(decoded?.value).toBeCloseTo(0.34,5);
   expect(decodeCustomBleCharacteristic(new DataView(buffer),{metric:"soil_ph",unit:"pH",format:"float32le",byteOffset:0,scale:100,offset:0})).toBeNull();
  });
  it("decodes a configured HID float32 little-endian scale report",()=>{
