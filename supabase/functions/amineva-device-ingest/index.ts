@@ -24,7 +24,7 @@ Deno.serve(async(req)=>{if(req.method==="OPTIONS")return new Response("ok",{head
  if(device.status!=="connected")return json({error:"Device is not connected or has been revoked"},403);
  if(body.app_id!==device.app_id||body.component_id!==device.component_id)return json({error:"Target application/component does not match the registered device"},403);
  if(device.app_id==="agroclimate"&&!targetComponent[device.component_id])return json({error:"The selected component has no AgroClimate routing adapter"},422);
- if(device.app_id==="agroclimate"&&targetComponent[device.component_id]==="post-harvest")return json({error:"Post-Harvest uses its dedicated paired temperature/humidity station driver; use its supported paired profile."},422);
+ 
  const appComponents:Record<string,string[]>={"agroclimate":["weather-observations","agro-forecast","soil-monitoring","agro-risk","agro-inventory","market-link","agtrans","aerial-console","farm-handler","post-harvest"],"inventra":["stock-control","sales-checkout","receipts-labels","product-weighing"],"info-solutions":["information-kiosks","interactive-displays","document-capture","public-terminals"]};
  if(!appComponents[device.app_id]?.includes(device.component_id))return json({error:"Unknown application component"},403);
  if(typeof body.event_id!=="string"||! /^[0-9a-f-]{36}$/i.test(body.event_id))return json({error:"Valid UUID event_id required"},400);
@@ -43,10 +43,28 @@ Deno.serve(async(req)=>{if(req.method==="OPTIONS")return new Response("ok",{head
  if(device.app_id==="agroclimate"){
   const token=typeof body.agroclimate_device_token==="string"?body.agroclimate_device_token:"";if(token.length<32||token.length>256)return json({error:"AgroClimate gateway device token is required; the central observation is saved and can be retried"},400);
   const agroUrl=Deno.env.get("AGROCLIMATE_SUPABASE_URL")||"https://apoqexuhlysoirtcvgfo.supabase.co",agroKey=Deno.env.get("AGROCLIMATE_SUPABASE_ANON_KEY");if(!agroKey)return json({error:"AGROCLIMATE_SUPABASE_ANON_KEY is not configured; central observation is saved but live AgroClimate delivery is pending"},503);
-  const component=targetComponent[device.component_id],remoteMetric=mapMetric(metric);
-  const remoteBody={action:"ingest",expected_component:component,metric:remoteMetric,value,unit,observed_at:new Date(measured).toISOString(),idempotency_key:body.event_id,metadata:{...metadata,source:"amineva-central-device-service",central_device_id:device.id,source_model:device.model||null}};
-  try{await sendAgroClimate(agroUrl,agroKey,token,remoteBody);delivery="agroclimate-component";}
-  catch(error){return json({accepted:false,central_saved:true,delivery:"pending",error:error instanceof Error?error.message:"AgroClimate delivery failed; retry this event"},502);}
+  try {
+   if(device.component_id==="post-harvest") {
+    if(metric!=="temperature"&&metric!=="humidity")return json({error:"Post-Harvest accepts paired temperature and humidity observations only"},403);
+    const {data:pairRows,error:pairError}=await admin.from("amineva_device_observations").select("event_id,metric,value,unit,measured_at").eq("device_id",device.id).in("metric",["temperature","humidity"]).gte("measured_at",new Date(Date.now()-30*60*1000).toISOString()).order("measured_at",{ascending:false}).limit(20);
+    if(pairError)return json({error:"Could not assemble the paired Post-Harvest reading"},503);
+    const temperature=pairRows?.find((r:any)=>r.metric==="temperature"),humidity=pairRows?.find((r:any)=>r.metric==="humidity");
+    if(!temperature||!humidity){delivery="awaiting-temperature-humidity-pair";}
+    else {
+     const tempC=temperature.unit==="°F"?(Number(temperature.value)-32)*5/9:Number(temperature.value);
+     const humidityPct=Number(humidity.value);
+     if(!Number.isFinite(tempC)||tempC < -40||tempC>85||!Number.isFinite(humidityPct)||humidityPct<0||humidityPct>100)return json({error:"Paired Post-Harvest values are outside the station's accepted range"},422);
+     const pairKey="central:"+device.id+":"+temperature.event_id+":"+humidity.event_id;
+     const observedAt=new Date(Math.max(Date.parse(temperature.measured_at),Date.parse(humidity.measured_at))).toISOString();
+     await sendAgroClimate(agroUrl,agroKey,token,{action:"ingest",temperature_c:tempC,humidity_pct:humidityPct,observed_at:observedAt,idempotency_key:pairKey,firmware:device.driver_profile_id,sensor_model:device.model||"Central paired BLE sensor"},"post-harvest-station");
+     delivery="agroclimate-post-harvest";
+    }
+   } else {
+    const component=targetComponent[device.component_id],remoteMetric=mapMetric(metric);
+    const remoteBody={action:"ingest",expected_component:component,metric:remoteMetric,value,unit,observed_at:new Date(measured).toISOString(),idempotency_key:body.event_id,metadata:{...metadata,source:"amineva-central-device-service",central_device_id:device.id,source_model:device.model||null}};
+    await sendAgroClimate(agroUrl,agroKey,token,remoteBody);delivery="agroclimate-component";
+   }
+  } catch(error) { return json({accepted:false,central_saved:true,delivery:"pending",error:error instanceof Error?error.message:"AgroClimate delivery failed; retry this event"},502); }
  }
  await admin.from("amineva_devices").update({last_seen_at:new Date().toISOString(),status:"connected"}).eq("id",device.id).eq("owner_id",user.id);
  return json({accepted:true,duplicate:Boolean(insertError?.code==="23505"),delivery,observation:persisted},insertError?.code==="23505"?200:201);
