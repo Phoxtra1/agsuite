@@ -24,6 +24,7 @@ const AboutUs = lazyWithRetry(() => import("./pages/landing/AboutUs"));
 const ExplorePage = lazyWithRetry(() => import("./pages/landing/ExplorePage"));
 const GetStartedPage = lazyWithRetry(() => import("./pages/GetStartedPage"));
 const AccountSettingsPage = lazyWithRetry(() => import("./pages/AccountSettingsPage"));
+const DeviceCenterPage = lazyWithRetry(() => import("./pages/DeviceCenterPage"));
 const SwitchDashboard = lazyWithRetry(() => import("./pages/landing/SwitchDashboard"));
 const PortalLayout = lazyWithRetry(() => import("./components/portal/PortalLayout"));
 const PortalAuthGate = lazyWithRetry(() => import("./components/auth/PortalAuthGate"));
@@ -274,6 +275,7 @@ function AppRoutes() {
         <Route path="/explore" element={<Landing />}><Route index element={<ExplorePage />} /></Route>
         <Route path="/explore/:section" element={<ExplorePage />} />
         <Route path="/account-settings" element={<AccountSettingsPage />} />
+        <Route path="/devices" element={<DeviceCenterPage />} />
 
         {/* Auth */}
         <Route path="/invite/:product" element={<InviteBridge />} />
