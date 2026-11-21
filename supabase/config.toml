@@ -1,1 +1,4 @@
 project_id = "qtvkjytszsbjulhgmnan"
+
+[functions.amineva-device-ingest]
+verify_jwt = true

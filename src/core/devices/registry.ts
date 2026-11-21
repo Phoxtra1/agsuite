@@ -21,8 +21,8 @@ export const COMPONENT_DEVICE_REQUIREMENTS: ComponentDeviceRequirement[] = [
  requirement("info-solutions","Info Solutions","public-terminals","Public terminals",["display","printing","scanning"],["native-bridge","network-gateway"]),
 ];
 export function matchDeviceToComponents(capabilities: DeviceCapability[], transport: DeviceTransport) { const actual = new Set(capabilities); return COMPONENT_DEVICE_REQUIREMENTS.filter(r => r.transports.includes(transport) && r.capabilities.some(c => actual.has(c))).map(r => ({ ...r, matchedCapabilities: r.capabilities.filter(c => actual.has(c)) })); }
-export function getBrowserTransportSupport() { const nav = navigator as Navigator & { bluetooth?: unknown; hid?: unknown; serial?: unknown }; return [
- { transport:"web-bluetooth" as const, supported:Boolean(nav.bluetooth), label:"Bluetooth LE", note:"HTTPS, browser support and explicit device/service permission required." },
- { transport:"web-hid" as const, supported:Boolean(nav.hid), label:"USB / HID", note:"Supported browser and explicit chooser required; report decoding is model-specific." },
- { transport:"web-serial" as const, supported:Boolean(nav.serial), label:"USB / Serial", note:"Supported browser and explicit port chooser required; protocol decoding is model-specific." },
+export function getBrowserTransportSupport() { const nav = navigator as Navigator & { bluetooth?: unknown; hid?: unknown; serial?: unknown }; const secure=typeof window!=="undefined"&&window.isSecureContext; return [
+ { transport:"web-bluetooth" as const, supported:Boolean(nav.bluetooth)&&secure, label:"Bluetooth LE", note:secure?"HTTPS, browser support and explicit device/service permission required.":"A secure HTTPS context is required." },
+ { transport:"web-hid" as const, supported:Boolean(nav.hid)&&secure, label:"USB / HID", note:secure?"Supported browser and explicit chooser required; report decoding is model-specific.":"A secure HTTPS context is required." },
+ { transport:"web-serial" as const, supported:Boolean(nav.serial)&&secure, label:"USB / Serial", note:secure?"Supported browser and explicit port chooser required; protocol decoding is model-specific.":"A secure HTTPS context is required." },
 ]; }
