@@ -17,6 +17,10 @@ export const BUILTIN_DRIVER_PROFILES:DriverProfile[]=[
  {id:"serial-nmea0183",label:"NMEA 0183 RMC/GGA GNSS",transport:"web-serial",manufacturer:"NMEA 0183 compatible",model:"RMC/GGA sentences",capabilities:["location","gnss"],metrics:["latitude","longitude","vehicle_speed"],verifiedStandard:true,description:"Checksum-validated RMC/GGA position and speed. Read-only; no vehicle control."},
  {id:"serial-mavlink-readonly",label:"MAVLink v1/v2 read-only telemetry",transport:"web-serial",manufacturer:"MAVLink ecosystem",model:"MAVLink v1/v2",capabilities:["flight-telemetry","location","gnss"],metrics:["latitude","longitude","aircraft_altitude","aircraft_battery"],verifiedStandard:true,description:"Read-only heartbeat, global position and battery telemetry; no flight-control commands."},
 ];
+export function capabilitiesForMetric(metric:ObservationMetric):DeviceCapability[]{
+ const map:Record<ObservationMetric,DeviceCapability[]>={temperature:["temperature"],humidity:["humidity"],soil_moisture:["soil-moisture"],soil_temperature:["soil-temperature"],soil_ph:["soil-ph"],electrical_conductivity:["electrical-conductivity"],rainfall:["rainfall"],wind_speed:["wind"],wind_direction:["wind"],water_level:["water-level"],weight:["weight"],barcode_count:["barcode"],latitude:["location"],longitude:["location"],vehicle_speed:["gnss"],aircraft_altitude:["flight-telemetry"],aircraft_battery:["flight-telemetry"]};
+ return map[metric]||[];
+}
 export const METRIC_UNITS:Record<ObservationMetric,string[]>={
  temperature:["°C","°F"],humidity:["%RH","%"],soil_moisture:["%","%VWC","m³/m³"],soil_temperature:["°C","°F"],soil_ph:["pH"],electrical_conductivity:["µS/cm","mS/cm","dS/m"],rainfall:["mm","in"],wind_speed:["m/s","km/h","mph"],wind_direction:["°"],water_level:["mm","cm","m"],weight:["g","kg","lb"],barcode_count:["count"],latitude:["°"],longitude:["°"],vehicle_speed:["m/s","km/h","mph"],aircraft_altitude:["m","ft"],aircraft_battery:["%","V"]
 };
