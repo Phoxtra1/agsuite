@@ -100,7 +100,7 @@ export default function EventDetailPage() {
             </section>
 
 
-          <aside className="space-y-5">            <section>
+            <section>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Before you register</p>
               <h2 className="mt-3 text-2xl font-bold">Frequently asked questions</h2>
               <div className="mt-5 space-y-3">
