@@ -26,16 +26,15 @@ export default function Landing() {
               {isSoftwareEnvironment ? (
                 <>
                   <Link to="/explore" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">Solutions</Link>
-                  <Link to="/explore/events" className={`text-sm font-medium transition hover:text-foreground ${location.pathname.startsWith("/explore/events") ? "text-primary" : "text-muted-foreground"}`}>Register for Events</Link>
-                  <Link to="/explore/appointments" className={`text-sm font-medium transition hover:text-foreground ${location.pathname.startsWith("/explore/appointments") ? "text-primary" : "text-muted-foreground"}`}>Book an Appointment</Link>
                   <Link to="/account-settings" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"><Settings className="h-4 w-4" /> Settings</Link>
                 </>
               ) : (
                 <>
                   <Link to={solutionsLink} className="text-sm font-medium text-muted-foreground transition hover:text-foreground">Solutions</Link>
+                  <Link to="/impact" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">Amineva Impact</Link>
                   <Link to="/about-us" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">About Us</Link>
                   <Link to="/faqs" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">FAQs</Link>
-                  <Link to="/get-started?mode=register" className="inline-flex items-center justify-center rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">Get Started</Link>
+                  <Link to="/explore/appointments" className="inline-flex items-center justify-center rounded-lg bg-[#101D32] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#1a2b46]">Appointment</Link>
                 </>
               )}
             </nav>
@@ -50,16 +49,15 @@ export default function Landing() {
                   {isSoftwareEnvironment ? (
                     <>
                       <Link to="/explore" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Solutions</Link>
-                      <Link to="/explore/events" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Register for Events</Link>
-                      <Link to="/explore/appointments" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Book an Appointment</Link>
                       <Link to="/account-settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10"><Settings className="h-4 w-4" /> Settings</Link>
                     </>
                   ) : (
                     <>
                       <Link to={solutionsLink} onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Solutions</Link>
+                      <Link to="/impact" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Amineva Impact</Link>
                       <Link to="/about-us" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">About Us</Link>
                       <Link to="/faqs" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">FAQs</Link>
-                      <Link to="/get-started?mode=register" onClick={() => setMobileOpen(false)} className="block rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-semibold text-primary-foreground">Get Started</Link>
+                      <Link to="/explore/appointments" onClick={() => setMobileOpen(false)} className="block rounded-lg bg-[#101D32] px-3 py-2.5 text-center text-sm font-semibold text-white hover:bg-[#1a2b46]">Appointment</Link>
                     </>
                   )}
                 </div>
