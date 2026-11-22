@@ -94,7 +94,6 @@ export default function HomePage() {
     if (p.status === "coming_soon" || p.status === "offline") return;
 
     // Sikasɛm no longer authenticates through Suite — it opens its own homepage.
-    // Category listing + live/offline status stay managed here in the Suite.
     const pid = (p.id || "").toLowerCase();
     const pname = (p.name || "").toLowerCase();
     const purl = (p.url || "").toLowerCase();
