@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, BookOpen, BriefcaseBusiness, CheckCircle2, Compass, Globe2, GraduationCap, MessageCircle, ShieldCheck, Video, Plane, CalendarDays } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Compass, Globe2, GraduationCap, MessageCircle, ShieldCheck, Video, Plane, CalendarDays } from "lucide-react";
 
 const careerTopics = [
   "Understanding interests, strengths and personal aspirations when exploring career directions.",
