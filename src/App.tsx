@@ -272,7 +272,7 @@ function AppRoutes() {
         {/* Seal (hidden admin entry) */}
         <Route path="/seal" element={<Seal />} />
 
-        {/* Suite (canonical routes: /suite, /suite/console, /suite/coms, /suite/acs, /suite/profile, /suite/settings) */}
+        {/* Suite routes: /suite, /suite/console, /suite/coms, /suite/profile, /suite/settings */}
         <Route path="/suite/*" element={<SuiteGuard />} />
 
         {/* Workspace — productivity & data intelligence hub */}
