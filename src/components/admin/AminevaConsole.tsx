@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { AdminProductLinks } from './AdminProductLinks';
 import { AdminPanel } from './AdminPanel';
-import { CategoryManager } from './CategoryManager';
 import { AuthDiagnosticsPanel } from './AuthDiagnosticsPanel';
 import { EmailDeliveryPanel } from './EmailDeliveryPanel';
 import UserAppAccessManager from './UserAppAccessManager';
@@ -10,12 +9,11 @@ import { HardwareIntegrationPanel } from './HardwareIntegrationPanel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
-import { useAdminProducts, useCategoryProducts } from '@/hooks/useProducts';
+import { useAdminProducts } from '@/hooks/useProducts';
 import { getSealSession } from '@/lib/sealAuth';
 import {
   LayoutDashboard,
   Settings,
-  FolderTree,
   ShieldCheck,
   Mail,
   KeyRound,
@@ -28,7 +26,6 @@ import {
 type SectionId =
   | 'overview'
   | 'products'
-  | 'categories'
   | 'auth-diagnostics'
   | 'email-delivery'
   | 'app-access'
@@ -38,7 +35,6 @@ type SectionId =
 const SECTIONS: { id: SectionId; label: string; icon: React.ElementType; hint: string }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, hint: 'Live snapshot' },
   { id: 'products', label: 'Product Registry', icon: Settings, hint: 'Internal registry' },
-  { id: 'categories', label: 'Category Management', icon: FolderTree, hint: 'Homepage listing' },
   { id: 'auth-diagnostics', label: 'Live Auth Diagnostics', icon: ShieldCheck, hint: 'Real-time telemetry' },
   { id: 'email-delivery', label: 'Email Delivery', icon: Mail, hint: 'Delivery statuses' },
   { id: 'app-access', label: 'User Access', icon: KeyRound, hint: 'Per-app grants' },
@@ -76,7 +72,6 @@ function StatCard({
 export function AminevaConsole() {
   const [section, setSection] = useState<SectionId>('overview');
   const { products: adminProducts } = useAdminProducts();
-  const { products: categoryProducts } = useCategoryProducts();
   const [now, setNow] = useState(() => new Date());
   const seal = getSealSession();
 
@@ -84,15 +79,6 @@ export function AminevaConsole() {
     const t = setInterval(() => setNow(new Date()), 30000);
     return () => clearInterval(t);
   }, []);
-
-  const liveCount = useMemo(
-    () => categoryProducts.filter((p) => p.status === 'live').length,
-    [categoryProducts]
-  );
-  const categoryCount = useMemo(
-    () => new Set(categoryProducts.map((p) => p.category).filter(Boolean)).size,
-    [categoryProducts]
-  );
 
   const active = SECTIONS.find((s) => s.id === section) || SECTIONS[0];
 
@@ -119,8 +105,6 @@ export function AminevaConsole() {
       {/* Stats */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
         <StatCard icon={Boxes} label="Registry products" value={adminProducts.length} />
-        <StatCard icon={FolderTree} label="Homepage products" value={categoryProducts.length} sub={`${categoryCount} categories`} />
-        <StatCard icon={CircleDot} label="Live now" value={liveCount} />
         <StatCard
           icon={Clock}
           label="Console time"
@@ -175,7 +159,6 @@ export function AminevaConsole() {
             </div>
           )}
           {section === 'products' && <AdminPanel />}
-          {section === 'categories' && <CategoryManager />}
           {section === 'auth-diagnostics' && <AuthDiagnosticsPanel />}
           {section === 'email-delivery' && <EmailDeliveryPanel />}
           {section === 'app-access' && <UserAppAccessManager />}
