@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Compass, Globe2, GraduationCap, MessageCircle, ShieldCheck, Video, Plane, CalendarDays } from "lucide-react";
+import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Compass, GraduationCap, MessageCircle, ShieldCheck, Video, Plane } from "lucide-react";
 
 const careerTopics = [
   "Understanding interests, strengths and personal aspirations when exploring career directions.",
@@ -34,7 +34,7 @@ export default function EventDetailPage() {
       </section>
 
       <section className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
-        <div className="grid gap-12 lg:grid-cols-[1fr_320px]">
+        <div className="grid gap-12">
           <div className="space-y-12">
             <section>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">About the programme</p>
@@ -86,47 +86,7 @@ export default function EventDetailPage() {
             </section>
 
 
-            <section>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Before you register</p>
-              <h2 className="mt-3 text-2xl font-bold">Frequently asked questions</h2>
-              <div className="mt-5 space-y-3">
-                <details className="rounded-xl border border-border bg-card p-4">
-                  <summary className="cursor-pointer text-sm font-semibold">Will this programme take place online or in person?</summary>
-                  <p className="mt-3 text-sm leading-7 text-muted-foreground">This edition is an online webinar. Joining instructions will be sent to confirmed participants before the event.</p>
-                </details>
-                <details className="rounded-xl border border-border bg-card p-4">
-                  <summary className="cursor-pointer text-sm font-semibold">Has the event date been confirmed?</summary>
-                  <p className="mt-3 text-sm leading-7 text-muted-foreground">The event is planned for 2027. The exact date and time will be announced once confirmed.</p>
-                </details>
-                <details className="rounded-xl border border-border bg-card p-4">
-                  <summary className="cursor-pointer text-sm font-semibold">Who can participate?</summary>
-                  <p className="mt-3 text-sm leading-7 text-muted-foreground">The programme is intended for learners, tertiary students, graduates, working professionals, entrepreneurs and others interested in career, education, travel and relocation opportunities.</p>
-                </details>
-                <details className="rounded-xl border border-border bg-card p-4">
-                  <summary className="cursor-pointer text-sm font-semibold">How do I register?</summary>
-                  <p className="mt-3 text-sm leading-7 text-muted-foreground">The registration form, confirmed fee and payment instructions will be published on this page when registration opens.</p>
-                </details>
-              </div>
-            </section>
-          </div>
 
-          <aside className="space-y-5">
-            <div className="sticky top-24 rounded-2xl border border-border bg-card p-6 shadow-sm">
-              <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">Event at a glance</p>
-              <div className="mt-5 space-y-4 text-sm">
-                <div className="flex gap-3"><Video className="h-5 w-5 text-primary"/><div><p className="font-semibold">Online webinar</p><p className="text-xs text-muted-foreground">Attend remotely</p></div></div>
-                <div className="flex gap-3"><CalendarDays className="h-5 w-5 text-primary"/><div><p className="font-semibold">2027 · Exact date to be announced</p><p className="text-xs text-muted-foreground">Check this page for updates</p></div></div>
-                <div className="flex gap-3"><Globe2 className="h-5 w-5 text-primary"/><div><p className="font-semibold">Open to a broad audience</p><p className="text-xs text-muted-foreground">Students, graduates and professionals</p></div></div>
-              </div>
-              <div className="mt-6 border-t border-border pt-5">
-                <p className="text-sm font-semibold">Registration will be announced</p>
-                <p className="mt-2 text-xs leading-6 text-muted-foreground">The registration form, confirmed fee and payment instructions will appear in this section when ready.</p>
-                <div id="event-registration" className="mt-4 rounded-xl border border-dashed border-border bg-muted/40 p-4 text-center">
-                  <p className="text-xs font-medium text-muted-foreground">Registration form coming soon</p>
-                </div>
-              </div>
-            </div>
-          </aside>
         </div>
       </section>
       <section className="border-t border-border bg-[#101D32] px-5 py-14 text-center text-white">
