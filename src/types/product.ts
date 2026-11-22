@@ -14,7 +14,6 @@ export type ProductData = {
   status: ProductStatus;
   url?: string;
   adminUrl?: string;
-  category?: string;
   order: number;
   isPublic?: boolean;
   isExternal?: boolean;
