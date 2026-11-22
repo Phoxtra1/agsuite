@@ -9,3 +9,4 @@ export * from "./browserAdapters";
 export * from "./observationRouter";
 export * from "./componentSubscriptions";
 export * from "./useComponentDeviceData";
+export * from "./integrationCatalog";
