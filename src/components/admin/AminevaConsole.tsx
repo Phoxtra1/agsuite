@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { AdminProductLinks } from './AdminProductLinks';
 import { AdminPanel } from './AdminPanel';
 import { AuthDiagnosticsPanel } from './AuthDiagnosticsPanel';
@@ -18,7 +18,6 @@ import {
   Mail,
   KeyRound,
   Boxes,
-  CircleDot,
   Clock,
   LibraryBig,
 } from 'lucide-react';
@@ -103,7 +102,7 @@ export function AminevaConsole() {
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+      <div className="grid grid-cols-2 gap-3">
         <StatCard icon={Boxes} label="Registry products" value={adminProducts.length} />
         <StatCard
           icon={Clock}
