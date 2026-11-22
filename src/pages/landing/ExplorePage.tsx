@@ -20,10 +20,11 @@ const products: Product[] = [
   { name: "Info Solutions", description: "Discover information. Access professional services.", group: "Information", icon: Compass, status: "live", href: "https://info.amineva.com", external: true },
   { name: "Career & Education", description: "Explore pathways, learning and opportunity.", group: "People", image: "/adesua.png", status: "live", href: "/explore/career-education" },
   { name: "AgroClimate", description: "Agriculture and climate intelligence.", group: "Agriculture", image: "/agroclimate.png", status: "live", href: "https://agro.amineva.com", external: true },
-  { name: "DataLens", description: "A new service is in development.", group: "Business", image: "/datalens.png", status: "in-development", href: "https://citis.amineva.com", external: true },
+  { name: "DataLens", description: "Cloud and IT infrastructure management.", group: "Cloud & IT Infrastructure Management", image: "/datalens.png", status: "live", href: "https://citis.amineva.com", external: true },
   { name: "Sikasem", description: "Financial operations and management.", group: "Finance", image: "/sikasem.png", status: "live", href: "https://ops.amineva.com", external: true },
   { name: "Inventra", description: "Inventory and sales management.", group: "Business", image: "/inventra.png", status: "live", href: "https://stock.amineva.com", external: true },
   { name: "Dipa", description: "Artificial intelligence.", group: "Intelligence", image: "/Dipa-icon.webp", status: "live", href: "https://ode.amineva.com", external: true },
+  { name: "Amineva Workspace", description: "Productivity tools.", group: "Productivity", icon: Sparkles, status: "live", href: "/workspace" },
 ];
 
 const careerOptions: Product[] = [
@@ -31,7 +32,7 @@ const careerOptions: Product[] = [
   { name: "Adesua", description: "Learning and practical education.", group: "Education", image: "/adesua.png", status: "live", href: "https://as.amineva.com", external: true },
 ];
 
-const filters = ["All", "Business", "People", "Intelligence", "Agriculture", "Finance", "Information"];
+const filters = ["All", "Business", "People", "Intelligence", "Agriculture", "Finance", "Information", "Cloud & IT Infrastructure Management", "Productivity"];
 
 function ProductCard({ product, index, showDescription = true, showGroup = false }: { product: Product; index: number; showDescription?: boolean; showGroup?: boolean }) {
   const Icon = product.icon;
@@ -59,7 +60,10 @@ function ProductCard({ product, index, showDescription = true, showGroup = false
         ) : product.status === "coming-soon" ? (
           <span className="rounded-full border border-border bg-muted px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Coming soon</span>
         ) : product.status === "live" ? (
-          <span className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Live</span>
+          <span
+            className="inline-flex items-center gap-1.5 rounded-full border border-emerald-500/25 bg-emerald-500/10 px-2.5 py-1 text-[10px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300"
+            style={{ animation: `amineva-live-${index % 4} ${[2.1, 2.7, 3.3, 2.4][index % 4]}s ease-in-out infinite` }}
+          ><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />Live</span>
         ) : (
           <ArrowUpRight className="h-4 w-4 text-muted-foreground/60 transition-all duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:text-primary" />
         )}
@@ -104,6 +108,13 @@ export default function ExplorePage() {
 
   return (
     <main className="relative min-h-[calc(100vh-6.25rem)] overflow-hidden bg-background px-4 py-10 text-foreground sm:px-6 sm:py-14">
+      <style>{`
+        @keyframes amineva-live-0 { 0%, 100% { opacity: 1; } 50% { opacity: .42; } }
+        @keyframes amineva-live-1 { 0%, 100% { transform: scale(1); box-shadow: 0 0 0 0 hsl(142 76% 36% / 0); } 50% { transform: scale(1.045); box-shadow: 0 0 0 4px hsl(142 76% 36% / .10); } }
+        @keyframes amineva-live-2 { 0%, 100% { filter: brightness(1); } 35% { filter: brightness(1.28); } 65% { filter: brightness(.82); } }
+        @keyframes amineva-live-3 { 0%, 100% { opacity: 1; transform: translateY(0); } 30% { opacity: .68; transform: translateY(-1px); } 60% { opacity: .92; transform: translateY(0); } }
+        @media (prefers-reduced-motion: reduce) { [style*="amineva-live-"] { animation: none !important; } }
+      `}</style>
       <div aria-hidden="true" className="pointer-events-none absolute -left-40 top-0 h-80 w-80 rounded-full bg-primary/[0.08] blur-3xl" />
       <div aria-hidden="true" className="pointer-events-none absolute -right-40 top-48 h-96 w-96 rounded-full bg-violet-500/[0.07] blur-3xl" />
       <div className="relative mx-auto max-w-6xl">
@@ -135,7 +146,7 @@ export default function ExplorePage() {
                   {query && <button type="button" onClick={clearSearch} aria-label="Clear search" className="rounded-full p-1 text-muted-foreground hover:bg-muted hover:text-foreground"><X className="h-4 w-4" /></button>}
                 </div>
               </div>
-              <p className="mx-auto mb-6 max-w-2xl text-center text-xs leading-5 text-muted-foreground sm:text-sm">Explore our connected solutions across business, people, intelligence, agriculture, finance and information.</p>
+              <p className="mx-auto mb-6 max-w-2xl text-center text-xs leading-5 text-muted-foreground sm:text-sm">Explore our connected solutions across productivity, cloud and IT infrastructure, business, people, intelligence, agriculture, finance and information.</p>
 
               <div className="mb-7 flex flex-wrap justify-center gap-2">
                 {filters.map((item) => <button key={item} type="button" onClick={() => setFilter(item)} className={`rounded-full border px-3 py-1.5 text-[11px] font-medium transition ${filter === item ? "border-primary bg-primary text-primary-foreground shadow-sm" : "border-border bg-card/70 text-muted-foreground hover:border-primary/35 hover:text-foreground"}`}>{item}</button>)}
