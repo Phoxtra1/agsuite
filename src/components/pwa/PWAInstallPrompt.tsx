@@ -82,12 +82,12 @@ export default function PWAInstallPrompt() {
   if (installed || !visible) return null;
 
   return (
-    <div className="fixed inset-x-0 bottom-4 z-[100] mx-auto w-[calc(100%-2rem)] max-w-md" role="dialog" aria-label="Install Amineva Global">
+    <div className="fixed inset-x-0 bottom-4 z-[100] mx-auto w-[calc(100%-2rem)] max-w-md" role="dialog" aria-label="Install Amineva">
       <div className="rounded-2xl border border-border bg-card p-4 text-card-foreground shadow-2xl">
         <div className="flex items-start gap-3">
           <img src="/amv_logo.png" alt="" className="h-12 w-12 rounded-xl object-contain" />
           <div className="min-w-0 flex-1">
-            <h2 className="font-semibold">Install Amineva Global</h2>
+            <h2 className="font-semibold">Install Amineva</h2>
             <p className="mt-1 text-sm text-muted-foreground">
               Add Amineva to your phone, tablet or computer for quick access as an app.
             </p>
