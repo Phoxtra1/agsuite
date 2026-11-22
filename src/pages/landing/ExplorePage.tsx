@@ -20,8 +20,6 @@ const products: Product[] = [
   { name: "Amineva Workspace", description: "Productivity tools.", group: "Productivity", icon: Sparkles, status: "live", href: "/workspace" },
   { name: "Info Solutions", description: "Discover information. Access professional services.", group: "Information", icon: Compass, status: "live", href: "https://info.amineva.com", external: true },
   { name: "Career & Education", description: "Explore pathways, learning and opportunity.", group: "People", image: "/adesua.png", status: "live", href: "/explore/career-education" },
-  { name: "Info Solutions", description: "Discover information. Access professional services.", group: "Information", icon: Compass, status: "live", href: "https://info.amineva.com", external: true },
-  { name: "Career & Education", description: "Explore pathways, learning and opportunity.", group: "People", image: "/adesua.png", status: "live", href: "/explore/career-education" },
   { name: "AgroClimate", description: "Agriculture and climate intelligence.", group: "Agriculture", image: "/agroclimate.png", status: "live", href: "https://agro.amineva.com", external: true },
   { name: "DataLens", description: "Cloud and IT infrastructure management.", group: "Cloud & IT Infrastructure Management", image: "/datalens.png", status: "live", href: "https://citis.amineva.com", external: true },
   { name: "Sikasem", description: "Financial operations and management.", group: "Finance", image: "/sikasem.png", status: "live", href: "https://ops.amineva.com", external: true },
