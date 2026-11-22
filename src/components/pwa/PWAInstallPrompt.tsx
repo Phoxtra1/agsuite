@@ -5,7 +5,7 @@ type InstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
-const DISMISS_KEY = "amineva_pwa_install_dismissed";
+const DISMISS_KEY = "amineva_pwa_install_dismissed_v2";
 
 function isStandalone(): boolean {
   return window.matchMedia("(display-mode: standalone)").matches ||
