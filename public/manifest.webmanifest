@@ -1,7 +1,7 @@
 {
-  "name": "Amineva",
+  "name": "Amineva Global",
   "short_name": "Amineva",
-  "description": "Amineva — an integrated application environment for accessing Amineva products, services and workspace tools.",
+  "description": "Amineva Global — access Amineva services, applications and workspace tools.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
