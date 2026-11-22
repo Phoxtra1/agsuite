@@ -9,13 +9,12 @@ import { ProfilePage } from "@/components/suite/pages/ProfilePage";
 import { SettingsPage } from "@/components/suite/pages/SettingsPage";
 import { AminevaConsole } from "@/components/admin/AminevaConsole";
 import { ComsSystem } from "@/components/coms/ComsSystem";
-import { ACSModule } from "@/components/acs/ACSModule";
 
 import { EmailVerificationBanner } from "@/components/suite/EmailVerificationBanner";
 import { useAppSession } from "@/components/auth/AppAuthGate";
 import { getSealSession } from "@/lib/sealAuth";
 
-type TabView = "overview" | "console" | "coms" | "acs" | "profile" | "settings";
+type TabView = "overview" | "console" | "coms" | "profile" | "settings";
 
 const isPreview = (): boolean => {
   if (typeof window === "undefined") return false;
@@ -34,7 +33,6 @@ export default function Suite() {
     const path = location.pathname.replace("/suite", "");
     if (path.startsWith("/console")) return "console";
     if (path.startsWith("/coms")) return "coms";
-    if (path.startsWith("/acs")) return "acs";
     if (path.startsWith("/profile")) return "profile";
     if (path.startsWith("/settings")) return "settings";
     return "overview";
@@ -63,7 +61,7 @@ export default function Suite() {
   }, [viewportUrl, targetApp]);
 
   const handleTabChange = (tab: TabView) => {
-    if (["console", "coms", "acs"].includes(tab) && !isAdmin) {
+    if (["console", "coms"].includes(tab) && !isAdmin) {
       navigate("/access-denied", { replace: true });
       return;
     }
@@ -71,7 +69,6 @@ export default function Suite() {
       overview: "/suite",
       console: "/suite/console",
       coms: "/suite/coms",
-      acs: "/suite/acs",
       profile: "/suite/profile",
       settings: "/suite/settings",
     };
@@ -158,7 +155,6 @@ export default function Suite() {
           <Route index element={<OverviewPage />} />
           <Route path="console" element={isAdmin ? <AminevaConsole /> : <Navigate to="/access-denied" replace />} />
           <Route path="coms" element={isAdmin ? <ComsSystem /> : <Navigate to="/access-denied" replace />} />
-          <Route path="acs" element={isAdmin ? <ACSModule /> : <Navigate to="/access-denied" replace />} />
           <Route path="profile" element={<ProfilePage />} />
           <Route path="settings" element={<SettingsPage />} />
           <Route path="*" element={<Navigate to="/suite" replace />} />
