@@ -11,7 +11,7 @@ import {
   clearGatewayState,
   GatewayStep,
 } from "@/suite/gateway/gatewayState";
-import { fetchCategoryProducts } from "@/data/products";
+import { fetchAdminProducts } from "@/data/products";
 import { shouldRouteToSuite } from "@/lib/productRouting";
 import { toast } from "@/components/ui/sonner";
 import {
@@ -153,7 +153,7 @@ export function GatewayFlow() {
 
   // Route user to product after authentication
   const routeToProduct = useCallback(async () => {
-    const products = await fetchCategoryProducts();
+    const products = await fetchAdminProducts();
 
     // SECURITY: Check for credential mismatch
     const storedAuth = getAuthRedirect();
