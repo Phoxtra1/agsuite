@@ -114,7 +114,6 @@ const collectionsSchema: CollectionSchema[] = [
       { key: 'status', type: 'string', size: 50, required: true },
       { key: 'url', type: 'string', size: 1024, required: false },
       { key: 'admin_url', type: 'string', size: 1024, required: false },
-      { key: 'category', type: 'string', size: 255, required: false },
       { key: 'sort_order', type: 'integer', required: false, default: 0 },
       { key: 'is_public', type: 'boolean', required: false, default: false },
       { key: 'is_external', type: 'boolean', required: false, default: false },
@@ -161,64 +160,6 @@ const collectionsSchema: CollectionSchema[] = [
       { key: 'app_id', type: 'string', size: 255, required: true },
       { key: 'role', type: 'string', size: 100, required: false },
       { key: 'active', type: 'boolean', required: false, default: true },
-    ],
-  },
-  {
-    id: 'acs_events',
-    name: 'ACS Events',
-    attributes: [
-      { key: 'type', type: 'string', size: 255, required: true },
-      { key: 'source', type: 'string', size: 255, required: true },
-      { key: 'payload', type: 'string', size: 10000, required: false },
-      { key: 'user_id', type: 'string', size: 255, required: false },
-    ],
-  },
-  {
-    id: 'acs_raw_data',
-    name: 'ACS Raw Data',
-    attributes: [
-      { key: 'platform', type: 'string', size: 255, required: true },
-      { key: 'dataset_type', type: 'string', size: 255, required: true },
-      { key: 'raw_payload', type: 'string', size: 100000, required: false },
-      { key: 'ingested_at', type: 'string', size: 255, required: false },
-    ],
-  },
-  {
-    id: 'acs_intelligence_outputs',
-    name: 'ACS Intelligence Outputs',
-    attributes: [
-      { key: 'title', type: 'string', size: 255, required: true },
-      { key: 'category', type: 'string', size: 255, required: true },
-      { key: 'intelligence', type: 'string', size: 100000, required: false },
-      { key: 'confidence', type: 'float', required: false },
-    ],
-  },
-  {
-    id: 'acs_sync_logs',
-    name: 'ACS Sync Logs',
-    attributes: [
-      { key: 'source', type: 'string', size: 255, required: true },
-      { key: 'status', type: 'string', size: 100, required: true },
-      { key: 'records_synced', type: 'integer', required: false, default: 0 },
-    ],
-  },
-  {
-    id: 'acs_processing_logs',
-    name: 'ACS Processing Logs',
-    attributes: [
-      { key: 'pipeline', type: 'string', size: 255, required: true },
-      { key: 'status', type: 'string', size: 100, required: true },
-      { key: 'input_count', type: 'integer', required: false, default: 0 },
-      { key: 'output_count', type: 'integer', required: false, default: 0 },
-    ],
-  },
-  {
-    id: 'acs_daily_intelligence_cache',
-    name: 'ACS Daily Intelligence Cache',
-    attributes: [
-      { key: 'cache_key', type: 'string', size: 255, required: true },
-      { key: 'data', type: 'string', size: 100000, required: false },
-      { key: 'created_at', type: 'string', size: 255, required: false },
     ],
   },
   {
@@ -450,6 +391,62 @@ const collectionsSchema: CollectionSchema[] = [
   },
 ];
 
+
+const legacyAcsCollections = [
+  'acs_events',
+  'acs_raw_data',
+  'acs_intelligence_outputs',
+  'acs_sync_logs',
+  'acs_processing_logs',
+  'acs_daily_intelligence_cache',
+];
+
+async function cleanupLegacyAppwriteData(): Promise<void> {
+  // Delete only collections that belonged exclusively to the retired ACS service.
+  for (const collectionId of legacyAcsCollections) {
+    const result = await apiRequest('DELETE', `/databases/${DB_ID}/collections/${collectionId}`);
+    if (result.ok) {
+      console.log(`Removed retired Appwrite collection '${collectionId}'.`);
+    } else if (result.status !== 404) {
+      console.warn(`Could not remove retired collection '${collectionId}':`, result.status, result.data);
+    }
+  }
+
+  // Keep the products collection and its admin records; remove only former category rows.
+  const productsCheck = await apiRequest('GET', `/databases/${DB_ID}/collections/products`);
+  if (productsCheck.ok) {
+    const categoryDocuments: any[] = [];
+    let offset = 0;
+    const pageSize = 100;
+
+    while (true) {
+      const query = `?queries[]=${encodeURIComponent('limit(' + pageSize + ')')}&queries[]=${encodeURIComponent('offset(' + offset + ')')}`;
+      const page = await apiRequest('GET', `/databases/${DB_ID}/collections/products/documents${query}`);
+      if (!page.ok || !Array.isArray(page.data?.documents)) {
+        console.warn('Could not inspect all product documents for retired category records:', page.status, page.data);
+        break;
+      }
+      const documents = page.data.documents;
+      categoryDocuments.push(...documents.filter((doc: any) => doc.product_type === 'category'));
+      if (documents.length < pageSize) break;
+      offset += documents.length;
+    }
+
+    for (const document of categoryDocuments) {
+      const removed = await apiRequest('DELETE', `/databases/${DB_ID}/collections/products/documents/${document.$id}`);
+      if (!removed.ok) {
+        console.warn(`Could not remove legacy category product '${document.$id}':`, removed.status, removed.data);
+      }
+    }
+
+    // The category attribute is no longer part of the admin Product Registry schema.
+    const categoryAttribute = await apiRequest('DELETE', `/databases/${DB_ID}/collections/products/attributes/category`);
+    if (!categoryAttribute.ok && categoryAttribute.status !== 404) {
+      console.warn('Could not remove retired products.category attribute:', categoryAttribute.status, categoryAttribute.data);
+    }
+  }
+}
+
 const storageBuckets = [
   { id: 'suite_assets', name: 'Suite Assets' },
   { id: 'workspace-drive', name: 'Workspace Drive Storage' },
@@ -482,7 +479,10 @@ async function runProvisioning(): Promise<void> {
     console.log(`Database '${DB_ID}' already exists.`);
   }
 
-  // 2. Iterate over collections
+  // 2. Remove obsolete ACS storage and former category catalogue data before provisioning current collections.
+  await cleanupLegacyAppwriteData();
+
+  // 3. Iterate over current collections
   for (const colSchema of collectionsSchema) {
     const colCheck = await apiRequest('GET', `/databases/${DB_ID}/collections/${colSchema.id}`);
 
@@ -534,7 +534,7 @@ async function runProvisioning(): Promise<void> {
     }
   }
 
-  // 3. Ensure Storage Buckets exist
+  // 4. Ensure Storage Buckets exist
   for (const b of storageBuckets) {
     const bCheck = await apiRequest('GET', `/storage/buckets/${b.id}`);
     if (!bCheck.ok) {
