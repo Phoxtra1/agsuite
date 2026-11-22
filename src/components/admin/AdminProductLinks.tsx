@@ -1,6 +1,6 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
-import { DEFAULT_CATEGORIES, ProductData, STATUS_COLORS, STATUS_LABELS } from '@/types/product';
+import { ProductData, STATUS_COLORS, STATUS_LABELS } from '@/types/product';
 import { getProductIcon } from '@/lib/products';
 import { useAdminProducts } from '@/hooks/useProducts';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -11,14 +11,6 @@ import { ArrowUpRight, Settings } from 'lucide-react';
 export function AdminProductLinks() {
   const { products } = useAdminProducts();
   const navigate = useNavigate();
-
-  const categoryOf = (id: string, productCategory?: string) => {
-    if (productCategory) {
-      const match = DEFAULT_CATEGORIES.find(c => c.id === productCategory);
-      if (match) return match.name;
-    }
-    return DEFAULT_CATEGORIES.find(c => c.products.includes(id))?.name ?? 'Other Applications';
-  };
 
   const manageable = products
     .filter(p => !!(p.adminUrl || p.url))
@@ -73,11 +65,7 @@ export function AdminProductLinks() {
                     {!isDisabled && (
                       <ArrowUpRight className="h-4 w-4 shrink-0 text-muted-foreground transition-colors group-hover:text-accent" />
                     )}
-                  </div>
-                  <p className="mt-0.5 text-[11px] uppercase tracking-wide text-muted-foreground">
-                    {categoryOf(product.id, product.category)}
-                  </p>
-                  <div className="mt-2 flex items-center gap-2">
+                  </div><div className="mt-2 flex items-center gap-2">
                     <Badge className={cn('text-[10px]', STATUS_COLORS[product.status])}>
                       {STATUS_LABELS[product.status]}
                     </Badge>
