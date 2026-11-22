@@ -1,5 +1,5 @@
 import { Link, useParams } from "react-router-dom";
-import { ArrowLeft, ArrowRight, CalendarClock, Clock3, GraduationCap, MapPin, Video, Plane, CheckCircle2 } from "lucide-react";
+import { ArrowLeft, CalendarClock, Clock3, GraduationCap, MapPin, Video, Plane, CheckCircle2 } from "lucide-react";
 
 const categories = {
   "career-education": {
