@@ -10,7 +10,6 @@ import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import { ThemeProvider } from "@/contexts/ThemeContext";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
-import { ACSEmitter, startACSEmitter, stopACSEmitter } from "@/core/acs/emitter";
 import { AppAuthGate } from "@/components/auth/AppAuthGate";
 import { WorkspaceGate } from "@/components/workspace/WorkspaceGate";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
@@ -194,21 +193,6 @@ class RouteErrorBoundary extends React.Component<
   }
 }
 
-function AppTelemetry() {
-  const location = useLocation();
-
-  useEffect(() => {
-    startACSEmitter();
-    return () => stopACSEmitter();
-  }, []);
-
-  useEffect(() => {
-    ACSEmitter.trackPageView(location.pathname);
-  }, [location.pathname]);
-
-  return null;
-}
-
 function SuiteGuard() {
   // If preview or authenticated via Seal Auth (Admin ID & PIN), grant direct access to Suite & Amineva Console.
   if (isPreview() || isSealAuthenticated()) {
@@ -314,7 +298,6 @@ function AppRoutes() {
         {/* Legacy/shorthand redirects → canonical /suite/* (preserves login context) */}
         <Route path="/console" element={<Navigate to="/suite/console" replace />} />
         <Route path="/coms" element={<Navigate to="/suite/coms" replace />} />
-        <Route path="/acs" element={<Navigate to="/suite/acs" replace />} />
         <Route path="/profile" element={<Navigate to="/suite/profile" replace />} />
         <Route path="/settings" element={<Navigate to="/suite/settings" replace />} />
 
@@ -357,7 +340,6 @@ export default function App() {
             <Toaster />
             <Sonner />
             <HashNormalizer />
-            <AppTelemetry />
             <NetworkStatus />
             <AppIdleGuard />
             <RouteErrorBoundaryForLocation />
