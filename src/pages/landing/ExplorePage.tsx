@@ -17,6 +17,7 @@ type Product = {
 };
 
 const products: Product[] = [
+  { name: "Amineva Workspace", description: "Productivity tools.", group: "Productivity", icon: Sparkles, status: "live", href: "/workspace" },
   { name: "Info Solutions", description: "Discover information. Access professional services.", group: "Information", icon: Compass, status: "live", href: "https://info.amineva.com", external: true },
   { name: "Career & Education", description: "Explore pathways, learning and opportunity.", group: "People", image: "/adesua.png", status: "live", href: "/explore/career-education" },
   { name: "AgroClimate", description: "Agriculture and climate intelligence.", group: "Agriculture", image: "/agroclimate.png", status: "live", href: "https://agro.amineva.com", external: true },
@@ -24,7 +25,6 @@ const products: Product[] = [
   { name: "Sikasem", description: "Financial operations and management.", group: "Finance", image: "/sikasem.png", status: "live", href: "https://ops.amineva.com", external: true },
   { name: "Inventra", description: "Inventory and sales management.", group: "Business", image: "/inventra.png", status: "live", href: "https://stock.amineva.com", external: true },
   { name: "Dipa", description: "Artificial intelligence.", group: "Intelligence", image: "/Dipa-icon.webp", status: "live", href: "https://ode.amineva.com", external: true },
-  { name: "Amineva Workspace", description: "Productivity tools.", group: "Productivity", icon: Sparkles, status: "live", href: "/workspace" },
 ];
 
 const careerOptions: Product[] = [

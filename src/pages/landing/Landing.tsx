@@ -28,7 +28,6 @@ export default function Landing() {
                   <Link to="/explore" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">Solutions</Link>
                   <Link to="/explore/events" className={`text-sm font-medium transition hover:text-foreground ${location.pathname.startsWith("/explore/events") ? "text-primary" : "text-muted-foreground"}`}>Register for Events</Link>
                   <Link to="/explore/appointments" className={`text-sm font-medium transition hover:text-foreground ${location.pathname.startsWith("/explore/appointments") ? "text-primary" : "text-muted-foreground"}`}>Book an Appointment</Link>
-                  <Link to="/workspace" className="text-sm font-medium text-muted-foreground transition hover:text-foreground">Workspace</Link>
                   <Link to="/account-settings" className="inline-flex items-center gap-2 text-sm font-medium text-muted-foreground transition hover:text-foreground"><Settings className="h-4 w-4" /> Settings</Link>
                 </>
               ) : (
@@ -53,7 +52,6 @@ export default function Landing() {
                       <Link to="/explore" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Solutions</Link>
                       <Link to="/explore/events" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Register for Events</Link>
                       <Link to="/explore/appointments" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Book an Appointment</Link>
-                      <Link to="/workspace" onClick={() => setMobileOpen(false)} className="block rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10">Workspace</Link>
                       <Link to="/account-settings" onClick={() => setMobileOpen(false)} className="flex items-center gap-2 rounded-lg px-3 py-2.5 text-sm text-foreground hover:bg-accent/10"><Settings className="h-4 w-4" /> Settings</Link>
                     </>
                   ) : (
