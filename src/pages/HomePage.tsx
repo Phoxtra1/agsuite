@@ -258,9 +258,10 @@ export default function HomePage() {
           {/* Public homepage navigation */}
           <div className="w-full flex justify-end gap-6 text-sm font-semibold text-muted-foreground flex-wrap items-center">
             <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/explore")}>Solutions</button>
+            <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/impact")}>Amineva Impact</button>
             <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/about-us")}>About Us</button>
             <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/faqs")}>FAQs</button>
-            <button type="button" onClick={() => navigate("/get-started?mode=register")} className="inline-flex h-10 items-center justify-center rounded-lg bg-primary px-4 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">Get Started</button>
+            <button type="button" onClick={() => navigate("/explore/appointments")} className="inline-flex h-10 items-center justify-center rounded-lg bg-[#101D32] px-4 text-sm font-semibold text-white transition hover:bg-[#1a2b46]">Appointment</button>
           </div>
 
           {selectedProduct ? (
@@ -314,8 +315,11 @@ export default function HomePage() {
                 We provide practical solutions through technology.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
-                <button type="button" onClick={() => navigate(isAuthenticated ? "/explore" : "/get-started?mode=register&returnTo=%2Fexplore")} className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:border-primary/50 hover:bg-muted">
+                <button type="button" onClick={() => navigate("/explore")} className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:border-primary/50 hover:bg-muted">
                   Explore Solutions
+                </button>
+                <button type="button" onClick={() => navigate("/get-started?mode=register")} className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
+                  Get Started
                 </button>
               </div>
             </section>
