@@ -85,11 +85,42 @@ export default function EventDetailPage() {
               </div>
             </section>
 
+            <section className="rounded-3xl border border-border bg-card p-6 sm:p-8">
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Guest contributions</p>
+              <h2 className="mt-3 text-2xl font-bold">Perspectives informed by knowledge and experience</h2>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">The programme is being developed with invited contributors who can share relevant professional knowledge and lived experience across career development, education, travel and relocation. Confirmed speaker profiles and participation details will be published here when arrangements are finalised.</p>
+              <div className="mt-5 rounded-xl border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">Guest speakers and contributors: To be announced.</div>
+            </section>
+
             <section className="rounded-3xl border border-border bg-muted/30 p-6 sm:p-8">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Programme flow</p>
               <h2 className="mt-3 text-2xl font-bold">A guided online conversation</h2>
               <p className="mt-3 text-sm leading-7 text-muted-foreground">The detailed running order and session timings will be published after contributors and the event schedule are confirmed.</p>
               <ol className="mt-6 space-y-4">{["Welcome and introduction by Amineva Global","Opening perspective on career development and exploration","Guest contributions and career discussion","Travel and relocation discussion","Interactive participant questions and answers","Amineva Global closing remarks and next steps"].map((item,index)=><li key={item} className="flex items-start gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{String(index+1).padStart(2,"0")}</span><span className="pt-1 text-sm leading-6 text-muted-foreground">{item}</span></li>)}</ol>
+            </section>
+
+
+          <aside className="space-y-5">            <section>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Before you register</p>
+              <h2 className="mt-3 text-2xl font-bold">Frequently asked questions</h2>
+              <div className="mt-5 space-y-3">
+                <details className="rounded-xl border border-border bg-card p-4">
+                  <summary className="cursor-pointer text-sm font-semibold">Will this programme take place online or in person?</summary>
+                  <p className="mt-3 text-sm leading-7 text-muted-foreground">This edition is an online webinar. Joining instructions will be sent to confirmed participants before the event.</p>
+                </details>
+                <details className="rounded-xl border border-border bg-card p-4">
+                  <summary className="cursor-pointer text-sm font-semibold">Has the event date been confirmed?</summary>
+                  <p className="mt-3 text-sm leading-7 text-muted-foreground">The event is planned for 2027. The exact date and time will be announced once confirmed.</p>
+                </details>
+                <details className="rounded-xl border border-border bg-card p-4">
+                  <summary className="cursor-pointer text-sm font-semibold">Who can participate?</summary>
+                  <p className="mt-3 text-sm leading-7 text-muted-foreground">The programme is intended for learners, tertiary students, graduates, working professionals, entrepreneurs and others interested in career, education, travel and relocation opportunities.</p>
+                </details>
+                <details className="rounded-xl border border-border bg-card p-4">
+                  <summary className="cursor-pointer text-sm font-semibold">How do I register?</summary>
+                  <p className="mt-3 text-sm leading-7 text-muted-foreground">The registration form, confirmed fee and payment instructions will be published on this page when registration opens.</p>
+                </details>
+              </div>
             </section>
           </div>
 
