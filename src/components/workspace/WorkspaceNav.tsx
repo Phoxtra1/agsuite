@@ -96,6 +96,9 @@ export function WorkspaceNav() {
         </button>
         <img src={amvLogo} alt="" className="h-8 w-8 rounded-full" />
         <div className="text-sm font-semibold text-foreground">Workspace</div>
+        <button type="button" onClick={() => navigate("/explore")} aria-label="Back to Solution Environment" title="Back to Solution Environment" className="ml-auto h-9 w-9 rounded-lg flex items-center justify-center hover:bg-muted text-muted-foreground hover:text-foreground">
+          <ArrowLeft className="h-5 w-5" />
+        </button>
       </div>
 
       {open && (
@@ -182,10 +185,13 @@ export function WorkspaceNav() {
             </div>
           </div>
           <button
-            onClick={() => navigate("/info-discovery")}
-            className="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-xs text-muted-foreground hover:bg-muted hover:text-foreground transition"
+            type="button"
+            onClick={() => navigate("/explore")}
+            aria-label="Back to Solution Environment"
+            title="Back to Solution Environment"
+            className="w-full flex items-center justify-center rounded-lg px-3 py-2 text-muted-foreground hover:bg-muted hover:text-foreground transition"
           >
-            <ArrowLeft className="h-3.5 w-3.5" /> Back to Info Discovery
+            <ArrowLeft className="h-4 w-4" />
           </button>
           {!PUBLIC_AUTH_PAUSED && <button
             onClick={() => workspaceSession.offline ? window.location.reload() : logout?.()}
