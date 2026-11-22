@@ -9,7 +9,6 @@ export const COMPONENT_DEVICE_REQUIREMENTS: ComponentDeviceRequirement[] = [
  requirement("agroclimate","AgroClimate","agro-inventory","Agro Inventory",["barcode","qr-code","weight","inventory-count"],["web-hid","web-serial","native-bridge"]),
  requirement("agroclimate","AgroClimate","post-harvest","Post-harvest monitoring",["temperature","humidity","environmental"],["web-bluetooth","web-serial","network-gateway"]),
  requirement("agroclimate","AgroClimate","agtrans","AgTrans transport",["location","gnss"],["native-bridge","network-gateway"]),
- requirement("agroclimate","AgroClimate","market-link","Market Link operations",["barcode","qr-code","weight"],["web-hid","web-serial","native-bridge"]),
  requirement("agroclimate","AgroClimate","agro-forecast","AgroForecast",["temperature","humidity","environmental"],["web-bluetooth","network-gateway"]),
  requirement("inventra","Inventra","stock-control","Stock control",["barcode","qr-code","weight","inventory-count"],["web-hid","web-serial","native-bridge"]),
  requirement("inventra","Inventra","sales-checkout","Sales and checkout",["barcode","qr-code","point-of-sale","printing"],["web-hid","web-serial","native-bridge"]),
