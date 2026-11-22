@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, GraduationCap, Plane, CalendarClock, Video, MapPin, Clock3 } from "lucide-react";
+import { ArrowRight, GraduationCap, Plane, CalendarClock, Video, Clock3 } from "lucide-react";
 
 const sessionTypes = [
   {
