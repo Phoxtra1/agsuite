@@ -10,6 +10,9 @@ describe("central device capability registry", () => {
  it("does not match a capability when the transport is not supported by the component", () => {
   expect(matchDeviceToComponents(["printing"], "web-bluetooth")).toHaveLength(0);
  });
+ it("keeps Market Link transactions out of generic device telemetry", () => {
+  expect(COMPONENT_DEVICE_REQUIREMENTS.some(item => item.appId === "agroclimate" && item.componentId === "market-link")).toBe(false);
+ });
  it("keeps application mappings distinct and documents unvalidated profiles", () => {
   expect(COMPONENT_DEVICE_REQUIREMENTS.some(item => item.appId === "inventra" && item.componentId === "sales-checkout")).toBe(true);
   expect(COMPONENT_DEVICE_REQUIREMENTS.some(item => item.appId === "info-solutions" && item.componentId === "information-kiosks")).toBe(true);
