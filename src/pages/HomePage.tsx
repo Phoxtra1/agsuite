@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { ProductData } from "@/types/product";
-import { useCategoryProducts } from "@/hooks/useProducts";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useVisitorLocation } from "@/hooks/useVisitorLocation";
@@ -19,7 +18,6 @@ type CountryCurrencyOption = {
 
 export default function HomePage() {
   const navigate = useNavigate();
-  const { products } = useCategoryProducts();
   const { isAuthenticated } = useAuth();
 
   const [selectedProduct, setSelectedProduct] = useState<ProductData | null>(null);
@@ -62,7 +60,7 @@ export default function HomePage() {
   ], []);
   const selectedAgOption = countryCurrencyOptions.find((opt) => opt.id === agCountry);
 
-  const workspaceProduct: ProductData = products.find((product) => product.id.toLowerCase().includes("workspace") || product.name.toLowerCase().includes("workspace")) || { id: "workspace", name: "Amineva Workspace", status: "live", order: 0 };
+  const workspaceProduct: ProductData = { id: "workspace", name: "Amineva Workspace", status: "live", order: 0 };
 
   // A direct /workspace visit returns here for authentication; restore the
   // Workspace sign-in card instead of leaving the user at product selection.
