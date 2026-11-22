@@ -6,6 +6,7 @@ import { AuthDiagnosticsPanel } from './AuthDiagnosticsPanel';
 import { EmailDeliveryPanel } from './EmailDeliveryPanel';
 import UserAppAccessManager from './UserAppAccessManager';
 import { DiscoveryLibraryPanel } from './DiscoveryLibraryPanel';
+import { HardwareIntegrationPanel } from './HardwareIntegrationPanel';
 import { Card, CardContent } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import { ScrollArea } from '@/components/ui/scroll-area';
@@ -31,7 +32,8 @@ type SectionId =
   | 'auth-diagnostics'
   | 'email-delivery'
   | 'app-access'
-  | 'discovery-library';
+  | 'discovery-library'
+  | 'hardware-integrations';
 
 const SECTIONS: { id: SectionId; label: string; icon: React.ElementType; hint: string }[] = [
   { id: 'overview', label: 'Overview', icon: LayoutDashboard, hint: 'Live snapshot' },
@@ -41,6 +43,7 @@ const SECTIONS: { id: SectionId; label: string; icon: React.ElementType; hint: s
   { id: 'email-delivery', label: 'Email Delivery', icon: Mail, hint: 'Delivery statuses' },
   { id: 'app-access', label: 'User Access', icon: KeyRound, hint: 'Per-app grants' },
   { id: 'discovery-library', label: 'Discovery Library', icon: LibraryBig, hint: 'Publication review' },
+  { id: 'hardware-integrations', label: 'Hardware & Integrations', icon: Boxes, hint: 'Shared product integration framework' },
 ];
 
 function StatCard({
@@ -177,6 +180,7 @@ export function AminevaConsole() {
           {section === 'email-delivery' && <EmailDeliveryPanel />}
           {section === 'app-access' && <UserAppAccessManager />}
           {section === 'discovery-library' && <DiscoveryLibraryPanel />}
+          {section === 'hardware-integrations' && <HardwareIntegrationPanel />}
         </div>
       </div>
     </div>
