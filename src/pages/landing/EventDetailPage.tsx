@@ -21,28 +21,14 @@ export default function EventDetailPage() {
     <main className="min-h-screen bg-background text-foreground">
       <section className="relative isolate overflow-hidden bg-[#101D32] px-5 py-16 text-white sm:py-20 lg:py-24">
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-amber-400/10 blur-3xl" />
-        <div className="absolute bottom-0 left-1/3 h-64 w-64 rounded-full bg-blue-400/10 blur-3xl" />
-        <div className="relative mx-auto max-w-6xl">
-          <Link to="/explore/events" className="inline-flex items-center gap-2 text-sm text-slate-300 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> All events</Link>
-          <div className="mt-10 grid items-center gap-10 lg:grid-cols-[1.2fr_.8fr]">
-            <div>
-              <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200"><Video className="h-3.5 w-3.5" /> Online webinar · 2027</span>
-              <p className="mt-7 text-xs font-bold uppercase tracking-[0.24em] text-amber-200">Amineva Global presents</p>
-              <h1 className="mt-4 max-w-3xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">Career, Travel &amp; Relocation Webinar</h1>
-              <p className="mt-6 max-w-2xl text-lg font-medium leading-8 text-slate-100">Explore Your Potentials, Discover Global Opportunities.</p>
-              <p className="mt-5 max-w-2xl text-sm leading-7 text-slate-300">A practical, experience-informed online programme for people exploring career directions, educational pathways and international opportunities.</p>
-            </div>
-            <div className="rounded-3xl border border-white/15 bg-white/[0.06] p-6 shadow-2xl backdrop-blur sm:p-8">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="rounded-2xl bg-white/[0.06] p-4"><Video className="h-5 w-5 text-amber-300" /><p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Format</p><p className="mt-1 text-sm font-semibold">Online webinar</p></div>
-                <div className="rounded-2xl bg-white/[0.06] p-4"><CalendarDays className="h-5 w-5 text-amber-300" /><p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Year</p><p className="mt-1 text-sm font-semibold">2027</p></div>
-                <div className="col-span-2 rounded-2xl bg-white/[0.06] p-4"><Globe2 className="h-5 w-5 text-amber-300" /><p className="mt-3 text-[10px] font-semibold uppercase tracking-wider text-slate-400">Date and time</p><p className="mt-1 text-sm font-semibold">To be announced</p><p className="mt-1 text-xs text-slate-400">The confirmed schedule will be published on this page.</p></div>
-              </div>
-              <div className="mt-5 rounded-2xl border border-amber-300/20 bg-amber-300/[0.07] p-4">
-                <p className="text-sm font-semibold text-amber-100">Registration information</p>
-                <p className="mt-1 text-xs leading-6 text-slate-300">Registration details and payment instructions will be published here when registration opens.</p>
-              </div>
-            </div>
+        <div className="relative mx-auto max-w-5xl text-center">
+          <Link to="/explore/events/webinars" className="inline-flex items-center gap-2 text-sm text-slate-300 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> All webinars</Link>
+          <div className="mt-9">
+            <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200"><Video className="h-3.5 w-3.5" /> Online webinar · 2027</span>
+            <p className="mt-7 text-xs font-bold uppercase tracking-[0.24em] text-amber-200">Amineva Global presents</p>
+            <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">Career, Travel &amp; Relocation Webinar</h1>
+            <p className="mt-6 text-lg font-medium leading-8 text-slate-100">Explore Your Potentials, Discover Global Opportunities.</p>
+            <button type="button" disabled aria-disabled="true" className="mt-8 inline-flex cursor-not-allowed items-center justify-center rounded-xl bg-amber-400 px-8 py-4 text-base font-extrabold text-slate-950 opacity-100 shadow-lg shadow-amber-950/20 animate-pulse">Register Now</button>
           </div>
         </div>
       </section>
