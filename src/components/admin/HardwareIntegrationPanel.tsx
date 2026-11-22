@@ -22,7 +22,6 @@ const modeIcon = (mode: string) => mode === "managed-gateway" ? RadioTower : mod
 export function HardwareIntegrationPanel() {
   const [activeProduct, setActiveProduct] = useState(INTEGRATION_PRODUCTS[0].id);
   const entries = useMemo(() => HARDWARE_INTEGRATION_CATALOG.filter(item => item.productId === activeProduct), [activeProduct]);
-  const product = INTEGRATION_PRODUCTS.find(item => item.id === activeProduct)!;
 
   return (
     <div className="space-y-5">
