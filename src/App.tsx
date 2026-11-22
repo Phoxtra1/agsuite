@@ -15,6 +15,7 @@ import { WorkspaceGate } from "@/components/workspace/WorkspaceGate";
 import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { useIdleSignout } from "@/hooks/useIdleSignout";
 import { NetworkStatus } from "@/components/pwa/NetworkStatus";
+import PWAInstallPrompt from "@/components/pwa/PWAInstallPrompt";
 
 /* Lazy Pages */
 const Landing = lazyWithRetry(() => import("./pages/landing/Landing"));
@@ -341,6 +342,7 @@ export default function App() {
             <Sonner />
             <HashNormalizer />
             <NetworkStatus />
+            <PWAInstallPrompt />
             <AppIdleGuard />
             <RouteErrorBoundaryForLocation />
           </TooltipProvider>
