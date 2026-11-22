@@ -36,7 +36,7 @@ loadDotEnv();
 
 const ENDPOINT = process.env.VITE_APPWRITE_ENDPOINT || 'https://cloud.phoxtra.com/v1';
 const PROJECT_ID = process.env.VITE_APPWRITE_PROJECT_ID || 'amineva';
-const DB_ID = process.env.VITE_DB_ID || process.env.VITE_ACS_DATABASE_ID || 'amineva-db';
+const DB_ID = process.env.VITE_DB_ID || 'amineva-db';
 const API_KEY = process.env.APPWRITE_API_KEY;
 
 if (!API_KEY) {
