@@ -84,7 +84,9 @@ export default function EventDetailPage() {
               <p className="mt-3 text-sm leading-7 text-muted-foreground">The detailed running order and session timings will be published after contributors and the event schedule are confirmed.</p>
               <ol className="mt-6 space-y-4">{["Welcome and introduction by Amineva Global","Opening perspective on career development and exploration","Guest contributions and career discussion","Travel and relocation discussion","Interactive participant questions and answers","Amineva Global closing remarks and next steps"].map((item,index)=><li key={item} className="flex items-start gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{String(index+1).padStart(2,"0")}</span><span className="pt-1 text-sm leading-6 text-muted-foreground">{item}</span></li>)}</ol>
             </section>
-          </div>
+
+
+
         </div>
       </section>
       <section className="border-t border-border bg-[#101D32] px-5 py-14 text-center text-white">
