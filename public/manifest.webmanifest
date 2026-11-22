@@ -1,7 +1,7 @@
 {
-  "name": "Amineva Global",
+  "name": "Amineva",
   "short_name": "Amineva",
-  "description": "Amineva Global — access Amineva services, applications and workspace tools.",
+  "description": "Amineva — access its applications, services and workspace tools.",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",
