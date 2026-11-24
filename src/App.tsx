@@ -25,8 +25,6 @@ const ExplorePage = lazyWithRetry(() => import("./pages/landing/ExplorePage"));
 const EventsPage = lazyWithRetry(() => import("./pages/landing/EventsPage"));
 const WebinarEventsPage = lazyWithRetry(() => import("./pages/landing/WebinarEventsPage"));
 const EventDetailPage = lazyWithRetry(() => import("./pages/landing/EventDetailPage"));
-const AppointmentsPage = lazyWithRetry(() => import("./pages/landing/AppointmentsPage"));
-const AppointmentCategoryPage = lazyWithRetry(() => import("./pages/landing/AppointmentCategoryPage"));
 const GetStartedPage = lazyWithRetry(() => import("./pages/GetStartedPage"));
 const AccountSettingsPage = lazyWithRetry(() => import("./pages/AccountSettingsPage"));
 const DeviceCenterPage = lazyWithRetry(() => import("./pages/DeviceCenterPage"));
@@ -278,8 +276,6 @@ function AppRoutes() {
           <Route path="events" element={<Navigate to="/event" replace />} />
           <Route path="events/webinars" element={<Navigate to="/event/webinars" replace />} />
           <Route path="events/career-travel-relocation-2027" element={<Navigate to="/event/travel-abroad-relocation-webinar" replace />} />
-          <Route path="appointments" element={<AppointmentsPage />} />
-          <Route path="appointments/:category" element={<AppointmentCategoryPage />} />
           <Route path=":section" element={<ExplorePage />} />
         </Route>
         <Route path="/account-settings" element={<AccountSettingsPage />} />
