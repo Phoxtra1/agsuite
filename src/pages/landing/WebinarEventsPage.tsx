@@ -27,11 +27,12 @@ export default function WebinarEventsPage() {
             <p className="mt-6 text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">Amineva Global presents</p>
             <h3 className="mt-3 max-w-3xl text-3xl font-bold leading-tight sm:text-4xl">{currentWebinar.title}</h3>
             <p className="mt-5 max-w-3xl text-base font-medium leading-7 text-slate-200">{currentWebinar.theme}</p>
+            <p className="mt-4 text-sm font-semibold text-amber-100">30 January 2027 · Online webinar</p>
           </div>
           <div className="p-7 sm:p-9">
             <p className="text-sm leading-7 text-muted-foreground">{currentWebinar.description}</p>
             <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
-              <span className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300"><CalendarDays className="h-4 w-4" /> Registration information on event page</span>
+              <span className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300"><CalendarDays className="h-4 w-4" /> Registration opens 1 December 2026</span>
               <Link to={webinarHref} className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">View webinar details <ArrowRight className="h-4 w-4" /></Link>
             </div>
           </div>
