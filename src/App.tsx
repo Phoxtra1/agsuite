@@ -272,6 +272,9 @@ function AppRoutes() {
         <Route path="/explore" element={<Landing />}>
           <Route index element={<ExplorePage />} />
           {/* Preserve legacy event URLs and send visitors to the clean public event routes. */}
+          <Route path="event" element={<Navigate to="/event" replace />} />
+          <Route path="event/webinars" element={<Navigate to="/event/webinars" replace />} />
+          <Route path="event/travel-abroad-relocation-webinar" element={<Navigate to="/event/travel-abroad-relocation-webinar" replace />} />
           <Route path="events" element={<Navigate to="/event" replace />} />
           <Route path="events/webinars" element={<Navigate to="/event/webinars" replace />} />
           <Route path="events/career-travel-relocation-2027" element={<Navigate to="/event/travel-abroad-relocation-webinar" replace />} />
