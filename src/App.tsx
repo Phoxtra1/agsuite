@@ -261,12 +261,20 @@ function AppRoutes() {
           <Route path="privacy" element={<PrivacyPage />} />
         </Route>
 
+        {/* Public events use clean root-level URLs, separate from the Solutions environment. */}
+        <Route path="/event" element={<Landing />}>
+          <Route index element={<EventsPage />} />
+          <Route path="webinars" element={<WebinarEventsPage />} />
+          <Route path="travel-abroad-relocation-webinar" element={<EventDetailPage />} />
+        </Route>
+
         {/* Standalone software environment and application routes */}
         <Route path="/explore" element={<Landing />}>
           <Route index element={<ExplorePage />} />
-          <Route path="events" element={<EventsPage />} />
-          <Route path="events/webinars" element={<WebinarEventsPage />} />
-          <Route path="events/career-travel-relocation-2027" element={<EventDetailPage />} />
+          {/* Preserve legacy event URLs and send visitors to the clean public event routes. */}
+          <Route path="events" element={<Navigate to="/event" replace />} />
+          <Route path="events/webinars" element={<Navigate to="/event/webinars" replace />} />
+          <Route path="events/career-travel-relocation-2027" element={<Navigate to="/event/travel-abroad-relocation-webinar" replace />} />
           <Route path="appointments" element={<AppointmentsPage />} />
           <Route path="appointments/:category" element={<AppointmentCategoryPage />} />
           <Route path=":section" element={<ExplorePage />} />
