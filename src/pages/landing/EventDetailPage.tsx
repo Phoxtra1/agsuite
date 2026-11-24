@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Compass, GraduationCap, MessageCir
 const discussionAreas = [
   {
     title: "Employment Opportunities",
-    icon: BriefcaseBusiness,
+    icon: Briefcase,
     description: "Explore international employment pathways, how to assess opportunities and the importance of understanding role requirements, eligibility and the process involved.",
   },
   {
@@ -119,7 +119,7 @@ export default function EventDetailPage() {
               <div><dt className="text-muted-foreground">Regular registration</dt><dd className="mt-1 font-medium">{currentWebinar.regularRegistration}</dd></div>
               <div><dt className="text-muted-foreground">Guest contributors</dt><dd className="mt-1 font-medium">To be announced</dd></div>
             </dl>
-            <button type="button" disabled aria-disabled="true" title="The official registration form link has not been connected yet." className="mt-7 inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground opacity-70">Register Now <ArrowRight className="h-4 w-4" /></button>
+            {registrationUrl ? <a href={registrationUrl} target="_blank" rel="noreferrer" className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">Register Now <ArrowRight className="h-4 w-4" /></a> : <p className="mt-7 text-sm leading-6 text-muted-foreground">Registration opens on 1 December 2026. The registration form link will be published before registration opens.</p>}
           </aside>
         </div>
       </section>
