@@ -29,7 +29,7 @@ export default function EventsPage() {
           <p className="mt-6 max-w-3xl text-base leading-8 text-slate-200 sm:text-lg">Amineva Global Events create space for people to explore important subjects, learn from relevant experience, and engage in meaningful conversation about opportunities and decisions that matter.</p>
           <div className="mt-9 flex flex-wrap items-center gap-3">
             <Link to={currentEvent.href + "#registration"} className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-bold text-slate-950 transition hover:bg-amber-300">Register Now <ArrowRight className="h-4 w-4" /></Link>
-            <a href="#upcoming-events" className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10">Explore Upcoming Events <CalendarDays className="h-4 w-4" /></a>
+            <a href="#event-formats" className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10">Explore Upcoming Event <CalendarDays className="h-4 w-4" /></a>
           </div>
         </div>
       </section>
