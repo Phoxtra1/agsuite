@@ -51,7 +51,7 @@ export default function EventDetailPage() {
               {registrationUrl ? (
                 <a href={registrationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-7 py-4 text-base font-extrabold text-slate-950 shadow-lg shadow-amber-950/20 transition hover:bg-amber-300">Register Now <ArrowRight className="h-5 w-5" /></a>
               ) : (
-                <a href="#registration" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-7 py-4 text-base font-extrabold text-slate-950 shadow-lg shadow-amber-950/20 transition hover:bg-amber-300">Register Now <ArrowRight className="h-5 w-5" /></a>
+                <button type="button" disabled aria-disabled="true" title="The official registration form link has not been connected yet." className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-amber-400 px-7 py-4 text-base font-extrabold text-slate-950 opacity-80">Register Now <ArrowRight className="h-5 w-5" /></button>
               )}
               <a href="#webinar-overview" className="inline-flex items-center rounded-xl border border-white/25 px-6 py-4 text-sm font-semibold text-white transition hover:bg-white/10">Explore webinar details</a>
             </div>
@@ -116,7 +116,7 @@ export default function EventDetailPage() {
               <div><dt className="text-muted-foreground">Date and time</dt><dd className="mt-1 font-medium">To be announced</dd></div>
               <div><dt className="text-muted-foreground">Guest contributors</dt><dd className="mt-1 font-medium">To be announced</dd></div>
             </dl>
-            <a href="#registration" className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">Register Now <ArrowRight className="h-4 w-4" /></a>
+            <button type="button" disabled aria-disabled="true" title="The official registration form link has not been connected yet." className="mt-7 inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground opacity-70">Register Now <ArrowRight className="h-4 w-4" /></button>
           </aside>
         </div>
       </section>
