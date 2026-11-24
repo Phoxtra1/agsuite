@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { currentWebinar } from "@/lib/eventData";
-import { ArrowLeft, ArrowRight, CheckCircle2, Compass, GraduationCap, MessageCircle, ShieldCheck, Video, Plane, BriefcaseBusiness, BookOpen } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Compass, GraduationCap, MessageCircle, ShieldCheck, Video, Plane, Briefcase, BookOpen } from "lucide-react";
 
 const discussionAreas = [
   {
