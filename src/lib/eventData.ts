@@ -6,9 +6,9 @@ export type PublicWebinar = {
   description: string;
   format: "Online webinar";
   eventDate: string;
-    registrationOpens: string;
-    earlyBirdEnds: string;
-    regularRegistration: string;
+  registrationOpens: string;
+  earlyBirdEnds: string;
+  regularRegistration: string;
   status: "upcoming" | "registration-open" | "completed";
   registrationUrl: string;
 };
@@ -22,9 +22,9 @@ export const webinarEvents: PublicWebinar[] = [
     description: "An online conversation exploring international employment, study, business and other pathways, alongside important considerations for people thinking about travel or relocation.",
     format: "Online webinar",
     eventDate: "30 January 2027",
-  registrationOpens: "1 December 2026",
-  earlyBirdEnds: "20 December 2026",
-  regularRegistration: "21 December 2026 – 24 January 2027",
+    registrationOpens: "1 December 2026",
+    earlyBirdEnds: "20 December 2026",
+    regularRegistration: "21 December 2026 – 24 January 2027",
     status: "upcoming",
     // Connect the designated Google Form here when its exact URL is supplied.
     registrationUrl: "",
