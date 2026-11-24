@@ -1,12 +1,8 @@
 import { Link } from "react-router-dom";
+import { currentWebinar } from "@/lib/eventData";
 import { ArrowLeft, ArrowRight, CalendarDays, Video } from "lucide-react";
 
-const currentWebinar = {
-  title: "Travel Abroad and Relocation Webinar",
-  theme: "Exploring employment, studies, business, and other pathway opportunities.",
-  description: "An online conversation exploring international employment, study, business and other pathways, alongside important considerations for people thinking about travel or relocation.",
-  href: "/event/travel-abroad-relocation-webinar",
-};
+const webinarHref = `/event/${currentWebinar.slug}`;
 
 export default function WebinarEventsPage() {
   return (
@@ -36,7 +32,7 @@ export default function WebinarEventsPage() {
             <p className="text-sm leading-7 text-muted-foreground">{currentWebinar.description}</p>
             <div className="mt-6 flex flex-wrap items-center justify-between gap-4">
               <span className="inline-flex items-center gap-2 text-xs font-semibold text-emerald-700 dark:text-emerald-300"><CalendarDays className="h-4 w-4" /> Registration information on event page</span>
-              <Link to={currentWebinar.href} className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">View webinar and register <ArrowRight className="h-4 w-4" /></Link>
+              <Link to={webinarHref} className="inline-flex items-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">View webinar and register <ArrowRight className="h-4 w-4" /></Link>
             </div>
           </div>
         </article>
