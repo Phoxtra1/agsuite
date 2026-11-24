@@ -261,6 +261,7 @@ export default function HomePage() {
             <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/impact")}>Amineva Impact</button>
             <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/about-us")}>About Us</button>
             <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/faqs")}>FAQs</button>
+            <button type="button" className="hover:text-foreground transition" onClick={() => navigate("/explore/events")}>Events</button>
             <button type="button" onClick={() => navigate("/explore/appointments")} className="inline-flex h-10 items-center justify-center rounded-lg bg-[#101D32] px-4 text-sm font-semibold text-white transition hover:bg-[#1a2b46]">Appointment</button>
           </div>
 
