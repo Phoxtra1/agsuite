@@ -46,6 +46,7 @@ export default function EventsPage() {
               <p className="mt-7 text-xs font-semibold uppercase tracking-[0.2em] text-amber-200">Amineva Global presents</p>
               <h3 className="mt-3 max-w-xl text-3xl font-bold leading-tight sm:text-4xl">{currentEvent.title}</h3>
               <p className="mt-5 max-w-xl text-base font-medium leading-7 text-slate-200">{currentEvent.theme}</p>
+              <p className="mt-4 text-sm font-semibold text-amber-100">30 January 2027 · Online webinar</p>
               <div className="mt-8 flex flex-wrap gap-3">
                 <Link to={currentEvent.href} className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-bold text-slate-950 transition hover:bg-amber-300">View Webinar Details <ArrowRight className="h-4 w-4" /></Link>
                 {currentEvent.registrationUrl ? <a href={currentEvent.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-5 py-3 text-sm font-semibold text-white transition hover:bg-white/10">Register Now</a> : <span className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-5 py-3 text-sm font-semibold text-white/70">Registration link pending</span>}
@@ -54,7 +55,7 @@ export default function EventsPage() {
             <div className="flex flex-col justify-center p-7 sm:p-10">
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">About this webinar</p>
               <p className="mt-4 text-sm leading-8 text-muted-foreground">{currentEvent.description}</p>
-              <p className="mt-5 text-xs leading-6 text-muted-foreground">Date, time, guest contributors and registration arrangements will be displayed on the event details page once confirmed.</p>
+              <p className="mt-5 text-xs leading-6 text-muted-foreground">The webinar is scheduled for 30 January 2027. Session time and guest contributor details will be published once confirmed. Registration opens 1 December 2026.</p>
             </div>
           </div>
         </article>
