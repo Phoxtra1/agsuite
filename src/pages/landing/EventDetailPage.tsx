@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, CheckCircle2, Compass, GraduationCap, MessageCir
 const discussionAreas = [
   {
     title: "Employment Opportunities",
-    icon: BriefcaseBusiness,
+    icon: Briefcase,
     description: "Explore international employment pathways, how to assess opportunities and the importance of understanding role requirements, eligibility and the process involved.",
   },
   {
@@ -41,7 +41,14 @@ export default function EventDetailPage() {
       <section className="relative isolate overflow-hidden bg-[#101D32] px-5 py-16 text-white sm:py-20 lg:py-24">
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-amber-400/10 blur-3xl" />
         <div className="relative mx-auto max-w-5xl">
-          <Link to="/event/webinars" className="inline-flex items-center gap-2 text-sm text-slate-300 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> All webinars</Link>
+          <div className="flex items-center justify-between gap-4">
+            <Link to="/event/webinars" className="inline-flex items-center gap-2 text-sm text-slate-300 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> All webinars</Link>
+            {registrationUrl ? (
+              <a href={registrationUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-amber-950/25 animate-pulse transition hover:bg-amber-300 sm:px-7 sm:py-3.5 sm:text-base">Register Now <ArrowRight className="h-4 w-4" /></a>
+            ) : (
+              <button type="button" disabled aria-disabled="true" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-white opacity-80 sm:px-7 sm:py-3.5 sm:text-base">Register Now</button>
+            )}
+          </div>
           <div className="mt-9 max-w-4xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200"><Video className="h-3.5 w-3.5" /> Amineva Global Webinar</span>
             <p className="mt-7 text-xs font-bold uppercase tracking-[0.24em] text-amber-200">Travel · Employment · Education · Business</p>
