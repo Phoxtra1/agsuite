@@ -43,7 +43,7 @@ export default function EventDetailPage() {
         <div className="relative mx-auto max-w-5xl">
           <div className="flex items-center justify-between gap-4">
             <Link to="/event/webinars" className="inline-flex items-center gap-2 text-sm text-slate-300 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> All webinars</Link>
-            <a href="#registration" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-amber-950/25 animate-pulse transition hover:bg-amber-300 sm:px-7 sm:py-3.5 sm:text-base">Register Now <ArrowRight className="h-4 w-4" /></a>
+
           </div>
           <div className="mt-9 max-w-4xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200"><Video className="h-3.5 w-3.5" /> Amineva Global Webinar</span>
