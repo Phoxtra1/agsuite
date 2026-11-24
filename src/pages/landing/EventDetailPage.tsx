@@ -1,94 +1,139 @@
 import { Link } from "react-router-dom";
-import { ArrowLeft, ArrowRight, BookOpen, CheckCircle2, Compass, GraduationCap, MessageCircle, ShieldCheck, Video, Plane } from "lucide-react";
+import { ArrowLeft, ArrowRight, CheckCircle2, Compass, GraduationCap, MessageCircle, ShieldCheck, Video, Plane, BriefcaseBusiness, BookOpen } from "lucide-react";
 
-const careerTopics = [
-  "Understanding interests, strengths and personal aspirations when exploring career directions.",
-  "Making thoughtful career choices and understanding their long-term implications.",
-  "Exploring education and professional pathways that connect to career goals.",
-  "Building relevant skills, work readiness and professional capacity.",
-  "Understanding career opportunities, including professional and entrepreneurial pathways.",
+const discussionAreas = [
+  {
+    title: "Employment Opportunities",
+    icon: BriefcaseBusiness,
+    description: "Explore international employment pathways, how to assess opportunities and the importance of understanding role requirements, eligibility and the process involved.",
+  },
+  {
+    title: "Study Opportunities",
+    icon: GraduationCap,
+    description: "Consider overseas education options, programme selection, entry requirements and the preparation involved in pursuing studies abroad.",
+  },
+  {
+    title: "Business Opportunities",
+    icon: BookOpen,
+    description: "Explore business-related pathways and the need to understand local conditions, applicable rules, resources and practical considerations before committing.",
+  },
+  {
+    title: "Other Pathway Opportunities",
+    icon: Compass,
+    description: "Discuss other possible routes and the importance of checking the relevant requirements, credibility of information and suitability of each option.",
+  },
 ];
-const travelTopics = [
-  "Exploring international study, employment, travel and relocation opportunities.",
-  "Understanding important considerations before making travel or relocation decisions.",
-  "Preparing for the financial, practical and personal realities of living, studying or working abroad.",
-  "Learning from relevant experiences and perspectives about life in other destinations.",
-  "Recognising misleading information and understanding why requirements and opportunities should be verified.",
+
+const audience = [
+  "Students and graduates exploring international study or career options",
+  "Job seekers and professionals considering employment opportunities abroad",
+  "Entrepreneurs and business-minded individuals exploring international possibilities",
+  "Individuals and families considering travel or relocation",
+  "Anyone seeking a clearer understanding of international pathways and the decisions involved",
 ];
 
 export default function EventDetailPage() {
+  const registrationUrl = import.meta.env.VITE_TRAVEL_RELOCATION_WEBINAR_REGISTRATION_URL as string | undefined;
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <section className="relative isolate overflow-hidden bg-[#101D32] px-5 py-16 text-white sm:py-20 lg:py-24">
         <div className="absolute -right-24 -top-24 h-96 w-96 rounded-full bg-amber-400/10 blur-3xl" />
-        <div className="relative mx-auto max-w-5xl text-center">
-          <Link to="/explore/events/webinars" className="inline-flex items-center gap-2 text-sm text-slate-300 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> All webinars</Link>
-          <div className="mt-9">
-            <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200"><Video className="h-3.5 w-3.5" /> Online webinar · 2027</span>
-            <p className="mt-7 text-xs font-bold uppercase tracking-[0.24em] text-amber-200">Amineva Global presents</p>
-            <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">Career, Travel &amp; Relocation Webinar</h1>
-            <p className="mt-6 text-lg font-medium leading-8 text-slate-100">Explore Your Potentials, Discover Global Opportunities.</p>
-            <button type="button" disabled aria-disabled="true" className="mt-8 inline-flex cursor-not-allowed items-center justify-center rounded-xl bg-amber-400 px-8 py-4 text-base font-extrabold text-slate-950 opacity-100 shadow-lg shadow-amber-950/20 animate-pulse">Register Now</button>
+        <div className="relative mx-auto max-w-5xl">
+          <Link to="/event/webinars" className="inline-flex items-center gap-2 text-sm text-slate-300 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> All webinars</Link>
+          <div className="mt-9 max-w-4xl">
+            <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200"><Video className="h-3.5 w-3.5" /> Amineva Global Webinar</span>
+            <p className="mt-7 text-xs font-bold uppercase tracking-[0.24em] text-amber-200">Travel · Employment · Education · Business</p>
+            <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">Travel Abroad and Relocation Webinar</h1>
+            <p className="mt-6 max-w-3xl text-lg font-medium leading-8 text-slate-100">Exploring employment, studies, business, and other pathway opportunities.</p>
+            <div className="mt-8 flex flex-wrap gap-3">
+              {registrationUrl ? (
+                <a href={registrationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-7 py-4 text-base font-extrabold text-slate-950 shadow-lg shadow-amber-950/20 transition hover:bg-amber-300">Register Now <ArrowRight className="h-5 w-5" /></a>
+              ) : (
+                <a href="#registration" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-7 py-4 text-base font-extrabold text-slate-950 shadow-lg shadow-amber-950/20 transition hover:bg-amber-300">Register Now <ArrowRight className="h-5 w-5" /></a>
+              )}
+              <a href="#webinar-overview" className="inline-flex items-center rounded-xl border border-white/25 px-6 py-4 text-sm font-semibold text-white transition hover:bg-white/10">Explore webinar details</a>
+            </div>
           </div>
         </div>
       </section>
 
-      <section className="mx-auto max-w-6xl px-5 py-16 sm:py-20">
-        <div className="grid gap-12">
+      <section id="webinar-overview" className="mx-auto max-w-6xl scroll-mt-20 px-5 py-14 sm:py-18">
+        <div className="grid gap-12 lg:grid-cols-[1fr_0.34fr]">
           <div className="space-y-12">
             <section>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">About the programme</p>
-              <h2 className="mt-3 text-3xl font-bold">Explore choices. Understand pathways. Ask better questions.</h2>
-              <p className="mt-5 text-sm leading-8 text-muted-foreground">Career, education, travel and relocation decisions can shape important parts of a person’s future. Yet people often have questions about where to begin, which pathways may be available, what preparation is required and how to assess the information they receive. This webinar brings these subjects into one moderated online conversation, with relevant contributions and opportunities for participants to ask questions.</p>
-              <p className="mt-4 text-sm leading-8 text-muted-foreground">The programme is designed to help participants explore possibilities, hear informed perspectives and consider practical factors before making decisions. It is an educational and information-sharing event; it does not promise employment, admission, visas or relocation outcomes.</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">About the webinar</p>
+              <h2 className="mt-3 text-3xl font-bold">Understand the possibilities. Consider the pathways. Make informed decisions.</h2>
+              <p className="mt-5 text-sm leading-8 text-muted-foreground">Travelling or relocating abroad can involve important decisions about employment, education, business and personal circumstances. People often need to understand what opportunities may exist, what requirements apply, how to prepare and how to assess the information they receive. This webinar creates a space to explore these subjects in one guided conversation.</p>
+              <p className="mt-4 text-sm leading-8 text-muted-foreground">Through relevant contributions and participant discussion, the programme will consider different international pathways and the practical questions people should ask before making decisions. The aim is to support awareness and informed consideration—not to promise jobs, admission, visas, business success or relocation outcomes.</p>
             </section>
 
-            <section className="rounded-3xl border border-border bg-card p-6 sm:p-8">
-              <div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary"><GraduationCap className="h-5 w-5" /></span><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">Discussion area one</p><h2 className="text-2xl font-bold">Career Development &amp; Exploration</h2></div></div>
-              <p className="mt-4 text-sm leading-7 text-muted-foreground">Explore how people identify suitable directions, understand educational options and prepare for changing professional opportunities.</p>
-              <ul className="mt-5 space-y-3">{careerTopics.map((topic) => <li key={topic} className="flex gap-3 text-sm leading-7 text-muted-foreground"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-amber-500" />{topic}</li>)}</ul>
-            </section>
-
-            <section className="rounded-3xl border border-border bg-card p-6 sm:p-8">
-              <div className="flex items-center gap-3"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary"><Plane className="h-5 w-5" /></span><div><p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">Discussion area two</p><h2 className="text-2xl font-bold">Travel &amp; Relocation</h2></div></div>
-              <p className="mt-4 text-sm leading-7 text-muted-foreground">Consider international opportunities and the information, preparation and careful decisions involved in travelling, studying, working or relocating abroad.</p>
-              <ul className="mt-5 space-y-3">{travelTopics.map((topic) => <li key={topic} className="flex gap-3 text-sm leading-7 text-muted-foreground"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-amber-500" />{topic}</li>)}</ul>
+            <section>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">What the webinar will explore</p>
+              <h2 className="mt-3 text-2xl font-bold">Four areas of discussion</h2>
+              <div className="mt-6 grid gap-4 sm:grid-cols-2">
+                {discussionAreas.map(({title,icon:Icon,description}) => <article key={title} className="rounded-2xl border border-border bg-card p-6"><span className="flex h-11 w-11 items-center justify-center rounded-xl bg-primary/10 text-primary"><Icon className="h-5 w-5" /></span><h3 className="mt-4 text-lg font-bold">{title}</h3><p className="mt-3 text-sm leading-7 text-muted-foreground">{description}</p></article>)}
+              </div>
             </section>
 
             <section>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Who should attend</p>
-              <h2 className="mt-3 text-2xl font-bold">A conversation for people at different stages</h2>
-              <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                {["JHS and SHS learners considering future pathways","Tertiary students exploring study and career directions","Graduates preparing for employment or further education","Working professionals considering career development or change","Entrepreneurs and individuals exploring wider opportunities"].map((item) => <div key={item} className="flex gap-3 rounded-xl border border-border bg-card p-4 text-sm leading-6 text-muted-foreground"><CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-amber-500" />{item}</div>)}
-              </div>
+              <h2 className="mt-3 text-2xl font-bold">For people exploring their next steps</h2>
+              <ul className="mt-5 grid gap-3 sm:grid-cols-2">
+                {audience.map(item => <li key={item} className="flex gap-3 rounded-xl border border-border bg-card p-4 text-sm leading-7 text-muted-foreground"><CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-amber-500" />{item}</li>)}
+              </ul>
             </section>
 
             <section>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">What participants can expect</p>
-              <h2 className="mt-3 text-2xl font-bold">Useful perspectives for informed decisions</h2>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">What participants can gain</p>
+              <h2 className="mt-3 text-2xl font-bold">A clearer basis for asking the right questions</h2>
               <div className="mt-5 grid gap-4 sm:grid-cols-2">
-                {[{icon:BookOpen,title:"Broader understanding",body:"Explore career, education, travel and relocation considerations in one programme."},{icon:MessageCircle,title:"Relevant perspectives",body:"Hear contributions informed by professional knowledge and lived experience."},{icon:Compass,title:"Questions and discussion",body:"Bring questions into a moderated conversation and learn from shared perspectives."},{icon:ShieldCheck,title:"Greater awareness",body:"Recognise the importance of preparation, careful assessment and information verification."}].map(({icon:Icon,title,body})=><article key={title} className="rounded-2xl border border-border bg-card p-5"><Icon className="h-5 w-5 text-amber-600 dark:text-amber-400"/><h3 className="mt-3 font-bold">{title}</h3><p className="mt-2 text-sm leading-7 text-muted-foreground">{body}</p></article>)}
+                {[{icon:Compass,title:"Pathway awareness",body:"A broader view of employment, study, business and other international pathways."},{icon:MessageCircle,title:"Relevant perspectives",body:"An opportunity to hear contributions and engage with questions on the subject."},{icon:ShieldCheck,title:"Careful assessment",body:"A reminder to verify information, understand requirements and be cautious of misleading claims."},{icon:Plane,title:"Better preparation",body:"Greater awareness of the practical considerations involved in travel and relocation decisions."}].map(({icon:Icon,title,body})=><article key={title} className="rounded-2xl border border-border bg-card p-5"><Icon className="h-5 w-5 text-amber-600 dark:text-amber-400"/><h3 className="mt-3 font-bold">{title}</h3><p className="mt-2 text-sm leading-7 text-muted-foreground">{body}</p></article>)}
               </div>
             </section>
 
             <section className="rounded-3xl border border-border bg-card p-6 sm:p-8">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Guest contributions</p>
-              <h2 className="mt-3 text-2xl font-bold">Perspectives informed by knowledge and experience</h2>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">The programme is being developed with invited contributors who can share relevant professional knowledge and lived experience across career development, education, travel and relocation. Confirmed speaker profiles and participation details will be published here when arrangements are finalised.</p>
-              <div className="mt-5 rounded-xl border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">Guest speakers and contributors: To be announced.</div>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Guest contributors</p>
+              <h2 className="mt-3 text-2xl font-bold">Knowledge and experience from relevant fields</h2>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">Confirmed speakers, facilitators and contributor profiles will be published here when participation is finalised.</p>
+              <div className="mt-5 rounded-xl border border-dashed border-border bg-muted/40 p-4 text-sm text-muted-foreground">Guest contributors: To be announced.</div>
             </section>
 
             <section className="rounded-3xl border border-border bg-muted/30 p-6 sm:p-8">
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Programme flow</p>
-              <h2 className="mt-3 text-2xl font-bold">A guided online conversation</h2>
-              <p className="mt-3 text-sm leading-7 text-muted-foreground">The detailed running order and session timings will be published after contributors and the event schedule are confirmed.</p>
-              <ol className="mt-6 space-y-4">{["Welcome and introduction by Amineva Global","Opening perspective on career development and exploration","Guest contributions and career discussion","Travel and relocation discussion","Interactive participant questions and answers","Amineva Global closing remarks and next steps"].map((item,index)=><li key={item} className="flex items-start gap-4"><span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-primary text-xs font-bold text-primary-foreground">{String(index+1).padStart(2,"0")}</span><span className="pt-1 text-sm leading-6 text-muted-foreground">{item}</span></li>)}</ol>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-600 dark:text-amber-400">Programme information</p>
+              <h2 className="mt-3 text-2xl font-bold">Event schedule and participation</h2>
+              <p className="mt-3 text-sm leading-7 text-muted-foreground">The date, time, online participation details and session programme will be published here once confirmed. Please check this page for updates before the webinar.</p>
             </section>
           </div>
+
+          <aside className="h-fit rounded-2xl border border-border bg-card p-6 lg:sticky lg:top-24">
+            <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">Event at a glance</p>
+            <h2 className="mt-3 text-xl font-bold">Travel Abroad and Relocation Webinar</h2>
+            <dl className="mt-5 space-y-4 text-sm">
+              <div><dt className="text-muted-foreground">Format</dt><dd className="mt-1 font-semibold">Online webinar</dd></div>
+              <div><dt className="text-muted-foreground">Theme</dt><dd className="mt-1 leading-6 font-medium">Exploring employment, studies, business, and other pathway opportunities.</dd></div>
+              <div><dt className="text-muted-foreground">Date and time</dt><dd className="mt-1 font-medium">To be announced</dd></div>
+              <div><dt className="text-muted-foreground">Guest contributors</dt><dd className="mt-1 font-medium">To be announced</dd></div>
+            </dl>
+            <a href="#registration" className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">Register Now <ArrowRight className="h-4 w-4" /></a>
+          </aside>
         </div>
       </section>
-      <section className="border-t border-border bg-[#101D32] px-5 py-14 text-center text-white">
-        <div className="mx-auto max-w-3xl"><p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-200">Amineva Global</p><h2 className="mt-3 text-2xl font-bold sm:text-3xl">Explore Your Potentials, Discover Global Opportunities.</h2><p className="mt-4 text-sm leading-7 text-slate-300">Follow this event page for confirmed programme and registration announcements.</p><Link to="/explore/events" className="mt-7 inline-flex items-center gap-2 rounded-xl border border-white/25 px-5 py-3 text-sm font-semibold hover:bg-white/10">Back to events <ArrowRight className="h-4 w-4"/></Link></div>
+
+      <section id="registration" className="scroll-mt-20 border-t border-border bg-[#101D32] px-5 py-14 text-center text-white">
+        <div className="mx-auto max-w-3xl">
+          <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-200">Registration</p>
+          <h2 className="mt-3 text-2xl font-bold sm:text-3xl">Take part in the conversation.</h2>
+          {registrationUrl ? (
+            <>
+              <p className="mt-4 text-sm leading-7 text-slate-300">Complete the registration form to express your interest in participating in this webinar.</p>
+              <a href={registrationUrl} target="_blank" rel="noreferrer" className="mt-7 inline-flex items-center gap-2 rounded-xl bg-amber-400 px-7 py-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ArrowRight className="h-4 w-4" /></a>
+            </>
+          ) : (
+            <p className="mt-4 text-sm leading-7 text-slate-300">Registration will open when the event form is published. The registration button is ready to connect to the official form once its link is provided.</p>
+          )}
+          <div className="mt-8"><Link to="/event" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-300 transition hover:text-white"><ArrowLeft className="h-4 w-4"/> Back to Amineva Global Events</Link></div>
+        </div>
       </section>
     </main>
   );
