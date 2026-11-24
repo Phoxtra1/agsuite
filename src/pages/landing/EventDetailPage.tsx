@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { currentWebinar } from "@/lib/eventData";
 import { ArrowLeft, ArrowRight, CheckCircle2, Compass, GraduationCap, MessageCircle, ShieldCheck, Video, Plane, BriefcaseBusiness, BookOpen } from "lucide-react";
 
 const discussionAreas = [
@@ -33,7 +34,7 @@ const audience = [
 ];
 
 export default function EventDetailPage() {
-  const registrationUrl = import.meta.env.VITE_TRAVEL_RELOCATION_WEBINAR_REGISTRATION_URL as string | undefined;
+  const registrationUrl = currentWebinar.registrationUrl;
 
   return (
     <main className="min-h-screen bg-background text-foreground">
