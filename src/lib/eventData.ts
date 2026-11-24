@@ -26,8 +26,8 @@ export const webinarEvents: PublicWebinar[] = [
     earlyBirdEnds: "20 December 2026",
     regularRegistration: "21 December 2026 – 24 January 2027",
     status: "upcoming",
-    // Connect the designated Google Form here when its exact URL is supplied.
-    registrationUrl: "https://docs.google.com/forms/d/1Vt6EY6dVdDgnhIgoIRBgGhyRNK3IMy2qM8v7rq8haaU/viewform",
+    // Registration form will be connected when it is created.
+    registrationUrl: "",
   },
 ];
 
