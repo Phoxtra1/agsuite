@@ -43,11 +43,7 @@ export default function EventDetailPage() {
         <div className="relative mx-auto max-w-5xl">
           <div className="flex items-center justify-between gap-4">
             <Link to="/event/webinars" className="inline-flex items-center gap-2 text-sm text-slate-300 transition hover:text-white"><ArrowLeft className="h-4 w-4" /> All webinars</Link>
-            {registrationUrl ? (
-              <a href={registrationUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-amber-950/25 animate-pulse transition hover:bg-amber-300 sm:px-7 sm:py-3.5 sm:text-base">Register Now <ArrowRight className="h-4 w-4" /></a>
-            ) : (
-              <button type="button" disabled aria-disabled="true" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-white opacity-80 sm:px-7 sm:py-3.5 sm:text-base">Register Now</button>
-            )}
+
           </div>
           <div className="mt-9 max-w-4xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200"><Video className="h-3.5 w-3.5" /> Amineva Global Webinar</span>
@@ -55,11 +51,6 @@ export default function EventDetailPage() {
             <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">Traveling Abroad and Relocation Webinar</h1>
             <p className="mt-6 max-w-3xl text-lg font-medium leading-8 text-slate-100">Exploring employment, studies, business, and other pathway opportunities.</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              {registrationUrl ? (
-                <a href={registrationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-7 py-4 text-base font-extrabold text-slate-950 shadow-lg shadow-amber-950/20 transition hover:bg-amber-300">Register Now <ArrowRight className="h-5 w-5" /></a>
-              ) : (
-                <button type="button" disabled aria-disabled="true" title="The official registration form link has not been connected yet." className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-amber-400 px-7 py-4 text-base font-extrabold text-slate-950 opacity-80">Register Now <ArrowRight className="h-5 w-5" /></button>
-              )}
               <a href="#webinar-overview" className="inline-flex items-center rounded-xl border border-white/25 px-6 py-4 text-sm font-semibold text-white transition hover:bg-white/10">Explore webinar details</a>
             </div>
           </div>
@@ -126,7 +117,6 @@ export default function EventDetailPage() {
               <div><dt className="text-muted-foreground">Regular registration</dt><dd className="mt-1 font-medium">{currentWebinar.regularRegistration}</dd></div>
               <div><dt className="text-muted-foreground">Guest contributors</dt><dd className="mt-1 font-medium">To be announced</dd></div>
             </dl>
-            {registrationUrl ? <a href={registrationUrl} target="_blank" rel="noreferrer" className="mt-7 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-primary px-5 py-3 text-sm font-semibold text-primary-foreground">Register Now <ArrowRight className="h-4 w-4" /></a> : <p className="mt-7 text-sm leading-6 text-muted-foreground">Registration opens on 1 December 2026. The registration form link will be published before registration opens.</p>}
           </aside>
         </div>
       </section>
