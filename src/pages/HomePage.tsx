@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ProductData } from "@/types/product";
+import { ProductData } from "@/types/product";\nimport { CalendarDays, ArrowRight } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useVisitorLocation } from "@/hooks/useVisitorLocation";
@@ -326,6 +326,10 @@ export default function HomePage() {
             </section>
           )}
         </div>
+
+        <button type="button" onClick={() => navigate("/event/webinars")} aria-label="Register Now — browse upcoming webinars" className="fixed bottom-6 right-5 z-[60] inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-400 px-5 py-3.5 text-sm font-extrabold text-slate-950 shadow-xl shadow-amber-950/20 transition hover:-translate-y-0.5 hover:bg-amber-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-500 focus-visible:ring-offset-2 sm:right-7">
+          <CalendarDays className="h-4 w-4" /> Register Now <ArrowRight className="h-4 w-4" />
+        </button>
 
         <div className="absolute bottom-4 left-8 right-8 flex justify-between items-center text-xs text-muted-foreground">
           <span>© {new Date().getFullYear()} Amineva <span onClick={(e) => { if (e.detail === 3) navigate("/seal"); }} className="cursor-default select-none">Global</span>. All Rights Reserved.</span>
