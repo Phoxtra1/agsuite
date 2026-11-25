@@ -10,14 +10,14 @@ export type PublicWebinar = {
   earlyBirdEnds: string;
   regularRegistration: string;
   status: "upcoming" | "registration-open" | "completed";
-  registrationUrl: string;
+  registrationUrl: string;\n  programHighlights?: string[];\n  audience?: string[];
 };
 
 export const webinarEvents: PublicWebinar[] = [
   {
     id: "AGE-2027-001",
     slug: "travel-abroad-relocation-webinar",
-    title: "Traveling Abroad and Relocation Webinar",
+    title: "Travelling Abroad and Relocation Webinar",
     theme: "Exploring employment, studies, business, and other pathway opportunities.",
     description: "An online conversation exploring international employment, study, business and other pathways, alongside important considerations for people thinking about travel or relocation.",
     format: "Online webinar",
@@ -28,6 +28,18 @@ export const webinarEvents: PublicWebinar[] = [
     status: "upcoming",
     // Registration form will be connected when it is created.
     registrationUrl: "",
+    programHighlights: [
+      "Employment opportunities and how to assess them",
+      "Study pathways, programme selection and entry requirements",
+      "Business opportunities and practical considerations",
+      "Travel, relocation and responsible pathway assessment",
+    ],
+    audience: [
+      "Students and graduates exploring international study or career options",
+      "Job seekers and professionals considering employment abroad",
+      "Entrepreneurs exploring international business possibilities",
+      "Individuals and families considering travel or relocation",
+    ],
   },
 ];
 
