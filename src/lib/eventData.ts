@@ -10,7 +10,9 @@ export type PublicWebinar = {
   earlyBirdEnds: string;
   regularRegistration: string;
   status: "upcoming" | "registration-open" | "completed";
-  registrationUrl: string;\n  programHighlights?: string[];\n  audience?: string[];
+  registrationUrl: string;
+  programHighlights?: string[];
+  audience?: string[];
 };
 
 export const webinarEvents: PublicWebinar[] = [
