@@ -26,7 +26,7 @@ export default function WebinarEventsPage() {
 
         <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 xl:grid-cols-3">
           {webinarEvents.filter(event => event.status !== "completed").map(event => {
-            const programPath = `/event/webinars/${event.slug}`;
+            const programPath = event.slug === "travel-abroad-relocation-webinar" ? "/event/travel-abroad-relocation-webinar" : `/event/webinars/${event.slug}`;
             const isRegistrationAvailable = Boolean(event.registrationUrl);
             return (
               <article key={event.id} className="group flex h-full flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition duration-200 hover:-translate-y-1 hover:border-amber-400/60 hover:shadow-lg">
