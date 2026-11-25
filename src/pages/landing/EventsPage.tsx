@@ -14,13 +14,13 @@ export default function EventsPage() {
     <main className="min-h-screen bg-background text-foreground">
       <section className="bg-[#101D32] px-5 py-16 text-white sm:py-20">
         <div className="mx-auto max-w-6xl">
-          <span className="inline-flex items-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Amineva Global Events</span>
+          <div className="flex items-start justify-between gap-4">
+            <span className="inline-flex items-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Amineva Global Events</span>
+            <button type="button" disabled aria-disabled="true" title="Registration will open when the official form is available." className="inline-flex shrink-0 animate-pulse items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-amber-950/25 opacity-90">Register Now <ArrowRight className="h-4 w-4" /></button>
+          </div>
           <p className="mt-8 text-xs font-semibold uppercase tracking-[0.24em] text-amber-200">Knowledge · Perspective · Opportunity</p>
           <h1 className="mt-4 max-w-3xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">Events that inform, connect and inspire.</h1>
           <p className="mt-6 max-w-3xl text-base leading-8 text-slate-200 sm:text-lg">Amineva Global Events create space for people to explore important subjects, learn from relevant experience, and engage in meaningful conversation about opportunities and decisions that matter.</p>
-          <div className="mt-9">
-            <button type="button" disabled aria-disabled="true" title="Registration will open when the official form is available." className="inline-flex animate-pulse items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-white shadow-lg shadow-amber-950/25 opacity-90">Register Now <ArrowRight className="h-4 w-4" /></button>
-          </div>
         </div>
       </section>
 
