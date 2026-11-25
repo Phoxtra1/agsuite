@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { ProductData } from "@/types/product";\nimport { CalendarDays, ArrowRight } from "lucide-react";
+import { ProductData } from "@/types/product";
+import { CalendarDays, ArrowRight } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
 import { useVisitorLocation } from "@/hooks/useVisitorLocation";
