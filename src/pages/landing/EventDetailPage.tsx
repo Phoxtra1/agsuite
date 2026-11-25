@@ -108,7 +108,7 @@ export default function EventDetailPage() {
 
           <aside className="h-fit rounded-2xl border border-border bg-card p-6 lg:sticky lg:top-24">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">Event at a glance</p>
-            <h2 className="mt-3 text-xl font-bold">Traveling Abroad and Relocation Webinar</h2>
+            <h2 className="mt-3 text-xl font-bold">Travelling Abroad and Relocation Webinar</h2>
             <dl className="mt-5 space-y-4 text-sm">
               <div><dt className="text-muted-foreground">Format</dt><dd className="mt-1 font-semibold">Online webinar</dd></div>
               <div><dt className="text-muted-foreground">Theme</dt><dd className="mt-1 leading-6 font-medium">Exploring employment, studies, business, and other pathway opportunities.</dd></div>
