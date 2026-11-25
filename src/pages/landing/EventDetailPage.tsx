@@ -48,10 +48,11 @@ export default function EventDetailPage() {
           <div className="mt-9 max-w-4xl">
             <span className="inline-flex items-center gap-2 rounded-full border border-amber-300/30 bg-amber-300/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.18em] text-amber-200"><Video className="h-3.5 w-3.5" /> Amineva Global Webinar</span>
             <p className="mt-7 text-xs font-bold uppercase tracking-[0.24em] text-amber-200">Travel · Employment · Education · Business</p>
-            <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">Traveling Abroad and Relocation Webinar</h1>
+            <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">Travelling Abroad and Relocation Webinar</h1>
             <p className="mt-6 max-w-3xl text-lg font-medium leading-8 text-slate-100">Exploring employment, studies, business, and other pathway opportunities.</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              <a href="#webinar-overview" className="inline-flex items-center rounded-xl border border-white/25 px-6 py-4 text-sm font-semibold text-white transition hover:bg-white/10">Explore webinar details</a>
+              {registrationUrl ? <a href={registrationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-4 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ArrowRight className="h-4 w-4" /></a> : <a href="#registration" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-4 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ArrowRight className="h-4 w-4" /></a>}
+              <a href="#webinar-overview" className="inline-flex items-center rounded-xl border border-white/25 px-6 py-4 text-sm font-semibold text-white transition hover:bg-white/10">View programme details</a>
             </div>
           </div>
         </div>
@@ -107,7 +108,7 @@ export default function EventDetailPage() {
 
           <aside className="h-fit rounded-2xl border border-border bg-card p-6 lg:sticky lg:top-24">
             <p className="text-xs font-bold uppercase tracking-[0.18em] text-amber-600 dark:text-amber-400">Event at a glance</p>
-            <h2 className="mt-3 text-xl font-bold">Traveling Abroad and Relocation Webinar</h2>
+            <h2 className="mt-3 text-xl font-bold">Travelling Abroad and Relocation Webinar</h2>
             <dl className="mt-5 space-y-4 text-sm">
               <div><dt className="text-muted-foreground">Format</dt><dd className="mt-1 font-semibold">Online webinar</dd></div>
               <div><dt className="text-muted-foreground">Theme</dt><dd className="mt-1 leading-6 font-medium">Exploring employment, studies, business, and other pathway opportunities.</dd></div>

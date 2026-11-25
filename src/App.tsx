@@ -24,6 +24,7 @@ const AboutUs = lazyWithRetry(() => import("./pages/landing/AboutUs"));
 const ExplorePage = lazyWithRetry(() => import("./pages/landing/ExplorePage"));
 const EventsPage = lazyWithRetry(() => import("./pages/landing/EventsPage"));
 const WebinarEventsPage = lazyWithRetry(() => import("./pages/landing/WebinarEventsPage"));
+const WebinarProgramPage = lazyWithRetry(() => import("./pages/landing/WebinarProgramPage"));
 const EventDetailPage = lazyWithRetry(() => import("./pages/landing/EventDetailPage"));
 const GetStartedPage = lazyWithRetry(() => import("./pages/GetStartedPage"));
 const AccountSettingsPage = lazyWithRetry(() => import("./pages/AccountSettingsPage"));
@@ -263,6 +264,7 @@ function AppRoutes() {
         <Route path="/event" element={<Landing />}>
           <Route index element={<EventsPage />} />
           <Route path="webinars" element={<WebinarEventsPage />} />
+          <Route path="webinars/:slug" element={<WebinarProgramPage />} />
           <Route path="travel-abroad-relocation-webinar" element={<EventDetailPage />} />
         </Route>
 
