@@ -39,6 +39,10 @@ export function getRegistrationState(event: PublicWebinar, now = new Date()): Re
   return "live";
 }
 
+export function isRegistrationAvailable(event: PublicWebinar, now = new Date()): boolean {
+  return getRegistrationState(event, now) === "live" && Boolean(event.registrationUrl);
+}
+
 export const registrationStateLabel: Record<RegistrationState, string> = {
   "not-live": "NOT LIVE",
   live: "LIVE",
