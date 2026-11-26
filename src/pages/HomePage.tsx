@@ -315,7 +315,7 @@ export default function HomePage() {
                 <button type="button" onClick={() => navigate("/explore")} className="inline-flex h-11 items-center justify-center rounded-lg border border-border bg-card px-5 text-sm font-semibold text-foreground transition hover:border-primary/50 hover:bg-muted">
                   Explore Solutions
                 </button>
-                <button type="button" onClick={() => navigate("/event/webinars")} className="inline-flex h-11 items-center justify-center rounded-lg bg-primary px-5 text-sm font-semibold text-primary-foreground transition hover:bg-primary/90">
+                <button type="button" onClick={() => navigate("/event/webinars")} className="inline-flex h-11 items-center justify-center rounded-lg bg-[#D99A16] px-5 text-sm font-semibold text-[#101D32] shadow-md shadow-[#D99A16]/20 transition hover:bg-[#C4870E] hover:shadow-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#D99A16] focus-visible:ring-offset-2">
                   Register Now
                 </button>
               </div>
