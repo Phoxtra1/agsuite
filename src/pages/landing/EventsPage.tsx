@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Video, Users, MessagesSquare, Presentation, Wrench } from "lucide-react";
-import { currentWebinar } from "@/lib/eventData";
+import { currentWebinar, isRegistrationAvailable } from "@/lib/eventData";
 
 const eventFormats = [
   { title: "Webinars", description: "Online programmes for focused learning and discussion.", icon: Video, href: "/event/webinars", active: true },
@@ -11,13 +11,15 @@ const eventFormats = [
 ];
 
 export default function EventsPage() {
+  const registrationAvailable = isRegistrationAvailable(currentWebinar);
+
   return (
     <main className="min-h-screen bg-background text-foreground">
       <section className="bg-[#101D32] px-5 py-16 text-white sm:py-20">
         <div className="mx-auto max-w-6xl">
           <div className="flex items-start justify-between gap-4">
             <span className="inline-flex items-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Amineva Global Events</span>
-            <a href={currentWebinar.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-slate-950 shadow-lg shadow-amber-950/25 transition hover:bg-amber-300">Register Now</a>
+            {registrationAvailable ? <a href={currentWebinar.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-slate-950 shadow-lg shadow-amber-950/25 transition hover:bg-amber-300">Register Now</a> : <button type="button" disabled className="inline-flex shrink-0 cursor-not-allowed items-center gap-2 rounded-xl bg-amber-400/60 px-5 py-3 text-sm font-extrabold text-slate-950/70 shadow-lg shadow-amber-950/10">Register Now</button>}
           </div>
           <p className="mt-8 text-xs font-semibold uppercase tracking-[0.24em] text-amber-200">Knowledge · Perspective · Opportunity</p>
           <h1 className="mt-4 max-w-3xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">Events that inform, connect and inspire.</h1>
