@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { webinarEvents, getRegistrationState, registrationStateLabel } from "@/lib/eventData";
+import { webinarEvents, isRegistrationAvailable } from "@/lib/eventData";
 import { ArrowRight, CalendarDays, Video } from "lucide-react";
 
 export default function WebinarEventsPage() {
@@ -20,22 +20,21 @@ export default function WebinarEventsPage() {
         <div className="flex flex-wrap justify-center gap-6">
           {webinarEvents.filter(event => event.status !== "completed").map(event => {
             const programPath = event.slug === "travel-abroad-relocation-webinar" ? "/event/travel-abroad-relocation-webinar" : `/event/webinars/${event.slug}`;
-            const state = getRegistrationState(event);
-            const isRegistrationAvailable = state === "live" && Boolean(event.registrationUrl);
+            const canRegister = isRegistrationAvailable(event);
             return (
               <article key={event.id} className="group flex h-full w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition duration-200 hover:-translate-y-1 hover:border-amber-400/60 hover:shadow-lg">
                 <div className="h-2 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-200" />
                 <div className="flex flex-1 flex-col p-6">
-                  <span className="inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"><Video className="h-3.5 w-3.5" /> Online webinar</span><span className="rounded-full bg-muted px-3 py-1.5 text-[10px] font-extrabold tracking-wider text-muted-foreground">{registrationStateLabel[state]}</span>
+                  <span className="inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"><Video className="h-3.5 w-3.5" /> Online webinar</span>
                   <h3 className="mt-5 text-xl font-bold leading-snug group-hover:text-primary">{event.title}</h3>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">{event.theme}</p>
                   <div className="mt-5 flex items-center gap-2 text-sm font-medium text-foreground"><CalendarDays className="h-4 w-4 text-amber-600 dark:text-amber-400" />{event.eventDate}</div>
                   <div className="mt-auto pt-7">
                     <div className="grid gap-3">
-                      {isRegistrationAvailable ? (
+                      {canRegister ? (
                         <a href={event.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now</a>
                       ) : (
-                        <button type="button" disabled title="The official Google Form link will be connected here." className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-amber-400/70 px-4 py-3 text-sm font-extrabold text-slate-950/80">Register Now</button>
+                        <button type="button" disabled title="Registration is not currently open." className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-amber-400/70 px-4 py-3 text-sm font-extrabold text-slate-950/80">Register Now</button>
                       )}
                       <Link to={programPath} className="inline-flex w-full items-center justify-center gap-2 rounded-xl border border-border px-4 py-3 text-sm font-semibold transition hover:border-primary/50 hover:bg-muted">View Program <ArrowRight className="h-4 w-4" /></Link>
                     </div>
