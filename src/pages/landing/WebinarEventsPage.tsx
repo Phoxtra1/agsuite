@@ -20,7 +20,8 @@ export default function WebinarEventsPage() {
         <div className="flex flex-wrap justify-center gap-6">
           {webinarEvents.filter(event => event.status !== "completed").map(event => {
             const programPath = event.slug === "travel-abroad-relocation-webinar" ? "/event/travel-abroad-relocation-webinar" : `/event/webinars/${event.slug}`;
-            const state = getRegistrationState(event);\n            const isRegistrationAvailable = state === "live" && Boolean(event.registrationUrl);
+            const state = getRegistrationState(event);
+            const isRegistrationAvailable = state === "live" && Boolean(event.registrationUrl);
             return (
               <article key={event.id} className="group flex h-full w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition duration-200 hover:-translate-y-1 hover:border-amber-400/60 hover:shadow-lg">
                 <div className="h-2 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-200" />
