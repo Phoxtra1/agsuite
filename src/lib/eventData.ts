@@ -1,4 +1,4 @@
-export type RegistrationState = "not-live" | "live" | "closed" | "full" | "completed";
+export type RegistrationState = "not-live" | "live" | "closed" | "completed";
 
 export type PublicWebinar = {
   id: string;
@@ -14,8 +14,6 @@ export type PublicWebinar = {
   earlyBirdEnds: string;
   regularRegistration: string;
   registrationClosesISO: string;
-  capacity: number;
-  capacityStatus: "available" | "full";
   status: "upcoming" | "registration-open" | "completed";
   registrationUrl: string;
   programHighlights?: string[];
@@ -33,7 +31,6 @@ export function getRegistrationState(event: PublicWebinar, now = new Date()): Re
   const today = `${part("year")}-${part("month")}-${part("day")}`;
 
   if (today > event.eventDateISO) return "completed";
-  if (event.capacityStatus === "full") return "full";
   if (today < event.registrationOpensISO) return "not-live";
   if (today > event.registrationClosesISO) return "closed";
   return "live";
@@ -47,7 +44,6 @@ export const registrationStateLabel: Record<RegistrationState, string> = {
   "not-live": "NOT LIVE",
   live: "LIVE",
   closed: "CLOSED",
-  full: "FULL",
   completed: "COMPLETED",
 };
 
@@ -65,8 +61,6 @@ export const webinarEvents: PublicWebinar[] = [{
   earlyBirdEnds: "20 December 2026",
   regularRegistration: "21 December 2026 – 24 January 2027",
   registrationClosesISO: "2027-01-24",
-  capacity: 100,
-  capacityStatus: "available",
   status: "upcoming",
   registrationUrl: "https://bit.ly/4zNBs1g",
   programHighlights: [
