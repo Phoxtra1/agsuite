@@ -83,15 +83,11 @@ function ProductCard({ product, index, showDescription = true, showGroup = false
     return <div aria-label={`${product.name} solution`}>{content}</div>;
   }
   if (product.external) {
-    const destination = new URL(product.href, window.location.origin);
-    destination.searchParams.set("aminevaReturn", `${window.location.origin}/explore`);
     return (
       <a
-        href={destination.toString()}
-        target="_blank"
-        rel="noopener noreferrer"
+        href={product.href}
         className="block w-full"
-        aria-label={`Open ${product.name} application in a new tab`}
+        aria-label={`Open ${product.name} solution in this window`}
       >
         {content}
       </a>
