@@ -133,8 +133,10 @@ export default function EventDetailPage() {
               <a href={registrationUrl} target="_blank" rel="noreferrer" className="mt-7 inline-flex items-center gap-2 rounded-xl bg-amber-400 px-7 py-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ArrowRight className="h-4 w-4" /></a>
             </>
           ) : (
-            <p className="mt-4 text-sm leading-7 text-slate-300">Registration is not currently open. Please return during the registration period.</p>
-            <button type="button" disabled className="mt-7 inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-amber-400/60 px-7 py-3.5 text-sm font-extrabold text-slate-950/70">Register Now</button>
+            <>
+              <p className="mt-4 text-sm leading-7 text-slate-300">Registration is not currently open. Please return during the registration period.</p>
+              <button type="button" disabled className="mt-7 inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-amber-400/60 px-7 py-3.5 text-sm font-extrabold text-slate-950/70">Register Now</button>
+            </>
           )}
           <div className="mt-8"><Link to="/event" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-300 transition hover:text-white"><ArrowLeft className="h-4 w-4"/> Back to Amineva Global Events</Link></div>
         </div>
