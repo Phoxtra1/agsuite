@@ -4,7 +4,6 @@ import { ProductData } from "@/types/product";
 import { CalendarDays, ArrowRight } from "lucide-react";
 
 import { useAuth } from "@/contexts/AuthContext";
-import { useVisitorLocation } from "@/hooks/useVisitorLocation";
 import amvLogo from "@/assets/amv_global_logo.png";
 import AuthCard from "@/components/home/AuthCard";
 
@@ -38,11 +37,8 @@ export default function HomePage() {
 
 
 
-  const { locationLabel: visitorLocationLabel, timeZone: visitorTimeZone } = useVisitorLocation();
-  const displayTimeZone = visitorTimeZone || Intl.DateTimeFormat().resolvedOptions().timeZone || "Etc/UTC";
-
-  const displayTime = useMemo(() => new Intl.DateTimeFormat("en-GB", { timeZone: displayTimeZone, hour: "2-digit", minute: "2-digit", hour12: false }).format(now), [now, displayTimeZone]);
-  const displayDate = useMemo(() => new Intl.DateTimeFormat("en-GB", { timeZone: displayTimeZone, day: "2-digit", month: "long", year: "numeric" }).format(now), [now, displayTimeZone]);
+  const displayTime = useMemo(() => new Intl.DateTimeFormat("en-GB", { hour: "2-digit", minute: "2-digit", hour12: false }).format(now), [now]);
+  const displayDate = useMemo(() => new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "long", year: "numeric" }).format(now), [now]);
 
   const isAgStock = useMemo(() => {
     const id = selectedProduct?.id?.toLowerCase() || "";
@@ -197,7 +193,7 @@ export default function HomePage() {
         <div className="p-8 flex items-start gap-4 relative z-10">
           <img src={amvLogo} alt="Amineva Global" className="h-14 w-14 rounded-full" />
           <div style={{ animation: "amvFadeUp 700ms ease-out, amvShimmer 3.6s ease-in-out infinite" }}>
-            <div className="font-semibold tracking-wide leading-none" style={{ color: "hsl(38,92%,50%)", fontSize: "22px" }}>{displayTime}, {visitorLocationLabel}</div>
+            <div className="font-semibold tracking-wide leading-none" style={{ color: "hsl(38,92%,50%)", fontSize: "22px" }}>{displayTime}</div>
             <div className="font-medium tracking-wide text-xs mt-1" style={{ color: "hsla(38,92%,50%,0.85)" }}>{displayDate}</div>
           </div>
         </div>
