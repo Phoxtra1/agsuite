@@ -1,6 +1,6 @@
 import { Link, Navigate, useParams } from "react-router-dom";
 import { webinarEvents } from "@/lib/eventData";
-import { ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, ExternalLink, Video } from "lucide-react";
+import { ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, Video } from "lucide-react";
 
 export default function WebinarProgramPage() {
   const { slug } = useParams();
@@ -19,7 +19,7 @@ export default function WebinarProgramPage() {
           <p className="mt-5 max-w-3xl text-lg leading-8 text-slate-200">{event.theme}</p>
           <div className="mt-7 flex flex-wrap gap-3">
             {registrationAvailable ? (
-              <a href={event.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ExternalLink className="h-4 w-4" /></a>
+              <a href={event.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now</a>
             ) : (
               <a href="#registration" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ArrowRight className="h-4 w-4" /></a>
             )}
