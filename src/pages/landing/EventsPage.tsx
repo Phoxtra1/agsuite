@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Video, Users, MessagesSquare, Presentation, Wrench } from "lucide-react";
+import { currentWebinar } from "@/lib/eventData";
 
 const eventFormats = [
   { title: "Webinars", description: "Online programmes for focused learning and discussion.", icon: Video, href: "/event/webinars", active: true },
@@ -16,7 +17,7 @@ export default function EventsPage() {
         <div className="mx-auto max-w-6xl">
           <div className="flex items-start justify-between gap-4">
             <span className="inline-flex items-center rounded-full border border-amber-300/30 bg-amber-300/10 px-4 py-2 text-xs font-semibold uppercase tracking-[0.18em] text-amber-200">Amineva Global Events</span>
-            <button type="button" disabled aria-disabled="true" title="Registration will open when the official form is available." className="inline-flex shrink-0 animate-pulse items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-white shadow-lg shadow-amber-950/25 opacity-90">Register Now <ArrowRight className="h-4 w-4" /></button>
+            <a href={currentWebinar.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex shrink-0 items-center gap-2 rounded-xl bg-amber-400 px-5 py-3 text-sm font-extrabold text-slate-950 shadow-lg shadow-amber-950/25 transition hover:bg-amber-300">Register Now <ArrowRight className="h-4 w-4" /></a>
           </div>
           <p className="mt-8 text-xs font-semibold uppercase tracking-[0.24em] text-amber-200">Knowledge · Perspective · Opportunity</p>
           <h1 className="mt-4 max-w-3xl text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">Events that inform, connect and inspire.</h1>
