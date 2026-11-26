@@ -62,7 +62,7 @@ export default function WebinarProgramPage() {
           </div>
           <div id="registration" className="mt-6 border-t border-border pt-5">
             {registrationAvailable ? (
-              <a href={event.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ExternalLink className="h-4 w-4" /></a>
+              <a href={event.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ArrowRight className="h-4 w-4" /></a>
             ) : (
               <button type="button" disabled className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-amber-400/60 px-4 py-3 text-sm font-extrabold text-slate-950/70">Register Now</button>
             )}
