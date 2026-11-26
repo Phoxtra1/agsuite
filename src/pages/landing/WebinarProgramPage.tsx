@@ -1,5 +1,5 @@
 import { Link, Navigate, useParams } from "react-router-dom";
-import { webinarEvents } from "@/lib/eventData";
+import { webinarEvents, isRegistrationAvailable } from "@/lib/eventData";
 import { ArrowLeft, ArrowRight, CalendarDays, CheckCircle2, Video } from "lucide-react";
 
 export default function WebinarProgramPage() {
@@ -7,7 +7,7 @@ export default function WebinarProgramPage() {
   const event = webinarEvents.find(item => item.slug === slug);
   if (!event) return <Navigate to="/event/webinars" replace />;
 
-  const registrationAvailable = Boolean(event.registrationUrl);
+  const registrationAvailable = isRegistrationAvailable(event);
   return (
     <main className="min-h-screen bg-background text-foreground">
       <section className="relative isolate overflow-hidden bg-[#101D32] px-5 py-14 text-white sm:py-20">
@@ -21,7 +21,7 @@ export default function WebinarProgramPage() {
             {registrationAvailable ? (
               <a href={event.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now</a>
             ) : (
-              <a href="#registration" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ArrowRight className="h-4 w-4" /></a>
+              <button type="button" disabled className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-amber-400/60 px-6 py-3.5 text-sm font-extrabold text-slate-950/70">Register Now</button>
             )}
             <a href="#programme" className="inline-flex items-center gap-2 rounded-xl border border-white/25 px-6 py-3.5 text-sm font-semibold text-white transition hover:bg-white/10">Explore programme</a>
           </div>
@@ -64,7 +64,7 @@ export default function WebinarProgramPage() {
             {registrationAvailable ? (
               <a href={event.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ExternalLink className="h-4 w-4" /></a>
             ) : (
-              <p className="text-sm leading-6 text-muted-foreground">The official Google Forms registration link will be connected here.</p>
+              <button type="button" disabled className="inline-flex w-full cursor-not-allowed items-center justify-center rounded-xl bg-amber-400/60 px-4 py-3 text-sm font-extrabold text-slate-950/70">Register Now</button>
             )}
           </div>
           <Link to="/event/webinars" className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-muted-foreground transition hover:text-foreground"><ArrowLeft className="h-4 w-4" /> Browse all webinars</Link>
