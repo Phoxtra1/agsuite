@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { webinarEvents } from "@/lib/eventData";
+import { webinarEvents, getRegistrationState, registrationStateLabel } from "@/lib/eventData";
 import { ArrowRight, CalendarDays, Video } from "lucide-react";
 
 export default function WebinarEventsPage() {
@@ -20,12 +20,12 @@ export default function WebinarEventsPage() {
         <div className="flex flex-wrap justify-center gap-6">
           {webinarEvents.filter(event => event.status !== "completed").map(event => {
             const programPath = event.slug === "travel-abroad-relocation-webinar" ? "/event/travel-abroad-relocation-webinar" : `/event/webinars/${event.slug}`;
-            const isRegistrationAvailable = Boolean(event.registrationUrl);
+            const state = getRegistrationState(event);\n            const isRegistrationAvailable = state === "live" && Boolean(event.registrationUrl);
             return (
               <article key={event.id} className="group flex h-full w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm transition duration-200 hover:-translate-y-1 hover:border-amber-400/60 hover:shadow-lg">
                 <div className="h-2 bg-gradient-to-r from-amber-500 via-amber-400 to-amber-200" />
                 <div className="flex flex-1 flex-col p-6">
-                  <span className="inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"><Video className="h-3.5 w-3.5" /> Online webinar</span>
+                  <span className="inline-flex w-fit items-center gap-2 rounded-full bg-primary/10 px-3 py-1.5 text-xs font-semibold text-primary"><Video className="h-3.5 w-3.5" /> Online webinar</span><span className="rounded-full bg-muted px-3 py-1.5 text-[10px] font-extrabold tracking-wider text-muted-foreground">{registrationStateLabel[state]}</span>
                   <h3 className="mt-5 text-xl font-bold leading-snug group-hover:text-primary">{event.title}</h3>
                   <p className="mt-3 text-sm leading-6 text-muted-foreground">{event.theme}</p>
                   <div className="mt-5 flex items-center gap-2 text-sm font-medium text-foreground"><CalendarDays className="h-4 w-4 text-amber-600 dark:text-amber-400" />{event.eventDate}</div>
