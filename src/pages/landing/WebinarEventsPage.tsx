@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { webinarEvents } from "@/lib/eventData";
-import { ArrowRight, CalendarDays, Video, ExternalLink } from "lucide-react";
+import { ArrowRight, CalendarDays, Video } from "lucide-react";
 
 export default function WebinarEventsPage() {
   return (
@@ -32,7 +32,7 @@ export default function WebinarEventsPage() {
                   <div className="mt-auto pt-7">
                     <div className="grid gap-3">
                       {isRegistrationAvailable ? (
-                        <a href={event.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ExternalLink className="h-4 w-4" /></a>
+                        <a href={event.registrationUrl} target="_blank" rel="noreferrer" className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-amber-400 px-4 py-3 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now</a>
                       ) : (
                         <button type="button" disabled title="The official Google Form link will be connected here." className="inline-flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-xl bg-amber-400/70 px-4 py-3 text-sm font-extrabold text-slate-950/80">Register Now</button>
                       )}
