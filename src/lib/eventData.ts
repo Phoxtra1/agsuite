@@ -15,7 +15,7 @@ export type PublicWebinar = {
   regularRegistration: string;
   registrationClosesISO: string;
   capacity: number;
-  capacityStatus: "available" | "full";
+  capacityStatus: "available" | "full";\n  status: "upcoming" | "registration-open" | "completed";
   registrationUrl: string;
   programHighlights?: string[];
   audience?: string[];
@@ -61,7 +61,7 @@ export const webinarEvents: PublicWebinar[] = [{
   regularRegistration: "21 December 2026 – 24 January 2027",
   registrationClosesISO: "2027-01-24",
   capacity: 100,
-  capacityStatus: "available",
+  capacityStatus: "available",\n  status: "upcoming",
   registrationUrl: "https://bit.ly/4zNBs1g",
   programHighlights: [
     "Employment opportunities and how to assess them",
