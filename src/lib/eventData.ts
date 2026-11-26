@@ -21,15 +21,14 @@ export const webinarEvents: PublicWebinar[] = [
     slug: "travel-abroad-relocation-webinar",
     title: "Travelling Abroad and Relocation Webinar",
     theme: "Exploring employment, studies, business, and other pathway opportunities.",
-    description: "An online conversation exploring international employment, study, business and other pathways, alongside important considerations for people thinking about travel or relocation.",
+    description: "An online conversation exploring international employment, study, business and other pathways, alongside important considerations for people thinking about travel or relocation",
     format: "Online webinar",
     eventDate: "30 January 2027",
     registrationOpens: "1 December 2026",
     earlyBirdEnds: "20 December 2026",
     regularRegistration: "21 December 2026 – 24 January 2027",
     status: "upcoming",
-    // Registration form will be connected when it is created.
-    registrationUrl: "",
+    registrationUrl: "https://bit.ly/4zNBs1g",
     programHighlights: [
       "Employment opportunities and how to assess them",
       "Study pathways, programme selection and entry requirements",
