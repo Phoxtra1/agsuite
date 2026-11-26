@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
-import { currentWebinar } from "@/lib/eventData";
-import { ArrowLeft, CheckCircle2, Compass, GraduationCap, MessageCircle, ShieldCheck, Video, Plane, Briefcase, BookOpen } from "lucide-react";
+import { currentWebinar, isRegistrationAvailable } from "@/lib/eventData";
+import { ArrowLeft, ArrowRight, CheckCircle2, Compass, GraduationCap, MessageCircle, ShieldCheck, Video, Plane, Briefcase, BookOpen } from "lucide-react";
 
 const discussionAreas = [
   {
@@ -35,6 +35,7 @@ const audience = [
 
 export default function EventDetailPage() {
   const registrationUrl = currentWebinar.registrationUrl;
+  const registrationAvailable = isRegistrationAvailable(currentWebinar);
 
   return (
     <main className="min-h-screen bg-background text-foreground">
@@ -51,7 +52,7 @@ export default function EventDetailPage() {
             <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight sm:text-5xl lg:text-6xl">Travelling Abroad and Relocation Webinar</h1>
             <p className="mt-6 max-w-3xl text-lg font-medium leading-8 text-slate-100">Exploring employment, studies, business, and other pathway opportunities.</p>
             <div className="mt-8 flex flex-wrap gap-3">
-              {registrationUrl ? <a href={registrationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-4 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now</a> : <a href="#registration" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-4 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ArrowRight className="h-4 w-4" /></a>}
+              {registrationAvailable ? <a href={registrationUrl} target="_blank" rel="noreferrer" className="inline-flex items-center gap-2 rounded-xl bg-amber-400 px-6 py-4 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now</a> : <button type="button" disabled className="inline-flex cursor-not-allowed items-center gap-2 rounded-xl bg-amber-400/60 px-6 py-4 text-sm font-extrabold text-slate-950/70">Register Now</button>}
               <a href="#webinar-overview" className="inline-flex items-center rounded-xl border border-white/25 px-6 py-4 text-sm font-semibold text-white transition hover:bg-white/10">View programme details</a>
             </div>
           </div>
@@ -126,13 +127,13 @@ export default function EventDetailPage() {
         <div className="mx-auto max-w-3xl">
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-amber-200">Registration</p>
           <h2 className="mt-3 text-2xl font-bold sm:text-3xl">Take part in the conversation.</h2>
-          {registrationUrl ? (
+          {registrationAvailable ? (
             <>
               <p className="mt-4 text-sm leading-7 text-slate-300">Complete the registration form to express your interest in participating in this webinar.</p>
               <a href={registrationUrl} target="_blank" rel="noreferrer" className="mt-7 inline-flex items-center gap-2 rounded-xl bg-amber-400 px-7 py-3.5 text-sm font-extrabold text-slate-950 transition hover:bg-amber-300">Register Now <ArrowRight className="h-4 w-4" /></a>
             </>
           ) : (
-            <p className="mt-4 text-sm leading-7 text-slate-300">Registration opens on 1 December 2026. The official registration form is being prepared and its link will be added here before registration opens.</p>
+            <p className="mt-4 text-sm leading-7 text-slate-300">Registration is not currently open. Please return during the registration period.</p>
           )}
           <div className="mt-8"><Link to="/event" className="inline-flex items-center gap-2 text-sm font-semibold text-slate-300 transition hover:text-white"><ArrowLeft className="h-4 w-4"/> Back to Amineva Global Events</Link></div>
         </div>
